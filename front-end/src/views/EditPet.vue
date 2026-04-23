@@ -129,6 +129,8 @@ export default {
           breed: data.breed, color: data.color, area: data.area,
           contact: data.contact, description: data.description || '',
         };
+      } catch {
+        this.error = this.$t('form.saveError');
       } finally {
         this.loading = false;
       }

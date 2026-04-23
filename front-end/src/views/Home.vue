@@ -241,7 +241,6 @@ export default {
     setType(type) {
       this.filters.type = type;
       this.$router.replace({ path: '/', query: type ? { type } : {} }).catch(() => {});
-      this.fetchPets();
     },
     setSpecies(species) { this.filters.species = species; this.fetchPets(); },
     setDays(days)       { this.filters.days = days;       this.fetchPets(); },

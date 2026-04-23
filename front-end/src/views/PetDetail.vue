@@ -179,9 +179,7 @@ export default {
           await navigator.clipboard.writeText(url);
           this.$toast(this.$t('detail.linkCopied'));
         }
-      } catch {
-        // user cancelled share or clipboard failed
-      }
+      } catch { /* user cancelled */ }
     },
     formatDate(date) {
       const locale = this.$lang === 'en' ? 'en-GB' : 'vi-VN';
