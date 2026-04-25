@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --forceExit"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 30000
   },
   "keywords": [],
   "author": "",
@@ -20,5 +24,10 @@
     "express": "^5.2.1",
     "mongoose": "^6.2.4",
     "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0",
+    "mongodb-memory-server": "^11.0.1",
+    "supertest": "^7.2.2"
   }
 }
