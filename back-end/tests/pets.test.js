@@ -96,6 +96,7 @@ describe('PUT /pets/:petId', () => {
 
     const res = await request(app)
       .put(`/pets/${created.body._id}`)
+      .set('x-claim-code', created.body.claimCode)
       .send({ resolved: true });
     expect(res.status).toBe(200);
     expect(res.body.resolved).toBe(true);
@@ -113,10 +114,65 @@ describe('DELETE /pets/:petId', () => {
       .field('area', 'Gò Vấp')
       .field('contact', '0111222333');
 
-    const del = await request(app).delete(`/pets/${created.body._id}`);
+    const del = await request(app)
+      .delete(`/pets/${created.body._id}`)
+      .set('x-claim-code', created.body.claimCode);
     expect(del.status).toBe(200);
 
     const get = await request(app).get(`/pets/${created.body._id}`);
     expect(get.status).toBe(404);
+  });
+});
+
+describe('Mã xác nhận', () => {
+  const createPet = () =>
+    request(app)
+      .post('/pets')
+      .field('type', 'lost')
+      .field('species', 'Mèo')
+      .field('breed', 'Mèo mướp')
+      .field('color', 'Vện')
+      .field('area', 'Quận 1')
+      .field('contact', '0900 000 099');
+
+  it('trả về claimCode một lần khi tạo tin', async () => {
+    const res = await createPet();
+    expect(res.status).toBe(201);
+    expect(typeof res.body.claimCode).toBe('string');
+    expect(res.body.claimCode.length).toBeGreaterThan(0);
+    expect(res.body.claimHash).toBeUndefined();
+  });
+
+  it('không đọc lại được claimCode qua GET', async () => {
+    const created = await createPet();
+    const res = await request(app).get(`/pets/${created.body._id}`);
+    expect(res.body.claimCode).toBeUndefined();
+    expect(res.body.claimHash).toBeUndefined();
+  });
+
+  it('từ chối sửa khi không có mã', async () => {
+    const created = await createPet();
+    const res = await request(app)
+      .put(`/pets/${created.body._id}`)
+      .send({ resolved: true });
+    expect(res.status).toBe(403);
+  });
+
+  it('từ chối xoá khi mã sai', async () => {
+    const created = await createPet();
+    const res = await request(app)
+      .delete(`/pets/${created.body._id}`)
+      .set('x-claim-code', 'MASAI1234');
+    expect(res.status).toBe(403);
+  });
+
+  it('tin cũ chưa có mã thì vẫn sửa được', async () => {
+    const Pet = require('../api/models/petModel');
+    const legacy = await Pet.create({
+      type: 'found', species: 'Chó', breed: 'Chó cỏ',
+      color: 'Vàng', area: 'Gò Vấp', contact: '0900 000 098',
+    });
+    const res = await request(app).put(`/pets/${legacy._id}`).send({ resolved: true });
+    expect(res.status).toBe(200);
   });
 });
