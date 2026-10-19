@@ -9,6 +9,10 @@
  * đây là dữ liệu mẫu trên web công khai, không dùng số thật của ai.
  */
 require('dotenv').config();
+// DNS của một số nhà mạng không trả về bản ghi SRV mà mongodb+srv:// cần,
+// nên dùng DNS của Google như server.js đang làm.
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 const mongoose = require('mongoose');
 const Pet = require('../api/models/petModel');
 
