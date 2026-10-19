@@ -42,6 +42,14 @@ const pets = [
     date: daysAgo(1),
   },
   {
+    // Cặp khớp có chủ ý với tin "Mun" ở trên: cùng con chó, khác khu vực, sau 1 ngày.
+    // Có cặp này thì tính năng gợi ý ghép tin mới có cái để tìm ra.
+    type: 'found', name: '', species: 'Chó', breed: 'Corgi', color: 'Nâu trắng',
+    area: 'Quận 3, TP.HCM', contact: '0900 000 019', image: dog(11),
+    description: 'Nhặt được chó chân ngắn, lông nâu trắng, có đeo vòng cổ đỏ. Đang giữ tại nhà.',
+    date: daysAgo(0),
+  },
+  {
     type: 'lost', name: 'Kem', species: 'Mèo', breed: 'Mèo Anh lông ngắn', color: 'Xám',
     area: 'Quận 3, TP.HCM', contact: '0900 000 002', image: cat('0w0AIO9enndfLoko'),
     description: 'Mèo lông xám dày, mắt vàng, khá nhát người lạ. Sổng ra từ ban công tầng 2.',
