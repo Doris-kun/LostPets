@@ -114,6 +114,48 @@
         </div>
       </div>
     </div>
+
+    <!-- AI đối chiếu với các tin ngược loại để tìm tin có thể là cùng một con vật -->
+    <div v-if="pet && !pet.resolved" class="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <p class="text-sm font-bold text-gray-900">{{ $t('match.title') }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">{{ $t('match.subtitle') }}</p>
+        </div>
+        <button @click="findMatches" :disabled="matchLoading"
+          class="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:from-violet-600 hover:to-indigo-600 disabled:opacity-50 transition-all shadow-sm">
+          <svg v-if="matchLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+          </svg>
+          {{ matchLoading ? $t('match.searching') : $t('match.action') }}
+        </button>
+      </div>
+
+      <div v-if="matches.length" class="mt-4 space-y-3">
+        <router-link v-for="m in matches" :key="m.pet._id" :to="`/pet/${m.pet._id}`"
+          class="flex gap-3 items-start border border-gray-100 rounded-xl p-3 hover:border-violet-200 hover:bg-violet-50/40 transition-all">
+          <img v-if="m.pet.image" :src="m.pet.image" :alt="m.pet.breed"
+            class="w-20 h-20 rounded-lg object-cover flex-shrink-0"/>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-sm font-semibold text-gray-900">{{ m.pet.breed }}</span>
+              <span class="text-xs text-gray-400">{{ m.pet.area }}</span>
+              <span class="ml-auto text-xs font-bold px-2 py-0.5 rounded-full"
+                :class="m.score >= 70 ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'">
+                {{ m.score }}%
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 leading-relaxed">{{ m.reason }}</p>
+          </div>
+        </router-link>
+      </div>
+
+      <p v-else-if="matchDone && !matchError" class="text-sm text-gray-400 mt-4 text-center py-3">
+        {{ $t('match.none') }}
+      </p>
+      <p v-if="matchError" class="text-sm text-rose-500 mt-4 text-center">{{ matchError }}</p>
+    </div>
   </div>
 </template>
 
@@ -123,7 +165,10 @@ import api from '../api';
 export default {
   name: 'PetDetail',
   data() {
-    return { pet: null, loading: false, deleting: false, resolving: false };
+    return {
+      pet: null, loading: false, deleting: false, resolving: false,
+      matches: [], matchLoading: false, matchError: '', matchDone: false,
+    };
   },
   computed: {
     contactHref() {
@@ -143,6 +188,21 @@ export default {
         this.pet = null;
       } finally {
         this.loading = false;
+      }
+    },
+    async findMatches() {
+      this.matchLoading = true;
+      this.matchError = '';
+      this.matches = [];
+      try {
+        const { data } = await api.findMatches(this.pet._id);
+        this.matches = data.matches || [];
+        this.matchDone = true;
+      } catch (err) {
+        const status = err.response && err.response.status;
+        this.matchError = status === 429 ? this.$t('match.limit') : this.$t('match.error');
+      } finally {
+        this.matchLoading = false;
       }
     },
     async deletePet() {
