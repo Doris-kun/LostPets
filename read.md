@@ -1,5 +1,5 @@
 # Project: Pet Lost & Found Platform
-# Stack: MEVN (MongoDB, Express, Vue.js, Node.js)
+# Stack: MERN (MongoDB, Express, React, Node.js)
 # Auth: None (Public access for all features)
 
 ## Features:
@@ -28,9 +28,9 @@
 5. Run `npm start` (starts on port 3000)
 
 ### Front-end Setup:
-1. Navigate to `front-end/` folder
+1. Navigate to `front-end-react/` folder
 2. Run `npm install`
-3. Run `npm run serve` (starts on port 8080)
+3. Run `npm run dev` (starts on port 5173)
 
 ## UI/UX
 - Professional and beautiful website using Tailwind CSS

@@ -2,7 +2,7 @@
 
 Tài liệu cho người mới vào dự án Lost Pets. Đọc hết một lượt rồi làm theo thứ tự.
 
-Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **MEVN** — MongoDB, Express, Vue 2, Node.js. Không có đăng nhập, mọi tính năng đều public.
+Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **MERN** — MongoDB, Express, React, Node.js. Không có đăng nhập, mọi tính năng đều public.
 
 ---
 
@@ -67,13 +67,15 @@ npm start           # http://localhost:3000
 
 ```bash
 # Terminal 2 — giao diện
-cd front-end
-npm run serve       # http://localhost:8080
+cd front-end-react
+npm run dev         # http://localhost:5173
 ```
 
 Back-end chạy thành công sẽ in `Connected to MongoDB`. Nếu lỗi kết nối, nó tự thử lại mỗi 5 giây — kiểm tra lại `MONGODB_URI` và phần Network Access trên Atlas.
 
-Front-end mặc định gọi API ở `http://localhost:3000`. Muốn đổi thì tạo file `front-end/.env` với `VUE_APP_API_URL=...`.
+Front-end mặc định gọi API ở `http://localhost:3000`. Muốn đổi thì tạo file `front-end-react/.env` với `VITE_API_URL=...`.
+
+Vite đọc biến `VITE_*` lúc **build**, không phải lúc chạy — sửa file `.env` xong phải khởi động lại `npm run dev`.
 
 ### Chạy test
 
@@ -168,7 +170,7 @@ Dự án tách sẵn hai thư mục, mỗi người giữ một bên để trán
 | Thư mục | Nội dung |
 |---|---|
 | `back-end/` | Express, Mongoose model, routes, controller, upload Cloudinary, test |
-| `front-end/` | Vue 2, các view, component, Tailwind, gọi API bằng axios |
+| `front-end-react/` | React 19 + Vite, các trang trong `src/pages/`, component dùng chung trong `src/components/`, state chung trong `src/context/`, Tailwind, gọi API bằng axios |
 
 Khi một tính năng cần cả hai bên (ví dụ thêm một trường dữ liệu mới), làm tuần tự: **back-end merge trước**, front-end pull về rồi làm sau. Và nhớ cập nhật mục API bên dưới trong cùng PR đó.
 
