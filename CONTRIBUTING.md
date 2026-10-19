@@ -266,6 +266,33 @@ Phản hồi `200` với body `{ "message": "Pet deleted successfully" }`.
 
 `image` là chuỗi rỗng khi tin không có ảnh — nhớ xử lý trường hợp này ở front-end.
 
+### `POST /ai/analyze-image` — AI đọc ảnh, điền giúp thông tin
+
+Gửi dạng `multipart/form-data`, field `image` (1 file, tối đa 5MB, JPEG/PNG/GIF/WEBP).
+
+Server gửi ảnh cho Google Gemini, nhận lại thông tin nhận dạng. Phản hồi `200`:
+
+```json
+{
+  "species": "Chó",
+  "breed": "Corgi",
+  "color": "Nâu trắng",
+  "description": "Chó nhỏ, chân ngắn, tai dựng, đeo vòng cổ đỏ.",
+  "confidence": 87
+}
+```
+
+Front-end dùng kết quả này để điền sẵn form đăng tin — chỉ điền vào ô còn trống, người dùng vẫn sửa được.
+
+Cần biến môi trường `GEMINI_API_KEY`. Thiếu key thì endpoint trả `503`, phần còn lại của web vẫn chạy bình thường.
+
+| Mã | Khi nào |
+|---|---|
+| `400` | không gửi ảnh, hoặc file không phải ảnh |
+| `422` | ảnh không có chó hoặc mèo |
+| `429` | gọi quá nhiều, chờ một chút |
+| `503` | chưa cấu hình `GEMINI_API_KEY`, hoặc key sai |
+
 ### Mã lỗi
 
 | Mã | Khi nào |
