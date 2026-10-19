@@ -109,6 +109,27 @@
             </div>
             <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleImage"/>
           </div>
+
+          <!-- AI đọc ảnh và điền giúp loài, giống, màu lông, mô tả -->
+          <div v-if="image" class="mt-3">
+            <button type="button" @click="analyzeImage" :disabled="aiLoading"
+              class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-500 to-indigo-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:from-violet-600 hover:to-indigo-600 disabled:opacity-50 transition-all shadow-sm">
+              <svg v-if="aiLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+              </svg>
+              <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M12 2a1 1 0 01.967.744L13.92 6.3a3 3 0 001.78 1.78l3.556.953a1 1 0 010 1.934l-3.556.953a3 3 0 00-1.78 1.78l-.953 3.556a1 1 0 01-1.934 0l-.953-3.556a3 3 0 00-1.78-1.78L4.744 10.97a1 1 0 010-1.934l3.556-.953a3 3 0 001.78-1.78l.953-3.556A1 1 0 0112 2zM5 13a1 1 0 01.894.553l.382.764.764.382a1 1 0 010 1.789l-.764.382-.382.764a1 1 0 01-1.789 0l-.382-.764-.764-.382a1 1 0 010-1.789l.764-.382.382-.764A1 1 0 015 13z"/>
+              </svg>
+              {{ aiLoading ? $t('ai.analyzing') : $t('ai.analyze') }}
+            </button>
+            <p v-if="!aiResult && !aiError" class="text-xs text-gray-400 mt-2 text-center">{{ $t('ai.hint') }}</p>
+            <div v-if="aiResult" class="mt-2 text-xs text-violet-700 bg-violet-50 border border-violet-100 rounded-xl px-3 py-2 text-center">
+              {{ $t('ai.filled') }}
+              <span class="font-semibold ml-1">{{ $t('ai.confidence') }}: {{ aiResult.confidence }}%</span>
+            </div>
+            <p v-if="aiError" class="text-xs text-rose-500 mt-2 text-center">{{ aiError }}</p>
+          </div>
         </div>
       </div>
 
@@ -136,6 +157,7 @@ export default {
     return {
       form: { type: 'lost', name: '', species: '', breed: '', color: '', area: '', contact: '', description: '' },
       image: null, preview: null, loading: false, error: '', showSpeciesError: false,
+      aiLoading: false, aiError: '', aiResult: null,
     };
   },
   methods: {
@@ -144,6 +166,30 @@ export default {
       if (!file) return;
       this.image = file;
       this.preview = URL.createObjectURL(file);
+      this.aiResult = null;
+      this.aiError = '';
+    },
+    async analyzeImage() {
+      this.aiLoading = true;
+      this.aiError = '';
+      this.aiResult = null;
+      try {
+        const formData = new FormData();
+        formData.append('image', this.image);
+        const { data } = await api.analyzeImage(formData);
+        // Chỉ điền vào ô còn trống, không ghi đè thứ người dùng đã tự gõ.
+        if (data.species !== 'Khác') this.form.species = data.species;
+        if (!this.form.breed) this.form.breed = data.breed;
+        if (!this.form.color) this.form.color = data.color;
+        if (!this.form.description) this.form.description = data.description;
+        this.aiResult = data;
+        this.showSpeciesError = false;
+      } catch (err) {
+        const status = err.response && err.response.status;
+        this.aiError = status === 422 ? this.$t('ai.notPet') : this.$t('ai.error');
+      } finally {
+        this.aiLoading = false;
+      }
     },
     async submit() {
       if (!this.form.species) { this.showSpeciesError = true; return; }

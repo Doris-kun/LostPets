@@ -8,4 +8,5 @@ export default {
   createPet: (data)   => http.post('/pets', data),
   updatePet: (id, data) => http.put(`/pets/${id}`, data),
   deletePet: (id)     => http.delete(`/pets/${id}`),
+  analyzeImage: (data) => http.post('/ai/analyze-image', data),
 };
