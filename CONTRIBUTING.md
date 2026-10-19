@@ -1,0 +1,283 @@
+# Hướng dẫn tham gia dự án
+
+Tài liệu cho người mới vào dự án Lost Pets. Đọc hết một lượt rồi làm theo thứ tự.
+
+Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **MEVN** — MongoDB, Express, Vue 2, Node.js. Không có đăng nhập, mọi tính năng đều public.
+
+---
+
+## 1. Cài đặt lần đầu
+
+### Yêu cầu
+
+- Node.js 18 trở lên
+- Tài khoản MongoDB Atlas (free) hoặc MongoDB cài trên máy
+- Tài khoản Cloudinary (free) — dùng để lưu ảnh
+
+### Các bước
+
+```bash
+git clone https://github.com/Doris-kun/LostPets.git
+cd LostPets
+
+cd back-end
+npm install
+cd ../front-end
+npm install
+```
+
+### Tạo file `.env`
+
+File `.env` **không có trong repo** (chứa mật khẩu nên bị `.gitignore` chặn). Mỗi người tự tạo trên máy mình:
+
+```bash
+cd back-end
+cp .env.example .env
+```
+
+PowerShell thì dùng `copy .env.example .env`.
+
+Mở `back-end/.env` và điền giá trị của **tài khoản riêng của bạn**:
+
+```
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/lost-pets?retryWrites=true&w=majority
+```
+
+- **Cloudinary**: đăng ký tại console.cloudinary.com, lấy key ở Settings → API Keys
+- **MongoDB**: tạo cluster M0 free tại cloud.mongodb.com, hoặc cài MongoDB trên máy rồi dùng `mongodb://localhost:27017/lost-pets`
+
+Nên dùng tài khoản riêng thay vì xài chung, để hai người test không ghi đè dữ liệu của nhau.
+
+> **Tuyệt đối không commit file `.env`.** Nếu thấy nó xuất hiện trong `git status` thì báo ngay, đừng commit.
+
+---
+
+## 2. Chạy dự án
+
+Mở **2 terminal** riêng:
+
+```bash
+# Terminal 1 — API
+cd back-end
+npm start           # http://localhost:3000
+```
+
+```bash
+# Terminal 2 — giao diện
+cd front-end
+npm run serve       # http://localhost:8080
+```
+
+Back-end chạy thành công sẽ in `Connected to MongoDB`. Nếu lỗi kết nối, nó tự thử lại mỗi 5 giây — kiểm tra lại `MONGODB_URI` và phần Network Access trên Atlas.
+
+Front-end mặc định gọi API ở `http://localhost:3000`. Muốn đổi thì tạo file `front-end/.env` với `VUE_APP_API_URL=...`.
+
+### Chạy test
+
+```bash
+cd back-end
+npm test
+```
+
+Test dùng `mongodb-memory-server` nên không cần MongoDB thật, cũng không cần `.env`.
+
+---
+
+## 3. Quy trình làm việc trên Git
+
+Nhánh `main` đã được khoá: **không ai push thẳng lên được**, kể cả chủ repo. Mọi thay đổi đều phải đi qua Pull Request, có CI pass và được người kia duyệt.
+
+### Mỗi lần làm một việc mới
+
+```bash
+git checkout main
+git pull origin main                  # lấy code mới nhất
+
+git checkout -b feat/ten-tinh-nang    # tạo nhánh riêng
+# ... sửa code ...
+git add .
+git commit -m "feat: mô tả ngắn việc đã làm"
+git push -u origin feat/ten-tinh-nang
+```
+
+Sau khi push, GitHub in ra link tạo PR ngay trong terminal. Hoặc vào tab **Pull requests** trên GitHub → **New pull request**.
+
+Trong trang tạo PR:
+
+1. Kiểm tra dòng trên cùng: `base: main` ← `compare: nhánh của bạn`
+2. Cột phải, mục **Reviewers** → chọn người còn lại
+3. Bấm **Create pull request**
+
+### Đặt tên nhánh
+
+| Tiền tố | Dùng khi | Ví dụ |
+|---|---|---|
+| `feat/` | thêm tính năng mới | `feat/filter-by-area` |
+| `fix/` | sửa lỗi | `fix/image-upload-crash` |
+| `refactor/` | dọn code, không đổi hành vi | `refactor/pet-controller` |
+| `docs/` | sửa tài liệu | `docs/api-contract` |
+| `chore/` | việc vặt, cấu hình | `chore/update-deps` |
+
+### Duyệt PR của người kia
+
+1. Vào PR → tab **Files changed**
+2. Góc trên bên phải bấm **Review changes**
+3. Chọn **Approve** — không phải Comment, vì Comment không mở khoá được nút merge
+4. Bấm **Submit review**
+
+Không ai tự duyệt PR của chính mình được. Hai người duyệt chéo cho nhau.
+
+### Merge
+
+Khi CI xanh và có 1 approve, nút **Merge pull request** sáng lên:
+
+1. Bấm mũi tên ▾ cạnh nút → chọn **Squash and merge**
+2. Xác nhận
+3. Bấm **Delete branch**
+
+Rồi về máy dọn lại:
+
+```bash
+git checkout main
+git pull origin main
+git branch -d ten-nhanh-vua-merge
+```
+
+### Khi bị conflict
+
+```bash
+git checkout nhanh-cua-ban
+git pull origin main        # kéo main mới về nhánh mình
+# mở file bị conflict, xoá các dấu <<<<<<< ======= >>>>>>>
+git add .
+git commit
+git push
+```
+
+Luôn giải quyết conflict **trên nhánh của mình**, không bao giờ trên `main`.
+
+---
+
+## 4. Phân chia công việc
+
+Dự án tách sẵn hai thư mục, mỗi người giữ một bên để tránh sửa trùng file:
+
+| Thư mục | Nội dung |
+|---|---|
+| `back-end/` | Express, Mongoose model, routes, controller, upload Cloudinary, test |
+| `front-end/` | Vue 2, các view, component, Tailwind, gọi API bằng axios |
+
+Khi một tính năng cần cả hai bên (ví dụ thêm một trường dữ liệu mới), làm tuần tự: **back-end merge trước**, front-end pull về rồi làm sau. Và nhớ cập nhật mục API bên dưới trong cùng PR đó.
+
+---
+
+## 5. API
+
+Base URL khi chạy local: `http://localhost:3000`
+
+Tất cả endpoint đều public, không cần token.
+
+### `GET /pets` — lấy danh sách
+
+Tham số query, tất cả đều tuỳ chọn:
+
+| Tham số | Kiểu | Ý nghĩa |
+|---|---|---|
+| `type` | `lost` hoặc `found` | lọc theo loại tin |
+| `species` | string | lọc theo loài, khớp một phần, không phân biệt hoa thường |
+| `breed` | string | lọc theo giống, khớp một phần |
+| `color` | string | lọc theo màu, khớp một phần |
+| `area` | string | lọc theo khu vực, khớp một phần |
+| `resolved` | `true` hoặc `false` | đã tìm thấy hay chưa |
+| `days` | số | chỉ lấy tin trong N ngày gần đây |
+| `sort` | `oldest` | mặc định là mới nhất trước |
+| `limit` | số | mặc định `9`, tối đa `50` |
+| `skip` | số | bỏ qua N bản ghi đầu, dùng để phân trang |
+
+Phản hồi `200`:
+
+```json
+{
+  "pets": [ { "...": "object pet" } ],
+  "total": 42
+}
+```
+
+`total` là tổng số bản ghi **khớp bộ lọc**, không phải số bản ghi trả về trong trang hiện tại. Dùng nó để tính số trang.
+
+### `POST /pets` — đăng tin mới
+
+Gửi dạng `multipart/form-data` nếu có ảnh (field tên `image`, 1 file). Không có ảnh thì gửi JSON cũng được.
+
+| Trường | Bắt buộc | Ghi chú |
+|---|---|---|
+| `type` | có | `lost` hoặc `found` |
+| `species` | có | loài |
+| `breed` | có | giống |
+| `color` | có | màu |
+| `area` | có | khu vực |
+| `contact` | có | thông tin liên hệ |
+| `name` | không | tên thú cưng |
+| `description` | không | mô tả thêm |
+| `image` | không | file ảnh, server tự upload lên Cloudinary |
+
+Phản hồi `201`: object pet vừa tạo. Server tự sinh `postId` dạng `L-XXXXXX` cho tin lost, `F-XXXXXX` cho tin found.
+
+Thiếu trường bắt buộc thì nhận `400` với body `{ "message": "All fields are required" }`.
+
+### `GET /pets/:petId` — xem chi tiết
+
+`petId` là `_id` của MongoDB. Không tìm thấy thì nhận `404` với body `{ "message": "Pet not found" }`.
+
+### `PUT /pets/:petId` — cập nhật
+
+Body JSON, chỉ cần gửi những trường muốn đổi. Trả về object sau khi đã cập nhật.
+
+Lưu ý: endpoint này **không nhận upload file**. Muốn đổi ảnh thì truyền `image` là một URL dạng chuỗi.
+
+### `DELETE /pets/:petId` — xoá
+
+Phản hồi `200` với body `{ "message": "Pet deleted successfully" }`.
+
+### Object `pet`
+
+```json
+{
+  "_id": "6700a1b2c3d4e5f6a7b8c9d0",
+  "postId": "L-A1B2C3",
+  "type": "lost",
+  "name": "Mun",
+  "species": "Chó",
+  "breed": "Corgi",
+  "color": "Nâu trắng",
+  "area": "Quận 1, TP.HCM",
+  "contact": "0901234567",
+  "image": "https://res.cloudinary.com/.../lost-pets/abc.jpg",
+  "description": "Mất chiều 12/10 gần công viên",
+  "resolved": false,
+  "date": "2026-10-12T09:30:00.000Z"
+}
+```
+
+`image` là chuỗi rỗng khi tin không có ảnh — nhớ xử lý trường hợp này ở front-end.
+
+### Mã lỗi
+
+| Mã | Khi nào |
+|---|---|
+| `400` | thiếu trường bắt buộc lúc tạo tin |
+| `404` | không tìm thấy pet theo `_id` |
+| `500` | lỗi server hoặc lỗi database |
+
+---
+
+## 6. Quy tắc chung
+
+- Không commit `.env`, `node_modules/`, `dist/`
+- Không push thẳng lên `main`
+- Mỗi PR chỉ làm một việc — dễ đọc, dễ duyệt, dễ revert khi hỏng
+- Trước khi mở PR, chạy `npm test` ở `back-end/` cho chắc
+- Đổi API thì cập nhật mục 5 của file này ngay trong cùng PR
