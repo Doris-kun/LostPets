@@ -276,7 +276,7 @@ Lưu ý: endpoint này **không nhận upload file**. Muốn đổi ảnh thì t
 
 Gửi dạng `multipart/form-data`, field `image` (1 file, tối đa 5MB, JPEG/PNG/GIF/WEBP).
 
-Server gửi ảnh cho Google Gemini, nhận lại thông tin nhận dạng. Phản hồi `200`:
+Server gửi ảnh cho Google Gemini (`gemini-3.5-flash-lite`, `thinking_level: minimal`), nhận lại thông tin nhận dạng. Phản hồi `200`:
 
 ```json
 {
