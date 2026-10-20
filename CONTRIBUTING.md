@@ -298,7 +298,7 @@ Cần biến môi trường `GEMINI_API_KEY`. Thiếu key thì endpoint trả `5
 | `422` | ảnh không có chó hoặc mèo |
 | `429` | gọi quá nhiều, chờ một chút |
 | `503` | chưa cấu hình `GEMINI_API_KEY`, hoặc key sai |
-| `504` | AI không trả lời trong 45 giây (bản free hay nghẽn) |
+| `504` | AI không trả lời trong 25 giây (bản free hay nghẽn) |
 
 ### `GET /ai/match/:petId` — AI gợi ý tin có thể khớp
 
