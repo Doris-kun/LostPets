@@ -150,6 +150,7 @@
 
 <script>
 import api from '../api';
+import claim from '../claim';
 
 export default {
   name: 'NewPet',
@@ -200,8 +201,10 @@ export default {
         const formData = new FormData();
         Object.entries(this.form).forEach(([k, v]) => formData.append(k, v));
         if (this.image) formData.append('image', this.image);
-        await api.createPet(formData);
-        this.$toast(this.$t('new.success'));
+        const { data } = await api.createPet(formData);
+        // Mã chỉ trả về đúng lần này, lưu ngay để người đăng sửa/xoá được sau.
+        claim.save(data._id, data.claimCode);
+        this.$toast(`${this.$t('claim.saved')} ${data.claimCode}`);
         this.$router.push('/');
       } catch {
         this.error = this.$t('form.error');

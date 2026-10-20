@@ -142,8 +142,10 @@ export default {
         await api.updatePet(this.$route.params.id, this.form);
         this.$toast(this.$t('edit.success'));
         this.$router.push(`/pet/${this.$route.params.id}`);
-      } catch {
-        this.error = this.$t('form.saveError');
+      } catch (err) {
+        // 403 nghĩa là trình duyệt này không giữ mã xác nhận của tin.
+        const status = err.response && err.response.status;
+        this.error = status === 403 ? this.$t('claim.denied') : this.$t('form.saveError');
       } finally {
         this.saving = false;
       }

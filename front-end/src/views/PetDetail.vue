@@ -205,6 +205,11 @@ export default {
         this.matchLoading = false;
       }
     },
+    // 403 nghĩa là trình duyệt này không giữ mã xác nhận của tin.
+    claimMessage(err) {
+      const status = err.response && err.response.status;
+      return status === 403 ? this.$t('claim.denied') : this.$t('form.saveError');
+    },
     async deletePet() {
       if (!confirm(this.$t('detail.confirm'))) return;
       this.deleting = true;
@@ -212,9 +217,9 @@ export default {
         await api.deletePet(this.pet._id);
         this.$toast(this.$t('delete.success'));
         this.$router.push('/');
-      } catch {
+      } catch (err) {
         this.deleting = false;
-        this.$toast(this.$t('form.saveError'), 'error');
+        this.$toast(this.claimMessage(err), 'error');
       }
     },
     async resolvePet() {
@@ -224,8 +229,8 @@ export default {
         const { data } = await api.updatePet(this.pet._id, { resolved: true });
         this.pet = data;
         this.$toast(this.$t('detail.resolvedBanner'));
-      } catch {
-        this.$toast(this.$t('form.saveError'), 'error');
+      } catch (err) {
+        this.$toast(this.claimMessage(err), 'error');
       } finally {
         this.resolving = false;
       }
