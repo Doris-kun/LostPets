@@ -52,3 +52,30 @@ describe('GET /ai/match/:petId', () => {
     expect(res.status).toBe(503);
   });
 });
+
+describe('Timeout khi AI quá chậm', () => {
+  const originalKey = process.env.GEMINI_API_KEY;
+  afterEach(() => {
+    jest.restoreAllMocks();
+    delete process.env.AI_TIMEOUT_MS;
+    if (originalKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = originalKey;
+  });
+
+  it('trả 504 thay vì treo tới khi proxy cắt', async () => {
+    process.env.GEMINI_API_KEY = 'AIza-test-key';
+    process.env.AI_TIMEOUT_MS = '200';
+    const { GoogleGenAI } = require('@google/genai');
+    // Giả lập Gemini không bao giờ trả lời.
+    jest
+      .spyOn(GoogleGenAI.prototype.interactions, 'create')
+      .mockImplementation(() => new Promise(() => {}));
+
+    const res = await request(app)
+      .post('/ai/analyze-image')
+      .attach('image', Buffer.from('fake'), { filename: 'a.jpg', contentType: 'image/jpeg' });
+
+    expect(res.status).toBe(504);
+    expect(res.body.message).toMatch(/quá tải/);
+  });
+});
