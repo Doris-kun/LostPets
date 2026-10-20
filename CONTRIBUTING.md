@@ -337,7 +337,36 @@ Chỉ trả về những tin đạt từ 40 điểm trở lên, sắp xếp đi�
 
 ---
 
-## 6. Quy tắc chung
+## 6. Đăng nhập
+
+Tài khoản là **tuỳ chọn**: khách vãng lai vẫn đăng tin được như trước. Đăng nhập chỉ thêm khả năng xem lại và quản lý tin của mình.
+
+Cần biến môi trường `JWT_SECRET`. Để trống thì các endpoint `/auth/*` trả `503`, phần còn lại của web không bị ảnh hưởng.
+
+### `POST /auth/register`
+
+Body JSON: `name`, `email`, `password` (tối thiểu 6 ký tự).
+
+Phản hồi `201`: `{ "token": "...", "user": { "_id", "name", "email" } }`
+
+| Mã | Khi nào |
+|---|---|
+| `400` | thiếu trường, hoặc mật khẩu quá ngắn |
+| `409` | email đã được đăng ký |
+
+### `POST /auth/login`
+
+Body JSON: `email`, `password`. Phản hồi giống `register`.
+
+Sai email hoặc sai mật khẩu đều trả `401` với **cùng một thông báo**, để không lộ email nào đã có trong hệ thống.
+
+### `GET /auth/me`
+
+Gửi header `Authorization: Bearer <token>`. Trả về thông tin tài khoản, dùng để kiểm tra token còn hiệu lực sau khi tải lại trang.
+
+Token sống 7 ngày.
+
+## 7. Quy tắc chung
 
 - Không commit `.env`, `node_modules/`, `dist/`
 - Không push thẳng lên `main`
