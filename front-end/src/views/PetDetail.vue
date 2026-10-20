@@ -178,6 +178,17 @@ export default {
     },
   },
   created() { this.fetchPet(); },
+  // Bấm vào một tin trong danh sách gợi ý sẽ đổi :id nhưng vẫn dùng lại
+  // component này, created() không chạy lại. Không theo dõi thì trang vẫn
+  // hiện tin cũ kèm kết quả đối chiếu cũ.
+  watch: {
+    '$route.params.id'() {
+      this.matches = [];
+      this.matchError = '';
+      this.matchDone = false;
+      this.fetchPet();
+    },
+  },
   methods: {
     async fetchPet() {
       this.loading = true;
