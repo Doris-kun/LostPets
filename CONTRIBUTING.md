@@ -291,6 +291,33 @@ Cần biến môi trường `GEMINI_API_KEY`. Thiếu key thì endpoint trả `5
 | `429` | gọi quá nhiều, chờ một chút |
 | `503` | chưa cấu hình `GEMINI_API_KEY`, hoặc key sai |
 
+### `GET /ai/match/:petId` — AI gợi ý tin có thể khớp
+
+Lấy tin theo `_id`, tìm trong các tin **ngược loại** (mất ↔ nhặt được) cùng loài, chưa đánh dấu tìm thấy, đăng trong 120 ngày gần đây, tối đa 6 ứng viên. Gửi ảnh và đặc điểm của tất cả cho Gemini chấm điểm.
+
+Phản hồi `200`:
+
+```json
+{
+  "matches": [
+    {
+      "pet": { "...": "object pet đầy đủ" },
+      "score": 82,
+      "reason": "Cùng giống Corgi, màu nâu trắng, khu vực cách nhau 2km và chênh 3 ngày."
+    }
+  ],
+  "candidatesChecked": 4
+}
+```
+
+Chỉ trả về những tin đạt từ 40 điểm trở lên, sắp xếp điểm cao trước. Không có ứng viên nào thì `matches` là mảng rỗng.
+
+| Mã | Khi nào |
+|---|---|
+| `404` | không tìm thấy pet theo `_id` |
+| `429` | gọi quá nhiều, chờ một chút |
+| `503` | chưa cấu hình `GEMINI_API_KEY` |
+
 ### Mã lỗi
 
 | Mã | Khi nào |

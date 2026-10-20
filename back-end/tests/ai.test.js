@@ -37,3 +37,18 @@ describe('POST /ai/analyze-image', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('GET /ai/match/:petId', () => {
+  const originalKey = process.env.GEMINI_API_KEY;
+
+  afterEach(() => {
+    if (originalKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = originalKey;
+  });
+
+  it('trả về 503 khi chưa cấu hình GEMINI_API_KEY', async () => {
+    delete process.env.GEMINI_API_KEY;
+    const res = await request(app).get('/ai/match/507f1f77bcf86cd799439011');
+    expect(res.status).toBe(503);
+  });
+});
