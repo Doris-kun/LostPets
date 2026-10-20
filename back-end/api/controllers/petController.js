@@ -1,6 +1,29 @@
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
+const crypto = require('crypto');
 const Pet = require('../models/petModel');
+
+// Mã xác nhận: người đăng nhận một lần lúc tạo tin, cần nó để sửa hoặc xoá.
+// Database chỉ lưu bản băm, mất mã thì không ai khôi phục được.
+const generateClaimCode = () => crypto.randomBytes(5).toString('hex').toUpperCase();
+const hashClaimCode = (code) => crypto.createHash('sha256').update(code).digest('hex');
+
+// Tin cũ chưa có claimHash thì vẫn cho sửa/xoá, để dữ liệu đăng trước đây không bị khoá.
+async function assertMayModify(req, res) {
+  const pet = await Pet.findById(req.params.petId).select('+claimHash');
+  if (!pet) {
+    res.status(404).json({ message: 'Pet not found' });
+    return null;
+  }
+  if (!pet.claimHash) return pet;
+
+  const provided = req.get('x-claim-code') || (req.body && req.body.claimCode);
+  if (!provided || hashClaimCode(String(provided).trim().toUpperCase()) !== pet.claimHash) {
+    res.status(403).json({ message: 'Sai mã xác nhận' });
+    return null;
+  }
+  return pet;
+}
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -67,8 +90,15 @@ exports.create_a_pet = async (req, res) => {
     }
 
     const postId = generatePostId(type);
-    const pet = await Pet.create({ postId, type, name, species, breed, color, area, contact, description, image: imageUrl });
-    res.status(201).json(pet);
+    const claimCode = generateClaimCode();
+    const pet = await Pet.create({
+      postId, type, name, species, breed, color, area, contact, description,
+      image: imageUrl, claimHash: hashClaimCode(claimCode),
+    });
+    // claimCode chỉ xuất hiện đúng lần này, không có endpoint nào đọc lại được.
+    // select: false chỉ lọc ở truy vấn, tài liệu vừa tạo vẫn giữ claimHash nên phải bỏ tay.
+    const { claimHash: _omit, ...created } = pet.toObject();
+    res.status(201).json({ ...created, claimCode });
   } catch {
     res.status(500).json({ message: 'Server error' });
   }
@@ -86,8 +116,14 @@ exports.read_a_pet = async (req, res) => {
 
 exports.update_a_pet = async (req, res) => {
   try {
-    const pet = await Pet.findByIdAndUpdate(req.params.petId, req.body, { new: true, runValidators: true });
-    if (!pet) return res.status(404).json({ message: 'Pet not found' });
+    if (!(await assertMayModify(req, res))) return;
+
+    // claimCode có thể nằm trong body, đừng để nó ghi đè lên tài liệu.
+    const { claimCode, claimHash, ...updates } = req.body || {};
+    const pet = await Pet.findByIdAndUpdate(req.params.petId, updates, {
+      new: true,
+      runValidators: true,
+    });
     res.json(pet);
   } catch {
     res.status(500).json({ message: 'Server error' });
@@ -96,8 +132,9 @@ exports.update_a_pet = async (req, res) => {
 
 exports.delete_a_pet = async (req, res) => {
   try {
-    const pet = await Pet.findByIdAndDelete(req.params.petId);
-    if (!pet) return res.status(404).json({ message: 'Pet not found' });
+    if (!(await assertMayModify(req, res))) return;
+
+    await Pet.findByIdAndDelete(req.params.petId);
     res.json({ message: 'Pet deleted successfully' });
   } catch {
     res.status(500).json({ message: 'Server error' });

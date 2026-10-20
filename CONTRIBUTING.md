@@ -226,7 +226,9 @@ Gửi dạng `multipart/form-data` nếu có ảnh (field tên `image`, 1 file).
 | `description` | không | mô tả thêm |
 | `image` | không | file ảnh, server tự upload lên Cloudinary |
 
-Phản hồi `201`: object pet vừa tạo. Server tự sinh `postId` dạng `L-XXXXXX` cho tin lost, `F-XXXXXX` cho tin found.
+Phản hồi `201`: object pet vừa tạo, **kèm trường `claimCode`**. Server tự sinh `postId` dạng `L-XXXXXX` cho tin lost, `F-XXXXXX` cho tin found.
+
+`claimCode` là mã xác nhận, **chỉ trả về đúng lần này**. Database chỉ lưu bản băm SHA-256 nên không có cách nào đọc lại. Front-end lưu mã vào `localStorage` để người đăng sửa/xoá được sau.
 
 Thiếu trường bắt buộc thì nhận `400` với body `{ "message": "All fields are required" }`.
 
@@ -238,11 +240,15 @@ Thiếu trường bắt buộc thì nhận `400` với body `{ "message": "All f
 
 Body JSON, chỉ cần gửi những trường muốn đổi. Trả về object sau khi đã cập nhật.
 
+**Cần mã xác nhận**: gửi header `x-claim-code: <mã>` (hoặc trường `claimCode` trong body). Sai hoặc thiếu mã thì nhận `403`.
+
 Lưu ý: endpoint này **không nhận upload file**. Muốn đổi ảnh thì truyền `image` là một URL dạng chuỗi.
 
 ### `DELETE /pets/:petId` — xoá
 
-Phản hồi `200` với body `{ "message": "Pet deleted successfully" }`.
+**Cần mã xác nhận**, giống `PUT`. Phản hồi `200` với body `{ "message": "Pet deleted successfully" }`.
+
+> Tin đăng trước khi có tính năng này không có mã nên vẫn sửa/xoá được tự do. Đó là chủ ý để dữ liệu cũ không bị khoá vĩnh viễn — nếu muốn siết, chạy một script gán mã cho toàn bộ tin cũ.
 
 ### Object `pet`
 
@@ -325,6 +331,7 @@ Chỉ trả về những tin đạt từ 40 điểm trở lên, sắp xếp đi�
 | Mã | Khi nào |
 |---|---|
 | `400` | thiếu trường bắt buộc lúc tạo tin |
+| `403` | sai hoặc thiếu mã xác nhận khi sửa/xoá |
 | `404` | không tìm thấy pet theo `_id` |
 | `500` | lỗi server hoặc lỗi database |
 
