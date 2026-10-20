@@ -176,3 +176,42 @@ describe('Mã xác nhận', () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe('Tham số lọc không hợp lệ', () => {
+  it.each([
+    ['days=abc', 'chữ thay vì số'],
+    ['days=999999999', 'số quá lớn'],
+    ['days=-5', 'số âm'],
+    ['skip=-5', 'skip âm'],
+    ['limit=-3', 'limit âm'],
+    ['limit=abc', 'limit là chữ'],
+  ])('không làm sập server với %s (%s)', async (query) => {
+    const res = await request(app).get(`/pets?${query}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.pets)).toBe(true);
+  });
+
+  it('limit vẫn bị chặn ở 50', async () => {
+    const res = await request(app).get('/pets?limit=9999');
+    expect(res.status).toBe(200);
+    expect(res.body.pets.length).toBeLessThanOrEqual(50);
+  });
+});
+
+describe('Giới hạn file khi đăng tin', () => {
+  it('từ chối file không phải ảnh', async () => {
+    const res = await request(app)
+      .post('/pets')
+      .field('type', 'lost')
+      .field('species', 'Chó')
+      .field('breed', 'Corgi')
+      .field('color', 'Vàng')
+      .field('area', 'Quận 1')
+      .field('contact', '0900 000 097')
+      .attach('image', Buffer.from('khong phai anh'), {
+        filename: 'virus.exe',
+        contentType: 'application/octet-stream',
+      });
+    expect(res.status).toBeGreaterThanOrEqual(400);
+  });
+});
