@@ -19,6 +19,22 @@ function getClient() {
   return client;
 }
 
+// Bản free của Gemini có lúc nghẽn tới hàng phút. Render cắt kết nối ở khoảng
+// 100 giây rồi trả 502, người dùng không hiểu chuyện gì xảy ra. Tự bỏ cuộc sớm
+// hơn thế để còn trả về một thông báo tử tế.
+// Đọc lúc gọi chứ không lúc nạp module, để test rút ngắn được mà không phải chờ thật.
+const getTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 45000;
+
+class AiTimeoutError extends Error {}
+
+function withTimeout(promise, ms = getTimeoutMs()) {
+  let timer;
+  const timeout = new Promise((_resolve, reject) => {
+    timer = setTimeout(() => reject(new AiTimeoutError('AI timeout')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 const PET_SCHEMA = {
   type: 'object',
   properties: {
@@ -73,7 +89,8 @@ exports.analyze_image = async (req, res) => {
   }
 
   try {
-    const interaction = await ai.interactions.create({
+    const interaction = await withTimeout(
+      ai.interactions.create({
       model: MODEL,
       input: [
         { type: 'text', text: PROMPT },
@@ -88,7 +105,8 @@ exports.analyze_image = async (req, res) => {
         mime_type: 'application/json',
         schema: PET_SCHEMA,
       },
-    });
+      })
+    );
 
     let result;
     try {
@@ -109,6 +127,9 @@ exports.analyze_image = async (req, res) => {
       confidence: result.confidence,
     });
   } catch (err) {
+    if (err instanceof AiTimeoutError) {
+      return res.status(504).json({ message: 'AI đang quá tải, thử lại sau ít phút' });
+    }
     const status = err.status || (err.response && err.response.status);
     if (status === 401 || status === 403) {
       return res.status(503).json({ message: 'API key không hợp lệ' });
@@ -226,11 +247,13 @@ exports.match_posts = async (req, res) => {
       if (part) input.push(part);
     });
 
-    const interaction = await ai.interactions.create({
+    const interaction = await withTimeout(
+      ai.interactions.create({
       model: MODEL,
       input,
       response_format: { type: 'text', mime_type: 'application/json', schema: MATCH_SCHEMA },
-    });
+      })
+    );
 
     let parsed;
     try {
@@ -250,6 +273,9 @@ exports.match_posts = async (req, res) => {
 
     res.json({ matches, candidatesChecked: candidates.length });
   } catch (err) {
+    if (err instanceof AiTimeoutError) {
+      return res.status(504).json({ message: 'AI đang quá tải, thử lại sau ít phút' });
+    }
     const status = err.status || (err.response && err.response.status);
     if (status === 429) {
       return res.status(429).json({ message: 'Đã hết lượt miễn phí, thử lại sau một chút' });
