@@ -1,7 +1,11 @@
 const { GoogleGenAI } = require('@google/genai');
 const multer = require('multer');
 
-const MODEL = 'gemini-3.8-flash';
+// gemini-3.8-flash bật suy luận mức medium theo mặc định: nhận diện một con chó
+// mất tới 136 giây. Bản lite với thinking_level 'minimal' làm cùng việc đó trong
+// khoảng 6 giây — đây là việc phân loại đơn giản, không cần model suy luận sâu.
+const MODEL = 'gemini-3.5-flash-lite';
+const GENERATION_CONFIG = { thinking_level: 'minimal' };
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -109,6 +113,7 @@ exports.analyze_image = async (req, res) => {
         mime_type: 'application/json',
         schema: PET_SCHEMA,
       },
+      generation_config: GENERATION_CONFIG,
       }),
       getAnalyzeTimeoutMs()
     );
@@ -257,6 +262,7 @@ exports.match_posts = async (req, res) => {
       model: MODEL,
       input,
       response_format: { type: 'text', mime_type: 'application/json', schema: MATCH_SCHEMA },
+      generation_config: GENERATION_CONFIG,
       }),
       getMatchTimeoutMs()
     );
