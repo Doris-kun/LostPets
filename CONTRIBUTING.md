@@ -180,6 +180,8 @@ Base URL khi chạy local: `http://localhost:3000`
 
 Tất cả endpoint đều public, không cần token.
 
+API chỉ nhận request từ các domain liệt kê trong biến môi trường `FRONTEND_URL` (ngăn cách bằng dấu phẩy). Để trống thì mở cho mọi domain và in cảnh báo trong log — tiện lúc phát triển, nhưng production phải đặt.
+
 ### `GET /pets` — lấy danh sách
 
 Tham số query, tất cả đều tuỳ chọn:
