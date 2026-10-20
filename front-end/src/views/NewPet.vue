@@ -187,7 +187,9 @@ export default {
         this.showSpeciesError = false;
       } catch (err) {
         const status = err.response && err.response.status;
-        this.aiError = status === 422 ? this.$t('ai.notPet') : this.$t('ai.error');
+        if (status === 422) this.aiError = this.$t('ai.notPet');
+        else if (status === 504 || status === 429) this.aiError = this.$t('ai.busy');
+        else this.aiError = this.$t('ai.error');
       } finally {
         this.aiLoading = false;
       }

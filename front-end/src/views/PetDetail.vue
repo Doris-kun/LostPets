@@ -211,7 +211,9 @@ export default {
         this.matchDone = true;
       } catch (err) {
         const status = err.response && err.response.status;
-        this.matchError = status === 429 ? this.$t('match.limit') : this.$t('match.error');
+        if (status === 429) this.matchError = this.$t('match.limit');
+        else if (status === 504) this.matchError = this.$t('match.busy');
+        else this.matchError = this.$t('match.error');
       } finally {
         this.matchLoading = false;
       }
