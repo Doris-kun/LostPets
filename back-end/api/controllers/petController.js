@@ -31,7 +31,19 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-exports.upload = multer({ storage: multer.memoryStorage() }).single('image');
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+// memoryStorage giữ nguyên file trong RAM, không giới hạn thì một file lớn
+// đủ làm sập instance free tier.
+exports.upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_IMAGE_BYTES },
+  fileFilter: (_req, file, cb) => {
+    if (IMAGE_TYPES.includes(file.mimetype)) return cb(null, true);
+    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'image'));
+  },
+}).single('image');
 
 const generatePostId = (type) => {
   const prefix = type === 'lost' ? 'L' : 'F';
@@ -49,15 +61,17 @@ exports.list_all_pets = async (req, res) => {
     if (req.query.color)   filter.color   = new RegExp(req.query.color,   'i');
     if (req.query.area)    filter.area    = new RegExp(req.query.area,    'i');
     if (req.query.resolved !== undefined) filter.resolved = req.query.resolved === 'true';
-    if (req.query.days) {
+    // parseInt('abc') ra NaN, setDate(NaN) ra Invalid Date và MongoDB ném lỗi.
+    const days = Number.parseInt(req.query.days, 10);
+    if (Number.isFinite(days) && days > 0) {
       const since = new Date();
-      since.setDate(since.getDate() - parseInt(req.query.days));
+      since.setDate(since.getDate() - Math.min(days, 3650));
       filter.date = { $gte: since };
     }
 
     const sort  = req.query.sort === 'oldest' ? { date: 1 } : { date: -1 };
-    const limit = Math.min(parseInt(req.query.limit) || 9, 50);
-    const skip  = parseInt(req.query.skip) || 0;
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 9, 1), 50);
+    const skip  = Math.max(Number.parseInt(req.query.skip, 10) || 0, 0);
 
     const [pets, total] = await Promise.all([
       Pet.find(filter).sort(sort).skip(skip).limit(limit),
