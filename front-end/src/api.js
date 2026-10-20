@@ -9,5 +9,6 @@ export default {
   updatePet: (id, data) => http.put(`/pets/${id}`, data),
   deletePet: (id)     => http.delete(`/pets/${id}`),
   analyzeImage: (data) => http.post('/ai/analyze-image', data),
-  findMatches: (id)   => http.get(`/ai/match/${id}`),
+  // Đối chiếu nhiều ảnh nên lâu hơn hẳn các request khác, cho hạn rộng ra.
+  findMatches: (id)   => http.get(`/ai/match/${id}`, { timeout: 120000 }),
 };

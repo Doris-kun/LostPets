@@ -128,30 +128,20 @@ exports.analyze_image = async (req, res) => {
 
 const Pet = require('../models/petModel');
 
-const MAX_CANDIDATES = 6;
+const MAX_CANDIDATES = 3;
 const CANDIDATE_WINDOW_DAYS = 120;
 const MIN_SCORE = 40;
-const IMAGE_FETCH_TIMEOUT_MS = 6000;
-
-// Tải ảnh về rồi chuyển sang base64. Ảnh hỏng thì bỏ qua, vẫn so khớp bằng chữ.
-async function fetchImageAsBase64(url) {
+// Gemini tự tải ảnh từ URL nên server không phải tải về rồi mã hoá base64.
+// Trước đây Render tải 7 ảnh cho mỗi lần gọi, chiếm phần lớn thời gian chờ.
+const imagePart = (url) => {
   if (!url) return null;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    if (!res.ok) return null;
-    const mime = res.headers.get('content-type') || 'image/jpeg';
-    if (!SUPPORTED_TYPES.includes(mime.split(';')[0].trim())) return null;
-    const buffer = Buffer.from(await res.arrayBuffer());
-    if (buffer.length > MAX_IMAGE_BYTES) return null;
-    return { data: buffer.toString('base64'), mime_type: mime.split(';')[0].trim() };
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
+  const ext = (url.split('?')[0].split('.').pop() || '').toLowerCase();
+  const mime =
+    ext === 'png' ? 'image/png' :
+    ext === 'gif' ? 'image/gif' :
+    ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  return { type: 'image', uri: url, mime_type: mime };
+};
 
 const describePet = (pet) =>
   [
@@ -212,8 +202,6 @@ exports.match_posts = async (req, res) => {
       return res.json({ matches: [] });
     }
 
-    const sourceImage = await fetchImageAsBase64(source.image);
-    const candidateImages = await Promise.all(candidates.map((c) => fetchImageAsBase64(c.image)));
 
     const input = [
       {
@@ -229,11 +217,13 @@ exports.match_posts = async (req, res) => {
         ].join('\n'),
       },
     ];
-    if (sourceImage) input.push({ type: 'image', ...sourceImage });
+    const sourcePart = imagePart(source.image);
+    if (sourcePart) input.push(sourcePart);
 
     candidates.forEach((c, i) => {
       input.push({ type: 'text', text: `ỨNG VIÊN ${i} — ${describePet(c)}` });
-      if (candidateImages[i]) input.push({ type: 'image', ...candidateImages[i] });
+      const part = imagePart(c.image);
+      if (part) input.push(part);
     });
 
     const interaction = await ai.interactions.create({
