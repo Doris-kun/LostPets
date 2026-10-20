@@ -123,7 +123,8 @@
               </svg>
               {{ aiLoading ? $t('ai.analyzing') : $t('ai.analyze') }}
             </button>
-            <p v-if="!aiResult && !aiError" class="text-xs text-gray-400 mt-2 text-center">{{ $t('ai.hint') }}</p>
+            <p v-if="aiLoading" class="text-xs text-violet-500 mt-2 text-center">{{ $t('ai.wait') }}</p>
+            <p v-else-if="!aiResult && !aiError" class="text-xs text-gray-400 mt-2 text-center">{{ $t('ai.hint') }}</p>
             <div v-if="aiResult" class="mt-2 text-xs text-violet-700 bg-violet-50 border border-violet-100 rounded-xl px-3 py-2 text-center">
               {{ $t('ai.filled') }}
               <span class="font-semibold ml-1">{{ $t('ai.confidence') }}: {{ aiResult.confidence }}%</span>

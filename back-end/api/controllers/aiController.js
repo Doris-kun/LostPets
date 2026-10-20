@@ -23,11 +23,15 @@ function getClient() {
 // 100 giây rồi trả 502, người dùng không hiểu chuyện gì xảy ra. Tự bỏ cuộc sớm
 // hơn thế để còn trả về một thông báo tử tế.
 // Đọc lúc gọi chứ không lúc nạp module, để test rút ngắn được mà không phải chờ thật.
-const getTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 45000;
+// Hai việc có ngưỡng khác nhau: phân tích một ảnh là thao tác người dùng đang
+// ngồi chờ ngay trên form, chờ quá lâu còn khó chịu hơn là báo hỏng sớm.
+// Đối chiếu ghép tin gửi tới 4 ảnh nên tự nhiên lâu hơn, cho hạn rộng hơn.
+const getAnalyzeTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 25000;
+const getMatchTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 45000;
 
 class AiTimeoutError extends Error {}
 
-function withTimeout(promise, ms = getTimeoutMs()) {
+function withTimeout(promise, ms) {
   let timer;
   const timeout = new Promise((_resolve, reject) => {
     timer = setTimeout(() => reject(new AiTimeoutError('AI timeout')), ms);
@@ -105,7 +109,8 @@ exports.analyze_image = async (req, res) => {
         mime_type: 'application/json',
         schema: PET_SCHEMA,
       },
-      })
+      }),
+      getAnalyzeTimeoutMs()
     );
 
     let result;
@@ -252,7 +257,8 @@ exports.match_posts = async (req, res) => {
       model: MODEL,
       input,
       response_format: { type: 'text', mime_type: 'application/json', schema: MATCH_SCHEMA },
-      })
+      }),
+      getMatchTimeoutMs()
     );
 
     let parsed;
