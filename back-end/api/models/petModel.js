@@ -13,6 +13,9 @@ const PetSchema = new Schema({
   image:       { type: String, default: '' },
   description: { type: String, default: '' },
   resolved:    { type: Boolean, default: false },
+  // Tin đăng khi đã đăng nhập thì gắn với tài khoản. Khách vãng lai để trống
+  // và chỉ dựa vào mã xác nhận như trước.
+  owner:       { type: Schema.Types.ObjectId, ref: 'User', default: null, index: true },
   // Băm SHA-256 của mã xác nhận. Chỉ người đăng giữ mã gốc nên chỉ họ sửa/xoá được.
   // select: false để mã băm không bao giờ lọt ra ngoài qua API.
   claimHash:   { type: String, select: false },

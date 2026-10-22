@@ -240,7 +240,13 @@ Thiếu trường bắt buộc thì nhận `400` với body `{ "message": "All f
 
 Body JSON, chỉ cần gửi những trường muốn đổi. Trả về object sau khi đã cập nhật.
 
-**Cần mã xác nhận**: gửi header `x-claim-code: <mã>` (hoặc trường `claimCode` trong body). Sai hoặc thiếu mã thì nhận `403`.
+Ai được sửa, theo thứ tự xét:
+
+1. **Chủ tài khoản đã đăng tin đó** — gửi `Authorization: Bearer <token>`, không cần mã. Đổi máy vẫn sửa được.
+2. **Người cầm mã xác nhận** — gửi header `x-claim-code: <mã>` (hoặc `claimCode` trong body). Dành cho khách vãng lai.
+3. Tin cũ không có cả hai thứ trên thì vẫn sửa được tự do.
+
+Tin đã có chủ thì khách vãng lai không sửa được, kể cả khi tin đó cũng có mã.
 
 Lưu ý: endpoint này **không nhận upload file**. Muốn đổi ảnh thì truyền `image` là một URL dạng chuỗi.
 
@@ -395,6 +401,12 @@ Phản hồi `201`: `{ "token": "...", "user": { "_id", "name", "email" } }`
 Body JSON: `email`, `password`. Phản hồi giống `register`.
 
 Sai email hoặc sai mật khẩu đều trả `401` với **cùng một thông báo**, để không lộ email nào đã có trong hệ thống.
+
+### `GET /pets/mine` — tin của chính mình
+
+Cần `Authorization: Bearer <token>`. Trả về `{ pets, total }` gồm các tin do tài khoản đó đăng, mới nhất trước.
+
+Tin đăng khi chưa đăng nhập có `owner` là `null` và không bao giờ xuất hiện ở đây.
 
 ### `GET /auth/me`
 

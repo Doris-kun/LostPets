@@ -8,14 +8,27 @@ const Pet = require('../models/petModel');
 const generateClaimCode = () => crypto.randomBytes(5).toString('hex').toUpperCase();
 const hashClaimCode = (code) => crypto.createHash('sha256').update(code).digest('hex');
 
-// Tin cũ chưa có claimHash thì vẫn cho sửa/xoá, để dữ liệu đăng trước đây không bị khoá.
+// Ai được sửa hoặc xoá một tin:
+//   1. chủ tài khoản đã đăng tin đó — không cần mã, đổi máy vẫn sửa được;
+//   2. người cầm mã xác nhận — dành cho khách vãng lai;
+//   3. tin cũ chưa có cả hai thứ trên thì vẫn mở, để dữ liệu đăng trước đây không bị khoá.
 async function assertMayModify(req, res) {
   const pet = await Pet.findById(req.params.petId).select('+claimHash');
   if (!pet) {
     res.status(404).json({ message: 'Pet not found' });
     return null;
   }
-  if (!pet.claimHash) return pet;
+
+  if (pet.owner && req.user && String(pet.owner) === req.user.sub) return pet;
+
+  if (!pet.claimHash) {
+    // Tin có chủ nhưng người gọi không phải chủ: không cho dựa vào kẽ hở này.
+    if (pet.owner) {
+      res.status(403).json({ message: 'Tin này thuộc về tài khoản khác' });
+      return null;
+    }
+    return pet;
+  }
 
   const provided = req.get('x-claim-code') || (req.body && req.body.claimCode);
   if (!provided || hashClaimCode(String(provided).trim().toUpperCase()) !== pet.claimHash) {
@@ -24,6 +37,16 @@ async function assertMayModify(req, res) {
   }
   return pet;
 }
+
+// Danh sách tin của chính người đang đăng nhập.
+exports.list_my_pets = async (req, res) => {
+  try {
+    const pets = await Pet.find({ owner: req.user.sub }).sort({ date: -1 });
+    res.json({ pets, total: pets.length });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -108,6 +131,8 @@ exports.create_a_pet = async (req, res) => {
     const pet = await Pet.create({
       postId, type, name, species, breed, color, area, contact, description,
       image: imageUrl, claimHash: hashClaimCode(claimCode),
+      // Đăng khi đã đăng nhập thì tin gắn luôn vào tài khoản.
+      owner: req.user ? req.user.sub : null,
     });
     // claimCode chỉ xuất hiện đúng lần này, không có endpoint nào đọc lại được.
     // select: false chỉ lọc ở truy vấn, tài liệu vừa tạo vẫn giữ claimHash nên phải bỏ tay.
