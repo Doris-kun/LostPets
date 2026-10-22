@@ -370,7 +370,7 @@ Trợ lý chỉ được biết những gì ghi trong `SYSTEM_INSTRUCTION` ở [
 | `429` | gọi quá nhiều |
 | `502` | trợ lý trả về chuỗi rỗng |
 | `503` | chưa cấu hình `GEMINI_API_KEY` |
-| `504` | trợ lý không trả lời trong 20 giây |
+| `504` | trợ lý không trả lời trong 30 giây |
 
 ### Mã lỗi
 

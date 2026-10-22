@@ -5,7 +5,9 @@ const GENERATION_CONFIG = { thinking_level: 'minimal' };
 
 const MAX_TURNS = 20;
 const MAX_MESSAGE_CHARS = 1000;
-const getChatTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 20000;
+// Lần gọi đầu của mỗi instance tốn khoảng 20 giây để dựng kết nối tới Gemini,
+// các lần sau chỉ 2 giây. Để 20 giây thì người đầu tiên hỏi gì cũng nhận lỗi.
+const getChatTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 30000;
 
 let client = null;
 function getClient() {
