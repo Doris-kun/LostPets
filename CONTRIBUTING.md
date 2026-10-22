@@ -334,6 +334,34 @@ Endpoint được viết để hạn chế báo lỗi nhất có thể:
 | `503` | chưa cấu hình `GEMINI_API_KEY` |
 | `504` | AI không trả lời trong 45 giây |
 
+### `POST /ai/chat` — trợ lý hỗ trợ người dùng
+
+Body JSON:
+
+```json
+{
+  "messages": [
+    { "role": "user", "content": "làm sao đăng tin" },
+    { "role": "assistant", "content": "Bạn bấm nút Đăng Báo Cáo..." },
+    { "role": "user", "content": "không biết giống thì sao" }
+  ]
+}
+```
+
+Server **không lưu hội thoại**. Front-end giữ lịch sử và gửi lại toàn bộ mỗi lượt, nên tải lại trang là mất.
+
+Phản hồi `200`: `{ "reply": "..." }`
+
+Trợ lý chỉ được biết những gì ghi trong `SYSTEM_INSTRUCTION` ở [chatController.js](back-end/api/controllers/chatController.js). **Thêm hoặc đổi tính năng nào trên web thì phải cập nhật phần đó**, nếu không trợ lý sẽ hướng dẫn sai.
+
+| Mã | Khi nào |
+|---|---|
+| `400` | không có nội dung, quá 20 lượt, hoặc một tin nhắn dài hơn 1000 ký tự |
+| `429` | gọi quá nhiều |
+| `502` | trợ lý trả về chuỗi rỗng |
+| `503` | chưa cấu hình `GEMINI_API_KEY` |
+| `504` | trợ lý không trả lời trong 20 giây |
+
 ### Mã lỗi
 
 | Mã | Khi nào |
