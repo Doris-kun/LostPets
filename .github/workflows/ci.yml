@@ -8,22 +8,65 @@ on:
 
 jobs:
   test:
+    name: test
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: npm
           cache-dependency-path: back-end/package-lock.json
 
+      # mongodb-memory-server tải một bản MongoDB thật để dựng database trong RAM.
+      # Không cache thì mỗi lần chạy CI lại tải lại khoảng 100MB.
+      - name: Cache MongoDB binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
         working-directory: back-end
 
       - name: Run tests
         run: npm test
         working-directory: back-end
+
+  build-frontend:
+    name: build-frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: front-end*/package-lock.json
+
+      # Tự tìm thư mục front-end đang có. Giai đoạn chuyển từ Vue sang React
+      # có thể tồn tại cả hai, lúc đó build cả hai. Nhờ vậy đổi framework
+      # không phải sửa lại file này.
+      - name: Install and build
+        run: |
+          built=0
+          for dir in front-end front-end-react; do
+            if [ -f "$dir/package.json" ]; then
+              echo "::group::build $dir"
+              npm ci --prefix "$dir"
+              npm run build --prefix "$dir"
+              echo "::endgroup::"
+              built=1
+            fi
+          done
+          if [ "$built" = "0" ]; then
+            echo "Không tìm thấy thư mục front-end nào có package.json"
+            exit 1
+          fi
