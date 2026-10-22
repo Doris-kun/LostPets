@@ -82,15 +82,17 @@
       <router-view />
     </main>
     <Toast />
+    <ChatWidget />
   </div>
 </template>
 
 <script>
 import Toast from './components/Toast.vue';
+import ChatWidget from './components/ChatWidget.vue';
 import auth from './auth';
 export default {
   name: 'App',
-  components: { Toast },
+  components: { Toast, ChatWidget },
   data() {
     return { auth };
   },
