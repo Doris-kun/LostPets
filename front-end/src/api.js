@@ -34,6 +34,7 @@ export default {
   analyzeImage: (data) => http.post('/ai/analyze-image', data),
   // Đối chiếu nhiều ảnh nên lâu hơn hẳn các request khác, cho hạn rộng ra.
   findMatches: (id)   => http.get(`/ai/match/${id}`, { timeout: 120000 }),
+  chat: (messages)    => http.post('/ai/chat', { messages }, { timeout: 60000 }),
 
   register: (data) => http.post('/auth/register', data),
   login:    (data) => http.post('/auth/login', data),
