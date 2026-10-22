@@ -162,17 +162,31 @@ const Pet = require('../models/petModel');
 const MAX_CANDIDATES = 3;
 const CANDIDATE_WINDOW_DAYS = 120;
 const MIN_SCORE = 40;
-// Gemini tự tải ảnh từ URL nên server không phải tải về rồi mã hoá base64.
-// Trước đây Render tải 7 ảnh cho mỗi lần gọi, chiếm phần lớn thời gian chờ.
-const imagePart = (url) => {
+const IMAGE_FETCH_TIMEOUT_MS = 8000;
+
+// Server tự tải ảnh rồi gửi kèm dạng base64, thay vì đưa URL cho Gemini tự lấy.
+// Để Gemini tự lấy thì chỉ cần MỘT ảnh không truy cập được là cả request bị từ
+// chối với "Cannot fetch content from the provided URL" — mất luôn kết quả của
+// các ứng viên khác. Tải ở đây thì ảnh hỏng chỉ bị bỏ qua, phần đối chiếu bằng
+// giống, màu, khu vực và thời gian vẫn chạy.
+async function imagePart(url) {
   if (!url) return null;
-  const ext = (url.split('?')[0].split('.').pop() || '').toLowerCase();
-  const mime =
-    ext === 'png' ? 'image/png' :
-    ext === 'gif' ? 'image/gif' :
-    ext === 'webp' ? 'image/webp' : 'image/jpeg';
-  return { type: 'image', uri: url, mime_type: mime };
-};
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return null;
+    const mime = (res.headers.get('content-type') || 'image/jpeg').split(';')[0].trim();
+    if (!SUPPORTED_TYPES.includes(mime)) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.length > MAX_IMAGE_BYTES) return null;
+    return { type: 'image', data: buffer.toString('base64'), mime_type: mime };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const describePet = (pet) =>
   [
@@ -248,13 +262,16 @@ exports.match_posts = async (req, res) => {
         ].join('\n'),
       },
     ];
-    const sourcePart = imagePart(source.image);
+    // Tải song song để không cộng dồn thời gian chờ.
+    const [sourcePart, ...candidateParts] = await Promise.all([
+      imagePart(source.image),
+      ...candidates.map((c) => imagePart(c.image)),
+    ]);
     if (sourcePart) input.push(sourcePart);
 
     candidates.forEach((c, i) => {
       input.push({ type: 'text', text: `ỨNG VIÊN ${i} — ${describePet(c)}` });
-      const part = imagePart(c.image);
-      if (part) input.push(part);
+      if (candidateParts[i]) input.push(candidateParts[i]);
     });
 
     const interaction = await withTimeout(
