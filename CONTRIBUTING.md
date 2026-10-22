@@ -321,6 +321,12 @@ Phản hồi `200`:
 
 Chỉ trả về những tin đạt từ 40 điểm trở lên, sắp xếp điểm cao trước. Không có ứng viên nào thì `matches` là mảng rỗng.
 
+Endpoint được viết để hạn chế báo lỗi nhất có thể:
+
+- Ảnh nào tải không được hoặc lớn hơn 1.5MB thì bỏ qua ảnh đó, vẫn đối chiếu bằng giống, màu, khu vực và thời gian
+- Nếu Gemini từ chối request (thường do ảnh), server **tự thử lại một lần chỉ với mô tả chữ** rồi mới báo lỗi
+- AI chấm cho một ứng viên không tồn tại thì kết quả đó bị loại
+
 | Mã | Khi nào |
 |---|---|
 | `404` | không tìm thấy pet theo `_id` |

@@ -157,12 +157,16 @@ exports.analyze_image = async (req, res) => {
 // nào khả năng là cùng một con vật không.
 // ---------------------------------------------------------------------------
 
+const mongoose = require('mongoose');
 const Pet = require('../models/petModel');
 
 const MAX_CANDIDATES = 3;
 const CANDIDATE_WINDOW_DAYS = 120;
 const MIN_SCORE = 40;
 const IMAGE_FETCH_TIMEOUT_MS = 8000;
+// Mỗi request gửi tối đa 4 ảnh. Giữ tổng dung lượng thấp hơn hẳn giới hạn của
+// Gemini để không bao giờ chạm tới, kể cả khi người dùng tải ảnh máy ảnh.
+const MATCH_IMAGE_MAX_BYTES = 1.5 * 1024 * 1024;
 
 // Server tự tải ảnh rồi gửi kèm dạng base64, thay vì đưa URL cho Gemini tự lấy.
 // Để Gemini tự lấy thì chỉ cần MỘT ảnh không truy cập được là cả request bị từ
@@ -179,7 +183,7 @@ async function imagePart(url) {
     const mime = (res.headers.get('content-type') || 'image/jpeg').split(';')[0].trim();
     if (!SUPPORTED_TYPES.includes(mime)) return null;
     const buffer = Buffer.from(await res.arrayBuffer());
-    if (buffer.length > MAX_IMAGE_BYTES) return null;
+    if (buffer.length > MATCH_IMAGE_MAX_BYTES) return null;
     return { type: 'image', data: buffer.toString('base64'), mime_type: mime };
   } catch {
     return null;
@@ -224,6 +228,11 @@ exports.match_posts = async (req, res) => {
   const ai = getClient();
   if (!ai) {
     return res.status(503).json({ message: 'AI chưa được cấu hình. Thiếu GEMINI_API_KEY.' });
+  }
+
+  // findById với id sai định dạng ném CastError và rơi xuống nhánh 500.
+  if (!mongoose.Types.ObjectId.isValid(req.params.petId)) {
+    return res.status(404).json({ message: 'Pet not found' });
   }
 
   try {
@@ -274,15 +283,29 @@ exports.match_posts = async (req, res) => {
       if (candidateParts[i]) input.push(candidateParts[i]);
     });
 
-    const interaction = await withTimeout(
-      ai.interactions.create({
-      model: MODEL,
-      input,
-      response_format: { type: 'text', mime_type: 'application/json', schema: MATCH_SCHEMA },
-      generation_config: GENERATION_CONFIG,
-      }),
-      getMatchTimeoutMs()
-    );
+    const askGemini = (payload) =>
+      withTimeout(
+        ai.interactions.create({
+          model: MODEL,
+          input: payload,
+          response_format: { type: 'text', mime_type: 'application/json', schema: MATCH_SCHEMA },
+          generation_config: GENERATION_CONFIG,
+        }),
+        getMatchTimeoutMs()
+      );
+
+    let interaction;
+    try {
+      interaction = await askGemini(input);
+    } catch (err) {
+      // Hết giờ thì thử lại cũng vô ích, để nhánh catch ngoài xử lý.
+      if (err instanceof AiTimeoutError) throw err;
+      // Ảnh là thứ hay làm hỏng request nhất (nguồn chặn, định dạng lạ, quá lớn).
+      // Thử lại ngay một lần chỉ với mô tả chữ: kém chính xác hơn nhưng vẫn
+      // trả được kết quả, thay vì báo lỗi cho người dùng.
+      console.warn('AI match: thử lại không kèm ảnh —', err.message);
+      interaction = await askGemini(input.filter((part) => part.type !== 'image'));
+    }
 
     let parsed;
     try {
