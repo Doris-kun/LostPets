@@ -52,6 +52,19 @@
             </button>
           </div>
 
+          <!-- Tài khoản -->
+          <router-link v-if="!auth.isLoggedIn()" to="/login"
+            class="hidden sm:inline-flex px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors">
+            {{ $t('auth.loginBtn') }}
+          </router-link>
+          <div v-else class="hidden sm:flex items-center gap-1 ml-1">
+            <span class="text-sm font-semibold text-gray-700 max-w-[8rem] truncate">{{ auth.user.name }}</span>
+            <button @click="logout"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors">
+              {{ $t('auth.logout') }}
+            </button>
+          </div>
+
           <!-- CTA -->
           <router-link
             to="/new"
@@ -74,8 +87,19 @@
 
 <script>
 import Toast from './components/Toast.vue';
+import auth from './auth';
 export default {
   name: 'App',
   components: { Toast },
+  data() {
+    return { auth };
+  },
+  methods: {
+    logout() {
+      auth.logout();
+      this.$toast(this.$t('auth.loggedOut'));
+      if (this.$route.path.startsWith('/me')) this.$router.push('/');
+    },
+  },
 };
 </script>
