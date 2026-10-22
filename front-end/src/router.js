@@ -13,6 +13,7 @@ const router = new Router({
     { path: '/pet/:id',      component: () => import('./views/PetDetail.vue') },
     { path: '/pet/:id/edit', component: () => import('./views/EditPet.vue') },
     { path: '/me',           component: () => import('./views/MyPets.vue'), meta: { requiresAuth: true } },
+    { path: '/admin',        component: () => import('./views/Admin.vue'), meta: { requiresAdmin: true } },
     { path: '/login',        component: () => import('./views/Login.vue') },
     { path: '/register',     component: () => import('./views/Register.vue') },
     { path: '*',             component: () => import('./views/NotFound.vue') },
@@ -22,8 +23,12 @@ const router = new Router({
 // Vào trang cần đăng nhập mà chưa đăng nhập thì đẩy sang /login,
 // nhớ đường cũ để đăng nhập xong quay lại đúng chỗ.
 router.beforeEach((to, from, next) => {
-  if (to.meta && to.meta.requiresAuth && !auth.isLoggedIn()) {
+  const meta = to.meta || {};
+  if ((meta.requiresAuth || meta.requiresAdmin) && !auth.isLoggedIn()) {
     next({ path: '/login', query: { next: to.fullPath } });
+  } else if (meta.requiresAdmin && !auth.isAdmin()) {
+    // Đã đăng nhập nhưng không phải quản trị viên: không lộ trang, đẩy về trang chủ.
+    next('/');
   } else {
     next();
   }
