@@ -215,3 +215,75 @@ describe('Giới hạn file khi đăng tin', () => {
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 });
+
+describe('Chỉ sửa được những trường cho phép', () => {
+  const createPet = () =>
+    request(app)
+      .post('/pets')
+      .field('type', 'lost')
+      .field('species', 'Chó')
+      .field('breed', 'Corgi')
+      .field('color', 'Nâu trắng')
+      .field('area', 'Quận 1')
+      .field('contact', '0900 000 096');
+
+  const Pet = require('../api/models/petModel');
+
+  it('không đổi được chủ sở hữu qua PUT', async () => {
+    const created = await createPet();
+    const fakeOwner = new mongoose.Types.ObjectId();
+
+    await request(app)
+      .put(`/pets/${created.body._id}`)
+      .set('x-claim-code', created.body.claimCode)
+      .send({ owner: fakeOwner, resolved: true });
+
+    const raw = await Pet.findById(created.body._id).lean();
+    expect(raw.owner).toBeNull();
+    expect(raw.resolved).toBe(true);
+  });
+
+  it('không đổi được claimHash, tránh chiếm quyền tin của người khác', async () => {
+    const created = await createPet();
+    const before = await Pet.findById(created.body._id).select('+claimHash').lean();
+
+    await request(app)
+      .put(`/pets/${created.body._id}`)
+      .set('x-claim-code', created.body.claimCode)
+      .send({ claimHash: 'bam-cua-ke-khac' });
+
+    const after = await Pet.findById(created.body._id).select('+claimHash').lean();
+    expect(after.claimHash).toBe(before.claimHash);
+  });
+
+  it('không đổi được postId', async () => {
+    const created = await createPet();
+    const res = await request(app)
+      .put(`/pets/${created.body._id}`)
+      .set('x-claim-code', created.body.claimCode)
+      .send({ postId: 'HACKED' });
+    expect(res.body.postId).toBe(created.body.postId);
+  });
+
+  it('không đổi được ngày đăng để nhảy lên đầu danh sách', async () => {
+    const created = await createPet();
+    const res = await request(app)
+      .put(`/pets/${created.body._id}`)
+      .set('x-claim-code', created.body.claimCode)
+      .send({ date: '2099-01-01' });
+    expect(new Date(res.body.date).getFullYear()).toBeLessThan(2099);
+  });
+
+  it('vẫn sửa được những trường bình thường', async () => {
+    const created = await createPet();
+    const res = await request(app)
+      .put(`/pets/${created.body._id}`)
+      .set('x-claim-code', created.body.claimCode)
+      .send({ color: 'Đen', area: 'Quận 7', description: 'Có vòng cổ đỏ' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.color).toBe('Đen');
+    expect(res.body.area).toBe('Quận 7');
+    expect(res.body.description).toBe('Có vòng cổ đỏ');
+  });
+});

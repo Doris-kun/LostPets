@@ -5,6 +5,17 @@ const Pet = require('../models/petModel');
 
 // Mã xác nhận: người đăng nhận một lần lúc tạo tin, cần nó để sửa hoặc xoá.
 // Database chỉ lưu bản băm, mất mã thì không ai khôi phục được.
+// Chỉ những trường này được sửa qua API. Danh sách trắng chứ không phải danh
+// sách đen: thêm trường mới vào model sau này cũng không vô tình cho sửa.
+// owner, claimHash, postId và date cố tình nằm ngoài — cho sửa thì ai sửa được
+// tin cũng chiếm được quyền sở hữu, khoá tin lại, hoặc đẩy tin lên đầu danh sách.
+const EDITABLE_FIELDS = [
+  'type', 'name', 'species', 'breed', 'color', 'area', 'contact', 'description', 'image', 'resolved',
+];
+
+const pickEditable = (body = {}) =>
+  Object.fromEntries(Object.entries(body).filter(([key]) => EDITABLE_FIELDS.includes(key)));
+
 const generateClaimCode = () => crypto.randomBytes(5).toString('hex').toUpperCase();
 const hashClaimCode = (code) => crypto.createHash('sha256').update(code).digest('hex');
 
@@ -157,8 +168,7 @@ exports.update_a_pet = async (req, res) => {
   try {
     if (!(await assertMayModify(req, res))) return;
 
-    // claimCode có thể nằm trong body, đừng để nó ghi đè lên tài liệu.
-    const { claimCode, claimHash, ...updates } = req.body || {};
+    const updates = pickEditable(req.body);
     const pet = await Pet.findByIdAndUpdate(req.params.petId, updates, {
       new: true,
       runValidators: true,

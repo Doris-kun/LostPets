@@ -248,6 +248,10 @@ Ai được sửa, theo thứ tự xét:
 
 Tin đã có chủ thì khách vãng lai không sửa được, kể cả khi tin đó cũng có mã.
 
+**Chỉ những trường này sửa được**: `type`, `name`, `species`, `breed`, `color`, `area`, `contact`, `description`, `image`, `resolved`. Gửi thêm trường khác thì bị bỏ qua chứ không báo lỗi.
+
+`owner`, `claimHash`, `postId` và `date` **cố tình không cho sửa** — mở ra thì ai sửa được tin cũng chiếm được quyền sở hữu, khoá tin lại bằng mã của mình, hoặc đổi ngày để tin nằm mãi ở đầu danh sách.
+
 Lưu ý: endpoint này **không nhận upload file**. Muốn đổi ảnh thì truyền `image` là một URL dạng chuỗi.
 
 ### `DELETE /pets/:petId` — xoá
@@ -441,7 +445,21 @@ Trả về `{ pets, total }`. Mỗi tin kèm `owner` là `{ name, email }` nếu
 
 Xoá bất kỳ tin nào, không cần mã xác nhận.
 
-## 8. Quy tắc chung
+## 8. Giới hạn tần suất
+
+Đếm theo IP, trong bộ nhớ của tiến trình. Vượt ngưỡng thì nhận `429` kèm header `Retry-After`.
+
+| Nhóm | Ngưỡng mặc định | Biến môi trường |
+|---|---|---|
+| `/ai/*` (mỗi endpoint đếm riêng) | 30 lượt / 10 phút | `AI_RATE_LIMIT` |
+| `POST /auth/register` | 30 lượt / giờ | `REGISTER_RATE_LIMIT` |
+| `POST /auth/login` | 20 lượt / 15 phút | `LOGIN_RATE_LIMIT` |
+
+Các endpoint AI đều tốn quota Gemini nên phải chặn vòng lặp tự động. Ngưỡng đăng ký đặt rộng vì cả một lớp học có thể dùng chung một IP.
+
+> Bộ đếm nằm trong bộ nhớ nên nếu sau này chạy nhiều instance thì mỗi instance đếm riêng, phải chuyển sang bộ đếm dùng chung như Redis.
+
+## 9. Quy tắc chung
 
 - Không commit `.env`, `node_modules/`, `dist/`
 - Không push thẳng lên `main`
