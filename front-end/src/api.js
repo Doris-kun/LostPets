@@ -40,4 +40,8 @@ export default {
   login:    (data) => http.post('/auth/login', data),
   me:       ()     => http.get('/auth/me'),
   myPets:   ()     => http.get('/pets/mine'),
+
+  adminStats:     ()       => http.get('/admin/stats'),
+  adminPets:      (params) => http.get('/admin/pets', { params }),
+  adminDeletePet: (id)     => http.delete(`/admin/pets/${id}`),
 };

@@ -1,11 +1,11 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/userModel');
-const { signToken } = require('../middleware/auth');
+const { signToken, isAdminEmail } = require('../middleware/auth');
 
 const SALT_ROUNDS = 10;
 const MIN_PASSWORD_LENGTH = 6;
 
-const publicUser = (user) => ({ _id: user._id, name: user.name, email: user.email });
+const publicUser = (user) => ({ _id: user._id, name: user.name, email: user.email, role: user.role });
 
 const secretMissing = (res) => {
   if (process.env.JWT_SECRET) return false;
@@ -29,10 +29,12 @@ exports.register = async (req, res) => {
       return res.status(409).json({ message: 'Email này đã được đăng ký' });
     }
 
+    const normalisedEmail = String(email).toLowerCase().trim();
     const user = await User.create({
       name: String(name).trim(),
-      email: String(email).toLowerCase().trim(),
+      email: normalisedEmail,
       passwordHash: await bcrypt.hash(String(password), SALT_ROUNDS),
+      role: isAdminEmail(normalisedEmail) ? 'admin' : 'user',
     });
 
     res.status(201).json({ token: signToken(user), user: publicUser(user) });
@@ -57,6 +59,15 @@ exports.login = async (req, res) => {
     const ok = user && (await bcrypt.compare(String(password), user.passwordHash));
     if (!ok) {
       return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
+    }
+
+    // Đồng bộ lại vai trò mỗi lần đăng nhập, để thêm hoặc bỏ quản trị viên
+    // chỉ cần sửa ADMIN_EMAILS rồi đăng nhập lại, không phải động vào database.
+    const shouldBeAdmin = isAdminEmail(user.email);
+    const expectedRole = shouldBeAdmin ? 'admin' : 'user';
+    if (user.role !== expectedRole) {
+      user.role = expectedRole;
+      await user.save();
     }
 
     res.json({ token: signToken(user), user: publicUser(user) });
