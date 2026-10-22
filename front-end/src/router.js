@@ -11,6 +11,8 @@ export default new Router({
     { path: '/new',          component: () => import('./views/NewPet.vue') },
     { path: '/pet/:id',      component: () => import('./views/PetDetail.vue') },
     { path: '/pet/:id/edit', component: () => import('./views/EditPet.vue') },
+    { path: '/login',        component: () => import('./views/Login.vue') },
+    { path: '/register',     component: () => import('./views/Register.vue') },
     { path: '*',             component: () => import('./views/NotFound.vue') },
   ]
 });
