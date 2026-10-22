@@ -38,4 +38,5 @@ export default {
   register: (data) => http.post('/auth/register', data),
   login:    (data) => http.post('/auth/login', data),
   me:       ()     => http.get('/auth/me'),
+  myPets:   ()     => http.get('/pets/mine'),
 };
