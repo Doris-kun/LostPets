@@ -58,6 +58,11 @@
             {{ $t('auth.loginBtn') }}
           </router-link>
           <div v-else class="hidden sm:flex items-center gap-1 ml-1">
+            <router-link v-if="auth.isAdmin()" to="/admin"
+              class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              :class="$route.path === '/admin' ? 'bg-violet-50 text-violet-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
+              {{ $t('admin.link') }}
+            </router-link>
             <router-link to="/me"
               class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
               :class="$route.path === '/me' ? 'bg-orange-50 text-orange-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'">

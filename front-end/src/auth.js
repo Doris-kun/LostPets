@@ -29,6 +29,7 @@ export default {
   get token() { return state.token; },
   get user() { return state.user; },
   isLoggedIn() { return Boolean(state.token); },
+  isAdmin() { return Boolean(state.user && state.user.role === 'admin'); },
 
   login(token, user) {
     state.token = token;

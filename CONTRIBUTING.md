@@ -414,7 +414,34 @@ Gửi header `Authorization: Bearer <token>`. Trả về thông tin tài khoản
 
 Token sống 7 ngày.
 
-## 7. Quy tắc chung
+## 7. Trang quản trị
+
+Quản trị viên được xác định bằng biến môi trường `ADMIN_EMAILS` (danh sách email, ngăn cách bằng dấu phẩy), **không phải** bằng cách sửa tay trong database. Vai trò được đồng bộ lại mỗi lần đăng nhập, nên thêm hoặc bỏ quản trị viên chỉ cần sửa biến môi trường rồi đăng nhập lại.
+
+Mọi endpoint dưới đây cần `Authorization: Bearer <token>` của tài khoản admin. Người thường nhận `403`, chưa đăng nhập nhận `401`.
+
+### `GET /admin/stats`
+
+```json
+{
+  "total": 19, "lost": 11, "found": 8, "resolved": 3, "open": 16,
+  "withImage": 19, "users": 2, "resolvedRate": 16,
+  "topAreas":  [{ "label": "Quận 1, TP.HCM", "count": 3 }],
+  "topBreeds": [{ "label": "Corgi", "count": 2 }]
+}
+```
+
+### `GET /admin/pets`
+
+Tham số: `type` (`lost`/`found`), `resolved` (`true`/`false`), `q` (tìm trong giống, khu vực, tên, mã tin), `limit` (mặc định 20, tối đa 100), `skip`.
+
+Trả về `{ pets, total }`. Mỗi tin kèm `owner` là `{ name, email }` nếu đăng bởi tài khoản, hoặc `null` nếu khách vãng lai đăng.
+
+### `DELETE /admin/pets/:petId`
+
+Xoá bất kỳ tin nào, không cần mã xác nhận.
+
+## 8. Quy tắc chung
 
 - Không commit `.env`, `node_modules/`, `dist/`
 - Không push thẳng lên `main`

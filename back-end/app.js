@@ -3,6 +3,7 @@ const cors = require('cors');
 const petRoutes = require('./api/routes/petRoutes');
 const aiRoutes = require('./api/routes/aiRoutes');
 const authRoutes = require('./api/routes/authRoutes');
+const adminRoutes = require('./api/routes/adminRoutes');
 
 const app = express();
 
@@ -37,5 +38,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/pets', petRoutes);
 app.use('/ai', aiRoutes);
 app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
 
 module.exports = app;
