@@ -4,8 +4,11 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 
 process.env.JWT_SECRET = 'test-secret-chi-dung-trong-test';
 const app = require('../app');
+const rateLimit = require('../api/middleware/rateLimit');
 
 let mongoServer;
+
+beforeEach(() => rateLimit.reset());
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
