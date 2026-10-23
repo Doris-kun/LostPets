@@ -5,7 +5,9 @@ const GENERATION_CONFIG = { thinking_level: 'minimal' };
 
 const MAX_TURNS = 20;
 const MAX_MESSAGE_CHARS = 1000;
-const getChatTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 20000;
+// Lần gọi đầu của mỗi instance tốn khoảng 20 giây để dựng kết nối tới Gemini,
+// các lần sau chỉ 2 giây. Để 20 giây thì người đầu tiên hỏi gì cũng nhận lỗi.
+const getChatTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 30000;
 
 let client = null;
 function getClient() {
@@ -42,8 +44,14 @@ const SYSTEM_INSTRUCTION = [
   '- Khi đã tìm lại được thú cưng, vào tin bấm "Đã tìm thấy / Đoàn tụ" để đánh dấu.',
   '- Website có hai ngôn ngữ, chuyển bằng nút VI / EN trên thanh menu.',
   '',
+  'VỀ TÀI KHOẢN (tuỳ chọn, không bắt buộc):',
+  '- Có thể đăng ký và đăng nhập bằng tên, email và mật khẩu ít nhất 6 ký tự. Nút Đăng nhập nằm trên thanh menu.',
+  '- Không có tài khoản vẫn đăng tin bình thường như trước.',
+  '- Đăng nhập rồi thì vào mục "Tin của tôi" trên thanh menu để xem và quản lý các tin mình đã đăng.',
+  '- Tin đăng khi đã đăng nhập thì sửa và xoá được mà KHÔNG cần mã xác nhận, kể cả khi đổi máy khác. Đây là cách tránh rủi ro mất mã.',
+  '- Mã xác nhận chỉ còn cần cho người đăng tin mà không đăng nhập.',
+  '',
   'NHỮNG GÌ WEBSITE KHÔNG CÓ (đừng hứa hẹn):',
-  '- Không có đăng ký tài khoản, không có đăng nhập.',
   '- Không có nhắn tin trong website. Hai bên liên lạc qua số điện thoại ghi trong tin.',
   '- Không có thông báo tự động, không gửi email.',
   '- Không có ứng dụng điện thoại.',

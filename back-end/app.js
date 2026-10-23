@@ -7,6 +7,10 @@ const adminRoutes = require('./api/routes/adminRoutes');
 
 const app = express();
 
+// Render đứng sau proxy. Không bật cái này thì req.ip là IP của proxy và
+// giới hạn tần suất sẽ tính chung cho tất cả mọi người.
+app.set('trust proxy', 1);
+
 // Danh sách domain được phép gọi API, ngăn cách bằng dấu phẩy.
 // Chưa đặt FRONTEND_URL thì mở cho mọi domain như trước — để quên biến môi trường
 // lúc deploy không làm sập web, nhưng có cảnh báo trong log.
