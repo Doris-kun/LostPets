@@ -10,7 +10,7 @@ Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **
 
 ### Yêu cầu
 
-- Node.js 18 trở lên
+- **Node.js 24** — xem mục "Về phiên bản Node" ở cuối phần này trước khi cài bản khác
 - Tài khoản MongoDB Atlas (free) hoặc MongoDB cài trên máy
 - Tài khoản Cloudinary (free) — dùng để lưu ảnh
 
@@ -25,6 +25,31 @@ npm install
 cd ../front-end
 npm install
 ```
+
+### Về phiên bản Node
+
+**Cả nhóm dùng Node 24, và CI cũng chạy Node 24.** Không phải vì code cần đúng bản đó, mà vì `package-lock.json`.
+
+Mỗi phiên bản npm giải các phụ thuộc gián tiếp ra kết quả hơi khác nhau. Nếu bạn sinh lockfile bằng npm 11 (đi kèm Node 24) rồi CI đọc bằng npm 10 (đi kèm Node 20), CI sẽ dừng với lỗi kiểu:
+
+```
+npm error `npm ci` can only install packages when your package.json
+and package-lock.json are in sync.
+npm error Missing: gcp-metadata@7.0.1 from lock file
+```
+
+Lỗi này từng làm CI đỏ và rất khó đoán, vì `npm install` ở máy vẫn chạy bình thường — nó tự vá lockfile khi thiếu, còn `npm ci` thì từ chối.
+
+Kiểm tra máy bạn:
+
+```bash
+node -v   # v24.x
+npm -v    # 11.x
+```
+
+Nếu lệch thì cài Node 24 (dùng [nvm-windows](https://github.com/coreybutler/nvm-windows) hoặc [nvm](https://github.com/nvm-sh/nvm) cho máy Linux/macOS) trước khi commit bất kỳ thay đổi nào chạm tới `package-lock.json`.
+
+Và khi thêm thư viện mới, **luôn commit kèm `package-lock.json`** — thiếu nó thì CI cài bản khác với máy bạn.
 
 ### Tạo file `.env`
 
