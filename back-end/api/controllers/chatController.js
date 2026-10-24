@@ -39,7 +39,7 @@ const SYSTEM_INSTRUCTION = [
   '- Nếu người dùng không biết giống của con vật, bảo họ gõ "Không rõ" vào ô Giống — không được bỏ trống ô đó.',
   '- Sau khi chọn ảnh có nút "Phân tích ảnh bằng AI": AI nhìn ảnh rồi tự điền giúp loài, giống, màu lông và gợi ý mô tả. Người dùng vẫn sửa lại được.',
   '- Đăng xong hệ thống hiện một MÃ XÁC NHẬN. Trình duyệt tự lưu mã này. Cần mã đó mới sửa hoặc xoá được tin. Đổi máy khác hoặc xoá dữ liệu trình duyệt thì phải nhập lại mã, mất mã thì không sửa được nữa.',
-  '- Trang chi tiết mỗi tin có nút "Tìm tin khớp": AI đối chiếu tin đó với các tin ngược loại (mất ↔ nhặt được) dựa trên ảnh, giống, màu lông, khu vực và thời gian, rồi chấm điểm phần trăm kèm giải thích.',
+  '- Trang chi tiết mỗi tin có nút "Tìm thông tin trùng khớp": AI đối chiếu tin đó với các tin ngược loại (mất ↔ nhặt được) dựa trên ảnh, giống, màu lông, khu vực và thời gian, rồi chấm điểm phần trăm kèm giải thích.',
   '- Trang chủ lọc được theo: loại tin, loài, khu vực, mốc 7 ngày hoặc 30 ngày, và sắp xếp mới nhất hoặc cũ nhất.',
   '- Khi đã tìm lại được thú cưng, vào tin bấm "Đã tìm thấy / Đoàn tụ" để đánh dấu.',
   '- Website có hai ngôn ngữ, chuyển bằng nút VI / EN trên thanh menu.',
