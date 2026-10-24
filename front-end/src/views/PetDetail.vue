@@ -81,6 +81,27 @@
           </a>
         </div>
 
+        <!-- Cảnh báo đặt ngay dưới số liên hệ, đúng lúc người ta sắp gọi -->
+        <div class="mx-6 mt-3 flex gap-2.5 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
+          <svg class="w-4 h-4 text-rose-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.1c.765-1.36 2.72-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-xs text-rose-700 leading-relaxed">{{ $t('scam.warning') }}</p>
+        </div>
+
+        <!-- Chỉ chủ tin mới nhận được secretDetail từ server, nên chỉ họ thấy ô này -->
+        <div v-if="pet.secretDetail" class="mx-6 mt-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+          <div class="flex items-center gap-1.5 mb-1">
+            <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <p class="text-xs font-bold text-amber-700 uppercase tracking-wide">{{ $t('secret.yours') }}</p>
+          </div>
+          <p class="text-sm text-amber-900 font-medium">{{ pet.secretDetail }}</p>
+          <p class="text-xs text-amber-600 mt-1.5 leading-relaxed">{{ $t('secret.howToUse') }}</p>
+        </div>
+
         <!-- Actions -->
         <div class="flex gap-3 mt-5 flex-wrap">
           <!-- Share -->

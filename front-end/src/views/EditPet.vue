@@ -91,6 +91,14 @@
         <textarea v-model="form.description" rows="3"
           class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent resize-none transition"></textarea>
       </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            {{ $t('secret.label') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
+          </label>
+          <input v-model="form.secretDetail" type="text" :placeholder="$t('secret.placeholder')" maxlength="200"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition"/>
+          <p class="text-xs text-amber-600 mt-1.5 leading-relaxed">{{ $t('secret.hint') }}</p>
+        </div>
 
       <div v-if="error" class="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
         <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -114,7 +122,7 @@ export default {
   name: 'EditPet',
   data() {
     return {
-      form: { type: 'lost', name: '', species: '', breed: '', color: '', area: '', contact: '', description: '' },
+      form: { type: 'lost', name: '', species: '', breed: '', color: '', area: '', contact: '', description: '', secretDetail: '' },
       loading: false, saving: false, error: '',
     };
   },
@@ -128,6 +136,7 @@ export default {
           type: data.type, name: data.name || '', species: data.species || '',
           breed: data.breed, color: data.color, area: data.area,
           contact: data.contact, description: data.description || '',
+          secretDetail: data.secretDetail || '',
         };
       } catch {
         this.error = this.$t('form.saveError');

@@ -96,6 +96,14 @@
         </div>
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            {{ $t('secret.label') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
+          </label>
+          <input v-model="form.secretDetail" type="text" :placeholder="$t('secret.placeholder')" maxlength="200"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition"/>
+          <p class="text-xs text-amber-600 mt-1.5 leading-relaxed">{{ $t('secret.hint') }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
             {{ $t('form.photo') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
           </label>
           <div @click="$refs.fileInput.click()"
@@ -157,7 +165,7 @@ export default {
   name: 'NewPet',
   data() {
     return {
-      form: { type: 'lost', name: '', species: '', breed: '', color: '', area: '', contact: '', description: '' },
+      form: { type: 'lost', name: '', species: '', breed: '', color: '', area: '', contact: '', description: '', secretDetail: '' },
       image: null, preview: null, loading: false, error: '', showSpeciesError: false,
       aiLoading: false, aiError: '', aiResult: null,
     };
