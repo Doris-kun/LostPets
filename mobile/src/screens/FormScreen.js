@@ -38,6 +38,7 @@ const EMPTY_FORM = {
   area: '',
   contact: '',
   description: '',
+  secretDetail: '',
 };
 
 export default function FormScreen({ route, navigation }) {
@@ -61,8 +62,18 @@ export default function FormScreen({ route, navigation }) {
       area: pet.area ?? '',
       contact: pet.contact ?? '',
       description: pet.description ?? '',
+      secretDetail: pet.secretDetail ?? '',
     };
   });
+
+  /*
+   * Đặc điểm bí mật chỉ server trả về cho CHỦ bài. Người khác mở màn sửa — tin
+   * cũ không có mã xác nhận thì ai cũng sửa được — sẽ nhận undefined.
+   *
+   * Gửi chuỗi rỗng lên trong trường hợp đó là XOÁ MẤT đặc điểm của chủ bài.
+   * Nên khi không nhận được trường này thì giấu ô đi và không gửi nó lên.
+   */
+  const canEditSecret = !isEdit || pet.secretDetail !== undefined;
 
   // Ảnh mới chọn từ máy. Chỉ dùng khi đăng mới — PUT không nhận upload file.
   const [image, setImage] = useState(null);
@@ -111,14 +122,20 @@ export default function FormScreen({ route, navigation }) {
     if (!validate()) return;
 
     setSaving(true);
+
+    // Không có quyền sửa đặc điểm bí mật thì bỏ hẳn trường đó ra khỏi dữ liệu
+    // gửi lên, để server giữ nguyên giá trị cũ.
+    const payload = { ...form };
+    if (!canEditSecret) delete payload.secretDetail;
+
     try {
       if (isEdit) {
         // PUT gửi JSON thường. Không gửi `image` nên ảnh cũ được giữ nguyên.
         const code = await claim.get(pet._id);
-        await api.updatePet(pet._id, form, code);
+        await api.updatePet(pet._id, payload, code);
       } else {
         const formData = new FormData();
-        Object.entries(form).forEach(([key, value]) => formData.append(key, value));
+        Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
 
         if (image) {
           /*
@@ -248,6 +265,27 @@ export default function FormScreen({ route, navigation }) {
           multiline
         />
 
+        {/*
+          Đặc điểm bí mật — vũ khí chống lừa đảo.
+
+          Server không bao giờ trả trường này ra ngoài, kể cả ở danh sách hay
+          tin công khai. Chỉ chủ bài mới đọc lại được. Khi có người nhắn "tôi
+          nhặt được rồi", hỏi họ mô tả đặc điểm này — người thật sự đang giữ
+          con vật mới trả lời đúng.
+        */}
+        {canEditSecret && (
+          <>
+            <Field
+              label={`🔒  ${t('secret.label')}`}
+              value={form.secretDetail}
+              onChangeText={(v) => update('secretDetail', v)}
+              placeholder={t('secret.placeholder')}
+              multiline
+            />
+            <Text style={styles.hint}>{t('secret.hint')}</Text>
+          </>
+        )}
+
         {/* Chọn ảnh chỉ có khi đăng mới — PUT /pets/:id không nhận upload file */}
         {!isEdit && (
           <>
@@ -361,6 +399,12 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   imagePickerText: { color: colors.textMuted, fontSize: 14 },
   preview: { width: '100%', height: 180, borderRadius: radius.md },
 
+  hint: {
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 18,
+    marginTop: -spacing.sm,
+  },
   note: { fontSize: 12, color: colors.textMuted, marginTop: spacing.lg, fontStyle: 'italic' },
 
   submit: {

@@ -214,6 +214,26 @@ export default function DetailScreen({ route, navigation }) {
         <Text style={styles.contactValue}>{pet.contact}</Text>
       </View>
 
+      {/* Cảnh báo đặt ngay dưới số liên hệ — đúng lúc người ta sắp bấm gọi */}
+      <View style={styles.scamBox}>
+        <Text style={styles.scamIcon}>⚠</Text>
+        <Text style={styles.scamText}>{t('scam.warning')}</Text>
+      </View>
+
+      {/*
+        Đặc điểm bí mật. Server chỉ trả trường này về cho CHỦ bài — người đăng
+        nhập đúng tài khoản, hoặc máy đang giữ mã xác nhận. Khách xem bài không
+        bao giờ nhận được, nên không cần kiểm tra quyền ở đây: không có dữ liệu
+        thì ô tự không hiện.
+      */}
+      {!!pet.secretDetail && (
+        <View style={styles.secretBox}>
+          <Text style={styles.secretLabel}>🔒  {t('secret.yours')}</Text>
+          <Text style={styles.secretValue}>{pet.secretDetail}</Text>
+          <Text style={styles.secretHint}>{t('secret.howToUse')}</Text>
+        </View>
+      )}
+
       <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.85}>
         <Text style={styles.shareText}>↗  {t('detail.share')}</Text>
       </TouchableOpacity>
@@ -311,6 +331,33 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   },
   contactLabel: { fontSize: 11, fontWeight: '700', color: colors.teal, letterSpacing: 0.5 },
   contactValue: { fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 4 },
+
+  scamBox: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    backgroundColor: colors.warnBg,
+    borderWidth: 1,
+    borderColor: colors.warnBorder,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 11,
+  },
+  scamIcon: { fontSize: 14, color: colors.warnText, marginTop: 1 },
+  scamText: { flex: 1, fontSize: 12.5, color: colors.warnText, lineHeight: 18 },
+
+  secretBox: {
+    marginTop: spacing.md,
+    backgroundColor: colors.secretBg,
+    borderWidth: 1,
+    borderColor: colors.secretBorder,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+  },
+  secretLabel: { fontSize: 11, fontWeight: "700", color: colors.secretText, letterSpacing: 0.4 },
+  secretValue: { fontSize: 14, fontWeight: "600", color: colors.text, marginTop: 6 },
+  secretHint: { fontSize: 11.5, color: colors.secretText, lineHeight: 17, marginTop: 6 },
 
   resolvedBanner: {
     flexDirection: 'row',

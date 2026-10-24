@@ -61,6 +61,16 @@ export const lightColors = {
   contactBg: '#FFF7ED',
   contactBorder: '#FED7AA',
 
+  // Cảnh báo lừa đảo: đỏ nhạt, đủ nổi để người ta dừng lại đọc
+  warnBg: '#FEF2F2',
+  warnBorder: '#FECACA',
+  warnText: '#B91C1C',
+
+  // Đặc điểm bí mật: vàng hổ phách, tông "chỉ mình bạn thấy"
+  secretBg: '#FFFBEB',
+  secretBorder: '#FDE68A',
+  secretText: '#92400E',
+
   // Lớp tối sau bảng lọc
   scrim: 'rgba(22, 41, 58, 0.45)',
 };
@@ -103,6 +113,14 @@ export const darkColors = {
 
   contactBg: '#2A2017',
   contactBorder: '#6B4A1E',
+
+  warnBg: '#2A1618',
+  warnBorder: '#6B2A2E',
+  warnText: '#F8A5A5',
+
+  secretBg: '#2A2413',
+  secretBorder: '#6B5A1E',
+  secretText: '#F0C97A',
 
   // Tối hơn chế độ sáng: nền vốn đã tối, lớp phủ nhạt thì không tách lớp được
   scrim: 'rgba(0, 0, 0, 0.6)',

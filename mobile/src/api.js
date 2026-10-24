@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_URL, REQUEST_TIMEOUT } from './config';
+import claim from './claim';
 import { getToken, reportUnauthorized } from './context/auth';
 
 /*
@@ -49,7 +50,10 @@ const withClaim = (claimCode) => (claimCode ? { headers: { 'x-claim-code': claim
 
 export default {
   getPets: (params) => http.get('/pets', { params }),
-  getPet: (id) => http.get(`/pets/${id}`),
+  // Kèm mã xác nhận để server biết người xem có phải chủ bài không —
+  // chủ bài thì nhận thêm trường đặc điểm bí mật. Mã lấy ở AsyncStorage nên
+  // phải await, khác web đọc localStorage ra ngay.
+  getPet: async (id) => http.get(`/pets/${id}`, withClaim(await claim.get(id))),
   createPet: (data) => http.post('/pets', data),
   updatePet: (id, data, claimCode) => http.put(`/pets/${id}`, data, withClaim(claimCode)),
   deletePet: (id, claimCode) => http.delete(`/pets/${id}`, withClaim(claimCode)),

@@ -134,6 +134,13 @@ export const words = {
     'detail.deleteTitle': 'Xoá bài',
     'detail.deleteConfirm': 'Bạn có chắc muốn xoá bài này?',
 
+    'secret.label': 'Đặc điểm bí mật',
+    'secret.placeholder': 'Vết sẹo ở chân sau trái, đốm lông hình trái tim dưới bụng...',
+    'secret.hint': 'Chỉ mình bạn thấy, không hiện trên bài đăng. Khi có người nói đã tìm thấy, hỏi họ mô tả đặc điểm này — người thật sự đang giữ con vật mới trả lời được.',
+    'secret.yours': 'ĐẶC ĐIỂM BÍ MẬT CỦA BẠN',
+    'secret.howToUse': 'Chỉ bạn thấy ô này. Hỏi người liên hệ mô tả đặc điểm trên trước khi gặp mặt.',
+    'scam.warning': 'Đừng chuyển tiền trước khi gặp mặt và nhìn tận mắt con vật. Người thật sự nhặt được sẽ không đòi tiền trước. Ảnh gửi qua tin nhắn có thể do AI tạo ra.',
+
     'error.title': 'Lỗi',
     'error.deniedTitle': 'Không có quyền',
     'error.deleteDeniedTitle': 'Không xoá được',
@@ -306,6 +313,13 @@ export const words = {
     'detail.resolveConfirm': 'Mark this pet as back with its owner?',
     'detail.deleteTitle': 'Delete post',
     'detail.deleteConfirm': 'Are you sure you want to delete this post?',
+
+    'secret.label': 'Private identifying detail',
+    'secret.placeholder': 'Scar on the left hind leg, heart-shaped patch under the belly...',
+    'secret.hint': 'Only you can see this; it never appears on the post. When someone says they found your pet, ask them to describe this detail — only a person actually holding the animal can.',
+    'secret.yours': 'YOUR PRIVATE DETAIL',
+    'secret.howToUse': 'Only you see this box. Ask whoever contacts you to describe the detail above before meeting.',
+    'scam.warning': 'Never send money before meeting in person and seeing the animal yourself. Someone who genuinely found your pet will not ask for money up front. Photos sent over chat can be AI-generated.',
 
     'error.title': 'Error',
     'error.deniedTitle': 'Not allowed',
