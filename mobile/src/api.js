@@ -1,16 +1,18 @@
 import axios from 'axios';
-import { API_URL } from './config';
+import { API_URL, REQUEST_TIMEOUT } from './config';
 
 /*
  * Gọi back-end. Giống front-end-react/src/api.js, chỉ khác chỗ lấy địa chỉ
  * và cách gửi mã xác nhận.
  *
- * timeout 15 giây: trên điện thoại, sai IP hoặc tường lửa chặn thì request treo
+ * Phải có timeout: trên điện thoại, sai IP hoặc tường lửa chặn thì request treo
  * rất lâu rồi mới báo lỗi. Đặt timeout để app báo sớm, người dùng đỡ tưởng treo máy.
+ * Con số cụ thể do config.js quyết định — máy chủ miễn phí cần chờ lâu hơn
+ * nhiều vì nó phải thức dậy trước khi trả lời.
  */
 const http = axios.create({
   baseURL: API_URL,
-  timeout: 15000,
+  timeout: REQUEST_TIMEOUT,
 });
 
 /*
