@@ -58,6 +58,10 @@ export default {
   updatePet: (id, data, claimCode) => http.put(`/pets/${id}`, data, withClaim(claimCode)),
   deletePet: (id, claimCode) => http.delete(`/pets/${id}`, withClaim(claimCode)),
 
+  // AI. Phân tích ảnh mất 10-20 giây, lâu hơn hẳn request thường, nên nới
+  // riêng thời gian chờ cho nó thay vì nới cho cả app.
+  analyzeImage: (data) => http.post('/ai/analyze-image', data, { timeout: 60000 }),
+
   // Tài khoản
   register: (data) => http.post('/auth/register', data),
   login: (data) => http.post('/auth/login', data),

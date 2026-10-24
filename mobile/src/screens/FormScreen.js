@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -79,6 +80,11 @@ export default function FormScreen({ route, navigation }) {
   const [image, setImage] = useState(null);
   const [saving, setSaving] = useState(false);
 
+  // Phần AI: đang chạy, kết quả, và lỗi nếu có
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+  const [aiError, setAiError] = useState('');
+
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   // Đổi tiêu đề trên thanh điều hướng theo chế độ.
@@ -103,6 +109,58 @@ export default function FormScreen({ route, navigation }) {
     });
 
     if (!result.canceled) setImage(result.assets[0]);
+  };
+
+  /*
+   * Nhờ AI xem ảnh rồi điền hộ loài, giống, màu lông và mô tả.
+   *
+   * Nguyên tắc: CHỈ điền vào ô còn trống. Người dùng đã tự gõ gì thì giữ
+   * nguyên — AI là trợ lý, không phải người quyết định.
+   */
+  const analyzePhoto = async () => {
+    if (!image) {
+      setAiError(t('ai.needPhoto'));
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError('');
+    setAiResult(null);
+
+    try {
+      /*
+       * Gửi file trên React Native khác hẳn web: không có đối tượng File, phải
+       * tự mô tả bằng { uri, name, type }. Giống hệt lúc đăng bài có ảnh.
+       */
+      const fileName = image.uri.split('/').pop() || 'photo.jpg';
+      const extension = fileName.split('.').pop().toLowerCase();
+
+      const formData = new FormData();
+      formData.append('image', {
+        uri: image.uri,
+        name: fileName,
+        type: extension === 'png' ? 'image/png' : 'image/jpeg',
+      });
+
+      const { data } = await api.analyzeImage(formData);
+
+      setForm((current) => ({
+        ...current,
+        species: data.species !== 'Khác' ? data.species : current.species,
+        breed: current.breed || data.breed,
+        color: current.color || data.color,
+        description: current.description || data.description,
+      }));
+
+      setAiResult(data);
+    } catch (err) {
+      const status = err.response?.status;
+      // 422 = ảnh không có chó mèo. 429/504 = AI quá tải hoặc hết lượt.
+      const key = status === 422 ? 'ai.notPet' : [429, 504].includes(status) ? 'ai.busy' : 'ai.error';
+      setAiError(t(key));
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const validate = () => {
@@ -297,6 +355,44 @@ export default function FormScreen({ route, navigation }) {
                 <Text style={styles.imagePickerText}>{t('form.photoPick')}</Text>
               )}
             </TouchableOpacity>
+
+            {/*
+              Nút AI chỉ hiện khi đã có ảnh — không có ảnh thì chẳng có gì để
+              xem, bày nút ra chỉ tổ gây thắc mắc.
+            */}
+            {!!image && (
+              <View style={styles.aiBlock}>
+                <TouchableOpacity
+                  style={[styles.aiButton, aiLoading && styles.disabled]}
+                  onPress={analyzePhoto}
+                  disabled={aiLoading}
+                  activeOpacity={0.85}
+                >
+                  {aiLoading ? (
+                    <ActivityIndicator color={colors.onPrimary} size="small" />
+                  ) : (
+                    <Text style={styles.aiButtonText}>✨  {t('ai.analyze')}</Text>
+                  )}
+                </TouchableOpacity>
+
+                <Text style={styles.aiNote}>
+                  {aiLoading ? t('ai.wait') : t('ai.hint')}
+                </Text>
+
+                {!!aiResult && (
+                  <View style={styles.aiResult}>
+                    <Text style={styles.aiResultText}>
+                      {t('ai.filled')}{'\n'}
+                      <Text style={styles.aiConfidence}>
+                        {t('ai.confidence')}: {aiResult.confidence}%
+                      </Text>
+                    </Text>
+                  </View>
+                )}
+
+                {!!aiError && <Text style={styles.aiError}>{aiError}</Text>}
+              </View>
+            )}
           </>
         )}
 
@@ -405,6 +501,36 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     lineHeight: 18,
     marginTop: -spacing.sm,
   },
+  aiBlock: { marginTop: spacing.md },
+  aiButton: {
+    backgroundColor: colors.aiAccent,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+  },
+  aiButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: "700" },
+  aiNote: {
+    fontSize: 11.5,
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: 6,
+    lineHeight: 17,
+  },
+  aiResult: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.aiBg,
+    borderWidth: 1,
+    borderColor: colors.aiBorder,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+  },
+  aiResultText: { fontSize: 12, color: colors.aiText, textAlign: "center", lineHeight: 18 },
+  aiConfidence: { fontWeight: "800" },
+  aiError: { fontSize: 12, color: colors.danger, textAlign: "center", marginTop: 6, lineHeight: 17 },
+
   note: { fontSize: 12, color: colors.textMuted, marginTop: spacing.lg, fontStyle: 'italic' },
 
   submit: {

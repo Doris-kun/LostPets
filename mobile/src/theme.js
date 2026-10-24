@@ -71,6 +71,16 @@ export const lightColors = {
   secretBorder: '#FDE68A',
   secretText: '#92400E',
 
+  /*
+   * Màu riêng cho các nút AI — tím, không trùng màu nào trong bộ thương hiệu.
+   * Cố ý: AI là thứ máy đoán hộ, phải nhìn ra ngay là khác với hành động do
+   * chính người dùng quyết định. Web cũng dùng tông tím này.
+   */
+  aiAccent: '#7C5CE0',
+  aiBg: '#F5F3FF',
+  aiBorder: '#DDD6FE',
+  aiText: '#5B3FD0',
+
   // Lớp tối sau bảng lọc
   scrim: 'rgba(22, 41, 58, 0.45)',
 };
@@ -121,6 +131,12 @@ export const darkColors = {
   secretBg: '#2A2413',
   secretBorder: '#6B5A1E',
   secretText: '#F0C97A',
+
+  // Tím sáng hơn bản ngày, nền tím than — vẫn tách khỏi bộ màu thương hiệu
+  aiAccent: '#8B6FE8',
+  aiBg: '#221E35',
+  aiBorder: '#453A6B',
+  aiText: '#C4B5FD',
 
   // Tối hơn chế độ sáng: nền vốn đã tối, lớp phủ nhạt thì không tách lớp được
   scrim: 'rgba(0, 0, 0, 0.6)',
