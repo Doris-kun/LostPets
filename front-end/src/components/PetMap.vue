@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import L, { addTiles, pinIcon, colorForPet, DEFAULT_CENTER, DEFAULT_ZOOM } from '../map';
+import L, { addTiles, pinIcon, colorForPet, AREA_RADIUS_M, DEFAULT_CENTER, DEFAULT_ZOOM } from '../map';
 
 export default {
   name: 'PetMap',
@@ -44,7 +44,19 @@ export default {
       if (this.located.length === 0) return;
 
       this.located.forEach((pet) => {
-        L.marker([pet.lat, pet.lng], { icon: pinIcon(colorForPet(pet)) })
+        const color = colorForPet(pet);
+        // Toạ độ đã được làm mờ về lưới ~500m, nên vẽ vùng mới đúng với
+        // độ chính xác mình thật sự có. Một chấm nhỏ ngụ ý chính xác hơn sự thật.
+        L.circle([pet.lat, pet.lng], {
+          radius: AREA_RADIUS_M,
+          color,
+          weight: 1,
+          opacity: 0.5,
+          fillColor: color,
+          fillOpacity: 0.12,
+        }).addTo(this.layer);
+
+        L.marker([pet.lat, pet.lng], { icon: pinIcon(color) })
           .addTo(this.layer)
           .bindPopup(this.popupHtml(pet))
           .on('popupopen', () => {
@@ -56,7 +68,7 @@ export default {
       // Khung nhìn tự ôm hết các điểm, khỏi phải tự kéo tìm.
       this.map.fitBounds(L.latLngBounds(this.located.map((p) => [p.lat, p.lng])), {
         padding: [40, 40],
-        maxZoom: 15,
+        maxZoom: 14,
       });
     },
     // Popup của Leaflet nhận HTML thuần, không dùng được template của Vue.
