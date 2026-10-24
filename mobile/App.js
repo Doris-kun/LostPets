@@ -5,11 +5,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ExpoSplashScreen from 'expo-splash-screen';
+import { AuthProvider } from './src/context/auth';
 import { LanguageProvider, useLanguage } from './src/context/language';
 import { ThemeProvider, useTheme } from './src/context/theme';
 import HomeScreen from './src/screens/HomeScreen';
 import DetailScreen from './src/screens/DetailScreen';
 import FormScreen from './src/screens/FormScreen';
+import AuthScreen from './src/screens/AuthScreen';
 import SplashScreen from './src/screens/SplashScreen';
 
 /*
@@ -66,7 +68,9 @@ export default function App() {
       {/* Bọc ngoài cùng để MỌI màn hình đều gọi được useTheme() và useLanguage() */}
       <ThemeProvider>
         <LanguageProvider>
-          <Root showSplash={showSplash} onSplashFinish={finishSplash} />
+          <AuthProvider>
+            <Root showSplash={showSplash} onSplashFinish={finishSplash} />
+          </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
     </SafeAreaProvider>
@@ -140,6 +144,8 @@ function RootStack() {
       />
       {/* Tiêu đề màn này do chính nó đặt, tuỳ theo đang đăng mới hay sửa */}
       <Stack.Screen name="Form" component={FormScreen} />
+      {/* Tiêu đề màn này do chính nó đặt, tuỳ đang ở tab Đăng nhập hay Đăng ký */}
+      <Stack.Screen name="Auth" component={AuthScreen} />
     </Stack.Navigator>
   );
 }

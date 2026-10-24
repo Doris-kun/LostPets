@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   RefreshControl,
@@ -13,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
+import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
 import { radius, spacing, statusStyle } from '../theme';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
@@ -210,7 +212,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header total={total} loading={loading} hasError={hasError} />
+      <Header total={total} loading={loading} hasError={hasError} navigation={navigation} />
 
       <View style={styles.filterRow}>
         {FILTERS.map((item) => {
@@ -304,8 +306,27 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-function Header({ total, loading, hasError }) {
+function Header({ total, loading, hasError, navigation }) {
   const { t, lang, toggleLang } = useLanguage();
+  const { user, isLoggedIn, logout } = useAuth();
+
+  /*
+   * Nút tài khoản — TẠM ĐẶT Ở ĐÂY.
+   *
+   * Khi nào dựng xong thanh điều hướng dưới đáy và trang Cài đặt thì dọn cả
+   * nút này lẫn hai nút ngôn ngữ / sáng tối vào đó. Thanh đầu đang quá chật.
+   */
+  const handleAccount = () => {
+    if (!isLoggedIn) {
+      navigation.navigate('Auth');
+      return;
+    }
+
+    Alert.alert(t('auth.welcome', { name: user?.name || '' }), t('auth.logoutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('auth.logout'), style: 'destructive', onPress: logout },
+    ]);
+  };
   const { colors, isDark, toggleScheme } = useTheme();
   const styles = useThemedStyles(themedStyles);
 
@@ -357,6 +378,17 @@ function Header({ total, loading, hasError }) {
         accessibilityLabel={t(isDark ? 'theme.toLight' : 'theme.toDark')}
       >
         <Text style={styles.langText}>{isDark ? '☀' : '☾'}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.langButton, isLoggedIn && styles.accountButtonOn]}
+        onPress={handleAccount}
+        activeOpacity={0.7}
+      >
+        {/* Đã đăng nhập thì hiện chữ cái đầu của tên, chưa thì hiện hình người */}
+        <Text style={[styles.langText, isLoggedIn && styles.accountTextOn]}>
+          {isLoggedIn ? (user?.name || '?').trim().charAt(0).toUpperCase() : '👤'}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -490,6 +522,8 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     borderColor: colors.border,
   },
   langText: { fontSize: 12, fontWeight: '800', color: colors.textSoft, letterSpacing: 0.3 },
+  accountButtonOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  accountTextOn: { color: colors.onPrimary, fontSize: 13 },
 
   filterRow: {
     flexDirection: 'row',
