@@ -16,6 +16,26 @@ export const words = {
   vi: {
     'brand.slogan': 'Đăng một tin, mở một lối về',
 
+    'tab.home': 'Trang chủ',
+    'tab.mine': 'Bài của tôi',
+    'tab.settings': 'Cài đặt',
+
+    'mine.title': 'Bài của tôi',
+    'mine.emptyTitle': 'Bạn chưa đăng bài nào',
+    'mine.emptyText': 'Bấm nút + ở trang chủ để đăng bài đầu tiên',
+    'mine.count': '{n} bài',
+
+    'settings.account': 'TÀI KHOẢN',
+    'settings.display': 'HIỂN THỊ',
+    'settings.about': 'GIỚI THIỆU',
+    'settings.language': 'Ngôn ngữ',
+    'settings.theme': 'Giao diện',
+    'settings.themeLight': 'Sáng',
+    'settings.themeDark': 'Tối',
+    'settings.admin': 'Trang quản trị',
+    'settings.version': 'Phiên bản',
+    'settings.guest': 'Khách',
+
     'auth.login': 'Đăng nhập',
     'auth.register': 'Đăng ký',
     'auth.name': 'Tên của bạn',
@@ -168,6 +188,26 @@ export const words = {
 
   en: {
     'brand.slogan': 'One post, one way home',
+
+    'tab.home': 'Home',
+    'tab.mine': 'My posts',
+    'tab.settings': 'Settings',
+
+    'mine.title': 'My posts',
+    'mine.emptyTitle': 'You have not posted yet',
+    'mine.emptyText': 'Tap + on the home screen to post your first one',
+    'mine.count': '{n} posts',
+
+    'settings.account': 'ACCOUNT',
+    'settings.display': 'DISPLAY',
+    'settings.about': 'ABOUT',
+    'settings.language': 'Language',
+    'settings.theme': 'Appearance',
+    'settings.themeLight': 'Light',
+    'settings.themeDark': 'Dark',
+    'settings.admin': 'Admin page',
+    'settings.version': 'Version',
+    'settings.guest': 'Guest',
 
     'auth.login': 'Sign in',
     'auth.register': 'Sign up',

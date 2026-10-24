@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   RefreshControl,
@@ -11,12 +10,13 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api';
+import PetCard from '../components/PetCard';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
-import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
-import { radius, spacing, statusStyle } from '../theme';
+import { radius, spacing } from '../theme';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 
 /*
@@ -75,34 +75,15 @@ const FILTERS = [
   { value: 'found', labelKey: 'filter.found', colorKey: 'found' },
 ];
 
-/*
- * "3 giờ trước" dễ đọc hơn ngày giờ đầy đủ. Quá 30 ngày thì quay về ngày tháng.
- *
- * Nhận t và lang từ bên ngoài chứ không tự gọi useLanguage(): đây là hàm
- * thường, không phải component, mà hook chỉ gọi được trong component.
- */
-function timeAgo(date, t, lang) {
-  const diff = Date.now() - new Date(date).getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return t('time.now');
-  if (minutes < 60) return t('time.minutes', { n: minutes });
-  if (hours < 24) return t('time.hours', { n: hours });
-  if (days < 30) return t('time.days', { n: days });
-
-  // Tháng viết tắt cũng phải đổi theo ngôn ngữ: "20 thg 10" / "Oct 20"
-  return new Date(date).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-US', {
-    day: 'numeric',
-    month: 'short',
-  });
-}
-
 export default function HomeScreen({ navigation }) {
   // insets.bottom = chiều cao vạch Home (iPhone) hoặc thanh điều hướng (Android).
   // Máy có nút bấm vật lý thì trả về 0, nên không thừa khoảng trống.
   const insets = useSafeAreaInsets();
+  /*
+   * Chiều cao thanh tab dưới đáy, đã gồm cả vạch Home của máy. Lấy số thật
+   * từ react-navigation thay vì đoán, vì mỗi máy một khác.
+   */
+  const tabBarHeight = useBottomTabBarHeight();
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -212,7 +193,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header total={total} loading={loading} hasError={hasError} navigation={navigation} />
+      <Header total={total} loading={loading} hasError={hasError} />
 
       <View style={styles.filterRow}>
         {FILTERS.map((item) => {
@@ -259,7 +240,7 @@ export default function HomeScreen({ navigation }) {
         <FlatList
           data={pets}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={[styles.list, { paddingBottom: 110 + insets.bottom }]}
+          contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 90 }]}
           showsVerticalScrollIndicator={false}
           // Kéo màn hình xuống để tải lại — thao tác quen thuộc trên điện thoại,
           // web không có khái niệm này.
@@ -282,14 +263,14 @@ export default function HomeScreen({ navigation }) {
             <ListFooter loadingMore={loadingMore} shown={pets.length} total={total} />
           }
           renderItem={({ item }) => (
-            <PetItem pet={item} onPress={() => navigation.navigate('Detail', { id: item._id })} />
+            <PetCard pet={item} onPress={() => navigation.navigate('Detail', { id: item._id })} />
           )}
         />
       )}
 
       {/* Nút tròn nổi ở góc — kiểu nút quen thuộc trên điện thoại */}
       <TouchableOpacity
-        style={[styles.fab, { bottom: spacing.xl + insets.bottom }]}
+        style={[styles.fab, { bottom: tabBarHeight + spacing.lg }]}
         onPress={() => navigation.navigate('Form', { mode: 'create' })}
         activeOpacity={0.85}
       >
@@ -306,28 +287,9 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-function Header({ total, loading, hasError, navigation }) {
-  const { t, lang, toggleLang } = useLanguage();
-  const { user, isLoggedIn, logout } = useAuth();
-
-  /*
-   * Nút tài khoản — TẠM ĐẶT Ở ĐÂY.
-   *
-   * Khi nào dựng xong thanh điều hướng dưới đáy và trang Cài đặt thì dọn cả
-   * nút này lẫn hai nút ngôn ngữ / sáng tối vào đó. Thanh đầu đang quá chật.
-   */
-  const handleAccount = () => {
-    if (!isLoggedIn) {
-      navigation.navigate('Auth');
-      return;
-    }
-
-    Alert.alert(t('auth.welcome', { name: user?.name || '' }), t('auth.logoutConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('auth.logout'), style: 'destructive', onPress: logout },
-    ]);
-  };
-  const { colors, isDark, toggleScheme } = useTheme();
+function Header({ total, loading, hasError }) {
+  const { t } = useLanguage();
+  const { isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);
 
   /*
@@ -354,88 +316,10 @@ function Header({ total, loading, hasError, navigation }) {
           <Text style={styles.countText}>{total}</Text>
         </View>
       )}
-
-      {/*
-        Nút đổi ngôn ngữ. Hiện tên thứ tiếng SẼ chuyển sang chứ không phải thứ
-        tiếng đang dùng — bấm "EN" thì được tiếng Anh, đọc là hiểu ngay phải làm
-        gì. Ghi thứ tiếng đang dùng thì người ta lại tưởng bấm vào là xác nhận.
-      */}
-      <TouchableOpacity style={styles.langButton} onPress={toggleLang} activeOpacity={0.7}>
-        <Text style={styles.langText}>{lang === 'vi' ? 'EN' : 'VI'}</Text>
-      </TouchableOpacity>
-
-      {/*
-        Nút đổi sáng/tối. Cùng quy tắc với nút ngôn ngữ: hiện thứ SẼ chuyển
-        sang chứ không phải thứ đang dùng. Đang nền tối thì vẽ mặt trời, bấm
-        vào là ra nền sáng.
-
-        Tạm để ở đây. Khi nào có trang Cài đặt thì dọn cả hai nút vào đó.
-      */}
-      <TouchableOpacity
-        style={styles.langButton}
-        onPress={toggleScheme}
-        activeOpacity={0.7}
-        accessibilityLabel={t(isDark ? 'theme.toLight' : 'theme.toDark')}
-      >
-        <Text style={styles.langText}>{isDark ? '☀' : '☾'}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.langButton, isLoggedIn && styles.accountButtonOn]}
-        onPress={handleAccount}
-        activeOpacity={0.7}
-      >
-        {/* Đã đăng nhập thì hiện chữ cái đầu của tên, chưa thì hiện hình người */}
-        <Text style={[styles.langText, isLoggedIn && styles.accountTextOn]}>
-          {isLoggedIn ? (user?.name || '?').trim().charAt(0).toUpperCase() : '👤'}
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 }
 
-function PetItem({ pet, onPress }) {
-  const { t, lang } = useLanguage();
-  const { colors, isDark } = useTheme();
-  const styles = useThemedStyles(themedStyles);
-  const status = statusStyle(pet, colors);
-
-  return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      {/* API trả image là CHUỖI RỖNG khi không có ảnh, không phải null */}
-      {pet.image ? (
-        <Image source={{ uri: pet.image }} style={styles.cardImage} />
-      ) : (
-        <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
-          <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.placeholderLogo} />
-        </View>
-      )}
-
-      <View style={styles.cardBody}>
-        <View style={styles.cardTopRow}>
-          <View style={[styles.badge, { backgroundColor: status.color }]}>
-            <Text style={styles.badgeText}>{t(status.labelKey)}</Text>
-          </View>
-          <Text style={styles.cardTime}>{timeAgo(pet.date, t, lang)}</Text>
-        </View>
-
-        <Text style={styles.cardTitle} numberOfLines={1}>
-          {pet.name || pet.breed}
-        </Text>
-        <Text style={styles.cardSub} numberOfLines={1}>
-          {pet.species} · {pet.breed}
-        </Text>
-
-        <View style={styles.cardFooter}>
-          <Text style={styles.cardArea} numberOfLines={1}>
-            📍 {pet.area}
-          </Text>
-          {!!pet.postId && <Text style={styles.cardCode}>{pet.postId}</Text>}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-}
 
 // Chân danh sách: đang tải thêm thì quay vòng, hết tin thì báo một dòng.
 function ListFooter({ loadingMore, shown, total }) {
@@ -513,17 +397,6 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   },
   countText: { fontSize: 13, fontWeight: '700', color: colors.teal },
 
-  langButton: {
-    marginLeft: spacing.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  langText: { fontSize: 12, fontWeight: '800', color: colors.textSoft, letterSpacing: 0.3 },
-  accountButtonOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  accountTextOn: { color: colors.onPrimary, fontSize: 13 },
 
   filterRow: {
     flexDirection: 'row',
@@ -570,30 +443,6 @@ const themedStyles = createThemedStyles((colors, shadow) =>
 
   list: { padding: spacing.lg, paddingBottom: 110 },
 
-  card: {
-    flexDirection: 'row',
-    backgroundColor: colors.background,
-    borderRadius: radius.lg,
-    padding: spacing.sm,
-    marginBottom: spacing.md,
-    ...shadow.card,
-  },
-  cardImage: { width: 96, height: 96, borderRadius: radius.md, backgroundColor: colors.surfaceTint },
-  cardImagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
-  placeholderLogo: { width: 52, height: 52, resizeMode: 'contain', opacity: 0.45 },
-
-  cardBody: { flex: 1, paddingLeft: spacing.md, paddingVertical: 2, justifyContent: 'space-between' },
-  cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  badge: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: radius.full },
-  badgeText: { color: colors.onPrimary, fontSize: 10.5, fontWeight: '800' },
-  cardTime: { fontSize: 11, color: colors.textMuted },
-
-  cardTitle: { fontSize: 16, fontWeight: '800', color: colors.text, marginTop: 5 },
-  cardSub: { fontSize: 12.5, color: colors.textMuted, marginTop: 1 },
-
-  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
-  cardArea: { flex: 1, fontSize: 12.5, color: colors.textSoft },
-  cardCode: { fontSize: 10.5, color: colors.textMuted, marginLeft: spacing.sm },
 
   footer: {
     flexDirection: 'row',

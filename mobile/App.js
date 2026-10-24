@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ExpoSplashScreen from 'expo-splash-screen';
@@ -12,6 +14,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import DetailScreen from './src/screens/DetailScreen';
 import FormScreen from './src/screens/FormScreen';
 import AuthScreen from './src/screens/AuthScreen';
+import MyPetsScreen from './src/screens/MyPetsScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import SplashScreen from './src/screens/SplashScreen';
 
 /*
@@ -42,6 +46,7 @@ ExpoSplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -110,6 +115,71 @@ function Root({ showSplash, onSplashFinish }) {
 }
 
 /*
+ * Thanh điều hướng dưới đáy — ba nhánh chính của app.
+ *
+ * Khác với Stack (xếp chồng, bấm Back bỏ tờ trên cùng), Tab là ba màn CHẠY
+ * SONG SONG: chuyển qua lại không mất vị trí cuộn, không tạo lịch sử Back.
+ *
+ * Bên web ba nhánh này nằm trên thanh điều hướng trên cùng. Điện thoại cầm
+ * một tay nên đặt dưới đáy, ngón cái với tới được.
+ *
+ * Nút + đăng bài vẫn là nút tròn nổi ở trang chủ, không làm thành tab — đó là
+ * hành động, không phải một nơi để tới.
+ */
+function MainTabs() {
+  const { t } = useLanguage();
+  const { colors } = useTheme();
+
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.borderLight,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: t('tab.home'),
+          // Tab đang chọn thì icon tô đặc, chưa chọn thì chỉ có viền —
+          // thêm một dấu hiệu nữa ngoài màu, cho người khó phân biệt màu.
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="MyPets"
+        component={MyPetsScreen}
+        options={{
+          title: t('tab.mine'),
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'paw' : 'paw-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: t('tab.settings'),
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'settings' : 'settings-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+/*
  * Tách riêng thành component con vì một lý do duy nhất: useLanguage() chỉ gọi
  * được ở BÊN TRONG LanguageProvider. Viết thẳng trong App thì nó nằm ngoài,
  * React báo lỗi ngay. Giống hệt chuyện NavBar bên web phải tách ra vì
@@ -135,8 +205,8 @@ function RootStack() {
         headerBackTitle: t('screen.back'),
       }}
     >
-      {/* Màn hình chính tự vẽ thanh đầu riêng (có logo + slogan) nên tắt thanh mặc định */}
-      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+      {/* Ba tab chính. Chúng tự vẽ thanh đầu riêng nên tắt thanh mặc định */}
+      <Stack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
       <Stack.Screen
         name="Detail"
         component={DetailScreen}

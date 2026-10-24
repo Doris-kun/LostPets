@@ -36,6 +36,9 @@ export const lightColors = {
   primary: brand.navy,
   primaryDark: '#164760',
   onPrimary: '#FFFFFF', // chữ nằm TRÊN nền primary
+  // Chữ trên nhãn trạng thái. Nền nhãn là màu thương hiệu, giống nhau ở cả
+  // hai chế độ, nên chữ cũng phải giống nhau — không đổi theo sáng/tối.
+  onStatus: '#FFFFFF',
 
   danger: '#E05252', // nút xoá
 
@@ -80,6 +83,7 @@ export const darkColors = {
   primary: '#3D93C2',
   primaryDark: '#2E7093',
   onPrimary: '#0B1620',
+  onStatus: '#FFFFFF',
 
   danger: '#F06B6B', // đỏ gốc bị tối, nâng sáng lên
 

@@ -286,7 +286,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     marginTop: spacing.lg,
   },
   badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.full },
-  badgeText: { color: colors.onPrimary, fontSize: 12, fontWeight: '700' },
+  badgeText: { color: colors.onStatus, fontSize: 12, fontWeight: '700' },
   postId: { fontSize: 12, color: colors.textMuted, fontVariant: ['tabular-nums'] },
 
   title: { fontSize: 24, fontWeight: '700', color: colors.text, marginTop: spacing.md },
