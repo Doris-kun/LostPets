@@ -69,6 +69,11 @@
           </div>
         </div>
 
+        <div v-if="hasCoords" class="mt-5">
+          <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">{{ $t('map.where') }}</p>
+          <PetMap :pets="[pet]" height="h-56"/>
+        </div>
+
         <div v-if="pet.description" class="mt-5">
           <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">{{ $t('detail.desc') }}</p>
           <p class="text-gray-600 text-sm leading-relaxed">{{ pet.description }}</p>
@@ -182,9 +187,11 @@
 
 <script>
 import api from '../api';
+import PetMap from '../components/PetMap.vue';
 
 export default {
   name: 'PetDetail',
+  components: { PetMap },
   data() {
     return {
       pet: null, loading: false, deleting: false, resolving: false,
@@ -192,6 +199,9 @@ export default {
     };
   },
   computed: {
+    hasCoords() {
+      return this.pet && Number.isFinite(this.pet.lat) && Number.isFinite(this.pet.lng);
+    },
     contactHref() {
       if (!this.pet) return '#';
       const c = this.pet.contact;

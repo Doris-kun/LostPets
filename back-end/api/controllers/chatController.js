@@ -41,6 +41,8 @@ const SYSTEM_INSTRUCTION = [
   '- Đăng xong hệ thống hiện một MÃ XÁC NHẬN. Trình duyệt tự lưu mã này. Cần mã đó mới sửa hoặc xoá được tin. Đổi máy khác hoặc xoá dữ liệu trình duyệt thì phải nhập lại mã, mất mã thì không sửa được nữa.',
   '- Trang chi tiết mỗi tin có nút "Tìm thông tin trùng khớp": AI đối chiếu tin đó với các tin ngược loại (mất ↔ nhặt được) dựa trên ảnh, giống, màu lông, khu vực và thời gian, rồi chấm điểm phần trăm kèm giải thích.',
   '- Trang chủ lọc được theo: loại tin, loài, khu vực, mốc 7 ngày hoặc 30 ngày, và sắp xếp mới nhất hoặc cũ nhất.',
+  '- Trang chủ có nút chuyển giữa "Danh sách" và "Bản đồ". Chế độ bản đồ hiện các tin kèm vị trí dưới dạng chấm tròn, màu đỏ là tin mất, xanh lá là tin nhặt được. Bấm vào chấm để xem nhanh và mở tin.',
+  '- Lúc đăng tin có phần "Vị trí trên bản đồ" (không bắt buộc): chạm vào bản đồ để đánh dấu nơi mất hoặc nơi nhặt được, hoặc bấm "Dùng vị trí của tôi". Ô khu vực dạng chữ vẫn bắt buộc như cũ.',
   '- Khi đã tìm lại được thú cưng, vào tin bấm "Đã tìm thấy / Đoàn tụ" để đánh dấu.',
   '- Lúc đăng tin có ô "Đặc điểm bí mật" (không bắt buộc): ghi một dấu hiệu chỉ chủ nuôi biết, ví dụ vết sẹo khuất hay đốm lông dưới bụng. Ô này KHÔNG hiện trên tin đăng, chỉ chủ tin xem được. Khi ai đó nói đã tìm thấy, chủ tin hỏi họ mô tả đặc điểm đó — người thật sự đang giữ con vật mới trả lời được.',
   '- Website có hai ngôn ngữ, chuyển bằng nút VI / EN trên thanh menu.',

@@ -49,11 +49,34 @@
           <option value="newest">{{ $t('sort.newest') }}</option>
           <option value="oldest">{{ $t('sort.oldest') }}</option>
         </select>
+
+        <!-- Chuyển giữa danh sách và bản đồ -->
+        <div class="flex items-center bg-gray-100 rounded-full p-0.5">
+          <button @click="setView('list')"
+            :class="view === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
+            class="px-3 py-1 rounded-full text-xs font-semibold transition-all">
+            {{ $t('map.listView') }}
+          </button>
+          <button @click="setView('map')"
+            :class="view === 'map' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
+            class="px-3 py-1 rounded-full text-xs font-semibold transition-all">
+            {{ $t('map.mapView') }}
+          </button>
+        </div>
       </div>
     </div>
 
+    <!-- Bản đồ: dùng chung bộ lọc với danh sách -->
+    <div v-if="view === 'map'">
+      <p v-if="mapLoading" class="text-sm text-gray-400 text-center py-16">{{ $t('mine.loading') }}</p>
+      <div v-else-if="!locatedCount" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+        <p class="text-sm text-gray-500">{{ $t('map.noLocated') }}</p>
+      </div>
+      <PetMap v-else :pets="mapPets"/>
+    </div>
+
     <!-- Skeleton loaders -->
-    <div v-if="loading">
+    <div v-if="view === 'list' && loading">
       <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse mb-5">
         <div class="flex flex-col sm:flex-row">
           <div class="sm:w-3/5 aspect-video sm:aspect-[16/9] bg-gray-200"></div>
@@ -78,7 +101,7 @@
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="pets.length === 0" class="text-center py-28">
+    <div v-else-if="view === 'list' && pets.length === 0" class="text-center py-28">
       <div class="w-16 h-16 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -92,7 +115,7 @@
     </div>
 
     <!-- Content -->
-    <div v-else>
+    <div v-else-if="view === 'list'">
       <!-- Featured card -->
       <router-link :to="`/pet/${featured._id}`"
         class="group block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 mb-5">
@@ -188,13 +211,18 @@
 
 <script>
 import api from '../api';
+import PetMap from '../components/PetMap.vue';
 
 export default {
   name: 'Home',
+  components: { PetMap },
   data() {
     return {
       pets: [],
       total: 0,
+      view: 'list',
+      mapPets: [],
+      mapLoading: false,
       skip: 0,
       limit: 9,
       loading: false,
@@ -219,6 +247,9 @@ export default {
     };
   },
   computed: {
+    locatedCount() {
+      return this.mapPets.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng)).length;
+    },
     pageTitle() {
       if (this.filters.type === 'lost')  return this.$t('home.lost');
       if (this.filters.type === 'found') return this.$t('home.found');
@@ -230,7 +261,7 @@ export default {
   watch: {
     '$route.query'(q) {
       this.filters.type = q.type || '';
-      this.fetchPets();
+      this.refresh();
     },
   },
   created() {
@@ -238,15 +269,37 @@ export default {
     this.fetchPets();
   },
   methods: {
+    setView(view) {
+      this.view = view;
+      if (view === 'map') this.fetchMapPets();
+    },
+    // Bản đồ cần toàn bộ tin khớp bộ lọc, không phân trang như danh sách.
+    async fetchMapPets() {
+      this.mapLoading = true;
+      try {
+        const params = { ...this.buildParams(0), limit: 50 };
+        const { data } = await api.getPets(params);
+        this.mapPets = data.pets;
+      } catch {
+        this.mapPets = [];
+      } finally {
+        this.mapLoading = false;
+      }
+    },
     setType(type) {
       this.filters.type = type;
       this.$router.replace({ path: '/', query: type ? { type } : {} }).catch(() => {});
     },
-    setSpecies(species) { this.filters.species = species; this.fetchPets(); },
-    setDays(days)       { this.filters.days = days;       this.fetchPets(); },
+    setSpecies(species) { this.filters.species = species; this.refresh(); },
+    setDays(days)       { this.filters.days = days;       this.refresh(); },
+    // Gọi lại đúng nguồn dữ liệu của chế độ đang xem.
+    refresh() {
+      if (this.view === 'map') this.fetchMapPets();
+      else this.fetchPets();
+    },
     debounceFetch() {
       clearTimeout(this.areaTimer);
-      this.areaTimer = setTimeout(() => this.fetchPets(), 400);
+      this.areaTimer = setTimeout(() => this.refresh(), 400);
     },
     buildParams(skip = 0) {
       const p = { skip, limit: this.limit, sort: this.filters.sort };

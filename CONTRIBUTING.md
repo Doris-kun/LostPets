@@ -249,6 +249,7 @@ Gửi dạng `multipart/form-data` nếu có ảnh (field tên `image`, 1 file).
 | `contact` | có | thông tin liên hệ |
 | `name` | không | tên thú cưng |
 | `secretDetail` | không | đặc điểm chỉ chủ nuôi biết, không bao giờ hiển thị công khai |
+| `lat`, `lng` | không | toạ độ nơi mất hoặc nhặt được, dùng để vẽ lên bản đồ |
 | `description` | không | mô tả thêm |
 | `image` | không | file ảnh, server tự upload lên Cloudinary |
 
@@ -309,6 +310,8 @@ Lưu ý: endpoint này **không nhận upload file**. Muốn đổi ảnh thì t
   "date": "2026-10-12T09:30:00.000Z"
 }
 ```
+
+`lat` và `lng` là `null` khi người đăng không chọn vị trí. Server chỉ nhận khi **có đủ cả hai** và nằm trong khoảng hợp lệ; gửi một trong hai, gửi chữ, hay gửi số ngoài khoảng thì bỏ qua cả cặp. Gửi `null` là xoá vị trí.
 
 `image` là chuỗi rỗng khi tin không có ảnh — nhớ xử lý trường hợp này ở front-end.
 

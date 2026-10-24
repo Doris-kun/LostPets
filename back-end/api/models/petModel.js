@@ -13,6 +13,10 @@ const PetSchema = new Schema({
   image:       { type: String, default: '' },
   description: { type: String, default: '' },
   resolved:    { type: Boolean, default: false },
+  // Toạ độ nơi mất hoặc nơi nhặt được. Tuỳ chọn — ô "khu vực" dạng chữ vẫn là
+  // thứ bắt buộc, bản đồ chỉ bổ sung cho ai muốn chỉ chính xác hơn.
+  lat:         { type: Number, default: null, min: -90, max: 90 },
+  lng:         { type: Number, default: null, min: -180, max: 180 },
   // Đặc điểm chỉ chủ nuôi biết: vết sẹo, đốm lông khuất, thói quen lạ.
   // select: false nên nó không bao giờ lọt ra ở danh sách hay tin công khai —
   // người nhận là đã tìm thấy phải tự mô tả được thì mới đáng tin.
