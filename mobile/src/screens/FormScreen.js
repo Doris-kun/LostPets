@@ -14,7 +14,9 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import api from '../api';
 import claim from '../claim';
-import { colors, radius, spacing } from '../theme';
+import { useLanguage } from '../context/language';
+import { radius, spacing } from '../theme';
+import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 
 /*
  * Màn hình form — dùng chung cho cả ĐĂNG MỚI (C) và SỬA (U).
@@ -41,6 +43,9 @@ const EMPTY_FORM = {
 export default function FormScreen({ route, navigation }) {
   const { mode, pet } = route.params;
   const isEdit = mode === 'edit';
+  const { t } = useLanguage();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(themedStyles);
 
   const [form, setForm] = useState(() => {
     if (!isEdit) return EMPTY_FORM;
@@ -67,8 +72,8 @@ export default function FormScreen({ route, navigation }) {
 
   // Đổi tiêu đề trên thanh điều hướng theo chế độ.
   useLayoutEffect(() => {
-    navigation.setOptions({ title: isEdit ? 'Chỉnh sửa tin' : 'Đăng tin mới' });
-  }, [navigation, isEdit]);
+    navigation.setOptions({ title: t(isEdit ? 'screen.edit' : 'screen.new') });
+  }, [navigation, isEdit, t]);
 
   const pickImage = async () => {
     /*
@@ -77,7 +82,7 @@ export default function FormScreen({ route, navigation }) {
      */
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Cần quyền truy cập', 'Hãy cho phép ứng dụng đọc thư viện ảnh để chọn ảnh.');
+      Alert.alert(t('form.permTitle'), t('form.permText'));
       return;
     }
 
@@ -91,11 +96,11 @@ export default function FormScreen({ route, navigation }) {
 
   const validate = () => {
     // Back-end trả 400 nếu thiếu, nhưng kiểm tra trước ở đây để báo lỗi rõ ràng hơn.
-    const required = { species: 'loài', breed: 'giống', color: 'màu lông', area: 'khu vực', contact: 'liên hệ' };
+    const required = ['species', 'breed', 'color', 'area', 'contact'];
 
-    for (const [key, label] of Object.entries(required)) {
+    for (const key of required) {
       if (!form[key].trim()) {
-        Alert.alert('Thiếu thông tin', `Vui lòng điền ${label}.`);
+        Alert.alert(t('form.missingTitle'), t('form.missingText', { field: t(`form.f.${key}`) }));
         return false;
       }
     }
@@ -143,10 +148,8 @@ export default function FormScreen({ route, navigation }) {
 
         if (data.claimCode) {
           Alert.alert(
-            'Đã đăng tin',
-            `Mã xác nhận của tin này là ${data.claimCode}.\n\n` +
-              'Máy bạn đã tự lưu mã, nên sửa hoặc xoá tin ngay trên máy này thì ' +
-              'không cần nhập lại. Muốn thao tác từ máy khác thì phải có mã này.',
+            t('form.postedTitle'),
+            t('form.postedText', { code: data.claimCode }),
           );
         }
       }
@@ -155,12 +158,10 @@ export default function FormScreen({ route, navigation }) {
     } catch (err) {
       const status = err.response?.status;
 
-      let message = 'Không gửi được lên server. Kiểm tra kết nối.';
-      if (status === 400) message = 'Thiếu trường bắt buộc.';
-      else if (status === 403) message = 'Tin này đăng từ máy khác nên máy bạn không giữ mã xác nhận.';
-      else if (status === 413) message = 'Ảnh quá lớn. Server chỉ nhận ảnh tối đa 5MB.';
-
-      Alert.alert('Lưu thất bại', message);
+      // Mỗi mã lỗi một câu riêng, tra thẳng trong từ điển theo số.
+      // Mã lạ (500, mất mạng...) thì rơi về câu chung.
+      const known = [400, 403, 413].includes(status);
+      Alert.alert(t('form.failTitle'), t(known ? `form.err.${status}` : 'form.err.network'));
       setSaving(false);
     }
   };
@@ -176,72 +177,92 @@ export default function FormScreen({ route, navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.sectionLabel}>TRẠNG THÁI</Text>
+        <Text style={styles.sectionLabel}>{t('form.status')}</Text>
         <View style={styles.row}>
           <Choice
-            label="Bị mất"
+            label={t('form.lostBtn')}
             active={form.type === 'lost'}
             activeColor={colors.lost}
             onPress={() => update('type', 'lost')}
           />
           <Choice
-            label="Tìm thấy"
+            label={t('form.foundBtn')}
             active={form.type === 'found'}
             activeColor={colors.found}
             onPress={() => update('type', 'found')}
           />
         </View>
 
-        <Text style={styles.sectionLabel}>LOÀI</Text>
+        <Text style={styles.sectionLabel}>{t('form.speciesLabel')}</Text>
         <View style={styles.row}>
           <Choice
-            label="Chó"
+            label={t('form.dog')}
             active={form.species === 'Chó'}
             activeColor={colors.orange}
             onPress={() => update('species', 'Chó')}
           />
           <Choice
-            label="Mèo"
+            label={t('form.cat')}
             active={form.species === 'Mèo'}
             activeColor={colors.teal}
             onPress={() => update('species', 'Mèo')}
           />
         </View>
 
-        <Field label="Tên (không bắt buộc)" value={form.name} onChangeText={(v) => update('name', v)} placeholder="Mimi, Lucky, Bông..." />
-        <Field label="Giống" value={form.breed} onChangeText={(v) => update('breed', v)} placeholder="Poodle, Corgi..." />
-        <Field label="Màu lông" value={form.color} onChangeText={(v) => update('color', v)} placeholder="Đen, Trắng, Vàng..." />
-        <Field label="Khu vực" value={form.area} onChangeText={(v) => update('area', v)} placeholder="Quận 1, TP.HCM" />
         <Field
-          label="Liên hệ"
+          label={t('form.name')}
+          value={form.name}
+          onChangeText={(v) => update('name', v)}
+          placeholder={t('form.namePh')}
+        />
+        <Field
+          label={t('form.breed')}
+          value={form.breed}
+          onChangeText={(v) => update('breed', v)}
+          placeholder={t('form.breedPh')}
+        />
+        <Field
+          label={t('form.color')}
+          value={form.color}
+          onChangeText={(v) => update('color', v)}
+          placeholder={t('form.colorPh')}
+        />
+        <Field
+          label={t('form.area')}
+          value={form.area}
+          onChangeText={(v) => update('area', v)}
+          placeholder={t('form.areaPh')}
+        />
+        <Field
+          label={t('form.contact')}
           value={form.contact}
           onChangeText={(v) => update('contact', v)}
-          placeholder="Số điện thoại hoặc email"
+          placeholder={t('form.contactPh')}
           keyboardType="default"
         />
         <Field
-          label="Mô tả"
+          label={t('form.desc')}
           value={form.description}
           onChangeText={(v) => update('description', v)}
-          placeholder="Đặc điểm nhận dạng, hoàn cảnh mất / tìm thấy..."
+          placeholder={t('form.descPh')}
           multiline
         />
 
         {/* Chọn ảnh chỉ có khi đăng mới — PUT /pets/:id không nhận upload file */}
         {!isEdit && (
           <>
-            <Text style={styles.sectionLabel}>ẢNH (KHÔNG BẮT BUỘC)</Text>
+            <Text style={styles.sectionLabel}>{t('form.photo')}</Text>
             <TouchableOpacity style={styles.imagePicker} onPress={pickImage} activeOpacity={0.8}>
               {image ? (
                 <Image source={{ uri: image.uri }} style={styles.preview} />
               ) : (
-                <Text style={styles.imagePickerText}>Bấm để chọn ảnh từ máy</Text>
+                <Text style={styles.imagePickerText}>{t('form.photoPick')}</Text>
               )}
             </TouchableOpacity>
           </>
         )}
 
-        {isEdit && <Text style={styles.note}>Không đổi được ảnh ở màn sửa — API chưa hỗ trợ.</Text>}
+        {isEdit && <Text style={styles.note}>{t('form.noImageEdit')}</Text>}
 
         <TouchableOpacity
           style={[styles.submit, saving && styles.disabled]}
@@ -250,7 +271,7 @@ export default function FormScreen({ route, navigation }) {
           activeOpacity={0.85}
         >
           <Text style={styles.submitText}>
-            {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Đăng báo cáo'}
+            {t(saving ? 'form.saving' : isEdit ? 'form.save' : 'form.submit')}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -259,6 +280,8 @@ export default function FormScreen({ route, navigation }) {
 }
 
 function Choice({ label, active, activeColor, onPress }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(themedStyles);
   return (
     <TouchableOpacity
       style={[styles.choice, active && { backgroundColor: activeColor, borderColor: activeColor }]}
@@ -271,6 +294,8 @@ function Choice({ label, active, activeColor, onPress }) {
 }
 
 function Field({ label, multiline, ...props }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(themedStyles);
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -284,7 +309,8 @@ function Field({ label, multiline, ...props }) {
   );
 }
 
-const styles = StyleSheet.create({
+const themedStyles = createThemedStyles((colors, shadow) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
 
@@ -307,7 +333,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   choiceText: { fontSize: 14, fontWeight: '700', color: colors.textSoft },
-  choiceTextActive: { color: '#fff' },
+  choiceTextActive: { color: colors.onPrimary },
 
   field: { marginTop: spacing.lg },
   fieldLabel: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
@@ -344,6 +370,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.xl,
   },
-  submitText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  submitText: { color: colors.onPrimary, fontSize: 15, fontWeight: '700' },
   disabled: { opacity: 0.5 },
-});
+  }),
+);
