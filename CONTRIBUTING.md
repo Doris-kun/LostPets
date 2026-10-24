@@ -248,6 +248,7 @@ Gửi dạng `multipart/form-data` nếu có ảnh (field tên `image`, 1 file).
 | `area` | có | khu vực |
 | `contact` | có | thông tin liên hệ |
 | `name` | không | tên thú cưng |
+| `secretDetail` | không | đặc điểm chỉ chủ nuôi biết, không bao giờ hiển thị công khai |
 | `description` | không | mô tả thêm |
 | `image` | không | file ảnh, server tự upload lên Cloudinary |
 
@@ -260,6 +261,10 @@ Thiếu trường bắt buộc thì nhận `400` với body `{ "message": "All f
 ### `GET /pets/:petId` — xem chi tiết
 
 `petId` là `_id` của MongoDB. Không tìm thấy thì nhận `404` với body `{ "message": "Pet not found" }`.
+
+Trường **`secretDetail` chỉ trả về cho chủ tin** — người gửi `Authorization` đúng tài khoản đã đăng, hoặc gửi header `x-claim-code` đúng mã. Khách xem tin không bao giờ nhận được trường này, kể cả ở danh sách chung hay lúc vừa tạo tin.
+
+Đây là lớp chống lừa đảo: kẻ gian lấy ảnh từ tin đăng rồi dùng AI dựng ảnh giả để đòi tiền chuộc, nhưng không thể biết một đặc điểm chưa từng công khai.
 
 ### `PUT /pets/:petId` — cập nhật
 

@@ -13,6 +13,10 @@ const PetSchema = new Schema({
   image:       { type: String, default: '' },
   description: { type: String, default: '' },
   resolved:    { type: Boolean, default: false },
+  // Đặc điểm chỉ chủ nuôi biết: vết sẹo, đốm lông khuất, thói quen lạ.
+  // select: false nên nó không bao giờ lọt ra ở danh sách hay tin công khai —
+  // người nhận là đã tìm thấy phải tự mô tả được thì mới đáng tin.
+  secretDetail: { type: String, default: '', select: false },
   // Tin đăng khi đã đăng nhập thì gắn với tài khoản. Khách vãng lai để trống
   // và chỉ dựa vào mã xác nhận như trước.
   owner:       { type: Schema.Types.ObjectId, ref: 'User', default: null, index: true },

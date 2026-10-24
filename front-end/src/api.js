@@ -27,7 +27,9 @@ const claimHeader = (id) => {
 
 export default {
   getPets:   (params) => http.get('/pets', { params }),
-  getPet:    (id)     => http.get(`/pets/${id}`),
+  // Kèm mã xác nhận để server biết người xem có phải chủ tin không —
+  // chủ tin thì nhận thêm trường đặc điểm bí mật.
+  getPet:    (id)     => http.get(`/pets/${id}`, claimHeader(id)),
   createPet: (data)   => http.post('/pets', data),
   updatePet: (id, data) => http.put(`/pets/${id}`, data, claimHeader(id)),
   deletePet: (id)     => http.delete(`/pets/${id}`, claimHeader(id)),

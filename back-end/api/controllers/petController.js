@@ -11,6 +11,7 @@ const Pet = require('../models/petModel');
 // tin cũng chiếm được quyền sở hữu, khoá tin lại, hoặc đẩy tin lên đầu danh sách.
 const EDITABLE_FIELDS = [
   'type', 'name', 'species', 'breed', 'color', 'area', 'contact', 'description', 'image', 'resolved',
+  'secretDetail',
 ];
 
 const pickEditable = (body = {}) =>
@@ -120,7 +121,7 @@ exports.list_all_pets = async (req, res) => {
 
 exports.create_a_pet = async (req, res) => {
   try {
-    const { type, name, species, breed, color, area, contact, description } = req.body;
+    const { type, name, species, breed, color, area, contact, description, secretDetail } = req.body;
     if (!type || !species || !breed || !color || !area || !contact) {
       return res.status(400).json({ message: 'All fields are required' });
     }
@@ -141,13 +142,14 @@ exports.create_a_pet = async (req, res) => {
     const claimCode = generateClaimCode();
     const pet = await Pet.create({
       postId, type, name, species, breed, color, area, contact, description,
+      secretDetail: secretDetail || '',
       image: imageUrl, claimHash: hashClaimCode(claimCode),
       // Đăng khi đã đăng nhập thì tin gắn luôn vào tài khoản.
       owner: req.user ? req.user.sub : null,
     });
     // claimCode chỉ xuất hiện đúng lần này, không có endpoint nào đọc lại được.
     // select: false chỉ lọc ở truy vấn, tài liệu vừa tạo vẫn giữ claimHash nên phải bỏ tay.
-    const { claimHash: _omit, ...created } = pet.toObject();
+    const { claimHash: _h, secretDetail: _s, ...created } = pet.toObject();
     res.status(201).json({ ...created, claimCode });
   } catch {
     res.status(500).json({ message: 'Server error' });
@@ -156,9 +158,21 @@ exports.create_a_pet = async (req, res) => {
 
 exports.read_a_pet = async (req, res) => {
   try {
-    const pet = await Pet.findById(req.params.petId);
+    const pet = await Pet.findById(req.params.petId).select('+secretDetail +claimHash');
     if (!pet) return res.status(404).json({ message: 'Pet not found' });
-    res.json(pet);
+
+    const { secretDetail, claimHash, ...publicPet } = pet.toObject();
+
+    // Đặc điểm bí mật chỉ trả về cho chủ tin: người đăng nhập đúng tài khoản,
+    // hoặc người cầm mã xác nhận. Khách xem tin không bao giờ thấy.
+    const isOwner = pet.owner && req.user && String(pet.owner) === req.user.sub;
+    const provided = req.get('x-claim-code');
+    const hasCode =
+      claimHash && provided && hashClaimCode(String(provided).trim().toUpperCase()) === claimHash;
+
+    if (isOwner || hasCode) publicPet.secretDetail = secretDetail || '';
+
+    res.json(publicPet);
   } catch {
     res.status(500).json({ message: 'Server error' });
   }

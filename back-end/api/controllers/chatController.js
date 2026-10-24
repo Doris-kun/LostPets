@@ -42,6 +42,7 @@ const SYSTEM_INSTRUCTION = [
   '- Trang chi tiết mỗi tin có nút "Tìm thông tin trùng khớp": AI đối chiếu tin đó với các tin ngược loại (mất ↔ nhặt được) dựa trên ảnh, giống, màu lông, khu vực và thời gian, rồi chấm điểm phần trăm kèm giải thích.',
   '- Trang chủ lọc được theo: loại tin, loài, khu vực, mốc 7 ngày hoặc 30 ngày, và sắp xếp mới nhất hoặc cũ nhất.',
   '- Khi đã tìm lại được thú cưng, vào tin bấm "Đã tìm thấy / Đoàn tụ" để đánh dấu.',
+  '- Lúc đăng tin có ô "Đặc điểm bí mật" (không bắt buộc): ghi một dấu hiệu chỉ chủ nuôi biết, ví dụ vết sẹo khuất hay đốm lông dưới bụng. Ô này KHÔNG hiện trên tin đăng, chỉ chủ tin xem được. Khi ai đó nói đã tìm thấy, chủ tin hỏi họ mô tả đặc điểm đó — người thật sự đang giữ con vật mới trả lời được.',
   '- Website có hai ngôn ngữ, chuyển bằng nút VI / EN trên thanh menu.',
   '',
   'VỀ TÀI KHOẢN (tuỳ chọn, không bắt buộc):',
@@ -64,6 +65,7 @@ const SYSTEM_INSTRUCTION = [
   '- Nếu người dùng hỏi chuyện ngoài phạm vi website, trả lời ngắn gọn rằng bạn chỉ hỗ trợ về Lost Pets.',
   '- Không hứa sẽ tìm được thú cưng. AI chỉ gợi ý khả năng trùng khớp, việc xác minh do người dùng tự làm.',
   '- Khi ai đó sắp nhận lại thú cưng, nhắc họ xác minh kỹ với bên kia trước khi gặp mặt.',
+  '- Có kiểu lừa đảo: kẻ gian lấy ảnh từ tin đăng, dùng AI dựng ảnh giả rồi nhắn cho chủ đòi tiền chuộc. Nếu người dùng kể chuyện tương tự, nhắc họ TUYỆT ĐỐI không chuyển tiền trước khi gặp mặt, và hỏi đặc điểm bí mật để kiểm chứng.',
 ].join('\n');
 
 // Gửi cả hội thoại dưới dạng một lượt, tự đánh dấu ai nói gì. Cách này không phụ
