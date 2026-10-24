@@ -194,8 +194,32 @@ Dự án tách sẵn hai thư mục, mỗi người giữ một bên để trán
 |---|---|
 | `back-end/` | Express, Mongoose model, routes, controller, upload Cloudinary, test |
 | `front-end/` | Vue 2, các view, component, Tailwind, gọi API bằng axios |
+| `mobile/` | App điện thoại: React Native + Expo, dùng chung back-end với web |
 
 Khi một tính năng cần cả hai bên (ví dụ thêm một trường dữ liệu mới), làm tuần tự: **back-end merge trước**, front-end pull về rồi làm sau. Và nhớ cập nhật mục API bên dưới trong cùng PR đó.
+
+### Chạy app mobile
+
+```bash
+cd mobile
+npm install
+npm start
+```
+
+Quét mã QR bằng **Expo Go** — Android quét ngay trong app, iPhone quét bằng app Camera.
+
+App tự tìm địa chỉ máy tính từ đường dẫn Metro, nên **không phải sửa IP bằng tay**.
+Nếu vì lý do nào đó tìm không ra, sửa `LAN_IP` trong `mobile/src/config.js` làm địa chỉ dự phòng
+(xem IP bằng `ipconfig`). Điện thoại không hiểu `localhost` — với nó, `localhost` là chính cái điện thoại.
+
+Điện thoại và máy tính phải chung một mạng. Wi-Fi trường hoặc quán thường chặn thiết bị
+nói chuyện với nhau — gặp trường hợp đó thì phát 4G từ điện thoại rồi cho máy tính nối vào.
+
+Phiên bản Expo SDK phải khớp với app Expo Go trên máy. Apple chỉ cho cài bản Expo Go mới nhất,
+nên khi Expo ra SDK mới thì phải nâng theo: `npm install expo@^<bản mới>` rồi `npx expo install --fix`.
+
+App hiện có: CRUD, lọc nâng cao, phân trang, song ngữ Việt/Anh, chế độ sáng/tối,
+đăng nhập, Bài của tôi, chia sẻ bài. **Chưa có:** ba chức năng AI và trang quản trị.
 
 ---
 
