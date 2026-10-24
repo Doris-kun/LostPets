@@ -136,3 +136,37 @@ describe('Xoá vị trí', () => {
     expect(res.body.lat).toBeNull();
   });
 });
+
+describe('Làm mờ toạ độ', () => {
+  const createAt = (lat, lng) =>
+    request(app)
+      .post('/pets')
+      .field('type', 'lost').field('species', 'Chó').field('breed', 'Corgi')
+      .field('color', 'Nâu').field('area', 'Quận 1').field('contact', '0900 000 004')
+      .field('lat', String(lat)).field('lng', String(lng));
+
+  it('không lưu toạ độ chính xác, làm tròn về lưới 0,005 độ', async () => {
+    const res = await createAt(10.772345, 106.698765);
+    expect(res.body.lat).not.toBe(10.772345);
+    // Lưới 0,005 độ = 1/200, nên nhân 200 phải ra số nguyên.
+    // Dùng phép nhân thay vì chia lấy dư, vì số thực dấu phẩy động
+    // cho 10.77 % 0.005 ra 0.004999... chứ không phải 0.
+    const onGrid = (v) => Math.abs(Math.round(v * 200) - v * 200) < 1e-6;
+    expect(onGrid(res.body.lat)).toBe(true);
+    expect(onGrid(res.body.lng)).toBe(true);
+  });
+
+  it('điểm sau khi làm mờ vẫn nằm trong khoảng 600m so với điểm gốc', async () => {
+    const lat = 10.772345;
+    const res = await createAt(lat, 106.698765);
+    // 1 độ vĩ ~ 111km, nên lệch tối đa phải dưới 0,0055 độ.
+    expect(Math.abs(res.body.lat - lat)).toBeLessThan(0.0055);
+  });
+
+  it('hai tin đăng ở hai điểm cách nhau vài chục mét thì trùng vị trí', async () => {
+    const a = await createAt(10.77201, 106.69801);
+    const b = await createAt(10.77233, 106.69842);
+    expect(a.body.lat).toBe(b.body.lat);
+    expect(a.body.lng).toBe(b.body.lng);
+  });
+});

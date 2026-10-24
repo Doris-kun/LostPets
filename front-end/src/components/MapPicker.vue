@@ -23,6 +23,7 @@
       </span>
     </div>
 
+    <p class="text-xs text-amber-600 mt-2 leading-relaxed">{{ $t('map.privacyNote') }}</p>
     <p v-if="error" class="text-xs text-rose-500 mt-1.5">{{ error }}</p>
   </div>
 </template>

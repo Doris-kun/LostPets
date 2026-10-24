@@ -5,6 +5,15 @@ import 'leaflet/dist/leaflet.css';
 export const DEFAULT_CENTER = [10.776, 106.7];
 export const DEFAULT_ZOOM = 12;
 
+// Server làm tròn toạ độ về lưới ~500m trước khi lưu, nên đây là độ chính xác
+// thật sự của mọi điểm trên bản đồ.
+export const AREA_RADIUS_M = 500;
+
+// Mở ứng dụng bản đồ của thiết bị để chỉ đường. Dùng đường liên kết chung của
+// Google Maps: không cần khoá API, trên điện thoại tự mở app.
+export const directionsUrl = (lat, lng) =>
+  `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
 // Nền bản đồ OpenStreetMap: miễn phí, không cần đăng ký khoá.
 // Bắt buộc ghi nguồn theo điều khoản sử dụng của họ.
 export function addTiles(map) {

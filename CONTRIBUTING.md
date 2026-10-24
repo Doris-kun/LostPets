@@ -311,6 +311,8 @@ Lưu ý: endpoint này **không nhận upload file**. Muốn đổi ảnh thì t
 }
 ```
 
+**Toạ độ luôn được làm mờ trước khi lưu**: làm tròn về lưới 0,005 độ (khoảng 500m) ngay ở setter của model, nên bản chính xác không bao giờ nằm trong database. Thú cưng thường mất gần nhà, ghim chính xác là công khai địa chỉ nhà người đăng — ghép với số điện thoại hiện ngay bên cạnh thì quá nguy hiểm. Giao diện vẽ một vòng tròn bán kính 500m thay vì một chấm, để thể hiện đúng độ chính xác thật sự.
+
 `lat` và `lng` là `null` khi người đăng không chọn vị trí. Server chỉ nhận khi **có đủ cả hai** và nằm trong khoảng hợp lệ; gửi một trong hai, gửi chữ, hay gửi số ngoài khoảng thì bỏ qua cả cặp. Gửi `null` là xoá vị trí.
 
 `image` là chuỗi rỗng khi tin không có ảnh — nhớ xử lý trường hợp này ở front-end.
