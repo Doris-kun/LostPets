@@ -333,6 +333,6 @@ exports.match_posts = async (req, res) => {
       return res.status(429).json({ message: 'Đã hết lượt miễn phí, thử lại sau một chút' });
     }
     console.error('AI match error:', err.message);
-    res.status(500).json({ message: 'Tìm tin khớp thất bại' });
+    res.status(500).json({ message: 'Tìm thông tin trùng khớp thất bại' });
   }
 };
