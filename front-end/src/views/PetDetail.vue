@@ -69,6 +69,22 @@
           </div>
         </div>
 
+        <div v-if="hasCoords" class="mt-5">
+          <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
+            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">{{ $t('map.where') }}</p>
+            <a :href="directionsHref" target="_blank" rel="noopener"
+              class="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-orange-300 hover:text-orange-600 transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+              </svg>
+              {{ $t('map.directions') }}
+            </a>
+          </div>
+          <PetMap :pets="[pet]" height="h-56"/>
+          <p class="text-xs text-gray-400 mt-2 leading-relaxed">{{ $t('map.approxNote') }}</p>
+        </div>
+
         <div v-if="pet.description" class="mt-5">
           <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">{{ $t('detail.desc') }}</p>
           <p class="text-gray-600 text-sm leading-relaxed">{{ pet.description }}</p>
@@ -182,9 +198,12 @@
 
 <script>
 import api from '../api';
+import PetMap from '../components/PetMap.vue';
+import { directionsUrl } from '../map';
 
 export default {
   name: 'PetDetail',
+  components: { PetMap },
   data() {
     return {
       pet: null, loading: false, deleting: false, resolving: false,
@@ -192,6 +211,12 @@ export default {
     };
   },
   computed: {
+    hasCoords() {
+      return this.pet && Number.isFinite(this.pet.lat) && Number.isFinite(this.pet.lng);
+    },
+    directionsHref() {
+      return this.hasCoords ? directionsUrl(this.pet.lat, this.pet.lng) : '#';
+    },
     contactHref() {
       if (!this.pet) return '#';
       const c = this.pet.contact;

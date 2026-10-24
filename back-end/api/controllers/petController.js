@@ -11,11 +11,48 @@ const Pet = require('../models/petModel');
 // tin cũng chiếm được quyền sở hữu, khoá tin lại, hoặc đẩy tin lên đầu danh sách.
 const EDITABLE_FIELDS = [
   'type', 'name', 'species', 'breed', 'color', 'area', 'contact', 'description', 'image', 'resolved',
-  'secretDetail',
+  'secretDetail', 'lat', 'lng',
 ];
 
-const pickEditable = (body = {}) =>
-  Object.fromEntries(Object.entries(body).filter(([key]) => EDITABLE_FIELDS.includes(key)));
+// Chỉ nhận toạ độ khi có đủ cả hai và nằm trong khoảng hợp lệ.
+function isValidCoord(lat, lng) {
+  if (lat === undefined && lng === undefined) return true;
+  return (
+    Number.isFinite(lat) && Number.isFinite(lng) &&
+    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+  );
+}
+
+const pickEditable = (body = {}) => {
+  const picked = Object.fromEntries(
+    Object.entries(body).filter(([key]) => EDITABLE_FIELDS.includes(key))
+  );
+  // Toạ độ đi qua form nên luôn là chuỗi.
+  // Cẩn thận: Number(null) ra 0, không xử lý riêng thì "xoá vị trí" lại thành
+  // toạ độ 0,0 giữa Đại Tây Dương.
+  let cleared = false;
+  for (const key of ['lat', 'lng']) {
+    if (!(key in picked)) continue;
+    const raw = picked[key];
+    if (raw === null || raw === '' || raw === 'null') {
+      cleared = true;
+      continue;
+    }
+    const n = Number(raw);
+    if (!Number.isFinite(n)) delete picked[key];
+    else picked[key] = n;
+  }
+
+  if (cleared) {
+    // Xoá một trong hai thì xoá cả cặp, không để lại toạ độ nửa vời.
+    picked.lat = null;
+    picked.lng = null;
+  } else if (!isValidCoord(picked.lat, picked.lng)) {
+    delete picked.lat;
+    delete picked.lng;
+  }
+  return picked;
+};
 
 const generateClaimCode = () => crypto.randomBytes(5).toString('hex').toUpperCase();
 const hashClaimCode = (code) => crypto.createHash('sha256').update(code).digest('hex');
@@ -122,6 +159,7 @@ exports.list_all_pets = async (req, res) => {
 exports.create_a_pet = async (req, res) => {
   try {
     const { type, name, species, breed, color, area, contact, description, secretDetail } = req.body;
+    const coords = pickEditable({ lat: req.body.lat, lng: req.body.lng });
     if (!type || !species || !breed || !color || !area || !contact) {
       return res.status(400).json({ message: 'All fields are required' });
     }
@@ -143,6 +181,8 @@ exports.create_a_pet = async (req, res) => {
     const pet = await Pet.create({
       postId, type, name, species, breed, color, area, contact, description,
       secretDetail: secretDetail || '',
+      lat: coords.lat === undefined ? null : coords.lat,
+      lng: coords.lng === undefined ? null : coords.lng,
       image: imageUrl, claimHash: hashClaimCode(claimCode),
       // Đăng khi đã đăng nhập thì tin gắn luôn vào tài khoản.
       owner: req.user ? req.user.sub : null,

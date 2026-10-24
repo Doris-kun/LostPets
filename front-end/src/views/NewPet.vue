@@ -80,6 +80,13 @@
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
         </div>
         <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            {{ $t('map.label') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
+          </label>
+          <MapPicker :lat="form.lat" :lng="form.lng" @change="setPoint"/>
+          <p class="text-xs text-gray-400 mt-1.5 leading-relaxed">{{ $t('map.hint') }}</p>
+        </div>
+        <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.contact') }}</label>
           <input v-model="form.contact" type="text" :placeholder="$t('form.contactPh')" required
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
@@ -159,18 +166,24 @@
 
 <script>
 import api from '../api';
+import MapPicker from '../components/MapPicker.vue';
 import claim from '../claim';
 
 export default {
   name: 'NewPet',
+  components: { MapPicker },
   data() {
     return {
-      form: { type: 'lost', name: '', species: '', breed: '', color: '', area: '', contact: '', description: '', secretDetail: '' },
+      form: { type: 'lost', name: '', species: '', breed: '', color: '', area: '', contact: '', description: '', secretDetail: '', lat: null, lng: null },
       image: null, preview: null, loading: false, error: '', showSpeciesError: false,
       aiLoading: false, aiError: '', aiResult: null,
     };
   },
   methods: {
+    setPoint({ lat, lng }) {
+      this.form.lat = lat;
+      this.form.lng = lng;
+    },
     handleImage(e) {
       const file = e.target.files[0];
       if (!file) return;

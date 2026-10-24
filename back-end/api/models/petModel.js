@@ -1,6 +1,15 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
+// Lưới 0,005 độ ~ 550m ở vĩ độ Việt Nam.
+const FUZZ_GRID = 0.005;
+function fuzz(value) {
+  if (value === null || value === undefined) return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Number((Math.round(n / FUZZ_GRID) * FUZZ_GRID).toFixed(6));
+}
+
 const PetSchema = new Schema({
   postId:      { type: String, unique: true, sparse: true },
   type:        { type: String, required: true, enum: ['lost', 'found'] },
@@ -13,6 +22,15 @@ const PetSchema = new Schema({
   image:       { type: String, default: '' },
   description: { type: String, default: '' },
   resolved:    { type: Boolean, default: false },
+  // Toạ độ nơi mất hoặc nơi nhặt được. Tuỳ chọn — ô "khu vực" dạng chữ vẫn là
+  // thứ bắt buộc, bản đồ chỉ bổ sung cho ai muốn chỉ rõ hơn.
+  //
+  // Toạ độ được làm tròn về lưới 0,005 độ (khoảng 500m) NGAY LÚC GÁN, nên bản
+  // chính xác không bao giờ nằm trong database. Thú cưng thường mất gần nhà,
+  // ghim chính xác là công khai địa chỉ nhà người đăng — ghép với số điện thoại
+  // ngay bên cạnh thì quá nguy hiểm.
+  lat:         { type: Number, default: null, min: -90, max: 90, set: fuzz },
+  lng:         { type: Number, default: null, min: -180, max: 180, set: fuzz },
   // Đặc điểm chỉ chủ nuôi biết: vết sẹo, đốm lông khuất, thói quen lạ.
   // select: false nên nó không bao giờ lọt ra ở danh sách hay tin công khai —
   // người nhận là đã tìm thấy phải tự mô tả được thì mới đáng tin.
