@@ -39,6 +39,11 @@ export default function DetailScreen({ route, navigation }) {
   // Đang gửi yêu cầu đánh dấu đoàn tụ -> khoá nút, đổi chữ thành "Đang lưu..."
   const [resolving, setResolving] = useState(false);
 
+  // Phần AI đối chiếu: đang chạy, kết quả, lỗi
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [matchResult, setMatchResult] = useState(null);
+  const [matchError, setMatchError] = useState('');
+
   // Tải lại mỗi khi quay về màn này -> sửa tin xong bấm Back là thấy ngay dữ liệu mới
   useFocusEffect(
     useCallback(() => {
@@ -86,6 +91,31 @@ export default function DetailScreen({ route, navigation }) {
         },
       },
     ]);
+  };
+
+  /*
+   * Nhờ AI đối chiếu bài này với các bài NGƯỢC LOẠI.
+   *
+   * Bài "bị mất" thì quét các bài "tìm thấy" và ngược lại. Server chọn ra vài
+   * ứng viên gần nhất rồi đưa AI xem ảnh, chấm điểm 0-100 kèm lý do. Chỉ trả
+   * về những bài đạt từ 40 điểm — dưới mức đó là đoán mò, hiện ra chỉ gây
+   * hy vọng hão.
+   *
+   * Đây là lý do app tồn tại: nối người mất với người nhặt được.
+   */
+  const findMatches = async () => {
+    setMatchLoading(true);
+    setMatchError('');
+
+    try {
+      const { data } = await api.findMatches(id);
+      setMatchResult(data);
+    } catch (err) {
+      const status = err.response?.status;
+      setMatchError(t([429, 504].includes(status) ? 'match.busy' : 'match.error'));
+    } finally {
+      setMatchLoading(false);
+    }
   };
 
   const handleShare = async () => {
@@ -234,6 +264,70 @@ export default function DetailScreen({ route, navigation }) {
         </View>
       )}
 
+      {/*
+        Đối chiếu AI — chỉ hiện với bài CHƯA đoàn tụ. Tìm chủ cho con vật đã
+        về nhà rồi thì vô nghĩa, bày nút ra chỉ tốn lượt gọi AI.
+      */}
+      {!pet.resolved && (
+        <View style={styles.matchBox}>
+          <Text style={styles.matchTitle}>{t('match.title')}</Text>
+          <Text style={styles.matchSubtitle}>{t('match.subtitle')}</Text>
+
+          <TouchableOpacity
+            style={[styles.matchButton, matchLoading && styles.buttonDisabled]}
+            onPress={findMatches}
+            disabled={matchLoading}
+            activeOpacity={0.85}
+          >
+            {matchLoading ? (
+              <ActivityIndicator color={colors.onPrimary} size="small" />
+            ) : (
+              <Text style={styles.matchButtonText}>✨  {t('match.action')}</Text>
+            )}
+          </TouchableOpacity>
+
+          {matchLoading && <Text style={styles.matchNote}>{t('match.wait')}</Text>}
+          {!!matchError && <Text style={styles.matchErrorText}>{matchError}</Text>}
+
+          {/* Có kết quả rồi: hoặc danh sách bài khớp, hoặc câu "chưa tìm thấy" */}
+          {!!matchResult &&
+            !matchLoading &&
+            (matchResult.matches.length > 0 ? (
+              <View style={styles.matchList}>
+                {matchResult.matches.map((item) => (
+                  <TouchableOpacity
+                    key={item.pet._id}
+                    style={styles.matchItem}
+                    onPress={() => navigation.push('Detail', { id: item.pet._id })}
+                    activeOpacity={0.85}
+                  >
+                    {!!item.pet.image && (
+                      <Image source={{ uri: item.pet.image }} style={styles.matchImage} />
+                    )}
+
+                    <View style={styles.matchItemBody}>
+                      <View style={styles.matchScorePill}>
+                        <Text style={styles.matchScoreText}>
+                          {t('match.score', { n: item.score })}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.matchItemTitle} numberOfLines={1}>
+                        {item.pet.name || item.pet.breed}
+                      </Text>
+                      <Text style={styles.matchReason}>{item.reason}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.matchNote}>
+                {t('match.none')} {t('match.checked', { n: matchResult.candidatesChecked })}
+              </Text>
+            ))}
+        </View>
+      )}
+
       <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.85}>
         <Text style={styles.shareText}>↗  {t('detail.share')}</Text>
       </TouchableOpacity>
@@ -373,6 +467,55 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   },
   resolvedIcon: { fontSize: 15, fontWeight: '800', color: colors.resolved },
   resolvedBannerText: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.resolved },
+
+  matchBox: {
+    marginTop: spacing.xl,
+    backgroundColor: colors.aiBg,
+    borderWidth: 1,
+    borderColor: colors.aiBorder,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+  },
+  matchTitle: { fontSize: 15, fontWeight: "800", color: colors.aiText },
+  matchSubtitle: { fontSize: 12, color: colors.textMuted, lineHeight: 18, marginTop: 4 },
+  matchButton: {
+    marginTop: spacing.md,
+    backgroundColor: colors.aiAccent,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+  },
+  matchButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: "700" },
+  matchNote: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: spacing.sm,
+    lineHeight: 18,
+  },
+  matchErrorText: { fontSize: 12, color: colors.danger, textAlign: "center", marginTop: spacing.sm },
+
+  matchList: { marginTop: spacing.md, gap: spacing.sm },
+  matchItem: {
+    flexDirection: "row",
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+  },
+  matchImage: { width: 64, height: 64, borderRadius: radius.sm, backgroundColor: colors.surface },
+  matchItemBody: { flex: 1, marginLeft: spacing.md, justifyContent: "center" },
+  matchScorePill: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.aiAccent,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  matchScoreText: { color: colors.onPrimary, fontSize: 10.5, fontWeight: "800" },
+  matchItemTitle: { fontSize: 14, fontWeight: "800", color: colors.text, marginTop: 4 },
+  matchReason: { fontSize: 12, color: colors.textSoft, lineHeight: 17, marginTop: 2 },
 
   shareButton: {
     marginTop: spacing.xl,

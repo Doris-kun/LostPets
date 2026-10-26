@@ -62,6 +62,10 @@ export default {
   // riêng thời gian chờ cho nó thay vì nới cho cả app.
   analyzeImage: (data) => http.post('/ai/analyze-image', data, { timeout: 60000 }),
 
+  // Đối chiếu lâu hơn phân tích ảnh nhiều: server phải tải về và so từng
+  // ảnh ứng viên. Cho hẳn 2 phút.
+  findMatches: (id) => http.get(`/ai/match/${id}`, { timeout: 120000 }),
+
   // Tài khoản
   register: (data) => http.post('/auth/register', data),
   login: (data) => http.post('/auth/login', data),
