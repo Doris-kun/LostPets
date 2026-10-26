@@ -125,26 +125,29 @@
             <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleImage"/>
           </div>
 
-          <!-- AI đọc ảnh và điền giúp loài, giống, màu lông, mô tả -->
-          <div v-if="image" class="mt-3">
-            <button type="button" @click="analyzeImage" :disabled="aiLoading"
-              class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-500 to-indigo-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:from-violet-600 hover:to-indigo-600 disabled:opacity-50 transition-all shadow-sm">
-              <svg v-if="aiLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <!-- AI chạy ngầm ngay khi chọn ảnh, không chặn người dùng gõ tiếp -->
+          <div v-if="image" class="mt-2.5 min-h-[1.5rem]">
+            <p v-if="aiLoading" class="flex items-center gap-1.5 text-xs text-violet-500">
+              <svg class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
               </svg>
-              <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M12 2a1 1 0 01.967.744L13.92 6.3a3 3 0 001.78 1.78l3.556.953a1 1 0 010 1.934l-3.556.953a3 3 0 00-1.78 1.78l-.953 3.556a1 1 0 01-1.934 0l-.953-3.556a3 3 0 00-1.78-1.78L4.744 10.97a1 1 0 010-1.934l3.556-.953a3 3 0 001.78-1.78l.953-3.556A1 1 0 0112 2zM5 13a1 1 0 01.894.553l.382.764.764.382a1 1 0 010 1.789l-.764.382-.382.764a1 1 0 01-1.789 0l-.382-.764-.764-.382a1 1 0 010-1.789l.764-.382.382-.764A1 1 0 015 13z"/>
+              {{ $t('ai.working') }}
+            </p>
+
+            <p v-else-if="aiResult" class="flex items-center gap-1.5 text-xs text-violet-700">
+              <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/>
               </svg>
-              {{ aiLoading ? $t('ai.analyzing') : $t('ai.analyze') }}
-            </button>
-            <p v-if="aiLoading" class="text-xs text-violet-500 mt-2 text-center">{{ $t('ai.wait') }}</p>
-            <p v-else-if="!aiResult && !aiError" class="text-xs text-gray-400 mt-2 text-center">{{ $t('ai.hint') }}</p>
-            <div v-if="aiResult" class="mt-2 text-xs text-violet-700 bg-violet-50 border border-violet-100 rounded-xl px-3 py-2 text-center">
               {{ $t('ai.filled') }}
-              <span class="font-semibold ml-1">{{ $t('ai.confidence') }}: {{ aiResult.confidence }}%</span>
-            </div>
-            <p v-if="aiError" class="text-xs text-rose-500 mt-2 text-center">{{ aiError }}</p>
+              <span class="font-semibold">{{ aiResult.confidence }}%</span>
+            </p>
+
+            <p v-else-if="aiError" class="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
+              <span>{{ aiError }}</span>
+              <button type="button" @click="analyzeImage"
+                class="font-semibold text-violet-600 hover:underline">{{ $t('ai.retry') }}</button>
+            </p>
           </div>
         </div>
       </div>
@@ -176,8 +179,11 @@ export default {
     return {
       form: { type: 'lost', name: '', species: '', breed: '', color: '', area: '', contact: '', description: '', secretDetail: '', lat: null, lng: null },
       image: null, preview: null, loading: false, error: '', showSpeciesError: false,
-      aiLoading: false, aiError: '', aiResult: null,
+      aiLoading: false, aiError: '', aiResult: null, aiRun: 0, gone: false,
     };
+  },
+  beforeDestroy() {
+    this.gone = true;
   },
   methods: {
     setPoint({ lat, lng }) {
@@ -191,29 +197,42 @@ export default {
       this.preview = URL.createObjectURL(file);
       this.aiResult = null;
       this.aiError = '';
+      // Chạy ngay, không chờ người dùng bấm gì. Họ cứ gõ tiếp các ô khác,
+      // kết quả về lúc nào thì điền vào chỗ còn trống lúc đó.
+      this.analyzeImage();
     },
     async analyzeImage() {
+      if (!this.image) return;
+      // Người dùng có thể đổi ảnh khi lượt trước chưa xong. Đánh số từng lượt
+      // để kết quả cũ về muộn không ghi đè kết quả của ảnh mới.
+      const runId = (this.aiRun += 1);
+      const file = this.image;
+
       this.aiLoading = true;
       this.aiError = '';
       this.aiResult = null;
       try {
         const formData = new FormData();
-        formData.append('image', this.image);
+        formData.append('image', file);
         const { data } = await api.analyzeImage(formData);
-        // Chỉ điền vào ô còn trống, không ghi đè thứ người dùng đã tự gõ.
-        if (data.species !== 'Khác') this.form.species = data.species;
+        if (runId !== this.aiRun || this.gone) return;
+
+        // Chỉ điền vào ô còn trống. Người dùng gõ trong lúc chờ thì giữ nguyên
+        // thứ họ gõ — AI là phần thêm vào, không phải thứ ghi đè.
+        if (!this.form.species && data.species !== 'Khác') this.form.species = data.species;
         if (!this.form.breed) this.form.breed = data.breed;
         if (!this.form.color) this.form.color = data.color;
         if (!this.form.description) this.form.description = data.description;
         this.aiResult = data;
         this.showSpeciesError = false;
       } catch (err) {
+        if (runId !== this.aiRun || this.gone) return;
         const status = err.response && err.response.status;
         if (status === 422) this.aiError = this.$t('ai.notPet');
         else if (status === 504 || status === 429) this.aiError = this.$t('ai.busy');
         else this.aiError = this.$t('ai.error');
       } finally {
-        this.aiLoading = false;
+        if (runId === this.aiRun) this.aiLoading = false;
       }
     },
     async submit() {
