@@ -14,6 +14,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import DetailScreen from './src/screens/DetailScreen';
 import FormScreen from './src/screens/FormScreen';
 import AuthScreen from './src/screens/AuthScreen';
+import ChatScreen from './src/screens/ChatScreen';
 import MyPetsScreen from './src/screens/MyPetsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import SplashScreen from './src/screens/SplashScreen';
@@ -216,6 +217,7 @@ function RootStack() {
       <Stack.Screen name="Form" component={FormScreen} />
       {/* Tiêu đề màn này do chính nó đặt, tuỳ đang ở tab Đăng nhập hay Đăng ký */}
       <Stack.Screen name="Auth" component={AuthScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: t('chat.title') }} />
     </Stack.Navigator>
   );
 }

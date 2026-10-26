@@ -66,6 +66,10 @@ export default {
   // ảnh ứng viên. Cho hẳn 2 phút.
   findMatches: (id) => http.get(`/ai/match/${id}`, { timeout: 120000 }),
 
+  // Trợ lý: gửi cả đoạn hội thoại lên mỗi lần, vì server không nhớ gì giữa
+  // các lần gọi. Tối đa 20 lượt, mỗi tin 1000 ký tự.
+  chat: (messages) => http.post('/ai/chat', { messages }, { timeout: 60000 }),
+
   // Tài khoản
   register: (data) => http.post('/auth/register', data),
   login: (data) => http.post('/auth/login', data),

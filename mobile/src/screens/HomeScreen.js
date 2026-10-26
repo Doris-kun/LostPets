@@ -268,6 +268,22 @@ export default function HomeScreen({ navigation }) {
         />
       )}
 
+      {/*
+        Nút trợ lý — nhỏ hơn và nhạt hơn nút +, đặt ngay phía trên nó.
+
+        Cố ý làm cho nó "nhẹ" hơn: đăng bài mới là việc chính của app, hỏi trợ
+        lý là việc phụ. Hai nút cùng cỡ cùng màu thì người dùng phải dừng lại
+        đọc mới biết bấm cái nào.
+      */}
+      <TouchableOpacity
+        style={[styles.chatFab, { bottom: tabBarHeight + spacing.lg + 70 }]}
+        onPress={() => navigation.navigate('Chat')}
+        activeOpacity={0.85}
+        accessibilityLabel={t('chat.title')}
+      >
+        <Text style={styles.chatFabIcon}>✨</Text>
+      </TouchableOpacity>
+
       {/* Nút tròn nổi ở góc — kiểu nút quen thuộc trên điện thoại */}
       <TouchableOpacity
         style={[styles.fab, { bottom: tabBarHeight + spacing.lg }]}
@@ -485,6 +501,19 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     alignItems: 'center',
     ...shadow.float,
   },
+  chatFab: {
+    position: "absolute",
+    right: spacing.xl + 7,
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    backgroundColor: colors.aiAccent,
+    justifyContent: "center",
+    alignItems: "center",
+    ...shadow.card,
+  },
+  chatFabIcon: { fontSize: 19 },
+
   fabIcon: { color: colors.onPrimary, fontSize: 30, lineHeight: 34, fontWeight: '300' },
   }),
 );
