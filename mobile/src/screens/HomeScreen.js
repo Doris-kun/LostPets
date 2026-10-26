@@ -193,7 +193,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header total={total} loading={loading} hasError={hasError} />
+      <Header total={total} loading={loading} hasError={hasError} navigation={navigation} />
 
       <View style={styles.filterRow}>
         {FILTERS.map((item) => {
@@ -268,25 +268,9 @@ export default function HomeScreen({ navigation }) {
         />
       )}
 
-      {/*
-        Nút trợ lý — nhỏ hơn và nhạt hơn nút +, đặt ngay phía trên nó.
-
-        Cố ý làm cho nó "nhẹ" hơn: đăng bài mới là việc chính của app, hỏi trợ
-        lý là việc phụ. Hai nút cùng cỡ cùng màu thì người dùng phải dừng lại
-        đọc mới biết bấm cái nào.
-      */}
-      <TouchableOpacity
-        style={[styles.chatFab, { bottom: tabBarHeight + spacing.lg + 70 }]}
-        onPress={() => navigation.navigate('Chat')}
-        activeOpacity={0.85}
-        accessibilityLabel={t('chat.title')}
-      >
-        <Text style={styles.chatFabIcon}>✨</Text>
-      </TouchableOpacity>
-
       {/* Nút tròn nổi ở góc — kiểu nút quen thuộc trên điện thoại */}
       <TouchableOpacity
-        style={[styles.fab, { bottom: tabBarHeight + spacing.lg }]}
+        style={[styles.fab, { bottom: tabBarHeight + spacing.sm }]}
         onPress={() => navigation.navigate('Form', { mode: 'create' })}
         activeOpacity={0.85}
       >
@@ -303,7 +287,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-function Header({ total, loading, hasError }) {
+function Header({ total, loading, hasError, navigation }) {
   const { t } = useLanguage();
   const { isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -332,6 +316,25 @@ function Header({ total, loading, hasError }) {
           <Text style={styles.countText}>{total}</Text>
         </View>
       )}
+
+      {/*
+        Trợ lý AI — đặt ở thanh đầu chứ không phải nút nổi.
+
+        Ban đầu tôi để nó làm nút tròn nổi phía trên nút +, nhưng thanh tab
+        dưới đáy đã chiếm mất chỗ, nên xếp chồng hai nút đẩy cái trên lên gần
+        giữa màn hình, lơ lửng không bám vào đâu.
+
+        Ở đây thì nó neo vào thanh đầu, và nút + ở góc dưới lại đứng một mình
+        như chuẩn mực quen thuộc: một màn hình chỉ nên có một nút nổi.
+      */}
+      <TouchableOpacity
+        style={styles.assistantButton}
+        onPress={() => navigation.navigate('Chat')}
+        activeOpacity={0.8}
+        accessibilityLabel={t('chat.title')}
+      >
+        <Text style={styles.assistantIcon}>✨</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -411,6 +414,19 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingVertical: 5,
     borderRadius: radius.full,
   },
+  assistantButton: {
+    marginLeft: spacing.sm,
+    width: 34,
+    height: 34,
+    borderRadius: radius.full,
+    backgroundColor: colors.aiBg,
+    borderWidth: 1,
+    borderColor: colors.aiBorder,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  assistantIcon: { fontSize: 15 },
+
   countText: { fontSize: 13, fontWeight: '700', color: colors.teal },
 
 
@@ -501,18 +517,6 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     alignItems: 'center',
     ...shadow.float,
   },
-  chatFab: {
-    position: "absolute",
-    right: spacing.xl + 7,
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    backgroundColor: colors.aiAccent,
-    justifyContent: "center",
-    alignItems: "center",
-    ...shadow.card,
-  },
-  chatFabIcon: { fontSize: 19 },
 
   fabIcon: { color: colors.onPrimary, fontSize: 30, lineHeight: 34, fontWeight: '300' },
   }),
