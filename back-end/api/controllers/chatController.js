@@ -7,12 +7,20 @@ const MAX_TURNS = 20;
 const MAX_MESSAGE_CHARS = 1000;
 // Lần gọi đầu của mỗi instance tốn khoảng 20 giây để dựng kết nối tới Gemini,
 // các lần sau chỉ 2 giây. Để 20 giây thì người đầu tiên hỏi gì cũng nhận lỗi.
-const getChatTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 30000;
+const getChatTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 40000;
+
+// SDK mặc định thử lại tới 5 lần khi gặp 429, mỗi lần chờ gấp đôi lần trước.
+// Khi đã chạm giới hạn tần suất, request biến thành 25-45 giây im lặng rồi
+// hết giờ — người dùng nhận thông báo "quá tải" trong khi nguyên nhân thật là
+// "hết lượt". Thử lại đúng một lần, chờ ngắn, để lỗi 429 nổi lên đúng bản chất.
+const HTTP_OPTIONS = {
+  retryOptions: { attempts: 2, initialDelay: 0.5, maxDelay: 2 },
+};
 
 let client = null;
 function getClient() {
   if (!process.env.GEMINI_API_KEY) return null;
-  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: HTTP_OPTIONS });
   return client;
 }
 
