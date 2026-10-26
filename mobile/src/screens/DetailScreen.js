@@ -13,6 +13,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../api';
 import claim from '../claim';
+import ClaimCodeModal from '../components/ClaimCodeModal';
 import { WEB_URL } from '../config';
 import { useLanguage } from '../context/language';
 import { radius, spacing, statusStyle } from '../theme';
@@ -44,6 +45,10 @@ export default function DetailScreen({ route, navigation }) {
   const [matchResult, setMatchResult] = useState(null);
   const [matchError, setMatchError] = useState('');
 
+  // Đang xin mã cho việc gì: 'delete', 'resolve', hoặc null khi không hỏi
+  const [askCode, setAskCode] = useState(null);
+  const [codeError, setCodeError] = useState('');
+
   // Tải lại mỗi khi quay về màn này -> sửa tin xong bấm Back là thấy ngay dữ liệu mới
   useFocusEffect(
     useCallback(() => {
@@ -67,26 +72,51 @@ export default function DetailScreen({ route, navigation }) {
     }, [id]),
   );
 
+  /*
+   * Đánh dấu đoàn tụ và Xoá đều cần mã xác nhận, và đều có thể bị 403.
+   *
+   * Hai hàm dưới nhận mã qua tham số thay vì tự đi lấy. Nhờ vậy khi 403, mình
+   * mở hộp thoại xin mã rồi GỌI LẠI CHÍNH NÓ với mã người dùng vừa gõ — không
+   * phải viết lại logic lần hai.
+   *
+   * code === undefined nghĩa là "tự lấy mã trong máy", còn truyền chuỗi vào
+   * nghĩa là "dùng đúng mã này".
+   */
+  const doResolve = async (code) => {
+    setResolving(true);
+    try {
+      // PUT chỉ gửi trường muốn đổi, các trường khác giữ nguyên.
+      const useCode = code ?? (await claim.get(id));
+      const { data } = await api.updatePet(id, { resolved: true }, useCode);
+      setPet(data);
+
+      // Mã gõ tay mà đúng thì cất lại, lần sau khỏi gõ nữa
+      if (code) await claim.save(id, code);
+
+      setAskCode(null);
+      return true;
+    } catch (err) {
+      if (err.response?.status === 403) return false;
+
+      Alert.alert(t('error.title'), t('error.saveFailed'));
+      setAskCode(null);
+      return true; // lỗi khác thì đừng hỏi mã, hỏi cũng vô ích
+    } finally {
+      setResolving(false);
+    }
+  };
+
   const handleResolve = () => {
     Alert.alert(t('detail.resolveTitle'), t('detail.resolveConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.confirm'),
         onPress: async () => {
-          setResolving(true);
-          try {
-            // PUT chỉ gửi trường muốn đổi, các trường khác giữ nguyên.
-            const code = await claim.get(id);
-            const { data } = await api.updatePet(id, { resolved: true }, code);
-            setPet(data);
-          } catch (err) {
-            const denied = err.response?.status === 403;
-            Alert.alert(
-              t(denied ? 'error.deniedTitle' : 'error.title'),
-              t(denied ? 'error.deniedText' : 'error.saveFailed'),
-            );
-          } finally {
-            setResolving(false);
+          const ok = await doResolve();
+          // Không có quyền -> mở hộp thoại xin mã thay vì báo lỗi rồi chịu thua
+          if (!ok) {
+            setCodeError('');
+            setAskCode('resolve');
           }
         },
       },
@@ -145,6 +175,26 @@ export default function DetailScreen({ route, navigation }) {
     }
   };
 
+  const doDelete = async (code) => {
+    setDeleting(true);
+    try {
+      // Mã xác nhận được cất lúc đăng bài. Bài cũ hoặc bài đăng từ máy khác
+      // thì máy này không giữ mã — gửi rỗng, back-end tự quyết định.
+      const useCode = code ?? (await claim.get(id));
+      await api.deletePet(id, useCode);
+      await claim.remove(id);
+      navigation.goBack();
+      return true;
+    } catch (err) {
+      setDeleting(false);
+      if (err.response?.status === 403) return false;
+
+      Alert.alert(t('error.title'), t('error.deleteFailed'));
+      setAskCode(null);
+      return true;
+    }
+  };
+
   const handleDelete = () => {
     /*
      * React Native KHÔNG có window.confirm() như trình duyệt.
@@ -158,21 +208,10 @@ export default function DetailScreen({ route, navigation }) {
         text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
-          setDeleting(true);
-          try {
-            // Mã xác nhận được cất lúc đăng tin. Tin cũ hoặc tin đăng từ máy
-            // khác thì máy này không giữ mã — gửi rỗng, back-end tự quyết định.
-            const code = await claim.get(id);
-            await api.deletePet(id, code);
-            await claim.remove(id);
-            navigation.goBack();
-          } catch (err) {
-            setDeleting(false);
-            const denied = err.response?.status === 403;
-            Alert.alert(
-              t(denied ? 'error.deleteDeniedTitle' : 'error.title'),
-              t(denied ? 'error.deniedText' : 'error.deleteFailed'),
-            );
+          const ok = await doDelete();
+          if (!ok) {
+            setCodeError('');
+            setAskCode('delete');
           }
         },
       },
@@ -362,6 +401,21 @@ export default function DetailScreen({ route, navigation }) {
           <Text style={styles.buttonDangerText}>{t(deleting ? 'detail.deleting' : 'detail.delete')}</Text>
         </TouchableOpacity>
       </View>
+      {/*
+        Xin mã khi back-end trả 403. Gõ đúng thì việc đang làm dở chạy tiếp
+        ngay, không phải bấm lại từ đầu.
+      */}
+      <ClaimCodeModal
+        visible={!!askCode}
+        mode="ask"
+        error={codeError}
+        onClose={() => setAskCode(null)}
+        onSubmit={async (typed) => {
+          const ok = askCode === 'delete' ? await doDelete(typed) : await doResolve(typed);
+          // Vẫn 403 nghĩa là gõ sai — giữ hộp thoại mở để gõ lại
+          if (!ok) setCodeError(t('claim.wrong'));
+        }}
+      />
     </ScrollView>
   );
 }

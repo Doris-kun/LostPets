@@ -142,11 +142,20 @@ export const words = {
     'scam.warning': 'Đừng chuyển tiền trước khi gặp mặt và nhìn tận mắt con vật. Người thật sự nhặt được sẽ không đòi tiền trước. Ảnh gửi qua tin nhắn có thể do AI tạo ra.',
 
     'error.title': 'Lỗi',
-    'error.deniedTitle': 'Không có quyền',
-    'error.deleteDeniedTitle': 'Không xoá được',
-    'error.deniedText': 'Tin này đăng từ máy khác nên máy bạn không giữ mã xác nhận.',
     'error.saveFailed': 'Không lưu được. Thử lại sau.',
     'error.deleteFailed': 'Xoá không thành công. Thử lại sau.',
+
+    'claim.savedTitle': 'Mã xác nhận của bài này',
+    'claim.savedText': 'Máy bạn đã tự lưu mã. Sửa hoặc xoá ngay trên máy này thì không cần nhập lại. Nhưng gỡ app hoặc đổi máy là mất — chép ra giấy nếu bạn muốn chắc chắn.',
+    'claim.copy': 'Sao chép mã',
+    'claim.copied': 'Đã sao chép',
+    'claim.done': 'Xong',
+    'claim.askTitle': 'Nhập mã xác nhận',
+    'claim.askText': 'Bài này đăng từ máy khác nên máy bạn không giữ mã. Nhập mã bạn đã chép lại để tiếp tục.',
+    'claim.placeholder': 'Ví dụ A3F9C2D81B',
+    'claim.submit': 'Xác nhận',
+    'claim.wrong': 'Mã không đúng. Kiểm tra lại từng ký tự.',
+    'claim.loggedIn': 'Bài đã gắn với tài khoản của bạn, sửa hoặc xoá ở máy nào cũng được.',
 
     'chat.title': 'Trợ lý LostPets',
     'chat.subtitle': 'Hỏi gì về app cũng được',
@@ -220,9 +229,6 @@ export const words = {
     'form.f.area': 'khu vực',
     'form.f.contact': 'liên hệ',
 
-    'form.postedTitle': 'Đã đăng bài',
-    'form.postedText':
-      'Mã xác nhận của tin này là {code}.\n\nMáy bạn đã tự lưu mã, nên sửa hoặc xoá tin ngay trên máy này thì không cần nhập lại. Muốn thao tác từ máy khác thì phải có mã này.',
     'form.failTitle': 'Lưu thất bại',
     'form.err.network': 'Không gửi được lên server. Kiểm tra kết nối.',
     'form.err.server': 'Máy chủ gặp lỗi khi xử lý. Thử lại sau.',
@@ -360,11 +366,20 @@ export const words = {
     'scam.warning': 'Never send money before meeting in person and seeing the animal yourself. Someone who genuinely found your pet will not ask for money up front. Photos sent over chat can be AI-generated.',
 
     'error.title': 'Error',
-    'error.deniedTitle': 'Not allowed',
-    'error.deleteDeniedTitle': 'Cannot delete',
-    'error.deniedText': 'This post was created on another device, so yours does not hold its claim code.',
     'error.saveFailed': 'Could not save. Please try again later.',
     'error.deleteFailed': 'Delete failed. Please try again later.',
+
+    'claim.savedTitle': 'Claim code for this post',
+    'claim.savedText': 'Your device saved it automatically, so editing or deleting here needs no code. But uninstalling the app or changing phone loses it — write it down to be safe.',
+    'claim.copy': 'Copy code',
+    'claim.copied': 'Copied',
+    'claim.done': 'Done',
+    'claim.askTitle': 'Enter claim code',
+    'claim.askText': 'This post was created on another device, so yours does not hold the code. Type the code you saved to continue.',
+    'claim.placeholder': 'e.g. A3F9C2D81B',
+    'claim.submit': 'Confirm',
+    'claim.wrong': 'Wrong code. Check each character.',
+    'claim.loggedIn': 'This post is tied to your account, so you can edit or delete it from any device.',
 
     'chat.title': 'LostPets Assistant',
     'chat.subtitle': 'Ask anything about the app',
@@ -438,9 +453,6 @@ export const words = {
     'form.f.area': 'area',
     'form.f.contact': 'contact',
 
-    'form.postedTitle': 'Post published',
-    'form.postedText':
-      'The claim code for this post is {code}.\n\nYour device saved it automatically, so editing or deleting from this device needs no code. From any other device you will have to type it in.',
     'form.failTitle': 'Save failed',
     'form.err.network': 'Could not reach the server. Check your connection.',
     'form.err.server': 'The server hit an error. Please try again later.',

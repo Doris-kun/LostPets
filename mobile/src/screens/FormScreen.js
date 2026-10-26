@@ -15,6 +15,8 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import api from '../api';
 import claim from '../claim';
+import ClaimCodeModal from '../components/ClaimCodeModal';
+import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
 import { radius, spacing } from '../theme';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
@@ -46,6 +48,7 @@ export default function FormScreen({ route, navigation }) {
   const { mode, pet } = route.params;
   const isEdit = mode === 'edit';
   const { t } = useLanguage();
+  const { isLoggedIn } = useAuth();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
 
@@ -84,6 +87,9 @@ export default function FormScreen({ route, navigation }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
   const [aiError, setAiError] = useState('');
+
+  // Mã vừa nhận sau khi đăng bài, chỉ dùng cho khách chưa đăng nhập
+  const [newCode, setNewCode] = useState('');
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -223,11 +229,16 @@ export default function FormScreen({ route, navigation }) {
          */
         await claim.save(data._id, data.claimCode);
 
-        if (data.claimCode) {
-          Alert.alert(
-            t('form.postedTitle'),
-            t('form.postedText', { code: data.claimCode }),
-          );
+        /*
+         * Đã đăng nhập thì KHÔNG báo gì cả.
+         *
+         * Bài được gắn thẳng vào tài khoản (trường owner), nên sửa/xoá ở máy
+         * nào cũng được — mã xác nhận không còn vai trò gì. Bày ra một đoạn
+         * dặn dò giữ mã chỉ làm người dùng hoang mang về thứ họ không cần.
+         */
+        if (!isLoggedIn && data.claimCode) {
+          setNewCode(data.claimCode);
+          return; // Đóng hộp thoại xong mới quay lại, xem handleCodeDone
         }
       }
 
@@ -425,6 +436,20 @@ export default function FormScreen({ route, navigation }) {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/*
+        Hiện mã cho khách vãng lai. Người dùng bấm Xong mới quay lại danh sách
+        — nếu quay lại ngay thì hộp thoại biến mất theo màn hình, không kịp chép.
+      */}
+      <ClaimCodeModal
+        visible={!!newCode}
+        mode="show"
+        code={newCode}
+        onClose={() => {
+          setNewCode('');
+          navigation.goBack();
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }
