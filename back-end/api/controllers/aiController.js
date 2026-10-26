@@ -16,10 +16,18 @@ exports.upload = multer({
 }).single('image');
 
 // Khởi tạo muộn: thiếu API key thì endpoint trả 503 thay vì làm sập server lúc start.
+// SDK mặc định thử lại tới 5 lần khi gặp 429, mỗi lần chờ gấp đôi lần trước.
+// Khi đã chạm giới hạn tần suất, request biến thành 25-45 giây im lặng rồi
+// hết giờ — người dùng nhận thông báo "quá tải" trong khi nguyên nhân thật là
+// "hết lượt". Thử lại đúng một lần, chờ ngắn, để lỗi 429 nổi lên đúng bản chất.
+const HTTP_OPTIONS = {
+  retryOptions: { attempts: 2, initialDelay: 0.5, maxDelay: 2 },
+};
+
 let client = null;
 function getClient() {
   if (!process.env.GEMINI_API_KEY) return null;
-  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: HTTP_OPTIONS });
   return client;
 }
 
@@ -30,8 +38,8 @@ function getClient() {
 // Hai việc có ngưỡng khác nhau: phân tích một ảnh là thao tác người dùng đang
 // ngồi chờ ngay trên form, chờ quá lâu còn khó chịu hơn là báo hỏng sớm.
 // Đối chiếu ghép tin gửi tới 4 ảnh nên tự nhiên lâu hơn, cho hạn rộng hơn.
-const getAnalyzeTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 25000;
-const getMatchTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 45000;
+const getAnalyzeTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 40000;
+const getMatchTimeoutMs = () => Number(process.env.AI_TIMEOUT_MS) || 60000;
 
 class AiTimeoutError extends Error {}
 

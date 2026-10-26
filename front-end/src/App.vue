@@ -4,11 +4,7 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <!-- Logo -->
         <router-link to="/" class="flex items-center gap-2.5">
-          <div class="w-8 h-8 bg-gradient-to-br from-orange-400 to-rose-500 rounded-lg flex items-center justify-center shadow-sm">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-              <path d="M4.5 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm15 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM7 6.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm10 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM12 22c4 0 7-2.686 7-6 0-1.56-.87-2.985-2.315-4.073C15.692 10.925 13.916 10.5 12 10.5s-3.692.425-4.685 1.427C5.87 13.015 5 14.44 5 16c0 3.314 3 6 7 6z"/>
-            </svg>
-          </div>
+          <img src="/logo.png" alt="Lost Pets" class="w-9 h-9 rounded-full shadow-sm"/>
           <span class="text-lg font-bold text-gray-900 tracking-tight">Lost Pets</span>
         </router-link>
 
