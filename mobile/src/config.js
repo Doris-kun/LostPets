@@ -68,7 +68,7 @@ function detectHost() {
 
 // Địa chỉ dự phòng, chỉ dùng khi tự tìm không ra.
 // Xem IP hiện tại: mở PowerShell gõ  ipconfig  rồi tìm dòng IPv4 Address.
-const LAN_IP = '192.168.20.244';
+const LAN_IP = '192.168.1.5';
 
 /*
  * CÔNG TẮC PHỤ: ép dùng địa chỉ máy ảo Android.
