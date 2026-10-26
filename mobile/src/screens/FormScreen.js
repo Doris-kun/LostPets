@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -91,6 +91,12 @@ export default function FormScreen({ route, navigation }) {
   // Mã vừa nhận sau khi đăng bài, chỉ dùng cho khách chưa đăng nhập
   const [newCode, setNewCode] = useState('');
 
+  /*
+   * Số thứ tự lần chạy AI. Dùng useRef chứ không useState: nó chỉ để so sánh
+   * bên trong hàm, đổi nó không cần vẽ lại màn hình.
+   */
+  const aiRun = useRef(0);
+
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   // Đổi tiêu đề trên thanh điều hướng theo chế độ.
@@ -114,7 +120,22 @@ export default function FormScreen({ route, navigation }) {
       quality: 0.7, // nén bớt, ảnh gốc điện thoại thường 3-5MB, tải lên rất chậm
     });
 
-    if (!result.canceled) setImage(result.assets[0]);
+    if (result.canceled) return;
+
+    const picked = result.assets[0];
+    setImage(picked);
+
+    /*
+     * Chạy AI NGAY, không chờ người dùng bấm gì.
+     *
+     * Họ cứ gõ tiếp các ô khác, kết quả về lúc nào thì điền vào ô còn trống
+     * lúc đó. Bắt bấm nút rồi ngồi nhìn vòng xoay 20 giây là phí thời gian của
+     * người ta — trong 20 giây đó họ gõ xong nửa cái form rồi.
+     *
+     * Truyền thẳng ảnh vừa chọn vào, không đợi setImage có hiệu lực: state
+     * trong React chỉ đổi ở lần vẽ sau, đọc ngay sẽ ra giá trị cũ.
+     */
+    analyzePhoto(picked);
   };
 
   /*
@@ -123,11 +144,19 @@ export default function FormScreen({ route, navigation }) {
    * Nguyên tắc: CHỈ điền vào ô còn trống. Người dùng đã tự gõ gì thì giữ
    * nguyên — AI là trợ lý, không phải người quyết định.
    */
-  const analyzePhoto = async () => {
-    if (!image) {
-      setAiError(t('ai.needPhoto'));
-      return;
-    }
+  const analyzePhoto = async (picked) => {
+    const photo = picked || image;
+    if (!photo) return;
+
+    /*
+     * Đánh số mỗi lần chạy.
+     *
+     * Người dùng có thể đổi ảnh khác trong lúc AI đang xem ảnh cũ. Kết quả cũ
+     * về sau sẽ điền nhầm thông tin của ảnh đã bỏ. Tăng số đếm trước khi gọi,
+     * rồi lúc nhận kết quả so lại — khác số thì bỏ qua.
+     */
+    const runId = aiRun.current + 1;
+    aiRun.current = runId;
 
     setAiLoading(true);
     setAiError('');
@@ -138,7 +167,7 @@ export default function FormScreen({ route, navigation }) {
        * Gửi file trên React Native khác hẳn web: không có đối tượng File, phải
        * tự mô tả bằng { uri, name, type }. Giống hệt lúc đăng bài có ảnh.
        */
-      const fileName = image.uri.split('/').pop() || 'photo.jpg';
+      const fileName = photo.uri.split('/').pop() || 'photo.jpg';
       const extension = fileName.split('.').pop().toLowerCase();
 
       const formData = new FormData();
@@ -149,6 +178,7 @@ export default function FormScreen({ route, navigation }) {
       });
 
       const { data } = await api.analyzeImage(formData);
+      if (aiRun.current !== runId) return; // ảnh đã đổi, kết quả này lạc hậu
 
       setForm((current) => ({
         ...current,
@@ -160,14 +190,14 @@ export default function FormScreen({ route, navigation }) {
 
       setAiResult(data);
     } catch (err) {
+      if (aiRun.current !== runId) return;
+
       const status = err.response?.status;
       // 422 = ảnh không có chó mèo. 429/504 = AI quá tải hoặc hết lượt.
       const key = status === 422 ? 'ai.notPet' : [429, 504].includes(status) ? 'ai.busy' : 'ai.error';
-      // TẠM: kèm nguyên văn lỗi để chẩn đoán
-      setAiError(`${t(key)}
-[${status || 'không có mã'}] ${err.message || ''}`);
+      setAiError(t(key));
     } finally {
-      setAiLoading(false);
+      if (aiRun.current === runId) setAiLoading(false);
     }
   };
 
@@ -387,37 +417,39 @@ export default function FormScreen({ route, navigation }) {
               Nút AI chỉ hiện khi đã có ảnh — không có ảnh thì chẳng có gì để
               xem, bày nút ra chỉ tổ gây thắc mắc.
             */}
+            {/*
+              Một dòng trạng thái mảnh, không phải nút bấm.
+
+              AI đã tự chạy từ lúc chọn ảnh rồi, nên không còn gì để bấm. Ba
+              trạng thái nối tiếp nhau trong cùng một chỗ: đang xem → đã điền
+              xong (kèm % chắc chắn) → hoặc hỏng (kèm link Thử lại).
+            */}
             {!!image && (
               <View style={styles.aiBlock}>
-                <TouchableOpacity
-                  style={[styles.aiButton, aiLoading && styles.disabled]}
-                  onPress={analyzePhoto}
-                  disabled={aiLoading}
-                  activeOpacity={0.85}
-                >
-                  {aiLoading ? (
-                    <ActivityIndicator color={colors.onPrimary} size="small" />
-                  ) : (
-                    <Text style={styles.aiButtonText}>✨  {t('ai.analyze')}</Text>
-                  )}
-                </TouchableOpacity>
+                {aiLoading && (
+                  <View style={styles.aiRow}>
+                    <ActivityIndicator size="small" color={colors.aiText} />
+                    <Text style={styles.aiWorking}>{t('ai.working')}</Text>
+                  </View>
+                )}
 
-                <Text style={styles.aiNote}>
-                  {aiLoading ? t('ai.wait') : t('ai.hint')}
-                </Text>
-
-                {!!aiResult && (
-                  <View style={styles.aiResult}>
-                    <Text style={styles.aiResultText}>
-                      {t('ai.filled')}{'\n'}
-                      <Text style={styles.aiConfidence}>
-                        {t('ai.confidence')}: {aiResult.confidence}%
-                      </Text>
+                {!aiLoading && !!aiResult && (
+                  <View style={styles.aiRow}>
+                    <Text style={styles.aiCheck}>✓</Text>
+                    <Text style={styles.aiDone}>
+                      {t('ai.filled')} <Text style={styles.aiConfidence}>{aiResult.confidence}%</Text>
                     </Text>
                   </View>
                 )}
 
-                {!!aiError && <Text style={styles.aiError}>{aiError}</Text>}
+                {!aiLoading && !!aiError && (
+                  <View style={styles.aiRow}>
+                    <Text style={styles.aiErrorText}>{aiError}</Text>
+                    <Text style={styles.aiRetry} onPress={() => analyzePhoto()}>
+                      {t('ai.retry')}
+                    </Text>
+                  </View>
+                )}
               </View>
             )}
           </>
@@ -542,35 +574,14 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     lineHeight: 18,
     marginTop: -spacing.sm,
   },
-  aiBlock: { marginTop: spacing.md },
-  aiButton: {
-    backgroundColor: colors.aiAccent,
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 44,
-  },
-  aiButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: "700" },
-  aiNote: {
-    fontSize: 11.5,
-    color: colors.textMuted,
-    textAlign: "center",
-    marginTop: 6,
-    lineHeight: 17,
-  },
-  aiResult: {
-    marginTop: spacing.sm,
-    backgroundColor: colors.aiBg,
-    borderWidth: 1,
-    borderColor: colors.aiBorder,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-  },
-  aiResultText: { fontSize: 12, color: colors.aiText, textAlign: "center", lineHeight: 18 },
-  aiConfidence: { fontWeight: "800" },
-  aiError: { fontSize: 12, color: colors.danger, textAlign: "center", marginTop: 6, lineHeight: 17 },
+  aiBlock: { marginTop: spacing.sm, minHeight: 22 },
+  aiRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
+  aiWorking: { flex: 1, fontSize: 12, color: colors.aiText, lineHeight: 17 },
+  aiCheck: { fontSize: 13, fontWeight: '800', color: colors.aiText },
+  aiDone: { flex: 1, fontSize: 12, color: colors.aiText, lineHeight: 17 },
+  aiConfidence: { fontWeight: '800' },
+  aiErrorText: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
+  aiRetry: { fontSize: 12, fontWeight: '800', color: colors.aiAccent },
 
   note: { fontSize: 12, color: colors.textMuted, marginTop: spacing.lg, fontStyle: 'italic' },
 
