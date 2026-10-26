@@ -157,7 +157,9 @@ export default function FormScreen({ route, navigation }) {
       const status = err.response?.status;
       // 422 = ảnh không có chó mèo. 429/504 = AI quá tải hoặc hết lượt.
       const key = status === 422 ? 'ai.notPet' : [429, 504].includes(status) ? 'ai.busy' : 'ai.error';
-      setAiError(t(key));
+      // TẠM: kèm nguyên văn lỗi để chẩn đoán
+      setAiError(`${t(key)}
+[${status || 'không có mã'}] ${err.message || ''}`);
     } finally {
       setAiLoading(false);
     }
@@ -233,10 +235,24 @@ export default function FormScreen({ route, navigation }) {
     } catch (err) {
       const status = err.response?.status;
 
-      // Mỗi mã lỗi một câu riêng, tra thẳng trong từ điển theo số.
-      // Mã lạ (500, mất mạng...) thì rơi về câu chung.
+      /*
+       * Mỗi mã lỗi một câu riêng.
+       *
+       * Phải tách rõ ba nhóm, trước đây tôi gộp sai:
+       *   400/403/413 — lỗi do dữ liệu gửi lên, câu riêng cho từng cái
+       *   5xx         — máy chủ hỏng, KHÔNG phải lỗi mạng của người dùng
+       *   không có mã — thật sự không gọi tới được máy chủ
+       *
+       * Gộp 5xx vào nhóm "kiểm tra kết nối" là chỉ sai chỗ: người dùng đi
+       * kiểm tra Wi-Fi trong khi lỗi nằm ở máy chủ.
+       */
       const known = [400, 403, 413].includes(status);
-      Alert.alert(t('form.failTitle'), t(known ? `form.err.${status}` : 'form.err.network'));
+      const serverFault = status >= 500;
+      // TẠM: kèm nguyên văn lỗi để chẩn đoán, gỡ sau khi tìm ra nguyên nhân
+      const detail = `
+
+[${status || 'không có mã'}] ${err.message || ''}`;
+      Alert.alert(t('form.failTitle'), t(known ? `form.err.${status}` : serverFault ? 'form.err.server' : 'form.err.network') + detail);
       setSaving(false);
     }
   };

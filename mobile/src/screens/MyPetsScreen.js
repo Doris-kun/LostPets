@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api';
 import PetCard from '../components/PetCard';
@@ -22,7 +21,6 @@ import { spacing } from '../theme';
 
 export default function MyPetsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -100,7 +98,7 @@ export default function MyPetsScreen({ navigation }) {
       <FlatList
         data={pets}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + spacing.lg }]}
+        contentContainerStyle={[styles.list, { paddingBottom: spacing.xl }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

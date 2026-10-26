@@ -1,6 +1,5 @@
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
@@ -24,7 +23,6 @@ const LOGO_MARK_DARK = require('../../assets/logo-mark-dark.png');
 
 export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const { t, lang, setLang } = useLanguage();
   const { colors, isDark, scheme, setScheme } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -42,7 +40,7 @@ export default function SettingsScreen({ navigation }) {
       style={styles.container}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + spacing.lg, paddingBottom: tabBarHeight + spacing.lg },
+        { paddingTop: insets.top + spacing.lg, paddingBottom: spacing.xl },
       ]}
     >
       <Text style={styles.screenTitle}>{t('tab.settings')}</Text>

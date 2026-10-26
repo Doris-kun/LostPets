@@ -10,7 +10,6 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api';
 import PetCard from '../components/PetCard';
@@ -83,7 +82,6 @@ export default function HomeScreen({ navigation }) {
    * Chiều cao thanh tab dưới đáy, đã gồm cả vạch Home của máy. Lấy số thật
    * từ react-navigation thay vì đoán, vì mỗi máy một khác.
    */
-  const tabBarHeight = useBottomTabBarHeight();
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -193,7 +191,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header total={total} loading={loading} hasError={hasError} navigation={navigation} />
+      <Header total={total} loading={loading} hasError={hasError} />
 
       <View style={styles.filterRow}>
         {FILTERS.map((item) => {
@@ -240,7 +238,7 @@ export default function HomeScreen({ navigation }) {
         <FlatList
           data={pets}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 90 }]}
+          contentContainerStyle={[styles.list, { paddingBottom: 90 }]}
           showsVerticalScrollIndicator={false}
           // Kéo màn hình xuống để tải lại — thao tác quen thuộc trên điện thoại,
           // web không có khái niệm này.
@@ -268,9 +266,27 @@ export default function HomeScreen({ navigation }) {
         />
       )}
 
+      {/*
+        Hai nút nổi xếp chồng ở góc phải dưới.
+
+        Nút + là việc chính nên to hơn, màu đậm hơn, nằm dưới cùng — ngón cái
+        với tới dễ nhất. Trợ lý nhỏ hơn, nằm ngay trên.
+
+        Cả hai hạ sát thanh tab nhất có thể: chỉ chừa 4 điểm ảnh, vừa đủ để
+        không dính vào thanh tab.
+      */}
+      <TouchableOpacity
+        style={styles.chatFab}
+        onPress={() => navigation.navigate('Chat')}
+        activeOpacity={0.85}
+        accessibilityLabel={t('chat.title')}
+      >
+        <Text style={styles.chatFabIcon}>✨</Text>
+      </TouchableOpacity>
+
       {/* Nút tròn nổi ở góc — kiểu nút quen thuộc trên điện thoại */}
       <TouchableOpacity
-        style={[styles.fab, { bottom: tabBarHeight + spacing.sm }]}
+        style={styles.fab}
         onPress={() => navigation.navigate('Form', { mode: 'create' })}
         activeOpacity={0.85}
       >
@@ -287,7 +303,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-function Header({ total, loading, hasError, navigation }) {
+function Header({ total, loading, hasError }) {
   const { t } = useLanguage();
   const { isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -317,24 +333,6 @@ function Header({ total, loading, hasError, navigation }) {
         </View>
       )}
 
-      {/*
-        Trợ lý AI — đặt ở thanh đầu chứ không phải nút nổi.
-
-        Ban đầu tôi để nó làm nút tròn nổi phía trên nút +, nhưng thanh tab
-        dưới đáy đã chiếm mất chỗ, nên xếp chồng hai nút đẩy cái trên lên gần
-        giữa màn hình, lơ lửng không bám vào đâu.
-
-        Ở đây thì nó neo vào thanh đầu, và nút + ở góc dưới lại đứng một mình
-        như chuẩn mực quen thuộc: một màn hình chỉ nên có một nút nổi.
-      */}
-      <TouchableOpacity
-        style={styles.assistantButton}
-        onPress={() => navigation.navigate('Chat')}
-        activeOpacity={0.8}
-        accessibilityLabel={t('chat.title')}
-      >
-        <Text style={styles.assistantIcon}>✨</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -414,18 +412,6 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingVertical: 5,
     borderRadius: radius.full,
   },
-  assistantButton: {
-    marginLeft: spacing.sm,
-    width: 34,
-    height: 34,
-    borderRadius: radius.full,
-    backgroundColor: colors.aiBg,
-    borderWidth: 1,
-    borderColor: colors.aiBorder,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  assistantIcon: { fontSize: 15 },
 
   countText: { fontSize: 13, fontWeight: '700', color: colors.teal },
 
@@ -517,6 +503,21 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     alignItems: 'center',
     ...shadow.float,
   },
+
+  chatFab: {
+    position: "absolute",
+    // Nằm ngay trên nút +: lề đáy của nút + (24) + chiều cao nút + (58) + khe hở (8)
+    bottom: spacing.xl + 58 + 8,
+    right: spacing.xl + 9,
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.aiAccent,
+    justifyContent: "center",
+    alignItems: "center",
+    ...shadow.card,
+  },
+  chatFabIcon: { fontSize: 17 },
 
   fabIcon: { color: colors.onPrimary, fontSize: 30, lineHeight: 34, fontWeight: '300' },
   }),
