@@ -209,6 +209,7 @@ export const words = {
     'form.photo': 'ẢNH (KHÔNG BẮT BUỘC)',
     'form.photoPick': 'Bấm để chọn ảnh từ máy',
     'form.photoTapHint': 'Chạm vào ảnh để đổi hoặc xoá',
+    'form.photoOptions': 'Ảnh của bài đăng',
     'form.photoChange': 'Đổi ảnh khác',
     'form.photoRemove': 'Xoá ảnh',
 
@@ -431,6 +432,7 @@ export const words = {
     'form.photo': 'PHOTO (OPTIONAL)',
     'form.photoPick': 'Tap to pick a photo from your device',
     'form.photoTapHint': 'Tap the photo to change or remove it',
+    'form.photoOptions': 'Post photo',
     'form.photoChange': 'Change photo',
     'form.photoRemove': 'Remove photo',
 

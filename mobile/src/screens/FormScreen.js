@@ -109,9 +109,6 @@ export default function FormScreen({ route, navigation }) {
    * Gửi chuỗi rỗng lên trong trường hợp đó là XOÁ MẤT đặc điểm của chủ bài.
    * Nên khi không nhận được trường này thì giấu ô đi và không gửi nó lên.
    */
-  // Ảnh đang lưu trên máy chủ, chỉ hiện khi chưa chọn ảnh mới và chưa bấm xoá
-  const keptImage = isEdit && !removeImage ? pet.image : "";
-
   const canEditSecret = !isEdit || pet.secretDetail !== undefined;
 
   // Ảnh mới chọn từ máy. Chỉ dùng khi đăng mới — PUT không nhận upload file.
@@ -124,6 +121,17 @@ export default function FormScreen({ route, navigation }) {
    * chủ sẽ GIỮ NGUYÊN ảnh cũ. Muốn xoá hẳn thì phải báo riêng bằng cờ này.
    */
   const [removeImage, setRemoveImage] = useState(false);
+
+  /*
+   * Ảnh đang lưu trên máy chủ, chỉ hiện khi chưa chọn ảnh mới và chưa bấm xoá.
+   *
+   * Dòng này BẮT BUỘC đứng sau hai dòng useState ở trên. Đặt trước thì lúc
+   * chạy, removeImage còn chưa có giá trị, `!removeImage` luôn ra true, và
+   * ảnh cũ không bao giờ biến mất dù bấm Xoá — app vẫn chạy, chỉ là kết quả
+   * sai âm thầm.
+   */
+  const keptImage = isEdit && !removeImage ? pet.image : '';
+
   const [saving, setSaving] = useState(false);
 
   // Phần AI: đang chạy, kết quả, và lỗi nếu có
@@ -282,7 +290,7 @@ export default function FormScreen({ route, navigation }) {
       return;
     }
 
-    Alert.alert(t('form.photo'), '', [
+    Alert.alert(t('form.photoOptions'), '', [
       { text: t('form.photoChange'), onPress: pickImage },
       { text: t('form.photoRemove'), style: 'destructive', onPress: dropPhoto },
       { text: t('common.cancel'), style: 'cancel' },
