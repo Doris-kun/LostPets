@@ -36,7 +36,7 @@ describe('POST /ai/chat', () => {
     expect(res.status).toBe(200);
     expect(res.body.reply).toMatch(/Đăng Báo Cáo/);
     // Luôn kèm hướng dẫn hệ thống để trợ lý không bịa tính năng.
-    expect(create.mock.calls[0][0].system_instruction).toMatch(/Lost Pets/);
+    expect(create.mock.calls[0][0].system_instruction).toMatch(/LostPets/);
   });
 
   it('gửi cả hội thoại trước đó để trợ lý hiểu ngữ cảnh', async () => {

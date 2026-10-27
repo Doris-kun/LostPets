@@ -1,4 +1,4 @@
-# Lost Pets Front-end
+# LostPets Front-end
 
 ## Project setup
 ```

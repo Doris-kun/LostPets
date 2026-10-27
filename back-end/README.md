@@ -1,4 +1,4 @@
-# Lost Pets Back-end
+# LostPets Back-end
 
 ## Setup
 
