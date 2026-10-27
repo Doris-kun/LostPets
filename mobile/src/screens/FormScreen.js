@@ -20,6 +20,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import api from '../api';
 import claim from '../claim';
 import ClaimCodeModal from '../components/ClaimCodeModal';
+import PetMap from '../components/PetMap';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
 import { radius, spacing } from '../theme';
@@ -46,6 +47,17 @@ const EMPTY_FORM = {
   contact: '',
   description: '',
   secretDetail: '',
+  /*
+   * Toạ độ trên bản đồ. null = chưa chọn, và đó là chuyện bình thường — tin
+   * không có vị trí vẫn đăng được, web cũng vậy.
+   *
+   * Hai trường này là SỐ, khác mọi trường còn lại đều là chuỗi. Qua FormData
+   * chúng thành chuỗi "null", và back-end đã lường trước đúng chuỗi đó
+   * (xem pickEditable trong api/controllers/petController.js) nên không
+   * thành toạ độ 0,0 giữa Đại Tây Dương.
+   */
+  lat: null,
+  lng: null,
 };
 
 /*
@@ -103,6 +115,8 @@ export default function FormScreen({ route, navigation }) {
       contact: pet.contact ?? '',
       description: pet.description ?? '',
       secretDetail: pet.secretDetail ?? '',
+      lat: pet.lat ?? null,
+      lng: pet.lng ?? null,
     };
   });
 
@@ -468,6 +482,21 @@ export default function FormScreen({ route, navigation }) {
           onChangeText={(v) => update('area', v)}
           placeholder={t('form.areaPh')}
         />
+
+        {/*
+         * Bản đồ đặt ngay dưới ô "Khu vực" vì hai thứ nói cùng một chuyện: ô
+         * trên là tên khu vực bằng chữ, bản đồ là chỗ đó trên bản đồ. Không
+         * bắt buộc — tin không có toạ độ vẫn đăng được bình thường.
+         */}
+        <View style={styles.mapBlock}>
+          <PetMap
+            mode="pick"
+            lat={form.lat}
+            lng={form.lng}
+            onChange={({ lat, lng }) => setForm((current) => ({ ...current, lat, lng }))}
+          />
+        </View>
+
         <Field
           label={t('form.contact')}
           value={form.contact}
@@ -712,6 +741,8 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   choiceTextActive: { color: colors.onPrimary },
 
   field: { marginTop: spacing.lg },
+  // Cùng khoảng cách với các ô nhập, để bản đồ nằm thẳng hàng trong mạch form
+  mapBlock: { marginTop: spacing.lg },
   fieldLabel: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
   input: {
     borderWidth: 1,

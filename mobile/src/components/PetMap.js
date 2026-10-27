@@ -269,10 +269,17 @@ export default function PetMap({
   // ---- mode="view" --------------------------------------------------------
 
   if (!isPick) {
-    const canvas = (
+    /*
+     * Nhận interactive qua tham số chứ không đọc prop.
+     *
+     * Bản xem trước phải tĩnh, nhưng bản mở toàn màn hình thì BẮT BUỘC phải
+     * thao tác được — mở to ra mà không kéo không phóng được thì mở để làm gì.
+     * Dùng thẳng prop interactive ở đây là khoá cả hai, đúng là lỗi tôi vừa mắc.
+     */
+    const renderCanvas = (live) => (
       <View style={styles.viewWrap}>
         <MapCanvas
-          interactive={interactive}
+          interactive={live}
           payload={payload}
           onSelect={onOpenPet ? setSelectedId : undefined}
           style={styles.fill}
@@ -326,14 +333,14 @@ export default function PetMap({
                   <Text style={styles.modalDone}>{t('map.done')}</Text>
                 </TouchableOpacity>
               </View>
-              {canvas}
+              {renderCanvas(true)}
             </View>
           </Modal>
         </View>
       );
     }
 
-    return <View style={[styles.fill, style]}>{canvas}</View>;
+    return <View style={[styles.fill, style]}>{renderCanvas(true)}</View>;
   }
 
   // ---- mode="pick" --------------------------------------------------------

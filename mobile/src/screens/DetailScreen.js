@@ -14,7 +14,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import api from '../api';
 import claim from '../claim';
 import ClaimCodeModal from '../components/ClaimCodeModal';
+import PetMap, { DirectionsButton } from '../components/PetMap';
 import { WEB_URL } from '../config';
+import { hasPoint } from '../map';
 import { useLanguage } from '../context/language';
 import { radius, spacing, statusStyle } from '../theme';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
@@ -327,6 +329,33 @@ export default function DetailScreen({ route, navigation }) {
         <InfoBox label={t('detail.area')} value={pet.area} />
       </View>
 
+      {/*
+       * Bản đồ chỉ hiện khi tin có toạ độ. Tin cũ và tin đăng từ web mà người
+       * ta bỏ qua bước chọn điểm thì không có — lúc đó không chừa chỗ trống.
+       */}
+      {hasPoint(pet) && (
+        <View style={styles.block}>
+          <Text style={styles.blockLabel}>{t('map.where')}</Text>
+
+          {/*
+           * Bản đồ tĩnh, chạm vào mở ra toàn màn hình (expandable).
+           *
+           * Màn này cuộn được, nên không để bản đồ bắt cử chỉ kéo — xem phần
+           * giải thích CHUYỆN CỬ CHỈ trong components/PetMap.js.
+           */}
+          <PetMap pets={[pet]} interactive={false} expandable height={170} style={styles.mapBox} />
+
+          {/*
+           * Nói rõ đây là vùng gần đúng, không phải địa chỉ. Quan trọng: người
+           * đọc thấy một pin trên bản đồ rất dễ tưởng là đúng nhà, rồi tự đi
+           * tới — trong khi toạ độ đã bị làm mờ ~500m và chủ tin cố ý vậy.
+           */}
+          <Text style={styles.mapNote}>{t('map.approxNote')}</Text>
+
+          <DirectionsButton lat={pet.lat} lng={pet.lng} />
+        </View>
+      )}
+
       {!!pet.description && (
         <View style={styles.block}>
           <Text style={styles.blockLabel}>{t('detail.desc')}</Text>
@@ -534,6 +563,8 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   block: { marginTop: spacing.lg },
   blockLabel: { fontSize: 11, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5 },
   blockText: { fontSize: 14, color: colors.textSoft, lineHeight: 21, marginTop: 6 },
+  mapBox: { marginTop: 6 },
+  mapNote: { fontSize: 11, color: colors.textMuted, lineHeight: 16, marginTop: spacing.sm },
 
   contactBox: {
     marginTop: spacing.lg,
