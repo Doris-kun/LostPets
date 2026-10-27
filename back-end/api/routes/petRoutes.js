@@ -13,9 +13,11 @@ router.route('/')
 
 router.get('/mine', requireAuth, petController.list_my_pets);
 
+// upload ở cả PUT để sửa tin đổi được ảnh. Multer bỏ qua request không phải
+// multipart, nên những chỗ gửi JSON như nút "Đã tìm thấy" vẫn chạy như cũ.
 router.route('/:petId')
   .get(petController.read_a_pet)
-  .put(petController.update_a_pet)
+  .put(petController.upload, petController.update_a_pet)
   .delete(petController.delete_a_pet);
 
 module.exports = router;
