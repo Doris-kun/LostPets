@@ -3,8 +3,10 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import api from '../api';
@@ -79,6 +82,7 @@ async function shrink(asset) {
 export default function FormScreen({ route, navigation }) {
   const { mode, pet } = route.params;
   const isEdit = mode === 'edit';
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { isLoggedIn } = useAuth();
   const { colors } = useTheme();
@@ -121,6 +125,8 @@ export default function FormScreen({ route, navigation }) {
    * chủ sẽ GIỮ NGUYÊN ảnh cũ. Muốn xoá hẳn thì phải báo riêng bằng cờ này.
    */
   const [removeImage, setRemoveImage] = useState(false);
+  // Bảng lựa chọn ảnh có đang mở không
+  const [photoMenu, setPhotoMenu] = useState(false);
 
   /*
    * Ảnh đang lưu trên máy chủ, chỉ hiện khi chưa chọn ảnh mới và chưa bấm xoá.
@@ -279,10 +285,12 @@ export default function FormScreen({ route, navigation }) {
    * Chạm vào khung ảnh.
    *
    * Chưa có ảnh  -> mở thẳng thư viện, không hỏi han gì cho nhanh.
-   * Đã có ảnh    -> hiện lựa chọn, vì lúc này có hai việc làm được.
+   * Đã có ảnh    -> mở bảng lựa chọn, vì lúc này có hai việc làm được.
    *
-   * Dùng hộp thoại thay vì bày hai dòng chữ dưới ảnh: ít chữ trên màn hình
-   * hơn, và thao tác xoá được đặt sau một bước xác nhận nên khó bấm nhầm.
+   * Dùng bảng TỰ VẼ chứ không dùng Alert của hệ điều hành. Alert để mỗi hệ
+   * tự vẽ theo quy ước riêng: iOS xếp nút dọc và tô đỏ nút xoá, Android xếp
+   * chữ phẳng nằm ngang và bỏ qua màu đỏ. Hai bên trông lệch hẳn nhau, mà
+   * bên Android thì rời rạc khó bấm.
    */
   const handlePhotoPress = () => {
     if (!image && !keptImage) {
@@ -290,11 +298,7 @@ export default function FormScreen({ route, navigation }) {
       return;
     }
 
-    Alert.alert(t('form.photoOptions'), '', [
-      { text: t('form.photoChange'), onPress: pickImage },
-      { text: t('form.photoRemove'), style: 'destructive', onPress: dropPhoto },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
+    setPhotoMenu(true);
   };
 
   /*
@@ -592,6 +596,62 @@ export default function FormScreen({ route, navigation }) {
           navigation.goBack();
         }}
       />
+
+      {/*
+        Bảng lựa chọn ảnh, trượt lên từ đáy.
+
+        Tự vẽ nên iPhone và Android trông giống hệt nhau, và theo đúng màu của
+        app. Nút Xoá ảnh đỏ ở cả hai bên — Android bỏ qua thuộc tính "nguy
+        hiểm" của Alert hệ thống nên nếu dùng Alert thì nó không đỏ.
+      */}
+      <Modal
+        visible={photoMenu}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={() => setPhotoMenu(false)}
+      >
+        <View style={styles.sheetRoot}>
+          {/* Chạm ra ngoài là đóng — thói quen quen thuộc với bảng trượt */}
+          <Pressable style={styles.sheetBackdrop} onPress={() => setPhotoMenu(false)} />
+
+          <View style={[styles.sheet, { paddingBottom: spacing.lg + insets.bottom }]}>
+            <Text style={styles.sheetTitle}>{t('form.photoOptions')}</Text>
+
+            <TouchableOpacity
+              style={styles.sheetRow}
+              onPress={() => {
+                setPhotoMenu(false);
+                pickImage();
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.sheetRowText}>{t('form.photoChange')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.sheetRow}
+              onPress={() => {
+                setPhotoMenu(false);
+                dropPhoto();
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.sheetRowText, styles.sheetRowDanger]}>
+                {t('form.photoRemove')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.sheetRow, styles.sheetCancel]}
+              onPress={() => setPhotoMenu(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.sheetCancelText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -699,6 +759,34 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     textAlign: "center",
     marginTop: 6,
   },
+
+  sheetRoot: { flex: 1, justifyContent: "flex-end", backgroundColor: colors.scrim },
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject },
+  sheet: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+  },
+  sheetTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.textMuted,
+    textAlign: "center",
+    marginBottom: spacing.md,
+  },
+  sheetRow: {
+    paddingVertical: 15,
+    borderRadius: radius.md,
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    marginBottom: spacing.sm,
+  },
+  sheetRowText: { fontSize: 15, fontWeight: "700", color: colors.text },
+  sheetRowDanger: { color: colors.danger },
+  sheetCancel: { backgroundColor: "transparent", marginBottom: 0 },
+  sheetCancelText: { fontSize: 15, fontWeight: "700", color: colors.textMuted },
 
   note: { fontSize: 12, color: colors.textMuted, marginTop: spacing.lg, fontStyle: 'italic' },
 
