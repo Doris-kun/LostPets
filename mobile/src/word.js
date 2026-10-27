@@ -239,7 +239,7 @@ export const words = {
     'map.hint': 'Kéo bản đồ cho tới khi nơi mất hoặc nơi nhặt được nằm dưới chấm tròn ở giữa, rồi bấm Xong.',
     'map.open': 'Chọn trên bản đồ',
     'map.change': 'Chọn lại',
-    'map.useMyLocation': 'Dùng vị trí của tôi',
+    'map.useMyLocation': 'Vị trí của tôi',
     'map.locating': 'Đang định vị...',
     'map.clear': 'Xoá vị trí',
     'map.done': 'Xong',
