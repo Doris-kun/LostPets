@@ -258,6 +258,37 @@ export default function FormScreen({ route, navigation }) {
     return true;
   };
 
+  const dropPhoto = () => {
+    setImage(null);
+    // Đánh dấu để lúc lưu báo máy chủ xoá ảnh. Chỉ bỏ ảnh khỏi màn hình thôi
+    // thì máy chủ vẫn giữ nguyên ảnh cũ.
+    setRemoveImage(true);
+    setAiResult(null);
+    setAiError('');
+  };
+
+  /*
+   * Chạm vào khung ảnh.
+   *
+   * Chưa có ảnh  -> mở thẳng thư viện, không hỏi han gì cho nhanh.
+   * Đã có ảnh    -> hiện lựa chọn, vì lúc này có hai việc làm được.
+   *
+   * Dùng hộp thoại thay vì bày hai dòng chữ dưới ảnh: ít chữ trên màn hình
+   * hơn, và thao tác xoá được đặt sau một bước xác nhận nên khó bấm nhầm.
+   */
+  const handlePhotoPress = () => {
+    if (!image && !keptImage) {
+      pickImage();
+      return;
+    }
+
+    Alert.alert(t('form.photo'), '', [
+      { text: t('form.photoChange'), onPress: pickImage },
+      { text: t('form.photoRemove'), style: 'destructive', onPress: dropPhoto },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  };
+
   /*
    * Gói dữ liệu thành FormData để gửi kèm file.
    *
@@ -472,7 +503,7 @@ export default function FormScreen({ route, navigation }) {
                 2. Đang sửa, còn ảnh cũ  -> hiện ảnh cũ từ máy chủ
                 3. Chưa có gì            -> khung gạch đứt mời chọn
             */}
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.imagePicker} onPress={handlePhotoPress} activeOpacity={0.8}>
               {image ? (
                 <Image source={{ uri: image.uri }} style={styles.preview} />
               ) : keptImage ? (
@@ -482,27 +513,8 @@ export default function FormScreen({ route, navigation }) {
               )}
             </TouchableOpacity>
 
-            {/* Có ảnh thì cho đổi hoặc xoá hẳn */}
-            {(image || keptImage) && (
-              <View style={styles.photoActions}>
-                <Text style={styles.photoAction} onPress={pickImage}>
-                  {t('form.photoChange')}
-                </Text>
-                <Text
-                  style={[styles.photoAction, styles.photoRemove]}
-                  onPress={() => {
-                    setImage(null);
-                    // Đánh dấu để lúc lưu báo máy chủ xoá ảnh. Chỉ bỏ ảnh khỏi
-                    // màn hình thôi thì máy chủ vẫn giữ nguyên ảnh cũ.
-                    setRemoveImage(true);
-                    setAiResult(null);
-                    setAiError('');
-                  }}
-                >
-                  {t('form.photoRemove')}
-                </Text>
-              </View>
-            )}
+            {/* Có ảnh thì nhắc nhẹ là chạm vào ảnh sẽ có lựa chọn */}
+            {(image || keptImage) && <Text style={styles.photoHint}>{t('form.photoTapHint')}</Text>}
 
             {/*
               Nút AI chỉ hiện khi đã có ảnh — không có ảnh thì chẳng có gì để
@@ -673,9 +685,12 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   aiErrorText: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
   aiRetry: { fontSize: 12, fontWeight: '800', color: colors.aiAccent },
 
-  photoActions: { flexDirection: "row", gap: spacing.lg, marginTop: spacing.sm },
-  photoAction: { fontSize: 13, fontWeight: "700", color: colors.primary },
-  photoRemove: { color: colors.danger },
+  photoHint: {
+    fontSize: 11.5,
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: 6,
+  },
 
   note: { fontSize: 12, color: colors.textMuted, marginTop: spacing.lg, fontStyle: 'italic' },
 

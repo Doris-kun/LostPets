@@ -208,9 +208,9 @@ export const words = {
     'form.descPh': 'Đặc điểm nhận dạng, hoàn cảnh mất / tìm thấy...',
     'form.photo': 'ẢNH (KHÔNG BẮT BUỘC)',
     'form.photoPick': 'Bấm để chọn ảnh từ máy',
+    'form.photoTapHint': 'Chạm vào ảnh để đổi hoặc xoá',
     'form.photoChange': 'Đổi ảnh khác',
     'form.photoRemove': 'Xoá ảnh',
-    'form.photoCurrent': 'Ảnh hiện tại',
 
     'form.submit': 'Đăng bài',
     'form.save': 'Lưu thay đổi',
@@ -430,9 +430,9 @@ export const words = {
     'form.descPh': 'Identifying features, where it was lost or found...',
     'form.photo': 'PHOTO (OPTIONAL)',
     'form.photoPick': 'Tap to pick a photo from your device',
+    'form.photoTapHint': 'Tap the photo to change or remove it',
     'form.photoChange': 'Change photo',
     'form.photoRemove': 'Remove photo',
-    'form.photoCurrent': 'Current photo',
 
     'form.submit': 'Post',
     'form.save': 'Save changes',
