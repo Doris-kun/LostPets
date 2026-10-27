@@ -411,7 +411,9 @@ Trợ lý chỉ được biết những gì ghi trong `SYSTEM_INSTRUCTION` ở [
 
 | Mã | Khi nào |
 |---|---|
-| `400` | thiếu trường bắt buộc lúc tạo tin |
+| `400` | thiếu trường bắt buộc, hoặc tệp tải lên không phải ảnh |
+| `403` | domain gọi API không nằm trong `FRONTEND_URL` |
+| `413` | ảnh vượt quá 5MB |
 | `403` | sai hoặc thiếu mã xác nhận khi sửa/xoá |
 | `404` | không tìm thấy pet theo `_id` |
 | `500` | lỗi server hoặc lỗi database |
