@@ -230,7 +230,7 @@ export default function FormScreen({ route, navigation }) {
 
       const formData = new FormData();
       formData.append('image', {
-        uri: image.uri,
+        uri: photo.uri,
         name: fileName,
         type: extension === 'png' ? 'image/png' : 'image/jpeg',
       });
