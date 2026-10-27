@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api';
 import { API_URL } from '../config';
@@ -282,7 +283,12 @@ export default function HomeScreen({ navigation }) {
         activeOpacity={0.85}
         accessibilityLabel={t('chat.title')}
       >
-        <Text style={styles.chatFabIcon}>✨</Text>
+        {/*
+          Bóng chat có ba chấm — ký hiệu quen thuộc nhất cho "nhắn tin hỗ trợ".
+          Trước dùng ✨ nhưng ngôi sao nghĩa là "AI", không nói được đây là chỗ
+          hỏi đáp. Người dùng nhìn phải đoán, mà đoán là đã thua.
+        */}
+        <Ionicons name="chatbubble-ellipses" size={20} color={colors.onPrimary} />
       </TouchableOpacity>
 
       {/* Nút tròn nổi ở góc — kiểu nút quen thuộc trên điện thoại */}
@@ -518,7 +524,6 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     alignItems: "center",
     ...shadow.card,
   },
-  chatFabIcon: { fontSize: 17 },
 
   fabIcon: { color: colors.onPrimary, fontSize: 30, lineHeight: 34, fontWeight: '300' },
   }),
