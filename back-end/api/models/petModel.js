@@ -20,6 +20,11 @@ const PetSchema = new Schema({
   area:        { type: String, required: true },
   contact:     { type: String, required: true },
   image:       { type: String, default: '' },
+  // public_id của ảnh trên Cloudinary. Lưu riêng vì đổi ảnh hay xoá tin thì phải
+  // gọi API xoá bằng đúng id này — chỉ có URL thì mỗi lần đổi ảnh lại bỏ lại một
+  // file rác, dùng lâu là đầy dung lượng miễn phí.
+  // select: false vì đây là chi tiết nội bộ, tin công khai không cần tới.
+  imageId:     { type: String, default: '', select: false },
   description: { type: String, default: '' },
   resolved:    { type: Boolean, default: false },
   // Toạ độ nơi mất hoặc nơi nhặt được. Tuỳ chọn — ô "khu vực" dạng chữ vẫn là
