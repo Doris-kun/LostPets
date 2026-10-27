@@ -83,8 +83,7 @@ export const words = {
     'home.emptyTitle': 'Chưa có bài nào',
     'home.emptySub': 'Bấm nút + ở góc dưới để đăng bài đầu tiên',
     'home.errorTitle': 'Lỗi kết nối',
-    'home.errorText':
-      'Không gọi được máy chủ. Kiểm tra back-end đã chạy chưa và địa chỉ trong src/config.js.',
+    'home.errorText': 'Không gọi được máy chủ ở {url}. Kiểm tra back-end đã chạy chưa, và điện thoại có chung mạng với máy tính không.',
 
     'home.loadingMore': 'Đang tải thêm...',
     'home.noMore': 'Đã hiển thị tất cả',
@@ -302,8 +301,7 @@ export const words = {
     'home.emptyTitle': 'No posts yet',
     'home.emptySub': 'Tap the + button below to post the first one',
     'home.errorTitle': 'Connection error',
-    'home.errorText':
-      'Could not reach the server. Check that the back-end is running and the address in src/config.js.',
+    'home.errorText': 'Could not reach the server at {url}. Check the back-end is running, and that the phone shares a network with the computer.',
 
     'home.loadingMore': 'Loading more...',
     'home.noMore': 'That is everything',

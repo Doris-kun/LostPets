@@ -12,6 +12,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api';
+import { API_URL } from '../config';
 import PetCard from '../components/PetCard';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
 import { useLanguage } from '../context/language';
@@ -376,7 +377,7 @@ function EmptyState({ hasError }) {
         <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.emptyLogo} />
       </View>
       <Text style={styles.emptyTitle}>{t(hasError ? 'home.errorTitle' : 'home.emptyTitle')}</Text>
-      <Text style={styles.emptyText}>{t(hasError ? 'home.errorText' : 'home.emptySub')}</Text>
+      <Text style={styles.emptyText}>{hasError ? t('home.errorText', { url: API_URL }) : t('home.emptySub')}</Text>
     </View>
   );
 }

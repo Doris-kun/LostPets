@@ -59,7 +59,27 @@ const PORT = 3000;
  *   - Máy ảo Android: trả về 10.0.2.2, vốn đã đúng sẵn nên cũng không sao
  */
 function detectHost() {
-  const url = NativeModules?.SourceCode?.scriptURL;
+  /*
+   * Phải thử hai cách, vì SDK 58 bật "kiến trúc mới" của React Native:
+   *
+   *   getDevServer()                  — cách hiện hành, đọc qua lớp mới
+   *   NativeModules.SourceCode        — cách cũ, kiến trúc mới KHÔNG còn
+   *
+   * Trước đây tôi chỉ dùng cách cũ. Nó im lặng trả về undefined sau khi nâng
+   * SDK, nên app âm thầm rơi về LAN_IP dự phòng đã lạc hậu — và báo "lỗi kết
+   * nối" mà không nói là đang gọi vào đâu.
+   */
+  let url = null;
+
+  try {
+    const devServer = require('react-native/Libraries/Core/Devtools/getDevServer').default();
+    // bundleLoadedFromServer = false nghĩa là chạy bản đóng gói sẵn (APK thật)
+    if (devServer?.bundleLoadedFromServer) url = devServer.url;
+  } catch {
+    // Không có module này thì xuống cách dưới
+  }
+
+  if (!url) url = NativeModules?.SourceCode?.scriptURL ?? null;
   if (typeof url !== 'string') return null;
 
   const match = /^https?:\/\/([^:/]+)/.exec(url);
@@ -68,7 +88,7 @@ function detectHost() {
 
 // Địa chỉ dự phòng, chỉ dùng khi tự tìm không ra.
 // Xem IP hiện tại: mở PowerShell gõ  ipconfig  rồi tìm dòng IPv4 Address.
-const LAN_IP = '192.168.1.5';
+const LAN_IP = '172.20.10.4';
 
 /*
  * CÔNG TẮC PHỤ: ép dùng địa chỉ máy ảo Android.
