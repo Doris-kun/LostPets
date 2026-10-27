@@ -249,8 +249,13 @@ export default {
         claim.save(data._id, data.claimCode);
         this.$toast(`${this.$t('claim.saved')} ${data.claimCode}`);
         this.$router.push('/');
-      } catch {
-        this.error = this.$t('form.error');
+      } catch (err) {
+        const status = err.response && err.response.status;
+        const message = err.response && err.response.data && err.response.data.message;
+        // 413 là ảnh vượt giới hạn dung lượng — nói thẳng để người dùng biết
+        // phải đổi ảnh, chứ không phải lỗi chung chung của máy chủ.
+        if (status === 413) this.error = message || this.$t('form.tooLarge');
+        else this.error = this.$t('form.error');
       } finally {
         this.loading = false;
       }

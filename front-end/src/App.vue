@@ -4,7 +4,7 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <!-- Logo -->
         <router-link to="/" class="flex items-center gap-2.5">
-          <img src="/logo.png" alt="Lost Pets" class="w-9 h-9 rounded-full shadow-sm"/>
+          <img src="/logo.png" alt="Lost Pets" class="w-9 h-9"/>
           <span class="text-lg font-bold text-gray-900 tracking-tight">Lost Pets</span>
         </router-link>
 
