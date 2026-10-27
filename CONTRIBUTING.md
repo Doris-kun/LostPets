@@ -1,6 +1,6 @@
 # Hướng dẫn tham gia dự án
 
-Tài liệu cho người mới vào dự án Lost Pets. Đọc hết một lượt rồi làm theo thứ tự.
+Tài liệu cho người mới vào dự án LostPets. Đọc hết một lượt rồi làm theo thứ tự.
 
 Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **MEVN** — MongoDB, Express, Vue 2, Node.js. Không có đăng nhập, mọi tính năng đều public.
 
