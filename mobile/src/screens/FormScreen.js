@@ -393,11 +393,10 @@ export default function FormScreen({ route, navigation }) {
        */
       const known = [400, 403, 413, 502].includes(status);
       const serverFault = status >= 500;
-      // TẠM: kèm nguyên văn lỗi để chẩn đoán, gỡ sau khi tìm ra nguyên nhân
-      const detail = `
-
-[${status || 'không có mã'}] ${err.message || ''}`;
-      Alert.alert(t('form.failTitle'), t(known ? `form.err.${status}` : serverFault ? 'form.err.server' : 'form.err.network') + detail);
+      Alert.alert(
+        t('form.failTitle'),
+        t(known ? `form.err.${status}` : serverFault ? 'form.err.server' : 'form.err.network'),
+      );
       setSaving(false);
     }
   };
