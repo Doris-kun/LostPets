@@ -75,4 +75,14 @@ export default {
   login: (data) => http.post('/auth/login', data),
   me: () => http.get('/auth/me'),
   myPets: () => http.get('/pets/mine'),
+
+  /*
+   * Quản trị. Back-end chặn cả ba đường này bằng requireAdmin, nên người
+   * thường có gọi thẳng cũng chỉ nhận 403 — việc giấu nút đi ở màn Cài đặt
+   * chỉ là cho gọn mắt, KHÔNG phải là lớp bảo vệ.
+   */
+  adminStats: () => http.get('/admin/stats'),
+  adminPets: (params) => http.get('/admin/pets', { params }),
+  // Quản trị viên xoá được bất kỳ tin nào, không cần mã xác nhận.
+  adminDeletePet: (id) => http.delete(`/admin/pets/${id}`),
 };

@@ -72,6 +72,21 @@ export default function SettingsScreen({ navigation }) {
             )}
           </View>
 
+          {/*
+            Lối vào trang quản trị. Giấu với người thường CHỈ để cho gọn mắt —
+            chặn thật nằm ở back-end (requireAdmin), nên lộ nút ra cũng không
+            vào được.
+          */}
+          {isAdmin && (
+            <TouchableOpacity
+              style={styles.adminButton}
+              onPress={() => navigation.navigate('Admin')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.adminButtonText}>{t('admin.link')}</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
             <Text style={styles.logoutText}>{t('auth.logout')}</Text>
           </TouchableOpacity>
@@ -215,6 +230,17 @@ const themedStyles = createThemedStyles((colors) =>
       alignItems: 'center',
     },
     logoutText: { fontSize: 14, fontWeight: '700', color: colors.danger },
+
+    // Cùng khuôn với nút Đăng xuất để hai nút xếp thẳng hàng, chỉ khác màu chữ
+    adminButton: {
+      marginTop: spacing.lg,
+      paddingVertical: 12,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      alignItems: 'center',
+    },
+    adminButtonText: { fontSize: 14, fontWeight: '700', color: colors.primary },
 
     guestTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
     guestText: { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginTop: 6 },

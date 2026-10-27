@@ -17,6 +17,7 @@ import AuthScreen from './src/screens/AuthScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import MyPetsScreen from './src/screens/MyPetsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import AdminScreen from './src/screens/AdminScreen';
 import SplashScreen from './src/screens/SplashScreen';
 
 /*
@@ -218,6 +219,12 @@ function RootStack() {
       {/* Tiêu đề màn này do chính nó đặt, tuỳ đang ở tab Đăng nhập hay Đăng ký */}
       <Stack.Screen name="Auth" component={AuthScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: t('chat.title') }} />
+      {/*
+        Trang quản trị nằm trong Stack chứ không phải một tab riêng: chỉ một
+        số rất ít tài khoản vào được, thêm hẳn một tab cho mọi người nhìn thấy
+        là thừa. Lối vào ở màn Cài đặt, chỉ hiện với quản trị viên.
+      */}
+      <Stack.Screen name="Admin" component={AdminScreen} options={{ title: t('admin.title') }} />
     </Stack.Navigator>
   );
 }
