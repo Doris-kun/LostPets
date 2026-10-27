@@ -57,9 +57,25 @@ export const FOCUS_ZOOM = 15;
  */
 export const AREA_RADIUS_M = 550;
 
+/*
+ * Đổi một giá trị sang số, nhưng "chưa có gì" phải ra NaN chứ không ra 0.
+ *
+ * CẨN THẬN VỚI Number(): Number(null) ra 0, Number('') cũng ra 0, mà 0 lại là
+ * một toạ độ hợp lệ — đúng giữa Đại Tây Dương, ngoài khơi châu Phi.
+ *
+ * Đây là lỗi tôi đã mắc thật, và nó rất khó nhìn ra: app không hề báo lỗi,
+ * bản đồ vẫn chạy ngon lành, chỉ là nó hiện một vùng biển xanh nhạt mênh mông.
+ * Nhìn như bản đồ không tải được, nên tôi đi sửa nhầm hai lần — đổ cho bộ lọc
+ * màu, rồi đổ cho nhà cung cấp ô bản đồ.
+ *
+ * Back-end cũng có đúng cái bẫy này và đã chú thích sẵn, xem pickEditable
+ * trong api/controllers/petController.js. Tôi đọc qua rồi vẫn dẫm phải.
+ */
+const toNumber = (v) => (v === null || v === undefined || v === '' ? NaN : Number(v));
+
 // Toạ độ chỉ dùng được khi có đủ cả hai. Thiếu một nửa thì coi như chưa có.
 export const hasPoint = (o) =>
-  !!o && Number.isFinite(Number(o.lat)) && Number.isFinite(Number(o.lng));
+  !!o && Number.isFinite(toNumber(o.lat)) && Number.isFinite(toNumber(o.lng));
 
 /*
  * Mở app bản đồ của chính điện thoại để chỉ đường.
@@ -126,15 +142,10 @@ ${
       ? `  /*
    * CHẾ ĐỘ TỐI. OpenStreetMap chỉ có nền sáng nên phải tự đảo màu.
    *
-   * Đặt bộ lọc lên .leaflet-tile — tức TỪNG ảnh ô bản đồ — chứ KHÔNG phải lên
-   * .leaflet-tile-pane là cái khung chứa tất cả. Đây là điểm khác nhau quan
-   * trọng, và là chỗ lần trước tôi làm sai:
-   *
-   *   lọc cả khung  -> trình duyệt gộp mọi ô thành một lớp vẽ chung. Ô mới tải
-   *                    xong thì nội dung lớp đổi, nhưng lớp đã lọc màu không
-   *                    nhất thiết được vẽ lại -> bản đồ trống trơn.
-   *   lọc từng ảnh  -> cái bị lọc CHÍNH LÀ cái vừa đổi nội dung, nên trình
-   *                    duyệt buộc phải vẽ lại nó.
+   * Đặt bộ lọc lên .leaflet-tile — tức từng ảnh ô bản đồ — chứ không phải lên
+   * .leaflet-tile-pane là cái khung chứa tất cả. Lọc cả khung thì trình duyệt
+   * phải gộp mọi ô thành một lớp vẽ chung rồi lọc một lượt, nặng hơn và vẽ lại
+   * nhiều hơn mức cần.
    *
    * hue-rotate đi kèm invert để màu không bị lộn ngược: đảo màu đơn thuần thì
    * biển xanh thành cam, cây xanh lá thành hồng.
@@ -189,29 +200,6 @@ ${
     detectRetina: true,
   }).addTo(map);
 
-${
-  isDark
-    ? `  /*
-   * BẮT WEBKIT VẼ LẠI khi ô bản đồ vừa tải xong.
-   *
-   * Ở chế độ tối, ảnh ô bản đồ bị lọc màu bằng CSS. Nhân trình duyệt của
-   * iPhone đôi khi KHÔNG vẽ lại phần đã lọc màu khi ảnh bên trong vừa về —
-   * kết quả là mở bản đồ ra thấy trống trơn, phải kéo một cái mới hiện.
-   * Chính là lỗi đã gặp thật, không phải phòng xa.
-   *
-   * Đặt bộ lọc lên TỪNG ảnh một (xem .leaflet-tile bên trên) đã đỡ hơn nhiều
-   * so với đặt lên cả lớp, nhưng vẫn thêm cú huých này cho chắc: đổi độ mờ
-   * một chút xíu rồi trả lại ngay. Mắt không thấy được, nhưng đủ để trình
-   * duyệt buộc phải vẽ lại.
-   */
-  tiles.on('load', function () {
-    var el = map.getContainer();
-    el.style.opacity = '0.999';
-    requestAnimationFrame(function () { el.style.opacity = ''; });
-  });
-`
-    : ''
-}
   // Pin tự vẽ bằng HTML. Ảnh pin mặc định của Leaflet hỏng đường dẫn khi nhúng
   // kiểu này, mà vẽ tay thì còn đổi được màu theo loại tin.
   function pin(color) {
