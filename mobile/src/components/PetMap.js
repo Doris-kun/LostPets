@@ -16,18 +16,15 @@ import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing, statusStyle } from '../theme';
 import { directionsUrl, hasPoint, mapHtml } from '../map';
-import PetCard from './PetCard';
 
 /*
  * Bản đồ của app. Một component, hai việc — chọn bằng prop mode:
  *
- *   mode="view"  hiện pin của nhiều tin (trang chủ, màn chi tiết)
+ *   mode="view"  hiện vị trí của tin (màn chi tiết)
  *   mode="pick"  chọn một điểm (màn đăng / sửa bài)
  *
  * Gộp hai việc vào một file vì phần khó nằm ở chỗ nói chuyện với WebView, và
  * phần đó y nhau cho cả hai. Tách ra thì phải chép lại, sửa một bên quên bên kia.
- *
- * Tương đương PetMap.vue + MapPicker.vue bên web.
  */
 
 /*
@@ -51,7 +48,7 @@ import PetCard from './PetCard';
  * Dùng chuỗi thay vì object để React so sánh được bằng ===: chuỗi không đổi
  * thì không tiêm lại, khỏi vẽ lại bản đồ vô ích.
  */
-function MapCanvas({ pick = false, interactive = true, payload, onSelect, onPick, style }) {
+function MapCanvas({ pick = false, interactive = true, payload, onPick, commitRef, style }) {
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
   const styles = useThemedStyles(themedStyles);
@@ -65,6 +62,20 @@ function MapCanvas({ pick = false, interactive = true, payload, onSelect, onPick
   useEffect(() => {
     setReady(false);
   }, [html]);
+
+  /*
+   * Đưa cách "chốt điểm đang ngắm" ra ngoài cho component cha gọi.
+   *
+   * Gán vào ref chứ không truyền hàm xuống, vì hướng gọi là NGƯỢC: thường con
+   * báo lên cha, còn đây là cha ra lệnh cho con.
+   */
+  useEffect(() => {
+    if (!commitRef) return;
+    commitRef.current = () => ref.current?.injectJavaScript('window.lp.commit(); true;');
+    return () => {
+      commitRef.current = null;
+    };
+  }, [commitRef]);
 
   useEffect(() => {
     if (!ready || !payload) return;
@@ -81,8 +92,6 @@ function MapCanvas({ pick = false, interactive = true, payload, onSelect, onPick
     }
 
     if (msg.type === 'ready') setReady(true);
-    else if (msg.type === 'select') onSelect?.(msg.id);
-    else if (msg.type === 'blur') onSelect?.(null);
     else if (msg.type === 'pick') onPick?.({ lat: msg.lat, lng: msg.lng });
   };
 
@@ -125,7 +134,6 @@ export default function PetMap({
   mode = 'view',
   // mode="view"
   pets = [],
-  onOpenPet,
   // mode="pick"
   lat = null,
   lng = null,
@@ -144,49 +152,51 @@ export default function PetMap({
   const isPick = mode === 'pick';
 
   const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
   const [locating, setLocating] = useState(false);
+  const commitPoint = useRef(null);
   const [error, setError] = useState('');
 
   /*
-   * Có đưa khung nhìn về điểm đang chọn hay không.
+   * Có dời khung nhìn về điểm đang chọn hay không.
    *
-   * Phải phân biệt, nếu không bản đồ nhảy về giữa sau MỖI lần kéo pin — kéo ra
-   * mép rồi bản đồ tự giật lại, không ai chỉnh được. Chỉ đưa khung nhìn về khi
-   * điểm đến từ BÊN NGOÀI bản đồ: lần đầu mở ra, hoặc bấm "dùng vị trí của tôi".
+   * Phải phân biệt, vì chấm chỉ điểm đứng yên giữa màn hình: dời khung nhìn
+   * tức là dời luôn điểm chọn. Người dùng vừa tự kéo bản đồ xong mà mình lại
+   * dời về giữa và phóng lại mức cũ thì công kéo của họ mất sạch.
+   *
+   * Chỉ dời khi điểm đến từ BÊN NGOÀI bản đồ: lúc mới mở ra, hoặc bấm "dùng
+   * vị trí của tôi".
    */
   const [focus, setFocus] = useState(true);
 
   const point = hasPoint({ lat, lng }) ? { lat: Number(lat), lng: Number(lng) } : null;
 
-  // Tin không có toạ độ thì không vẽ được. Đếm lại để nói thật với người dùng
-  // là bản đồ đang thiếu bao nhiêu tin, thay vì im lặng bỏ qua.
-  const located = useMemo(() => pets.filter(hasPoint), [pets]);
-  const missing = pets.length - located.length;
-
   /*
-   * Chỉ gửi sang WebView đúng bốn thứ bản đồ cần: id, toạ độ, màu.
+   * Câu lệnh tiêm sang WebView.
    *
-   * KHÔNG gửi tên hay mô tả con vật. Hai lý do: chữ nghĩa phải theo ngôn ngữ
-   * và chế độ màu người dùng đang chọn, mà trang HTML không biết những thứ đó;
-   * và chữ do người dùng gõ nhét vào mã JavaScript là chỗ dễ sinh lỗi nhất.
-   * Màu lấy từ statusStyle nên pin trùng đúng màu nhãn trạng thái trong app.
+   * Chỉ gửi đúng thứ bản đồ cần. KHÔNG gửi tên hay mô tả con vật: chữ nghĩa
+   * phải theo ngôn ngữ và chế độ màu người dùng đang chọn, mà trang HTML không
+   * biết những thứ đó; và chữ do người dùng gõ nhét vào mã JavaScript là chỗ
+   * dễ sinh lỗi nhất. Màu lấy từ statusStyle nên pin trùng màu nhãn trạng thái.
    */
-  const payload = useMemo(() => {
-    if (isPick) {
-      const color = colors.primary;
-      if (!point) return `window.lp.setPoint(null, null, '${color}', false)`;
-      return `window.lp.setPoint(${point.lat}, ${point.lng}, '${color}', ${focus})`;
-    }
-
-    const markers = located.map((p) => ({
-      id: p._id,
+  const petsPayload = useMemo(() => {
+    const markers = pets.filter(hasPoint).map((p) => ({
       lat: Number(p.lat),
       lng: Number(p.lng),
       color: statusStyle(p, colors).color,
     }));
     return `window.lp.setPets(${JSON.stringify(markers)})`;
-  }, [isPick, point?.lat, point?.lng, focus, located, colors]);
+  }, [pets, colors]);
+
+  /*
+   * Bản xem trước và bản toàn màn hình cần giá trị focus KHÁC NHAU, nên dựng
+   * câu lệnh theo yêu cầu chứ không dùng chung một chuỗi:
+   *   - xem trước: luôn dời về điểm đã chọn, vì nó chỉ để nhìn
+   *   - toàn màn hình: chỉ dời lúc mới mở, sau đó để người dùng tự kéo
+   */
+  const pointPayload = (withFocus) =>
+    point
+      ? `window.lp.setPoint(${point.lat}, ${point.lng}, '${colors.primary}', ${withFocus})`
+      : `window.lp.setPoint(null, null, '${colors.primary}', false)`;
 
   const emit = (next, fromMap) => {
     setError('');
@@ -196,8 +206,15 @@ export default function PetMap({
 
   const clear = () => {
     setError('');
-    setFocus(true); // lần sau chọn lại thì đưa khung nhìn về điểm mới
+    setFocus(true); // lần sau chọn lại thì dời khung nhìn về điểm mới
     onChange?.({ lat: null, lng: null });
+  };
+
+  // Mở ra là dời khung nhìn về điểm đã chọn, nếu không chấm giữa màn hình sẽ
+  // nằm ở chỗ khác hẳn với điểm đang lưu.
+  const openPicker = () => {
+    setFocus(true);
+    setOpen(true);
   };
 
   const useMyLocation = async () => {
@@ -237,8 +254,6 @@ export default function PetMap({
     }
   };
 
-  const selected = selectedId ? located.find((p) => p._id === selectedId) : null;
-
   const canvasHeight = height ?? (isPick ? 150 : 220);
 
   /*
@@ -248,8 +263,8 @@ export default function PetMap({
    * Pressable: WebView là view của hệ điều hành, nó ăn hết cú chạm, Pressable
    * bọc ngoài sẽ không bao giờ nổ. Lớp phủ thì chắc chắn nhận được.
    *
-   * Phủ lên cũng làm dòng ghi nguồn OpenStreetMap mất tính bấm được — vẫn HIỆN
-   * ra, nên vẫn đúng điều khoản của họ. Bản toàn màn hình bấm được bình thường.
+   * Phủ lên cũng làm dòng ghi nguồn mất tính bấm được — vẫn HIỆN ra, nên vẫn
+   * đúng điều khoản. Bản toàn màn hình bấm được bình thường.
    */
   const preview = (
     <View style={[styles.previewBox, { height: canvasHeight }]}>
@@ -258,10 +273,16 @@ export default function PetMap({
        * Để cả hai thì có hai WebView cùng chạy một bản đồ — máy yếu rất ì, mà
        * cái bên dưới đang bị che, không ai nhìn thấy.
        */}
-      {!open && <MapCanvas pick={isPick} interactive={false} payload={payload} />}
+      {!open && (
+        <MapCanvas
+          pick={isPick}
+          interactive={false}
+          payload={isPick ? pointPayload(true) : petsPayload}
+        />
+      )}
 
       {(isPick || expandable) && (
-        <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(true)} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={openPicker} />
       )}
     </View>
   );
@@ -269,57 +290,6 @@ export default function PetMap({
   // ---- mode="view" --------------------------------------------------------
 
   if (!isPick) {
-    /*
-     * Nhận interactive qua tham số chứ không đọc prop.
-     *
-     * Bản xem trước phải tĩnh, nhưng bản mở toàn màn hình thì BẮT BUỘC phải
-     * thao tác được — mở to ra mà không kéo không phóng được thì mở để làm gì.
-     * Dùng thẳng prop interactive ở đây là khoá cả hai, đúng là lỗi tôi vừa mắc.
-     */
-    const renderCanvas = (live) => (
-      <View style={styles.viewWrap}>
-        <MapCanvas
-          interactive={live}
-          payload={payload}
-          onSelect={onOpenPet ? setSelectedId : undefined}
-          style={styles.fill}
-        />
-
-        {missing > 0 && (
-          <View style={styles.chip} pointerEvents="none">
-            <Text style={styles.chipText}>{t('map.withoutCoords', { n: missing })}</Text>
-          </View>
-        )}
-
-        {located.length === 0 && (
-          <View style={styles.empty} pointerEvents="none">
-            <Text style={styles.emptyText}>{t('map.noLocated')}</Text>
-          </View>
-        )}
-
-        {/* Bấm vào pin thì hiện thẻ tin ở đáy — dùng đúng thẻ của danh sách,
-            nên không phải dịch hay tô màu lại lần nữa. */}
-        {selected && (
-          <View style={[styles.selected, { paddingBottom: insets.bottom + spacing.sm }]}>
-            <PetCard
-              pet={selected}
-              onPress={() => {
-                setSelectedId(null);
-                onOpenPet?.(selected._id);
-              }}
-            />
-            <TouchableOpacity
-              style={styles.selectedClose}
-              onPress={() => setSelectedId(null)}
-              hitSlop={10}
-            >
-              <Text style={styles.selectedCloseText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    );
-
     // Bản đồ tĩnh nhúng trong màn cuộn: hiện bản xem trước, chạm để mở to.
     if (!interactive) {
       return (
@@ -333,14 +303,20 @@ export default function PetMap({
                   <Text style={styles.modalDone}>{t('map.done')}</Text>
                 </TouchableOpacity>
               </View>
-              {renderCanvas(true)}
+              {/* Mở to ra thì BẮT BUỘC phải kéo và phóng được, không thì mở
+                  ra để làm gì — nên ép interactive chứ không đọc prop. */}
+              <MapCanvas interactive payload={petsPayload} style={styles.fill} />
             </View>
           </Modal>
         </View>
       );
     }
 
-    return <View style={[styles.fill, style]}>{renderCanvas(true)}</View>;
+    return (
+      <View style={[styles.fill, style]}>
+        <MapCanvas interactive payload={petsPayload} style={styles.fill} />
+      </View>
+    );
   }
 
   // ---- mode="pick" --------------------------------------------------------
@@ -352,7 +328,7 @@ export default function PetMap({
       {preview}
 
       <View style={styles.row}>
-        <TouchableOpacity style={styles.btn} onPress={() => setOpen(true)}>
+        <TouchableOpacity style={styles.btn} onPress={openPicker}>
           <Text style={styles.btnText}>{t(point ? 'map.change' : 'map.open')}</Text>
         </TouchableOpacity>
 
@@ -375,25 +351,40 @@ export default function PetMap({
         <View style={styles.modal}>
           <View style={[styles.modalHead, { paddingTop: insets.top + spacing.sm }]}>
             <Text style={styles.modalTitle}>{t('map.label')}</Text>
-            <TouchableOpacity onPress={() => setOpen(false)} hitSlop={10}>
+            {/* Chốt chỗ đang ngắm RỒI mới đóng. Cần vậy cho trường hợp mở ra,
+                không kéo gì cả, bấm Xong luôn — lúc đó moveend chưa hề nổ. */}
+            <TouchableOpacity
+              onPress={() => {
+                commitPoint.current?.();
+                setOpen(false);
+              }}
+              hitSlop={10}
+            >
               <Text style={styles.modalDone}>{t('map.done')}</Text>
             </TouchableOpacity>
           </View>
 
           <Text style={styles.modalHint}>{t('map.hint')}</Text>
 
-          <MapCanvas pick interactive payload={payload} onPick={(p) => emit(p, true)} style={styles.fill} />
+          <MapCanvas
+            pick
+            interactive
+            payload={pointPayload(focus)}
+            onPick={(p) => emit(p, true)}
+            commitRef={commitPoint}
+            style={styles.fill}
+          />
 
+          {/*
+            Chỉ còn nút "dùng vị trí của tôi". Nút xoá vị trí cố ý KHÔNG có ở
+            đây: chấm giữa màn hình luôn là điểm đang chọn, xoá xong thì chấm
+            vẫn nằm đó và lập tức chọn lại chính chỗ cũ — bấm như không bấm.
+            Muốn bỏ hẳn vị trí thì đóng lại rồi xoá ở ngoài form.
+          */}
           <View style={[styles.modalFoot, { paddingBottom: insets.bottom + spacing.sm }]}>
             <TouchableOpacity style={styles.btn} onPress={useMyLocation} disabled={locating}>
               <Text style={styles.btnText}>{t(locating ? 'map.locating' : 'map.useMyLocation')}</Text>
             </TouchableOpacity>
-
-            {point && (
-              <TouchableOpacity style={styles.btnPlain} onPress={clear}>
-                <Text style={styles.btnPlainText}>{t('map.clear')}</Text>
-              </TouchableOpacity>
-            )}
           </View>
 
           {!!error && <Text style={[styles.error, styles.modalError]}>{error}</Text>}
@@ -425,9 +416,9 @@ export function DirectionsButton({ lat, lng }) {
   );
 }
 
-const themedStyles = createThemedStyles((colors, shadow) =>
+const themedStyles = createThemedStyles((colors) =>
   StyleSheet.create({
-      fill: { flex: 1 },
+    fill: { flex: 1 },
 
     canvas: {
       flex: 1,
@@ -456,60 +447,6 @@ const themedStyles = createThemedStyles((colors, shadow) =>
       backgroundColor: colors.surfaceTint,
     },
 
-    // --- mode="view" ---
-    viewWrap: { flex: 1, backgroundColor: colors.surfaceTint },
-
-    chip: {
-      position: 'absolute',
-      top: spacing.sm,
-      left: spacing.sm,
-      right: spacing.sm,
-      backgroundColor: colors.surface,
-      borderRadius: radius.full,
-      paddingVertical: 6,
-      paddingHorizontal: spacing.md,
-      ...shadow.card,
-    },
-    chipText: { color: colors.textSoft, fontSize: 11, textAlign: 'center' },
-
-    empty: {
-      ...StyleSheet.absoluteFillObject,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: spacing.xl,
-    },
-    emptyText: {
-      color: colors.textSoft,
-      fontSize: 13,
-      textAlign: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      padding: spacing.md,
-      overflow: 'hidden',
-    },
-
-    selected: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-      paddingHorizontal: spacing.md,
-    },
-    selectedClose: {
-      position: 'absolute',
-      top: -6,
-      right: spacing.md - 6,
-      width: 28,
-      height: 28,
-      borderRadius: radius.full,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-      ...shadow.card,
-    },
-    selectedCloseText: { color: colors.textSoft, fontSize: 13, fontWeight: '700' },
-
-    // --- mode="pick" ---
     label: {
       color: colors.textMuted,
       fontSize: 11,
