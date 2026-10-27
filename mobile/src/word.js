@@ -236,7 +236,7 @@ export const words = {
     'form.err.413': 'Ảnh quá lớn. Server chỉ nhận ảnh tối đa 5MB.',
 
     'map.label': 'VỊ TRÍ TRÊN BẢN ĐỒ',
-    'map.hint': 'Chạm vào bản đồ để đánh dấu nơi mất hoặc nơi nhặt được. Kéo chấm tròn để chỉnh lại.',
+    'map.hint': 'Kéo bản đồ cho tới khi nơi mất hoặc nơi nhặt được nằm dưới chấm tròn ở giữa, rồi bấm Xong.',
     'map.open': 'Chọn trên bản đồ',
     'map.change': 'Chọn lại',
     'map.useMyLocation': 'Dùng vị trí của tôi',
@@ -476,7 +476,7 @@ export const words = {
     'form.err.413': 'The photo is too large. The server accepts at most 5MB.',
 
     'map.label': 'LOCATION ON MAP',
-    'map.hint': 'Tap the map to mark where the pet was lost or found. Drag the dot to adjust.',
+    'map.hint': 'Drag the map until the spot where the pet was lost or found sits under the dot in the middle, then tap Done.',
     'map.open': 'Pick on map',
     'map.change': 'Pick again',
     'map.useMyLocation': 'Use my location',

@@ -19,31 +19,23 @@
 const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4';
 
 /*
- * NỀN BẢN ĐỒ.
+ * NỀN BẢN ĐỒ — dùng OpenStreetMap: không khoá, không tài khoản, không thẻ.
  *
- * Lúc đầu tôi dùng nền gốc của OpenStreetMap cho cả hai chế độ, rồi ĐẢO MÀU
- * bằng CSS để ra chế độ tối. Cách đó hỏng theo hai kiểu, thấy ngay khi chạy thật:
+ * Tôi đã thử đổi sang nền của CARTO cho đẹp hơn và SAI: nền của họ giờ bắt
+ * phải có khoá API. Ô bản đồ vẫn trả về ảnh thật nhưng đóng dấu chìm
+ * "API KEY REQUIRED" đè lên. Tôi lại đi kiểm tra bằng mã trả về HTTP, thấy 200
+ * nên tưởng chạy được — mã 200 chỉ nói máy chủ CÓ trả lời, không nói thứ trả
+ * về dùng được. Bài học: kiểm tra ảnh thì phải nhìn vào ảnh.
  *
- *   1. Ảnh bị lọc màu nên nhạt và mờ hẳn đi — chữ đường phố khó đọc.
- *   2. WebKit (nhân trình duyệt của iPhone) nhiều khi KHÔNG vẽ lại lớp đã lọc
- *      màu khi ảnh trong đó vừa tải xong. Kết quả: mở bản đồ ra thấy trống
- *      trơn, phải kéo hoặc phóng một cái thì ô bản đồ mới chịu hiện.
+ * Google Maps cũng không dùng được, còn vướng hơn: khoá của họ bắt gắn thẻ
+ * tín dụng.
  *
- * Nên đổi sang nền của CARTO: họ có sẵn một bộ nền tối thật, không phải đảo
- * màu, nên bỏ hẳn được bộ lọc CSS — hết cả hai lỗi trên.
- *
- * Nền này cũng miễn phí, không cần khoá, và quan trọng là hỗ trợ {r}: trên
- * màn hình điện thoại mật độ cao, Leaflet tự xin bản ảnh @2x nên bản đồ NÉT
- * hơn hẳn mà KHÔNG tốn thêm lượt tải (vẫn đúng từng ấy ô, chỉ ảnh to gấp đôi).
- *
- * Dữ liệu vẫn là của OpenStreetMap, CARTO chỉ vẽ lại — nên phải ghi nguồn cả hai.
+ * Đổi lại, OpenStreetMap chỉ có nền SÁNG. Chế độ tối phải tự lo — xem phần
+ * giải thích ở chỗ đặt bộ lọc màu bên dưới.
  */
-const TILES = {
-  light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-};
+const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 // Mặc định nhìn về TP.HCM, nơi phần lớn tin đang tập trung. Giống web.
 export const DEFAULT_CENTER = [10.776, 106.7];
@@ -129,8 +121,30 @@ export function mapHtml({ pick = false, interactive = true, isDark = false } = {
     display: none;
   }
 
-  /* Dòng ghi nguồn — BẮT BUỘC theo điều khoản của OpenStreetMap và CARTO,
-     không được bỏ. Chỉ thu nhỏ lại cho vừa màn hình điện thoại. */
+${
+    isDark
+      ? `  /*
+   * CHẾ ĐỘ TỐI. OpenStreetMap chỉ có nền sáng nên phải tự đảo màu.
+   *
+   * Đặt bộ lọc lên .leaflet-tile — tức TỪNG ảnh ô bản đồ — chứ KHÔNG phải lên
+   * .leaflet-tile-pane là cái khung chứa tất cả. Đây là điểm khác nhau quan
+   * trọng, và là chỗ lần trước tôi làm sai:
+   *
+   *   lọc cả khung  -> trình duyệt gộp mọi ô thành một lớp vẽ chung. Ô mới tải
+   *                    xong thì nội dung lớp đổi, nhưng lớp đã lọc màu không
+   *                    nhất thiết được vẽ lại -> bản đồ trống trơn.
+   *   lọc từng ảnh  -> cái bị lọc CHÍNH LÀ cái vừa đổi nội dung, nên trình
+   *                    duyệt buộc phải vẽ lại nó.
+   *
+   * hue-rotate đi kèm invert để màu không bị lộn ngược: đảo màu đơn thuần thì
+   * biển xanh thành cam, cây xanh lá thành hồng.
+   */
+  .leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(0.95); }
+
+`
+      : ''
+  }  /* Dòng ghi nguồn — BẮT BUỘC theo điều khoản của OpenStreetMap, không được
+     bỏ. Chỉ thu nhỏ lại cho vừa màn hình điện thoại. */
   .leaflet-control-attribution { font-size: 9px; background: rgba(255, 255, 255, 0.75); }
 </style>
 </head>
@@ -161,13 +175,43 @@ export function mapHtml({ pick = false, interactive = true, isDark = false } = {
     attributionControl: true,
   }).setView([${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}], ${DEFAULT_ZOOM});
 
-  L.tileLayer('${isDark ? TILES.dark : TILES.light}', {
-    maxZoom: 20,
-    // Bốn tên miền con để trình duyệt tải nhiều ô song song thay vì xếp hàng
-    subdomains: 'abcd',
+  var tiles = L.tileLayer('${TILE_URL}', {
+    maxZoom: 19,
     attribution: '${TILE_ATTRIBUTION}',
+    /*
+     * Màn hình điện thoại có mật độ điểm ảnh gấp 2-3 lần màn máy tính, nên ô
+     * bản đồ 256 điểm bị kéo giãn ra, nhìn mờ. Bật cái này thì Leaflet xin ô
+     * của mức phóng sâu hơn một bậc rồi vẽ nhỏ lại — nét gấp đôi.
+     *
+     * Cái giá: số ô phải tải tăng gấp bốn. Chấp nhận được với một app ít
+     * người dùng, nhưng đây là chỗ cần xem lại đầu tiên nếu bản đồ tải chậm.
+     */
+    detectRetina: true,
   }).addTo(map);
 
+${
+  isDark
+    ? `  /*
+   * BẮT WEBKIT VẼ LẠI khi ô bản đồ vừa tải xong.
+   *
+   * Ở chế độ tối, ảnh ô bản đồ bị lọc màu bằng CSS. Nhân trình duyệt của
+   * iPhone đôi khi KHÔNG vẽ lại phần đã lọc màu khi ảnh bên trong vừa về —
+   * kết quả là mở bản đồ ra thấy trống trơn, phải kéo một cái mới hiện.
+   * Chính là lỗi đã gặp thật, không phải phòng xa.
+   *
+   * Đặt bộ lọc lên TỪNG ảnh một (xem .leaflet-tile bên trên) đã đỡ hơn nhiều
+   * so với đặt lên cả lớp, nhưng vẫn thêm cú huých này cho chắc: đổi độ mờ
+   * một chút xíu rồi trả lại ngay. Mắt không thấy được, nhưng đủ để trình
+   * duyệt buộc phải vẽ lại.
+   */
+  tiles.on('load', function () {
+    var el = map.getContainer();
+    el.style.opacity = '0.999';
+    requestAnimationFrame(function () { el.style.opacity = ''; });
+  });
+`
+    : ''
+}
   // Pin tự vẽ bằng HTML. Ảnh pin mặc định của Leaflet hỏng đường dẫn khi nhúng
   // kiểu này, mà vẽ tay thì còn đổi được màu theo loại tin.
   function pin(color) {
