@@ -1,4 +1,5 @@
 import { NativeModules, Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 /*
  * Địa chỉ back-end.
@@ -69,17 +70,21 @@ function detectHost() {
    * SDK, nên app âm thầm rơi về LAN_IP dự phòng đã lạc hậu — và báo "lỗi kết
    * nối" mà không nói là đang gọi vào đâu.
    */
-  let url = null;
-
-  try {
-    const devServer = require('react-native/Libraries/Core/Devtools/getDevServer').default();
-    // bundleLoadedFromServer = false nghĩa là chạy bản đóng gói sẵn (APK thật)
-    if (devServer?.bundleLoadedFromServer) url = devServer.url;
-  } catch {
-    // Không có module này thì xuống cách dưới
+  /*
+   * Cách chính: hỏi Expo. hostUri có dạng "172.20.10.4:8081", và trả về null
+   * khi chạy bản đóng gói sẵn (APK thật) — đúng như mong muốn, lúc đó phải
+   * dùng địa chỉ máy chủ thật chứ không phải máy tính của ai.
+   */
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (typeof hostUri === 'string' && hostUri) {
+    return hostUri.split(':')[0];
   }
 
-  if (!url) url = NativeModules?.SourceCode?.scriptURL ?? null;
+  /*
+   * Dự phòng: đọc đường dẫn mã nguồn đã tải. Cách này cũ, kiến trúc mới của
+   * React Native có thể không còn, nên chỉ dùng khi cách trên không ra.
+   */
+  const url = NativeModules?.SourceCode?.scriptURL;
   if (typeof url !== 'string') return null;
 
   const match = /^https?:\/\/([^:/]+)/.exec(url);
