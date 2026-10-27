@@ -109,10 +109,21 @@ export default function FormScreen({ route, navigation }) {
    * Gửi chuỗi rỗng lên trong trường hợp đó là XOÁ MẤT đặc điểm của chủ bài.
    * Nên khi không nhận được trường này thì giấu ô đi và không gửi nó lên.
    */
+  // Ảnh đang lưu trên máy chủ, chỉ hiện khi chưa chọn ảnh mới và chưa bấm xoá
+  const keptImage = isEdit && !removeImage ? pet.image : "";
+
   const canEditSecret = !isEdit || pet.secretDetail !== undefined;
 
   // Ảnh mới chọn từ máy. Chỉ dùng khi đăng mới — PUT không nhận upload file.
   const [image, setImage] = useState(null);
+
+  /*
+   * Người dùng đã bấm xoá ảnh chưa.
+   *
+   * Khác với image = null: null chỉ nghĩa là "chưa chọn ảnh mới", lúc lưu máy
+   * chủ sẽ GIỮ NGUYÊN ảnh cũ. Muốn xoá hẳn thì phải báo riêng bằng cờ này.
+   */
+  const [removeImage, setRemoveImage] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Phần AI: đang chạy, kết quả, và lỗi nếu có
@@ -156,6 +167,7 @@ export default function FormScreen({ route, navigation }) {
 
     const picked = await shrink(result.assets[0]);
     setImage(picked);
+    setRemoveImage(false);
 
     /*
      * Chạy AI NGAY, không chờ người dùng bấm gì.
@@ -246,6 +258,35 @@ export default function FormScreen({ route, navigation }) {
     return true;
   };
 
+  /*
+   * Gói dữ liệu thành FormData để gửi kèm file.
+   *
+   * Gửi file trên React Native khác hẳn web. Web dùng đối tượng File lấy từ
+   * thẻ input. React Native không có File — phải tự mô tả bằng một object
+   * { uri, name, type }, và chính object đó được đưa vào FormData.
+   */
+  const buildFormData = (fields) => {
+    const formData = new FormData();
+    Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+
+    if (image) {
+      const fileName = image.uri.split("/").pop() || "photo.jpg";
+      const extension = fileName.split(".").pop().toLowerCase();
+
+      formData.append("image", {
+        uri: image.uri,
+        name: fileName,
+        type: extension === "png" ? "image/png" : "image/jpeg",
+      });
+    } else if (removeImage) {
+      // Qua FormData mọi giá trị đều thành chuỗi, nên máy chủ nhận "true"
+      // chứ không phải boolean — back-end đã lường trước cả hai kiểu.
+      formData.append("removeImage", "true");
+    }
+
+    return formData;
+  };
+
   const handleSubmit = async () => {
     if (!validate()) return;
 
@@ -258,32 +299,20 @@ export default function FormScreen({ route, navigation }) {
 
     try {
       if (isEdit) {
-        // PUT gửi JSON thường. Không gửi `image` nên ảnh cũ được giữ nguyên.
         const code = await claim.get(pet._id);
-        await api.updatePet(pet._id, payload, code);
+
+        /*
+         * Hai cách gửi, tuỳ có đụng tới ảnh hay không:
+         *
+         *   Không đụng ảnh -> gửi JSON thường. Máy chủ không thấy trường ảnh
+         *                     nên giữ nguyên ảnh cũ.
+         *   Có đụng ảnh    -> phải gửi FormData, vì file không nhét vào JSON
+         *                     được. Kèm theo removeImage nếu muốn xoá hẳn.
+         */
+        const touchesPhoto = Boolean(image) || removeImage;
+        await api.updatePet(pet._id, touchesPhoto ? buildFormData(payload) : payload, code);
       } else {
-        const formData = new FormData();
-        Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
-
-        if (image) {
-          /*
-           * Gửi file trên React Native khác hẳn web.
-           *
-           * Web: append(File) — đối tượng File lấy từ <input type="file">.
-           * RN: không có File. Phải tự mô tả bằng object { uri, name, type },
-           * và chính cái object này được append vào FormData.
-           */
-          const fileName = image.uri.split('/').pop() || 'photo.jpg';
-          const extension = fileName.split('.').pop().toLowerCase();
-
-          formData.append('image', {
-            uri: image.uri,
-            name: fileName,
-            type: extension === 'png' ? 'image/png' : 'image/jpeg',
-          });
-        }
-
-        const { data } = await api.createPet(formData);
+        const { data } = await api.createPet(buildFormData(payload));
 
         /*
          * Back-end trả claimCode đúng MỘT LẦN này, và chỉ lưu bản băm.
@@ -319,7 +348,7 @@ export default function FormScreen({ route, navigation }) {
        * Gộp 5xx vào nhóm "kiểm tra kết nối" là chỉ sai chỗ: người dùng đi
        * kiểm tra Wi-Fi trong khi lỗi nằm ở máy chủ.
        */
-      const known = [400, 403, 413].includes(status);
+      const known = [400, 403, 413, 502].includes(status);
       const serverFault = status >= 500;
       // TẠM: kèm nguyên văn lỗi để chẩn đoán, gỡ sau khi tìm ra nguyên nhân
       const detail = `
@@ -434,16 +463,46 @@ export default function FormScreen({ route, navigation }) {
         )}
 
         {/* Chọn ảnh chỉ có khi đăng mới — PUT /pets/:id không nhận upload file */}
-        {!isEdit && (
+        {(
           <>
             <Text style={styles.sectionLabel}>{t('form.photo')}</Text>
+            {/*
+              Ba trạng thái của khung ảnh:
+                1. Vừa chọn ảnh mới      -> hiện ảnh đó
+                2. Đang sửa, còn ảnh cũ  -> hiện ảnh cũ từ máy chủ
+                3. Chưa có gì            -> khung gạch đứt mời chọn
+            */}
             <TouchableOpacity style={styles.imagePicker} onPress={pickImage} activeOpacity={0.8}>
               {image ? (
                 <Image source={{ uri: image.uri }} style={styles.preview} />
+              ) : keptImage ? (
+                <Image source={{ uri: keptImage }} style={styles.preview} />
               ) : (
                 <Text style={styles.imagePickerText}>{t('form.photoPick')}</Text>
               )}
             </TouchableOpacity>
+
+            {/* Có ảnh thì cho đổi hoặc xoá hẳn */}
+            {(image || keptImage) && (
+              <View style={styles.photoActions}>
+                <Text style={styles.photoAction} onPress={pickImage}>
+                  {t('form.photoChange')}
+                </Text>
+                <Text
+                  style={[styles.photoAction, styles.photoRemove]}
+                  onPress={() => {
+                    setImage(null);
+                    // Đánh dấu để lúc lưu báo máy chủ xoá ảnh. Chỉ bỏ ảnh khỏi
+                    // màn hình thôi thì máy chủ vẫn giữ nguyên ảnh cũ.
+                    setRemoveImage(true);
+                    setAiResult(null);
+                    setAiError('');
+                  }}
+                >
+                  {t('form.photoRemove')}
+                </Text>
+              </View>
+            )}
 
             {/*
               Nút AI chỉ hiện khi đã có ảnh — không có ảnh thì chẳng có gì để
@@ -487,7 +546,6 @@ export default function FormScreen({ route, navigation }) {
           </>
         )}
 
-        {isEdit && <Text style={styles.note}>{t('form.noImageEdit')}</Text>}
 
         <TouchableOpacity
           style={[styles.submit, saving && styles.disabled]}
@@ -614,6 +672,10 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   aiConfidence: { fontWeight: '800' },
   aiErrorText: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
   aiRetry: { fontSize: 12, fontWeight: '800', color: colors.aiAccent },
+
+  photoActions: { flexDirection: "row", gap: spacing.lg, marginTop: spacing.sm },
+  photoAction: { fontSize: 13, fontWeight: "700", color: colors.primary },
+  photoRemove: { color: colors.danger },
 
   note: { fontSize: 12, color: colors.textMuted, marginTop: spacing.lg, fontStyle: 'italic' },
 

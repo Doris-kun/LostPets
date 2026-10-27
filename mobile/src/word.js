@@ -208,7 +208,10 @@ export const words = {
     'form.descPh': 'Đặc điểm nhận dạng, hoàn cảnh mất / tìm thấy...',
     'form.photo': 'ẢNH (KHÔNG BẮT BUỘC)',
     'form.photoPick': 'Bấm để chọn ảnh từ máy',
-    'form.noImageEdit': 'Không đổi được ảnh ở màn sửa — API chưa hỗ trợ.',
+    'form.photoChange': 'Đổi ảnh khác',
+    'form.photoRemove': 'Xoá ảnh',
+    'form.photoCurrent': 'Ảnh hiện tại',
+
     'form.submit': 'Đăng bài',
     'form.save': 'Lưu thay đổi',
     'form.saving': 'Đang lưu...',
@@ -228,6 +231,7 @@ export const words = {
     'form.err.server': 'Máy chủ gặp lỗi khi xử lý. Thử lại sau.',
     'form.err.400': 'Thiếu trường bắt buộc.',
     'form.err.403': 'Tin này đăng từ máy khác nên máy bạn không giữ mã xác nhận.',
+    'form.err.502': 'Không tải được ảnh lên. Thử lại sau.',
     'form.err.413': 'Ảnh quá lớn. Server chỉ nhận ảnh tối đa 5MB.',
   },
 
@@ -426,7 +430,10 @@ export const words = {
     'form.descPh': 'Identifying features, where it was lost or found...',
     'form.photo': 'PHOTO (OPTIONAL)',
     'form.photoPick': 'Tap to pick a photo from your device',
-    'form.noImageEdit': 'The photo cannot be changed when editing — the API does not support it yet.',
+    'form.photoChange': 'Change photo',
+    'form.photoRemove': 'Remove photo',
+    'form.photoCurrent': 'Current photo',
+
     'form.submit': 'Post',
     'form.save': 'Save changes',
     'form.saving': 'Saving...',
@@ -446,6 +453,7 @@ export const words = {
     'form.err.server': 'The server hit an error. Please try again later.',
     'form.err.400': 'A required field is missing.',
     'form.err.403': 'This post was created on another device, so yours does not hold its claim code.',
+    'form.err.502': 'Could not upload the photo. Please try again later.',
     'form.err.413': 'The photo is too large. The server accepts at most 5MB.',
   },
 };
