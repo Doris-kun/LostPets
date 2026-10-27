@@ -1,6 +1,6 @@
 # Hướng dẫn tham gia dự án
 
-Tài liệu cho người mới vào dự án Lost Pets. Đọc hết một lượt rồi làm theo thứ tự.
+Tài liệu cho người mới vào dự án LostPets. Đọc hết một lượt rồi làm theo thứ tự.
 
 Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **MEVN** — MongoDB, Express, Vue 2, Node.js. Không có đăng nhập, mọi tính năng đều public.
 
@@ -293,7 +293,9 @@ Trường **`secretDetail` chỉ trả về cho chủ tin** — người gửi `
 
 ### `PUT /pets/:petId` — cập nhật
 
-Body JSON, chỉ cần gửi những trường muốn đổi. Trả về object sau khi đã cập nhật.
+Chỉ cần gửi những trường muốn đổi. Trả về object sau khi đã cập nhật.
+
+Gửi dạng `multipart/form-data` nếu có đổi ảnh (field `image`, 1 file), còn lại gửi JSON cũng được.
 
 Ai được sửa, theo thứ tự xét:
 
@@ -303,11 +305,29 @@ Ai được sửa, theo thứ tự xét:
 
 Tin đã có chủ thì khách vãng lai không sửa được, kể cả khi tin đó cũng có mã.
 
-**Chỉ những trường này sửa được**: `type`, `name`, `species`, `breed`, `color`, `area`, `contact`, `description`, `image`, `resolved`. Gửi thêm trường khác thì bị bỏ qua chứ không báo lỗi.
+**Chỉ những trường này sửa được**: `type`, `name`, `species`, `breed`, `color`, `area`, `contact`, `description`, `resolved`, `secretDetail`, `lat`, `lng`. Gửi thêm trường khác thì bị bỏ qua chứ không báo lỗi.
 
 `owner`, `claimHash`, `postId` và `date` **cố tình không cho sửa** — mở ra thì ai sửa được tin cũng chiếm được quyền sở hữu, khoá tin lại bằng mã của mình, hoặc đổi ngày để tin nằm mãi ở đầu danh sách.
 
-Lưu ý: endpoint này **không nhận upload file**. Muốn đổi ảnh thì truyền `image` là một URL dạng chuỗi.
+#### Đổi ảnh
+
+`image` và `imageId` cũng **không nằm trong danh sách trên**, kể cả khi gửi dưới dạng chuỗi. Ảnh chỉ đổi được bằng hai cách:
+
+| Muốn gì | Gửi gì |
+|---|---|
+| Đổi sang ảnh khác | field `image` là một **file** (tối đa 5MB, JPEG/PNG/GIF/WEBP) |
+| Gỡ hẳn ảnh khỏi tin | `removeImage` = `true` |
+| Giữ nguyên ảnh | không gửi gì cả |
+
+Gửi cả hai thì **file mới thắng**, `removeImage` bị bỏ qua.
+
+Lý do không cho gửi URL dạng chuỗi: ai sửa được tin sẽ trỏ ảnh đi bất kỳ đâu — sang ảnh nhục mạ, hoặc sang một server của họ để đếm xem có bao nhiêu người đang xem tin đó.
+
+Ảnh cũ trên Cloudinary **bị xoá sau khi tin đã lưu xong**, không phải trước. Dọn trước mà lưu lỗi thì tin còn trỏ vào một ảnh vừa bị xoá. Xoá tin cũng dọn luôn ảnh của tin đó.
+
+Server lưu `public_id` của ảnh vào trường `imageId` (`select: false`, không bao giờ trả ra API) để còn biết đường gọi xoá. Tin đăng trước khi có trường này chỉ có URL — code tự moi `public_id` ra từ URL nên vẫn dọn được.
+
+Ảnh vượt 5MB nhận `413`, tệp không phải ảnh nhận `400`, Cloudinary lỗi nhận `502` — tất cả đều là JSON có `message`.
 
 ### `DELETE /pets/:petId` — xoá
 
@@ -435,7 +455,9 @@ Trợ lý chỉ được biết những gì ghi trong `SYSTEM_INSTRUCTION` ở [
 
 | Mã | Khi nào |
 |---|---|
-| `400` | thiếu trường bắt buộc lúc tạo tin |
+| `400` | thiếu trường bắt buộc, hoặc tệp tải lên không phải ảnh |
+| `403` | domain gọi API không nằm trong `FRONTEND_URL` |
+| `413` | ảnh vượt quá 5MB |
 | `403` | sai hoặc thiếu mã xác nhận khi sửa/xoá |
 | `404` | không tìm thấy pet theo `_id` |
 | `500` | lỗi server hoặc lỗi database |

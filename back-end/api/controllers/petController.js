@@ -9,8 +9,13 @@ const Pet = require('../models/petModel');
 // sách đen: thêm trường mới vào model sau này cũng không vô tình cho sửa.
 // owner, claimHash, postId và date cố tình nằm ngoài — cho sửa thì ai sửa được
 // tin cũng chiếm được quyền sở hữu, khoá tin lại, hoặc đẩy tin lên đầu danh sách.
+//
+// image và imageId cố tình nằm ngoài: ảnh chỉ đổi được bằng cách tải file lên,
+// chứ không bằng cách gửi một chuỗi URL. Cho gửi URL thì ai sửa được tin cũng
+// trỏ ảnh đi bất kỳ đâu — sang ảnh nhục mạ, hoặc sang một server đếm xem có bao
+// nhiêu người xem tin đó.
 const EDITABLE_FIELDS = [
-  'type', 'name', 'species', 'breed', 'color', 'area', 'contact', 'description', 'image', 'resolved',
+  'type', 'name', 'species', 'breed', 'color', 'area', 'contact', 'description', 'resolved',
   'secretDetail', 'lat', 'lng',
 ];
 
@@ -62,7 +67,8 @@ const hashClaimCode = (code) => crypto.createHash('sha256').update(code).digest(
 //   2. người cầm mã xác nhận — dành cho khách vãng lai;
 //   3. tin cũ chưa có cả hai thứ trên thì vẫn mở, để dữ liệu đăng trước đây không bị khoá.
 async function assertMayModify(req, res) {
-  const pet = await Pet.findById(req.params.petId).select('+claimHash');
+  // +imageId để chỗ gọi còn biết ảnh cũ nằm ở public_id nào mà dọn.
+  const pet = await Pet.findById(req.params.petId).select('+claimHash +imageId');
   if (!pet) {
     res.status(404).json({ message: 'Pet not found' });
     return null;
@@ -105,6 +111,44 @@ cloudinary.config({
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+// Lỗi riêng cho bước tải ảnh lên, để phân biệt với lỗi database ở cùng khối try.
+// Ảnh không lên được là chuyện của Cloudinary, nói đúng thì người dùng còn biết
+// là thử lại được; gộp vào "Server error" thì họ tưởng tin của mình mất rồi.
+class ImageUploadError extends Error {}
+
+const uploadImage = async (buffer) => {
+  try {
+    return await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream({ folder: 'lost-pets' }, (err, data) => {
+          if (err) reject(err); else resolve(data);
+        })
+        .end(buffer);
+    });
+  } catch (err) {
+    throw new ImageUploadError(err && err.message);
+  }
+};
+
+// Tin đăng trước khi có trường imageId chỉ lưu URL. public_id nằm ngay trong URL,
+// sau đoạn /upload/ và v<số phiên bản>, nên vẫn moi ra được để dọn.
+// Chỉ đúng với URL không kèm biến đổi ảnh — chỗ này chưa bao giờ sinh loại đó.
+const publicIdFromUrl = (url) => {
+  const match = /\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i.exec(url || '');
+  return match ? match[1] : '';
+};
+
+// Dọn ảnh không còn ai trỏ tới. Đây là việc phụ, không phải việc chính: thất bại
+// thì để lại một file rác trên Cloudinary, còn tin của người dùng vẫn lưu xong.
+// Nên không await và không để nó làm request thất bại.
+const discardImage = (pet) => {
+  const publicId = pet.imageId || publicIdFromUrl(pet.image);
+  if (!publicId) return;
+  cloudinary.uploader
+    .destroy(publicId)
+    .catch((err) => console.error('Không xoá được ảnh cũ:', publicId, err && err.message));
+};
 
 // memoryStorage giữ nguyên file trong RAM, không giới hạn thì một file lớn
 // đủ làm sập instance free tier.
@@ -165,15 +209,11 @@ exports.create_a_pet = async (req, res) => {
     }
 
     let imageUrl = '';
+    let imageId = '';
     if (req.file) {
-      const result = await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream({ folder: 'lost-pets' }, (err, data) => {
-            if (err) reject(err); else resolve(data);
-          })
-          .end(req.file.buffer);
-      });
+      const result = await uploadImage(req.file.buffer);
       imageUrl = result.secure_url;
+      imageId = result.public_id;
     }
 
     const postId = generatePostId(type);
@@ -183,15 +223,18 @@ exports.create_a_pet = async (req, res) => {
       secretDetail: secretDetail || '',
       lat: coords.lat === undefined ? null : coords.lat,
       lng: coords.lng === undefined ? null : coords.lng,
-      image: imageUrl, claimHash: hashClaimCode(claimCode),
+      image: imageUrl, imageId, claimHash: hashClaimCode(claimCode),
       // Đăng khi đã đăng nhập thì tin gắn luôn vào tài khoản.
       owner: req.user ? req.user.sub : null,
     });
     // claimCode chỉ xuất hiện đúng lần này, không có endpoint nào đọc lại được.
     // select: false chỉ lọc ở truy vấn, tài liệu vừa tạo vẫn giữ claimHash nên phải bỏ tay.
-    const { claimHash: _h, secretDetail: _s, ...created } = pet.toObject();
+    const { claimHash: _h, secretDetail: _s, imageId: _i, ...created } = pet.toObject();
     res.status(201).json({ ...created, claimCode });
-  } catch {
+  } catch (err) {
+    if (err instanceof ImageUploadError) {
+      return res.status(502).json({ message: 'Không tải được ảnh lên, thử lại sau' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -220,24 +263,56 @@ exports.read_a_pet = async (req, res) => {
 
 exports.update_a_pet = async (req, res) => {
   try {
-    if (!(await assertMayModify(req, res))) return;
+    const current = await assertMayModify(req, res);
+    if (!current) return;
 
     const updates = pickEditable(req.body);
+
+    // Ảnh không đi qua danh sách trắng: hoặc có file mới tải lên, hoặc người
+    // dùng bấm xoá ảnh. Gán thẳng vào updates sau khi đã lọc body, nên dù client
+    // có gửi image hay imageId trong body thì cũng không ăn.
+    // Qua form nên removeImage là chuỗi; gửi JSON thì là boolean.
+    const wantsRemove = req.body.removeImage === true || req.body.removeImage === 'true';
+    let replaced = false;
+
+    if (req.file) {
+      const result = await uploadImage(req.file.buffer);
+      updates.image = result.secure_url;
+      updates.imageId = result.public_id;
+      replaced = true;
+    } else if (wantsRemove && current.image) {
+      updates.image = '';
+      updates.imageId = '';
+      replaced = true;
+    }
+
     const pet = await Pet.findByIdAndUpdate(req.params.petId, updates, {
       new: true,
       runValidators: true,
     });
+
+    // Dọn ảnh cũ chỉ sau khi tin đã lưu xong. Dọn trước mà lưu lỗi thì tin còn
+    // trỏ vào một ảnh vừa bị xoá, người xem nhận về ô ảnh hỏng.
+    if (replaced) discardImage(current);
+
     res.json(pet);
-  } catch {
+  } catch (err) {
+    if (err instanceof ImageUploadError) {
+      return res.status(502).json({ message: 'Không tải được ảnh lên, thử lại sau' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 };
 
 exports.delete_a_pet = async (req, res) => {
   try {
-    if (!(await assertMayModify(req, res))) return;
+    const pet = await assertMayModify(req, res);
+    if (!pet) return;
 
     await Pet.findByIdAndDelete(req.params.petId);
+    // Xoá tin mà để ảnh lại thì file đó nằm trên Cloudinary vĩnh viễn, không còn
+    // chỗ nào trỏ tới để biết mà dọn.
+    discardImage(pet);
     res.json({ message: 'Pet deleted successfully' });
   } catch {
     res.status(500).json({ message: 'Server error' });

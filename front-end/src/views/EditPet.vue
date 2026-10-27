@@ -92,12 +92,13 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{{ $t('form.details') }}</p>
-        <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.desc') }}</label>
-        <textarea v-model="form.description" rows="3"
-          class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent resize-none transition"></textarea>
-      </div>
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $t('form.details') }}</p>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.desc') }}</label>
+          <textarea v-model="form.description" rows="3"
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent resize-none transition"></textarea>
+        </div>
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1.5">
             {{ $t('secret.label') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
@@ -106,6 +107,39 @@
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition"/>
           <p class="text-xs text-amber-600 mt-1.5 leading-relaxed">{{ $t('secret.hint') }}</p>
         </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            {{ $t('form.photo') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
+          </label>
+          <div @click="$refs.fileInput.click()"
+            class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/50 transition-all">
+            <template v-if="shownPhoto">
+              <img :src="shownPhoto" class="mx-auto max-h-52 rounded-xl object-cover mb-3"/>
+              <p class="text-sm text-gray-400">{{ $t('form.photoChange') }}</p>
+            </template>
+            <div v-else class="py-4">
+              <svg class="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <p class="text-sm text-gray-400">{{ $t('form.photoUpload') }}</p>
+            </div>
+            <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleImage"/>
+          </div>
+
+          <button v-if="shownPhoto" type="button" @click="dropPhoto"
+            class="mt-2 text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors">
+            {{ $t('form.photoRemove') }}
+          </button>
+          <!-- Ảnh chỉ thật sự mất khi bấm Lưu, nên nói rõ và cho đường quay lại. -->
+          <p v-else-if="removeImage && currentImage" class="mt-2 text-xs text-gray-400">
+            {{ $t('form.photoRemoved') }}
+            <button type="button" @click="removeImage = false"
+              class="font-semibold text-orange-500 hover:text-orange-600 transition-colors">
+              {{ $t('form.undo') }}
+            </button>
+          </p>
+        </div>
+      </div>
 
       <div v-if="error" class="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
         <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -132,14 +166,54 @@ export default {
   data() {
     return {
       form: { type: 'lost', name: '', species: '', breed: '', color: '', area: '', contact: '', description: '', secretDetail: '', lat: null, lng: null },
+      // currentImage là ảnh đang lưu trên server, image là file mới vừa chọn,
+      // removeImage là ý muốn gỡ hẳn ảnh. Tách ba thứ ra vì cả ba trạng thái
+      // cùng tồn tại được, và chỉ lúc bấm Lưu mới quyết định gửi gì.
+      currentImage: '', image: null, preview: null, removeImage: false,
       loading: false, saving: false, error: '',
     };
   },
   created() { this.fetchPet(); },
+  computed: {
+    // Ảnh đang hiển thị: ảnh mới chọn đè lên ảnh cũ, còn khi đã bấm xoá thì trống.
+    shownPhoto() {
+      if (this.preview) return this.preview;
+      return this.removeImage ? '' : this.currentImage;
+    },
+  },
+  beforeDestroy() {
+    this.releasePreview();
+  },
   methods: {
     setPoint({ lat, lng }) {
       this.form.lat = lat;
       this.form.lng = lng;
+    },
+    // URL.createObjectURL giữ file trong bộ nhớ tới khi được thu hồi. Đổi ảnh
+    // vài lần rồi rời trang mà không thu hồi là bỏ lại từng đó file trong RAM.
+    releasePreview() {
+      if (this.preview) URL.revokeObjectURL(this.preview);
+      this.preview = null;
+      this.image = null;
+    },
+    handleImage(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      this.releasePreview();
+      this.image = file;
+      this.preview = URL.createObjectURL(file);
+      // Chọn ảnh mới thì ý "xoá ảnh" trước đó không còn nghĩa gì.
+      this.removeImage = false;
+    },
+    dropPhoto() {
+      // Bấm xoá lúc đang xem ảnh vừa chọn thì chỉ là bỏ lựa chọn đó, quay về
+      // ảnh cũ — chứ không phải muốn gỡ ảnh khỏi tin.
+      if (this.image) {
+        this.releasePreview();
+        this.$refs.fileInput.value = '';
+        return;
+      }
+      this.removeImage = true;
     },
     async fetchPet() {
       this.loading = true;
@@ -152,6 +226,7 @@ export default {
           secretDetail: data.secretDetail || '',
           lat: data.lat, lng: data.lng,
         };
+        this.currentImage = data.image || '';
       } catch {
         this.error = this.$t('form.saveError');
       } finally {
@@ -162,13 +237,24 @@ export default {
       this.error = '';
       this.saving = true;
       try {
-        await api.updatePet(this.$route.params.id, this.form);
+        // Gửi dạng form thay vì JSON vì có thể kèm file ảnh. Server bỏ qua
+        // những trường không cho sửa, nên cứ gửi cả form như lúc đăng tin.
+        const formData = new FormData();
+        Object.entries(this.form).forEach(([key, value]) => formData.append(key, value));
+        if (this.image) formData.append('image', this.image);
+        else if (this.removeImage) formData.append('removeImage', 'true');
+
+        await api.updatePet(this.$route.params.id, formData);
         this.$toast(this.$t('edit.success'));
         this.$router.push(`/pet/${this.$route.params.id}`);
       } catch (err) {
         // 403 nghĩa là trình duyệt này không giữ mã xác nhận của tin.
         const status = err.response && err.response.status;
-        this.error = status === 403 ? this.$t('claim.denied') : this.$t('form.saveError');
+        if (status === 403) this.error = this.$t('claim.denied');
+        else if (status === 413) this.error = this.$t('form.tooLarge');
+        // 502 là Cloudinary lỗi, không phải tin sai — thử lại là được.
+        else if (status === 502) this.error = this.$t('form.imageFailed');
+        else this.error = this.$t('form.saveError');
       } finally {
         this.saving = false;
       }
