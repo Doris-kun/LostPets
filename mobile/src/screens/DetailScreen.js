@@ -48,6 +48,8 @@ export default function DetailScreen({ route, navigation }) {
   // Đang xin mã cho việc gì: 'delete', 'resolve', hoặc null khi không hỏi
   const [askCode, setAskCode] = useState(null);
   const [codeError, setCodeError] = useState('');
+  // Đang kiểm tra quyền sửa, khoá nút để tránh bấm hai lần
+  const [checkingEdit, setCheckingEdit] = useState(false);
 
   // Tải lại mỗi khi quay về màn này -> sửa tin xong bấm Back là thấy ngay dữ liệu mới
   useFocusEffect(
@@ -173,6 +175,60 @@ export default function DetailScreen({ route, navigation }) {
       // Người dùng đóng bảng chia sẻ giữa chừng cũng vào đây. Không phải lỗi,
       // nên không báo gì cả.
     }
+  };
+
+  /*
+   * Kiểm tra quyền sửa TRƯỚC khi mở form.
+   *
+   * Trước đây bấm Sửa là vào thẳng form. Người dùng điền xong xuôi, bấm Lưu,
+   * rồi mới nhận 403 — mất trắng công gõ. Giờ hỏi mã ngay từ đầu như nút Xoá.
+   *
+   * Cách kiểm: gửi một lệnh cập nhật RỖNG. Back-end vẫn chạy đủ phần kiểm tra
+   * quyền, nhưng danh sách trường được phép sửa lọc ra rỗng nên không có gì
+   * thay đổi. Đúng quyền thì trả 200, sai thì 403. Không cần thêm endpoint mới.
+   */
+  const canEdit = async (code) => {
+    try {
+      const useCode = code ?? (await claim.get(id));
+      await api.updatePet(id, {}, useCode);
+      if (code) await claim.save(id, code);
+      return true;
+    } catch (err) {
+      if (err.response?.status === 403) return false;
+      // Lỗi khác (mất mạng, server hỏng) thì cứ cho vào form, để người dùng
+      // gặp lỗi thật lúc bấm Lưu thay vì bị chặn ở đây mà không hiểu vì sao.
+      return true;
+    }
+  };
+
+  const openEditForm = async () => {
+    /*
+     * Lấy lại bài từ server trước khi mở form.
+     *
+     * Vừa nhập đúng mã thì server mới chịu trả về đặc điểm bí mật. Dùng bản
+     * `pet` đang có trong màn hình thì trường đó vẫn thiếu, và form sẽ tưởng
+     * là mình không có quyền sửa nó.
+     */
+    try {
+      const { data } = await api.getPet(id);
+      navigation.navigate('Form', { mode: 'edit', pet: data });
+    } catch {
+      navigation.navigate('Form', { mode: 'edit', pet });
+    }
+  };
+
+  const handleEdit = async () => {
+    setCheckingEdit(true);
+    const ok = await canEdit();
+    setCheckingEdit(false);
+
+    if (ok) {
+      openEditForm();
+      return;
+    }
+
+    setCodeError('');
+    setAskCode('edit');
   };
 
   const doDelete = async (code) => {
@@ -388,7 +444,8 @@ export default function DetailScreen({ route, navigation }) {
       <View style={styles.actions}>
         <TouchableOpacity
           style={[styles.button, styles.buttonOutline]}
-          onPress={() => navigation.navigate('Form', { mode: 'edit', pet })}
+          onPress={handleEdit}
+          disabled={checkingEdit}
         >
           <Text style={styles.buttonOutlineText}>{t('detail.edit')}</Text>
         </TouchableOpacity>
@@ -411,7 +468,16 @@ export default function DetailScreen({ route, navigation }) {
         error={codeError}
         onClose={() => setAskCode(null)}
         onSubmit={async (typed) => {
-          const ok = askCode === 'delete' ? await doDelete(typed) : await doResolve(typed);
+          const run =
+            askCode === "delete" ? doDelete : askCode === "edit" ? canEdit : doResolve;
+          const ok = await run(typed);
+
+          // Nhập đúng mã để sửa -> đóng hộp thoại rồi mở form
+          if (ok && askCode === "edit") {
+            setAskCode(null);
+            openEditForm();
+            return;
+          }
           // Vẫn 403 nghĩa là gõ sai — giữ hộp thoại mở để gõ lại
           if (!ok) setCodeError(t('claim.wrong'));
         }}

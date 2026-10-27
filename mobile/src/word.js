@@ -146,9 +146,7 @@ export const words = {
     'error.deleteFailed': 'Xoá không thành công. Thử lại sau.',
 
     'claim.savedTitle': 'Mã xác nhận của bài này',
-    'claim.savedText': 'Máy bạn đã tự lưu mã. Sửa hoặc xoá ngay trên máy này thì không cần nhập lại. Nhưng gỡ app hoặc đổi máy là mất — chép ra giấy nếu bạn muốn chắc chắn.',
-    'claim.copy': 'Sao chép mã',
-    'claim.copied': 'Đã sao chép',
+    'claim.savedText': 'Máy bạn đã tự lưu mã, nên sửa hoặc xoá ngay trên máy này thì không cần nhập lại. CHÉP MÃ RA GIẤY nếu bạn muốn sửa bài từ máy khác, hoặc phòng khi gỡ app.',
     'claim.done': 'Xong',
     'claim.askTitle': 'Nhập mã xác nhận',
     'claim.askText': 'Bài này đăng từ máy khác nên máy bạn không giữ mã. Nhập mã bạn đã chép lại để tiếp tục.',
@@ -367,9 +365,7 @@ export const words = {
     'error.deleteFailed': 'Delete failed. Please try again later.',
 
     'claim.savedTitle': 'Claim code for this post',
-    'claim.savedText': 'Your device saved it automatically, so editing or deleting here needs no code. But uninstalling the app or changing phone loses it — write it down to be safe.',
-    'claim.copy': 'Copy code',
-    'claim.copied': 'Copied',
+    'claim.savedText': 'Your device saved it automatically, so editing or deleting here needs no code. WRITE IT DOWN if you may edit this post from another device, or in case you reinstall the app.',
     'claim.done': 'Done',
     'claim.askTitle': 'Enter claim code',
     'claim.askText': 'This post was created on another device, so yours does not hold the code. Type the code you saved to continue.',

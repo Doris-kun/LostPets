@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import api from '../api';
 import claim from '../claim';
 import ClaimCodeModal from '../components/ClaimCodeModal';
@@ -43,6 +44,37 @@ const EMPTY_FORM = {
   description: '',
   secretDetail: '',
 };
+
+/*
+ * Thu nhỏ ảnh trước khi gửi lên.
+ *
+ * VÌ SAO CẦN: back-end chặn file quá 5MB. Ảnh chụp bằng iPhone thường 3–8MB,
+ * nên ảnh nhẹ thì đăng được, ảnh nặng thì hỏng — rất khó đoán với người dùng.
+ *
+ * Tệ hơn: back-end chưa có bộ bắt lỗi upload, nên file quá cỡ không trả về
+ * 413 mà trả 500 kèm một trang HTML lỗi. App đọc thành "máy chủ gặp lỗi",
+ * không ai biết nguyên nhân thật là ảnh nặng.
+ *
+ * Nên app tự lo: hạ bề ngang về tối đa 1600 điểm và nén còn 70%. Ảnh ra
+ * thường dưới 1MB — vừa chắc chắn qua được giới hạn, vừa tải lên nhanh hơn
+ * nhiều. Bản đồ hiển thị trong app chỉ rộng vài trăm điểm nên không mất nét.
+ */
+const MAX_WIDTH = 1600;
+
+async function shrink(asset) {
+  try {
+    const result = await ImageManipulator.manipulateAsync(
+      asset.uri,
+      // Ảnh đã nhỏ hơn mức này thì không phóng to lên, bỏ qua bước resize
+      asset.width > MAX_WIDTH ? [{ resize: { width: MAX_WIDTH } }] : [],
+      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
+    );
+    return result;
+  } catch {
+    // Nén hỏng thì vẫn gửi ảnh gốc — còn hơn là chặn người dùng đăng bài.
+    return asset;
+  }
+}
 
 export default function FormScreen({ route, navigation }) {
   const { mode, pet } = route.params;
@@ -117,12 +149,12 @@ export default function FormScreen({ route, navigation }) {
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      quality: 0.7, // nén bớt, ảnh gốc điện thoại thường 3-5MB, tải lên rất chậm
+      quality: 1, // lấy bản gốc, việc nén để bước dưới lo cho chắc tay
     });
 
     if (result.canceled) return;
 
-    const picked = result.assets[0];
+    const picked = await shrink(result.assets[0]);
     setImage(picked);
 
     /*

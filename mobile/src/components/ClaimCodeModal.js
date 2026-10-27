@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
 import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing } from '../theme';
@@ -37,25 +36,15 @@ export default function ClaimCodeModal({ visible, mode, code, error, onSubmit, o
   const styles = useThemedStyles(themedStyles);
 
   const [typed, setTyped] = useState('');
-  const [copied, setCopied] = useState(false);
 
   // Mở lại thì xoá dấu vết lần trước — không để mã cũ hay chữ "Đã sao chép"
   // còn nằm đó gây hiểu nhầm.
   useEffect(() => {
     if (visible) {
       setTyped('');
-      setCopied(false);
     }
   }, [visible]);
 
-  const copy = async () => {
-    try {
-      await Clipboard.setStringAsync(code);
-      setCopied(true);
-    } catch {
-      // Máy từ chối quyền clipboard. Mã vẫn hiện trên màn hình để chép tay.
-    }
-  };
 
   const isShow = mode === 'show';
 
@@ -81,16 +70,16 @@ export default function ClaimCodeModal({ visible, mode, code, error, onSubmit, o
                 {code}
               </Text>
 
-              <TouchableOpacity
-                style={[styles.primaryButton, copied && styles.copiedButton]}
-                onPress={copy}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.primaryButtonText}>
-                  {t(copied ? 'claim.copied' : 'claim.copy')}
-                </Text>
-              </TouchableOpacity>
+              {/*
+                Không có nút sao chép.
 
+                Chép vào bộ nhớ tạm của CHÍNH máy này thì vô nghĩa: máy đã tự
+                lưu mã rồi. Thứ người dùng thật sự cần là mang mã sang máy
+                khác — mà bộ nhớ tạm không đi qua máy khác được.
+
+                Nên chỉ hiện mã thật to, giãn ký tự, cho bôi đen được, và nói
+                thẳng là hãy chép ra giấy.
+              */}
               <Text style={styles.note}>{t('claim.savedText')}</Text>
             </>
           ) : (
@@ -122,8 +111,19 @@ export default function ClaimCodeModal({ visible, mode, code, error, onSubmit, o
             </>
           )}
 
-          <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.7}>
-            <Text style={styles.closeText}>{t(isShow ? 'claim.done' : 'common.cancel')}</Text>
+          {/*
+            Ở chế độ hiện mã, đây là nút DUY NHẤT nên phải nổi bật — trước nó
+            là chữ xám nhạt, trên nền tối gần như không thấy.
+            Ở chế độ nhập mã thì nó chỉ là nút huỷ, để nhạt mới đúng vai.
+          */}
+          <TouchableOpacity
+            style={isShow ? styles.primaryButton : styles.closeButton}
+            onPress={onClose}
+            activeOpacity={0.85}
+          >
+            <Text style={isShow ? styles.primaryButtonText : styles.closeText}>
+              {t(isShow ? "claim.done" : "common.cancel")}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -197,7 +197,6 @@ const themedStyles = createThemedStyles((colors) =>
       alignItems: 'center',
       marginTop: spacing.lg,
     },
-    copiedButton: { backgroundColor: colors.found },
     primaryButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: '700' },
     disabled: { opacity: 0.45 },
 
