@@ -6,6 +6,13 @@ const translations = {
     'nav.lost': 'Thú Cưng Bị Mất',
     'nav.found': 'Tìm Thấy Thú Cưng',
     'nav.post': 'Đăng Báo Cáo',
+    'nudge.askLost': 'Tin "{name}" bạn đăng {days} ngày trước — tìm được chưa?',
+    'nudge.askFound': 'Tin "{name}" bạn đăng {days} ngày trước — đã tìm được chủ chưa?',
+    'nudge.yes': 'Rồi',
+    'nudge.no': 'Chưa',
+    'nudge.later': 'Để sau',
+    'nudge.saving': 'Đang lưu...',
+    'nudge.thanks': 'Cảm ơn bạn đã cập nhật!',
     'badge.lost': 'Bị mất',
     'badge.found': 'Tìm thấy',
     'badge.resolved': 'Đã đoàn tụ',
@@ -210,6 +217,13 @@ const translations = {
     'nav.lost': 'Lost Pets',
     'nav.found': 'Found Pets',
     'nav.post': 'Post Report',
+    'nudge.askLost': 'Your post "{name}" from {days} days ago — found them yet?',
+    'nudge.askFound': 'Your post "{name}" from {days} days ago — found the owner yet?',
+    'nudge.yes': 'Yes',
+    'nudge.no': 'Not yet',
+    'nudge.later': 'Later',
+    'nudge.saving': 'Saving...',
+    'nudge.thanks': 'Thanks for the update!',
     'badge.lost': 'Lost',
     'badge.found': 'Found',
     'badge.resolved': 'Reunited',
@@ -423,8 +437,15 @@ export function setLang(lang) {
 
 export const i18nMixin = {
   methods: {
-    $t(key) {
-      return translations[langStore.lang]?.[key] ?? key;
+    // vars thay các ô {tên} trong câu dịch. Cần vì tiếng Việt và tiếng Anh đặt
+    // con số ở vị trí khác nhau trong câu — ghép chuỗi ngoài chỗ gọi thì có câu
+    // dịch đúng ngữ pháp một thứ tiếng và sai thứ tiếng kia.
+    $t(key, vars) {
+      const text = translations[langStore.lang]?.[key] ?? key;
+      if (!vars) return text;
+      return text.replace(/\{(\w+)\}/g, (match, name) =>
+        (name in vars ? String(vars[name]) : match)
+      );
     },
     $setLang(lang) {
       setLang(lang);

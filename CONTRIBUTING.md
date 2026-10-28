@@ -516,7 +516,41 @@ Các endpoint AI đều tốn quota Gemini nên phải chặn vòng lặp tự �
 
 > Bộ đếm nằm trong bộ nhớ nên nếu sau này chạy nhiều instance thì mỗi instance đếm riêng, phải chuyển sang bộ đếm dùng chung như Redis.
 
-## 9. Quy tắc chung
+## 9. Dữ liệu lưu trong trình duyệt
+
+Front-end giữ vài thứ trong `localStorage`. Không có gì được gửi lên server ngoài mã xác nhận lúc sửa/xoá tin.
+
+| Khoá | Nội dung | Module |
+|---|---|---|
+| `claim:<petId>` | mã xác nhận của tin đó | `src/claim.js` |
+| `nudge:ask:<petId>` | sớm nhất bao giờ được hỏi lại về tin đó (mốc ms) | `src/nudge.js` |
+| `nudge:scan` | sớm nhất bao giờ được dò lại toàn bộ (mốc ms) | `src/nudge.js` |
+| `lang` | ngôn ngữ đang chọn | `src/i18n.js` |
+| `token`, `user` | phiên đăng nhập | `src/auth.js` |
+
+`claim.list()` lọc theo tiền tố `claim:` nên không dính các khoá khác — lưu ý khi đặt tên khoá mới, đừng bắt đầu bằng `claim:`.
+
+### Dải nhắc "tìm được chưa?"
+
+`components/ResolveNudge.vue` nằm trong `App.vue`, chạy một lần mỗi lần tải trang.
+
+Nút "Đã tìm thấy" trên trang chi tiết gần như không ai bấm, vì người ta đoàn tụ xong là quên website này tồn tại. Mà cuộc đoàn tụ diễn ra **ngoài đời**: không có nhắn tin, không có thông báo, không có giao dịch — **không một dữ liệu nào trong hệ thống đổi khi con vật về nhà**. Không có tín hiệu thì không đoán được, chỉ hỏi được.
+
+Nên đừng viết quy tắc kiểu "tin quá 45 ngày thì tự đánh dấu đoàn tụ". Suy luận đó sai ở đúng những ca quan trọng nhất — người mất chó hai tháng vẫn đang tìm. Và nó phá hỏng con số tỉ lệ đoàn tụ ở trang quản trị: `resolved` có nghĩa là **một con người đã xác nhận**, cho quy tắc tự động set nó thì con số ấy không còn đo đoàn tụ nữa, nó đo chính cái hằng số timeout trong code.
+
+Cách hoạt động:
+
+1. Dò tối đa 12 tiếng một lần (`nudge:scan`), và tối đa 5 tin, để không bắn một loạt request mỗi lần tải trang.
+2. Chỉ hỏi tin **chưa đoàn tụ** và đã đăng quá **7 ngày**. Hỏi ngày hôm sau thì vô duyên, người ta còn đang tìm.
+3. Mỗi lần chỉ hỏi **một tin**, tin cũ nhất trước. Hỏi dồn thì người ta bấm bừa cho xong, dữ liệu thu về vô nghĩa.
+4. "Rồi" → `PUT { resolved: true }`. "Chưa" → im 7 ngày. Dấu X → im 1 ngày.
+5. Tin trả `404` (đã bị xoá) thì dọn luôn mã trong trình duyệt. Chỉ dọn khi server nói rõ `404` — mất mạng cũng vào nhánh lỗi, mà xoá mã vì rớt wifi thì người ta mất quyền sửa tin của chính mình.
+
+Đang đứng ngay trong trang chi tiết của tin đó thì dải không hiện, vì trang đó đã có nút riêng rồi.
+
+> Thử nhanh lúc phát triển: `localStorage.removeItem('nudge:scan')` rồi tải lại trang.
+
+## 10. Quy tắc chung
 
 - Không commit `.env`, `node_modules/`, `dist/`
 - Không push thẳng lên `main`

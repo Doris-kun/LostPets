@@ -55,6 +55,7 @@ const SYSTEM_INSTRUCTION = [
   '- Khi đã tìm lại được thú cưng, vào tin bấm "Đã tìm thấy / Đoàn tụ" để đánh dấu.',
   '- Lúc đăng tin có ô "Đặc điểm bí mật" (không bắt buộc): ghi một dấu hiệu chỉ chủ nuôi biết, ví dụ vết sẹo khuất hay đốm lông dưới bụng. Ô này KHÔNG hiện trên tin đăng, chỉ chủ tin xem được. Khi ai đó nói đã tìm thấy, chủ tin hỏi họ mô tả đặc điểm đó — người thật sự đang giữ con vật mới trả lời được.',
   '- Website có hai ngôn ngữ, chuyển bằng nút VI / EN trên thanh menu.',
+  '- Tin đăng quá 7 ngày mà chưa đánh dấu đoàn tụ thì website hiện một dải hỏi "tìm được chưa?" ở đầu trang, bấm "Rồi" là đánh dấu xong ngay, không cần vào tin. Trả lời "Chưa" thì một tuần sau mới hỏi lại. Chỉ người đăng tin trên chính trình duyệt đó mới thấy dải này.',
   '',
   'VỀ TÀI KHOẢN (tuỳ chọn, không bắt buộc):',
   '- Có thể đăng ký và đăng nhập bằng tên, email và mật khẩu ít nhất 6 ký tự. Nút Đăng nhập nằm trên thanh menu.',
