@@ -46,4 +46,5 @@ export default {
   adminStats:     ()       => http.get('/admin/stats'),
   adminPets:      (params) => http.get('/admin/pets', { params }),
   adminDeletePet: (id)     => http.delete(`/admin/pets/${id}`),
+  adminCleanup:   ()       => http.post('/admin/cleanup'),
 };

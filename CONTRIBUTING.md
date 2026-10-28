@@ -283,7 +283,15 @@ Tin đã có chủ thì khách vãng lai không sửa được, kể cả khi ti
 
 **Chỉ những trường này sửa được**: `type`, `name`, `species`, `breed`, `color`, `area`, `contact`, `description`, `resolved`, `secretDetail`, `lat`, `lng`. Gửi thêm trường khác thì bị bỏ qua chứ không báo lỗi.
 
-`owner`, `claimHash`, `postId` và `date` **cố tình không cho sửa** — mở ra thì ai sửa được tin cũng chiếm được quyền sở hữu, khoá tin lại bằng mã của mình, hoặc đổi ngày để tin nằm mãi ở đầu danh sách.
+`owner`, `claimHash`, `postId`, `date` và `resolvedAt` **cố tình không cho sửa** — mở ra thì ai sửa được tin cũng chiếm được quyền sở hữu, khoá tin lại bằng mã của mình, đổi ngày để tin nằm mãi ở đầu danh sách, hoặc tự hoãn hạn xoá của tin mình.
+
+#### Đánh dấu đoàn tụ
+
+Gửi `resolved: true` thì server tự đóng dấu `resolvedAt` là thời điểm hiện tại — đây là lúc đồng hồ đếm ngược tới đợt dọn tự động bắt đầu chạy (xem mục 7). Gửi `resolved: false` thì `resolvedAt` về `null` và đồng hồ dừng hẳn.
+
+Chỉ đóng dấu khi trạng thái **thật sự đổi** từ chưa sang rồi. Sửa nội dung một tin đã đoàn tụ mà form gửi kèm `resolved: true` thì mốc cũ giữ nguyên, không bị đẩy lùi thêm một kỳ hạn nữa.
+
+Gửi qua form thì boolean thành chuỗi, mà `Boolean('false')` lại ra `true` — server xử lý riêng nên `resolved: 'false'` vẫn hiểu đúng là bỏ đánh dấu.
 
 #### Đổi ảnh
 
@@ -327,9 +335,12 @@ Server lưu `public_id` của ảnh vào trường `imageId` (`select: false`, k
   "image": "https://res.cloudinary.com/.../lost-pets/abc.jpg",
   "description": "Mất chiều 12/10 gần công viên",
   "resolved": false,
+  "resolvedAt": null,
   "date": "2026-10-12T09:30:00.000Z"
 }
 ```
+
+`resolvedAt` là lúc tin được đánh dấu đoàn tụ, và là đồng hồ đếm ngược tới đợt dọn tự động (xem mục 7). Bỏ đánh dấu thì nó về `null` và đồng hồ dừng hẳn. Đây **không phải** trường gửi lên được: server tự đặt, gửi `resolvedAt` trong body thì bị bỏ qua — nếu không thì ai cũng hoãn hoặc ép xoá tin bằng một dòng body. Đừng nhầm với `date` là ngày đăng.
 
 **Toạ độ luôn được làm mờ trước khi lưu**: làm tròn về lưới 0,005 độ (khoảng 500m) ngay ở setter của model, nên bản chính xác không bao giờ nằm trong database. Thú cưng thường mất gần nhà, ghim chính xác là công khai địa chỉ nhà người đăng — ghép với số điện thoại hiện ngay bên cạnh thì quá nguy hiểm. Giao diện vẽ một vòng tròn bán kính 500m thay vì một chấm, để thể hiện đúng độ chính xác thật sự.
 
@@ -487,6 +498,7 @@ Mọi endpoint dưới đây cần `Authorization: Bearer <token>` của tài kh
 {
   "total": 19, "lost": 11, "found": 8, "resolved": 3, "open": 16,
   "withImage": 19, "users": 2, "resolvedRate": 16,
+  "pendingCleanup": 1, "cleanupDays": 30,
   "topAreas":  [{ "label": "Quận 1, TP.HCM", "count": 3 }],
   "topBreeds": [{ "label": "Corgi", "count": 2 }]
 }
@@ -501,6 +513,36 @@ Trả về `{ pets, total }`. Mỗi tin kèm `owner` là `{ name, email }` nếu
 ### `DELETE /admin/pets/:petId`
 
 Xoá bất kỳ tin nào, không cần mã xác nhận.
+
+### `POST /admin/cleanup` — dọn tin đã đoàn tụ
+
+Xoá hẳn những tin có `resolved: true` và `resolvedAt` cũ hơn `CLEANUP_AFTER_DAYS` ngày (mặc định 30), kèm ảnh trên Cloudinary.
+
+```json
+{ "deleted": 2, "stamped": 0, "days": 30 }
+```
+
+`stamped` là số tin đã đoàn tụ từ trước khi có trường `resolvedAt`, được đóng dấu mốc "bây giờ" trong lượt chạy này. Chúng **không** bị xoá ở cùng lượt — mỗi tin luôn được hưởng trọn kỳ hạn kể từ lúc có mốc. Cố ý không suy mốc cũ ra từ `date`: đoán sai một tin là xoá nhầm tin của người ta.
+
+**Hai đường vào:**
+
+| Cách gọi | Dùng khi |
+|---|---|
+| `Authorization: Bearer <token>` admin | quản trị viên bấm nút "Dọn ngay" trên trang quản trị |
+| `x-cleanup-token: <CLEANUP_TOKEN>` | cron gọi vào, vì cron không đăng nhập được nên không có JWT |
+
+Chưa đặt `CLEANUP_TOKEN` thì đường thứ hai **đóng hẳn**, chỉ còn admin bấm tay. Mặc định phải là đóng, không thì quên đặt biến môi trường là ai cũng gọi được endpoint xoá hàng loạt. So sánh mã dùng `crypto.timingSafeEqual` trên bản băm của hai chuỗi — băm trước để hai buffer luôn đủ 32 byte, vì chính độ dài mã cũng là một manh mối cho người đang dò.
+
+**Hẹn giờ chạy** nằm ở [`.github/workflows/cleanup.yml`](.github/workflows/cleanup.yml), 19:00 UTC mỗi ngày (02:00 giờ Việt Nam). Cần hai secret trong repo (Settings → Secrets and variables → Actions):
+
+- `API_URL` — địa chỉ back-end trên Render, không có dấu `/` ở cuối
+- `CLEANUP_TOKEN` — đúng chuỗi đã đặt trong biến môi trường của Render
+
+Không đặt `setInterval` hay `node-cron` trong app vì Render gói miễn phí cho web service ngủ sau 15 phút không ai truy cập: instance ngủ thì không có gì chạy cả. Hẹn giờ từ bên ngoài thì chính request đó đánh thức dịch vụ dậy.
+
+**Vì sao không dùng TTL index của MongoDB**, dù cách đó không tốn dòng code nào: TTL xoá thẳng dưới tầng database nên code của app không chạy, ảnh trên Cloudinary bị bỏ lại vĩnh viễn và không còn tin nào trỏ tới để biết đường dọn. Đổi vài chục dòng code lấy một đống rác không bao giờ dọn được thì không đáng.
+
+> Đổi `CLEANUP_AFTER_DAYS` thì nhớ sửa luôn hai chuỗi dịch `detail.resolvedExpiry` trong `front-end/src/i18n.js` và dòng nói về 30 ngày trong `SYSTEM_INSTRUCTION` của `chatController.js`, không thì giao diện nói một đằng hệ thống làm một nẻo.
 
 ## 8. Giới hạn tần suất
 
