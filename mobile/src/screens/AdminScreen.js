@@ -483,7 +483,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     search: {
       marginTop: spacing.lg,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.borderStrong,
       borderRadius: radius.md,
       paddingHorizontal: spacing.md,
       paddingVertical: 10,
@@ -498,7 +498,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
       paddingVertical: 7,
       borderRadius: radius.full,
       borderWidth: 1.5,
-      borderColor: colors.border,
+      borderColor: colors.borderStrong,
     },
     chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
     chipText: { fontSize: 12, fontWeight: '700', color: colors.textSoft },

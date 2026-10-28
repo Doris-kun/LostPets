@@ -443,6 +443,9 @@ const themedStyles = createThemedStyles((colors) =>
       borderRadius: radius.md,
       overflow: 'hidden',
       borderWidth: 1,
+      // Viền nhạt: đây chỉ là khung bao quanh bản đồ, chính tấm bản đồ bên
+      // trong mới là thứ cho biết chạm vào được. Không phải đường bao của
+      // một điều khiển nên không cần 3:1.
       borderColor: colors.border,
       backgroundColor: colors.surfaceTint,
     },
@@ -466,7 +469,7 @@ const themedStyles = createThemedStyles((colors) =>
       minHeight: 44,
       justifyContent: 'center',
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.borderStrong,
       borderRadius: radius.sm,
       paddingVertical: 8,
       paddingHorizontal: spacing.md,
@@ -512,7 +515,7 @@ const themedStyles = createThemedStyles((colors) =>
       justifyContent: 'center',
       alignSelf: 'flex-start',
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.borderStrong,
       borderRadius: radius.sm,
       paddingVertical: 8,
       paddingHorizontal: spacing.md,

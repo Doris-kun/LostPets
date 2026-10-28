@@ -747,7 +747,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingVertical: 12,
     borderRadius: radius.md,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     alignItems: 'center',
   },
   choiceText: { fontSize: 14, fontWeight: '700', color: colors.textSoft },
@@ -759,7 +759,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   fieldLabel: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 11,
@@ -770,7 +770,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
 
   imagePicker: {
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     borderStyle: 'dashed',
     borderRadius: radius.md,
     padding: spacing.lg,

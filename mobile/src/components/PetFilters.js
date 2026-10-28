@@ -353,7 +353,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingVertical: 9,
     borderRadius: radius.full,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
@@ -361,7 +361,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
 
   input: {
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 11,
@@ -378,7 +378,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonGhost: { borderWidth: 2, borderColor: colors.border },
+  buttonGhost: { borderWidth: 2, borderColor: colors.borderStrong },
   buttonGhostText: { color: colors.textSoft, fontWeight: '700', fontSize: 14 },
   buttonPrimary: { backgroundColor: colors.primary },
   buttonPrimaryText: { color: colors.onPrimary, fontWeight: '700', fontSize: 14 },

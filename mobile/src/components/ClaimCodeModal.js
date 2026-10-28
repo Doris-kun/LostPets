@@ -172,7 +172,7 @@ const themedStyles = createThemedStyles((colors) =>
 
     input: {
       borderWidth: 1.5,
-      borderColor: colors.border,
+      borderColor: colors.borderStrong,
       borderRadius: radius.md,
       paddingHorizontal: spacing.md,
       paddingVertical: 12,

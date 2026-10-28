@@ -402,7 +402,9 @@ function Featured({ pet, total, restCount, onPress }) {
           )}
 
           <View style={[styles.featuredBadge, { backgroundColor: status.color }]}>
-            <Text style={styles.featuredBadgeText}>{t(status.labelKey)}</Text>
+            <Text style={[styles.featuredBadgeText, { color: status.onColor }]}>
+              {t(status.labelKey)}
+            </Text>
           </View>
         </View>
 
@@ -539,7 +541,8 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingVertical: 5,
     borderRadius: radius.full,
   },
-  featuredBadgeText: { fontSize: 11, fontWeight: '800', color: colors.onStatus },
+  // Màu chữ do statusStyle quyết định lúc vẽ
+  featuredBadgeText: { fontSize: 11, fontWeight: '800' },
 
   featuredBody: { padding: spacing.lg },
   featuredLabel: {
@@ -585,7 +588,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingVertical: 8,
     borderRadius: radius.full,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     backgroundColor: colors.background,
   },
   chipText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
@@ -600,7 +603,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingVertical: 8,
     borderRadius: radius.full,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
   },
   filterButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   filterButtonText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },

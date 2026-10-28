@@ -236,7 +236,7 @@ const themedStyles = createThemedStyles((colors) =>
     fieldLabel: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
     input: {
       borderWidth: 1.5,
-      borderColor: colors.border,
+      borderColor: colors.borderStrong,
       borderRadius: radius.md,
       paddingHorizontal: spacing.md,
       paddingVertical: 12,

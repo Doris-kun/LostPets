@@ -61,7 +61,7 @@ export default function PetCard({ pet, onPress }) {
       <View style={styles.cardBody}>
         <View style={styles.cardTopRow}>
           <View style={[styles.badge, { backgroundColor: status.color }]}>
-            <Text style={styles.badgeText}>{t(status.labelKey)}</Text>
+            <Text style={[styles.badgeText, { color: status.onColor }]}>{t(status.labelKey)}</Text>
           </View>
           <Text style={styles.cardTime}>{timeAgo(pet.date, t, lang)}</Text>
         </View>
@@ -116,7 +116,8 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     badge: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: radius.full },
     // Nền nhãn là màu thương hiệu, giống nhau ở cả hai chế độ, nên chữ trên
     // nó cũng phải trắng ở cả hai — không dùng onPrimary vì màu đó đổi theo chế độ.
-    badgeText: { color: colors.onStatus, fontSize: 10.5, fontWeight: '800' },
+    // Màu chữ do statusStyle quyết định lúc vẽ, vì mỗi nhãn một nền khác nhau
+    badgeText: { fontSize: 10.5, fontWeight: '800' },
     cardTime: { fontSize: 11, color: colors.textMuted },
 
     cardTitle: { fontSize: 16, fontWeight: '800', color: colors.text, marginTop: 5 },

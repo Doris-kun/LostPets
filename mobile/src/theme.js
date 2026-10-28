@@ -36,9 +36,25 @@ export const lightColors = {
   primary: brand.navy,
   primaryDark: '#164760',
   onPrimary: '#FFFFFF', // chữ nằm TRÊN nền primary
-  // Chữ trên nhãn trạng thái. Nền nhãn là màu thương hiệu, giống nhau ở cả
-  // hai chế độ, nên chữ cũng phải giống nhau — không đổi theo sáng/tối.
-  onStatus: '#FFFFFF',
+
+  /*
+   * Màu CHỮ trên nhãn trạng thái.
+   *
+   * Trước đây là trắng cho cả ba nhãn. Đo ra thì chữ trắng trên nền cam chỉ
+   * được 2.46:1, trên nền xanh ngọc 3.03:1 — dưới xa ngưỡng 4.5:1.
+   *
+   * Cách sửa: GIỮ NGUYÊN màu nền lấy từ logo, chỉ đổi chữ sang màu mực đậm.
+   * Màu thương hiệu không suy suyển mà chữ vẫn đọc được:
+   *   trên cam        6.03:1
+   *   trên xanh ngọc  4.90:1
+   *
+   * Riêng nhãn "Đã đoàn tụ" phải tách riêng, vì nền của nó KHÁC NHAU giữa hai
+   * chế độ: nền navy đậm (chế độ sáng) cần chữ trắng, nền xanh nhạt (chế độ
+   * tối) cần chữ đậm. Một màu không phục vụ được cả hai.
+   */
+  onLost: '#16293A',
+  onFound: '#16293A',
+  onResolved: '#FFFFFF', // nền navy đậm -> chữ trắng, 7.32:1
 
   danger: '#D92F2F', // nút xoá — đậm hơn bản cũ #E05252 để đạt 4.77:1
 
@@ -72,6 +88,21 @@ export const lightColors = {
   // dẫn giao diện, và đây đúng là nó.
   textMuted: '#617281',
   textSoft: '#5B6B78',
+
+
+  /*
+   * Viền của thứ BẤM ĐƯỢC hoặc GÕ ĐƯỢC: chip lọc, nút có viền, ô nhập.
+   *
+   * Tách khỏi border thường vì hai thứ này phục vụ hai việc khác nhau:
+   *   border       — ngăn cách lớp này với lớp kia. Chỉ là trang trí, nhạt
+   *                  được, vì nội dung bên trong mới là thứ nhận diện.
+   *   borderStrong — ĐƯỜNG BAO của một điều khiển. Nhiều khi nó là thứ DUY
+   *                  NHẤT cho biết đây là chỗ bấm được, nên chuẩn đòi tối
+   *                  thiểu 3:1 so với nền.
+   *
+   * Viền cũ chỉ đạt 1.22:1 (sáng) và 1.45:1 (tối) — gần như không nhìn thấy.
+   */
+  borderStrong: '#7391A5', // 3.03:1 trên nền nhạt nhất
 
   border: '#E3E9ED',
   borderLight: '#F1F5F7',
@@ -125,7 +156,11 @@ export const darkColors = {
   primary: '#3D93C2',
   primaryDark: '#2E7093',
   onPrimary: '#0B1620',
-  onStatus: '#FFFFFF',
+
+  // Nền hai nhãn đầu giống hệt chế độ sáng nên màu chữ cũng giữ nguyên.
+  onLost: '#16293A',
+  onFound: '#16293A',
+  onResolved: '#16293A', // nền xanh nhạt -> chữ đậm, 7.18:1
 
   danger: '#F06B6B', // đỏ gốc bị tối, nâng sáng lên
 
@@ -145,6 +180,9 @@ export const darkColors = {
   // Trên lớp nổi nhất (surfaceTint) chỉ đạt 4.13:1, nâng nhẹ cho đủ 4.52:1
   textMuted: '#8697A2',
   textSoft: '#B6C5CE',
+
+  // Cùng vai trò với bên chế độ sáng, chỉ khác là phải sáng lên thay vì đậm đi
+  borderStrong: '#507C98', // 3.04:1 trên lớp nổi nhất
 
   border: '#243845',
   borderLight: '#1B2B36',
@@ -236,7 +274,13 @@ export const darkShadow = {
  * xem tiếng gì. Nơi gọi tự dịch bằng t(status.labelKey).
  */
 export function statusStyle(pet, colors) {
-  if (pet.resolved) return { color: colors.resolved, labelKey: 'badge.resolved' };
-  if (pet.type === 'lost') return { color: colors.lost, labelKey: 'badge.lost' };
-  return { color: colors.found, labelKey: 'badge.found' };
+  // Trả về cả màu CHỮ, vì mỗi nhãn một nền khác nhau nên không dùng chung
+  // được một màu chữ. Nơi gọi chỉ việc lấy ra dùng, không phải tự nghĩ.
+  if (pet.resolved) {
+    return { color: colors.resolved, onColor: colors.onResolved, labelKey: 'badge.resolved' };
+  }
+  if (pet.type === 'lost') {
+    return { color: colors.lost, onColor: colors.onLost, labelKey: 'badge.lost' };
+  }
+  return { color: colors.found, onColor: colors.onFound, labelKey: 'badge.found' };
 }

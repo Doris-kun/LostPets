@@ -307,7 +307,7 @@ export default function DetailScreen({ route, navigation }) {
 
       <View style={styles.header}>
         <View style={[styles.badge, { backgroundColor: status.color }]}>
-          <Text style={styles.badgeText}>{t(status.labelKey)}</Text>
+          <Text style={[styles.badgeText, { color: status.onColor }]}>{t(status.labelKey)}</Text>
         </View>
         {!!pet.postId && <Text style={styles.postId}>{pet.postId}</Text>}
       </View>
@@ -559,7 +559,8 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     marginTop: spacing.lg,
   },
   badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.full },
-  badgeText: { color: colors.onStatus, fontSize: 12, fontWeight: '700' },
+  // Màu chữ do statusStyle quyết định lúc vẽ
+  badgeText: { fontSize: 12, fontWeight: '700' },
   postId: { fontSize: 12, color: colors.textMuted, fontVariant: ['tabular-nums'] },
 
   title: { fontSize: 24, fontWeight: '700', color: colors.text, marginTop: spacing.md },
@@ -690,7 +691,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     alignItems: 'center',
   },
   shareText: { color: colors.textSoft, fontWeight: '700', fontSize: 14 },
@@ -716,7 +717,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonOutline: { borderWidth: 2, borderColor: colors.border },
+  buttonOutline: { borderWidth: 2, borderColor: colors.borderStrong },
   buttonOutlineText: { color: colors.textSoft, fontWeight: '700', fontSize: 14 },
   buttonDanger: { backgroundColor: colors.danger },
   buttonDangerText: { color: colors.onPrimary, fontWeight: '700', fontSize: 14 },
