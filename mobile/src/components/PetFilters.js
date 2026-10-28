@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -149,7 +151,24 @@ export default function PetFilters({ visible, value, onClose, onApply }) {
         khung này chắc chắn cao bằng màn hình (bằng chứng là tấm bảng nằm đúng
         đáy nhờ justifyContent), nên tô màu thẳng lên nó thì không thể trượt.
       */}
-      <View style={styles.root}>
+      {/*
+        BÀN PHÍM CHE MẤT BẢNG LỌC — chỉ xảy ra trên iOS.
+
+        Android tự thu nhỏ cửa sổ lại khi bàn phím bật, nên bảng lọc bị đẩy
+        lên trên và vẫn nhìn thấy đủ. iOS KHÔNG làm vậy: bàn phím trượt đè lên
+        trên, che mất gần hết bảng, gõ xong không thấy mình gõ gì.
+
+        KeyboardAvoidingView với behavior="padding" chèn thêm một khoảng đệm
+        dưới đáy đúng bằng chiều cao bàn phím. Khung này đã có
+        justifyContent: flex-end nên bảng lọc tự bị đẩy lên theo.
+
+        Android để undefined, KHÔNG đặt behavior: hệ điều hành đã xử lý rồi,
+        đặt thêm là đẩy hai lần, bảng lọc bay lên lưng chừng màn hình.
+      */}
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <Animated.View
           style={[
             styles.sheet,
@@ -234,7 +253,7 @@ export default function PetFilters({ visible, value, onClose, onApply }) {
             </TouchableOpacity>
           </View>
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
