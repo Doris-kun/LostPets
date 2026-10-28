@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, shadow as _shadow, spacing, statusStyle } from '../theme';
@@ -73,9 +74,12 @@ export default function PetCard({ pet, onPress }) {
         </Text>
 
         <View style={styles.cardFooter}>
-          <Text style={styles.cardArea} numberOfLines={1}>
-            📍 {pet.area}
-          </Text>
+          <View style={styles.cardAreaRow}>
+            <Ionicons name="location" size={12} color={colors.textMuted} />
+            <Text style={styles.cardArea} numberOfLines={1}>
+              {pet.area}
+            </Text>
+          </View>
           {!!pet.postId && <Text style={styles.cardCode}>{pet.postId}</Text>}
         </View>
       </View>
@@ -124,6 +128,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
       justifyContent: 'space-between',
       marginTop: 6,
     },
+    cardAreaRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 3 },
     cardArea: { flex: 1, fontSize: 12.5, color: colors.textSoft },
     cardCode: { fontSize: 10.5, color: colors.textMuted, marginLeft: spacing.sm },
   }),

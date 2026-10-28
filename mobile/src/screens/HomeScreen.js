@@ -221,8 +221,18 @@ export default function HomeScreen({ navigation }) {
           onPress={() => setFiltersOpen(true)}
           activeOpacity={0.8}
         >
+          {/*
+            Icon bộ lọc chứ không phải bánh răng. Bánh răng nghĩa là "cài đặt",
+            mà app đã có hẳn một tab tên Cài đặt rồi — hai chỗ cùng một biểu
+            tượng thì người dùng phải đoán cái nào ra cái gì.
+          */}
+          <Ionicons
+            name="options-outline"
+            size={15}
+            color={activeCount > 0 ? colors.onPrimary : colors.textSoft}
+          />
           <Text style={[styles.filterButtonText, activeCount > 0 && styles.chipTextActive]}>
-            ⚙ {t('home.filter')}
+            {t('home.filter')}
           </Text>
           {activeCount > 0 && (
             <View style={styles.filterBadge}>

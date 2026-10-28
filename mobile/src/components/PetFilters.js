@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../context/language';
 import { radius, spacing } from '../theme';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
@@ -188,7 +189,7 @@ export default function PetFilters({ visible, value, onClose, onApply }) {
               activeOpacity={0.7}
               accessibilityLabel={t('filter.close')}
             >
-              <Text style={styles.closeIcon}>✕</Text>
+              <Ionicons name="close" size={18} color={colors.textSoft} />
             </TouchableOpacity>
           </View>
 
@@ -329,7 +330,6 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     justifyContent: 'center',
     alignItems: 'center',
   },
-  closeIcon: { fontSize: 15, fontWeight: '700', color: colors.textSoft, lineHeight: 18 },
 
   field: { marginBottom: spacing.lg },
   fieldLabel: {

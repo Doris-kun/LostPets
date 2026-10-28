@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { Ionicons } from '@expo/vector-icons';
 import api from '../api';
 import claim from '../claim';
 import ClaimCodeModal from '../components/ClaimCodeModal';
@@ -523,7 +524,8 @@ export default function FormScreen({ route, navigation }) {
         {canEditSecret && (
           <>
             <Field
-              label={`🔒  ${t('secret.label')}`}
+              label={t('secret.label')}
+              icon={<Ionicons name="lock-closed" size={12} color={colors.secretText} />}
               value={form.secretDetail}
               onChangeText={(v) => update('secretDetail', v)}
               placeholder={t('secret.placeholder')}
@@ -578,7 +580,7 @@ export default function FormScreen({ route, navigation }) {
 
                 {!aiLoading && !!aiResult && (
                   <View style={styles.aiRow}>
-                    <Text style={styles.aiCheck}>✓</Text>
+                    <Ionicons name="checkmark-circle" size={14} color={colors.aiText} />
                     <Text style={styles.aiDone}>
                       {t('ai.filled')} <Text style={styles.aiConfidence}>{aiResult.confidence}%</Text>
                     </Text>
@@ -698,12 +700,21 @@ function Choice({ label, active, activeColor, onPress }) {
   );
 }
 
-function Field({ label, multiline, ...props }) {
+function Field({ label, icon, multiline, ...props }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      {/*
+        Icon lồng THẲNG trong Text, không bọc View riêng. React Native cho
+        phép vậy vì icon thực chất cũng là chữ, nên nó tự nằm đúng đường chân
+        chữ — bọc View thì phải tự canh lại cho khớp.
+      */}
+      <Text style={styles.fieldLabel}>
+        {icon}
+        {icon ? '  ' : null}
+        {label}
+      </Text>
       <TextInput
         style={[styles.input, multiline && styles.inputMultiline]}
         placeholderTextColor={colors.textMuted}
@@ -777,7 +788,6 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   aiBlock: { marginTop: spacing.sm, minHeight: 22 },
   aiRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   aiWorking: { flex: 1, fontSize: 12, color: colors.aiText, lineHeight: 17 },
-  aiCheck: { fontSize: 13, fontWeight: '800', color: colors.aiText },
   aiDone: { flex: 1, fontSize: 12, color: colors.aiText, lineHeight: 17 },
   aiConfidence: { fontWeight: '800' },
   aiErrorText: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },

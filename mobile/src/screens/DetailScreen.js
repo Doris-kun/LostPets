@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import api from '../api';
 import claim from '../claim';
 import ClaimCodeModal from '../components/ClaimCodeModal';
@@ -300,7 +301,7 @@ export default function DetailScreen({ route, navigation }) {
         <Image source={{ uri: pet.image }} style={styles.image} />
       ) : (
         <View style={[styles.image, styles.imagePlaceholder]}>
-          <Text style={styles.placeholderIcon}>🐾</Text>
+          <Ionicons name="paw" size={56} color={colors.textMuted} style={styles.placeholderIcon} />
         </View>
       )}
 
@@ -314,7 +315,7 @@ export default function DetailScreen({ route, navigation }) {
       {/* Tin đã đoàn tụ: báo rõ bằng một dải màu, không chỉ ẩn nút đi */}
       {pet.resolved && (
         <View style={styles.resolvedBanner}>
-          <Text style={styles.resolvedIcon}>✓</Text>
+          <Ionicons name="checkmark-circle" size={17} color={colors.resolved} />
           <Text style={styles.resolvedBannerText}>{t('detail.resolvedBanner')}</Text>
         </View>
       )}
@@ -370,7 +371,7 @@ export default function DetailScreen({ route, navigation }) {
 
       {/* Cảnh báo đặt ngay dưới số liên hệ — đúng lúc người ta sắp bấm gọi */}
       <View style={styles.scamBox}>
-        <Text style={styles.scamIcon}>⚠</Text>
+        <Ionicons name="warning" size={15} color={colors.warnText} style={styles.scamIcon} />
         <Text style={styles.scamText}>{t('scam.warning')}</Text>
       </View>
 
@@ -382,7 +383,10 @@ export default function DetailScreen({ route, navigation }) {
       */}
       {!!pet.secretDetail && (
         <View style={styles.secretBox}>
-          <Text style={styles.secretLabel}>🔒  {t('secret.yours')}</Text>
+          <View style={styles.secretLabelRow}>
+            <Ionicons name="lock-closed" size={12} color={colors.secretText} />
+            <Text style={styles.secretLabel}>{t('secret.yours')}</Text>
+          </View>
           <Text style={styles.secretValue}>{pet.secretDetail}</Text>
           <Text style={styles.secretHint}>{t('secret.howToUse')}</Text>
         </View>
@@ -406,7 +410,10 @@ export default function DetailScreen({ route, navigation }) {
             {matchLoading ? (
               <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={styles.matchButtonText}>✨  {t('match.action')}</Text>
+              <View style={styles.buttonRow}>
+                <Ionicons name="sparkles" size={15} color={colors.onPrimary} />
+                <Text style={styles.matchButtonText}>{t('match.action')}</Text>
+              </View>
             )}
           </TouchableOpacity>
 
@@ -453,7 +460,8 @@ export default function DetailScreen({ route, navigation }) {
       )}
 
       <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.85}>
-        <Text style={styles.shareText}>↗  {t('detail.share')}</Text>
+        <Ionicons name="share-social-outline" size={16} color={colors.textSoft} />
+        <Text style={styles.shareText}>{t('detail.share')}</Text>
       </TouchableOpacity>
 
       {/* Chỉ hiện khi tin chưa được đánh dấu — đã đoàn tụ rồi thì không lùi lại */}
@@ -464,6 +472,8 @@ export default function DetailScreen({ route, navigation }) {
           disabled={resolving}
           activeOpacity={0.85}
         >
+          {/* Lúc đang lưu thì bỏ icon đi, chỉ còn chữ "Đang lưu..." */}
+          {!resolving && <Ionicons name="checkmark-circle-outline" size={17} color={colors.resolved} />}
           <Text style={styles.resolveText}>
             {t(resolving ? 'detail.resolving' : 'detail.resolve')}
           </Text>
@@ -540,7 +550,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
 
   image: { width: '100%', height: 220, borderRadius: radius.lg, backgroundColor: colors.surface },
   imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
-  placeholderIcon: { fontSize: 56, opacity: 0.3 },
+  placeholderIcon: { opacity: 0.4 },
 
   header: {
     flexDirection: 'row',
@@ -588,7 +598,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingHorizontal: spacing.md,
     paddingVertical: 11,
   },
-  scamIcon: { fontSize: 14, color: colors.warnText, marginTop: 1 },
+  scamIcon: { marginTop: 1 },
   scamText: { flex: 1, fontSize: 12.5, color: colors.warnText, lineHeight: 18 },
 
   secretBox: {
@@ -600,6 +610,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
   },
+  secretLabelRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   secretLabel: { fontSize: 11, fontWeight: "700", color: colors.secretText, letterSpacing: 0.4 },
   secretValue: { fontSize: 14, fontWeight: "600", color: colors.text, marginTop: 6 },
   secretHint: { fontSize: 11.5, color: colors.secretText, lineHeight: 17, marginTop: 6 },
@@ -638,6 +649,8 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     justifyContent: "center",
     minHeight: 44,
   },
+  // Icon và chữ nằm cùng hàng, canh giữa — dùng chung cho các nút có icon
+  buttonRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   matchButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: "700" },
   matchNote: {
     fontSize: 12,
@@ -669,6 +682,9 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   matchReason: { fontSize: 12, color: colors.textSoft, lineHeight: 17, marginTop: 2 },
 
   shareButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
     marginTop: spacing.xl,
     paddingVertical: 14,
     borderRadius: radius.md,
@@ -680,6 +696,9 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   shareText: { color: colors.textSoft, fontWeight: '700', fontSize: 14 },
 
   resolveButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
     marginTop: spacing.md,
     paddingVertical: 14,
     borderRadius: radius.md,
