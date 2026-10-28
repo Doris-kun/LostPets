@@ -149,6 +149,33 @@
             {{ deleting ? $t('detail.deleting') : $t('detail.delete') }}
           </button>
         </div>
+
+        <!--
+          Mã xác nhận chỉ hiện khi trình duyệt này có mã của tin, và phải bấm
+          mới hiện. Người dùng bình thường không cần biết nó tồn tại — mã nằm
+          sẵn trong localStorage và tự gắn vào mỗi lần sửa. Chỗ này dành cho
+          đúng một việc: mang mã sang máy khác.
+        -->
+        <div v-if="claimCode" class="mt-4 pt-4 border-t border-gray-100">
+          <button v-if="!showCode" type="button" @click="showCode = true"
+            class="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+            {{ $t('claim.view') }}
+          </button>
+
+          <div v-else class="space-y-2">
+            <p class="text-xs font-semibold text-gray-500">{{ $t('claim.viewTitle') }}</p>
+            <div class="flex items-center gap-3 flex-wrap">
+              <!-- select-all: bôi đen cả mã chỉ bằng một cú nhấp, phòng khi
+                   trình duyệt không cho dùng clipboard. -->
+              <code class="font-mono text-base font-bold tracking-[0.2em] text-gray-900 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 select-all">{{ claimCode }}</code>
+              <button type="button" @click="copyCode"
+                class="text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors">
+                {{ copied ? $t('claim.copied') : $t('claim.copy') }}
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">{{ $t('claim.viewHint') }}</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -200,6 +227,7 @@
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
 import { directionsUrl } from '../map';
+import claim from '../claim';
 
 export default {
   name: 'PetDetail',
@@ -208,6 +236,7 @@ export default {
     return {
       pet: null, loading: false, deleting: false, resolving: false,
       matches: [], matchLoading: false, matchError: '', matchDone: false,
+      claimCode: '', showCode: false, copied: false,
     };
   },
   computed: {
@@ -232,12 +261,19 @@ export default {
       this.matches = [];
       this.matchError = '';
       this.matchDone = false;
+      // Mã của tin cũ mà còn nằm đây thì người dùng chép nhầm mã sang tin khác.
+      this.showCode = false;
+      this.copied = false;
       this.fetchPet();
     },
+  },
+  beforeDestroy() {
+    if (this.copyTimer) clearTimeout(this.copyTimer);
   },
   methods: {
     async fetchPet() {
       this.loading = true;
+      this.claimCode = claim.get(this.$route.params.id);
       try {
         const { data } = await api.getPet(this.$route.params.id);
         this.pet = data;
@@ -245,6 +281,17 @@ export default {
         this.pet = null;
       } finally {
         this.loading = false;
+      }
+    },
+    async copyCode() {
+      try {
+        await navigator.clipboard.writeText(this.claimCode);
+        this.copied = true;
+        if (this.copyTimer) clearTimeout(this.copyTimer);
+        this.copyTimer = setTimeout(() => { this.copied = false; }, 2000);
+      } catch {
+        // Trình duyệt cũ, hoặc trang không chạy HTTPS, thì không có clipboard.
+        // Mã đã để select-all nên vẫn bôi đen một nhấp rồi Ctrl+C được.
       }
     },
     async findMatches() {

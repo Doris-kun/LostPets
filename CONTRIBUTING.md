@@ -257,6 +257,8 @@ Phản hồi `201`: object pet vừa tạo, **kèm trường `claimCode`**. Serv
 
 `claimCode` là mã xác nhận, **chỉ trả về đúng lần này**. Database chỉ lưu bản băm SHA-256 nên không có cách nào đọc lại. Front-end lưu mã vào `localStorage` để người đăng sửa/xoá được sau.
 
+Front-end **không hiện mã này ra màn hình lúc đăng**. Toast chỉ sống 3 giây, không ai chép kịp 10 ký tự hex, nên hiện ra vừa vô dụng vừa khiến người dùng tưởng mình đang đánh mất thứ gì đó quan trọng. `localStorage` mới là chỗ làm việc thật — nó tự gắn mã vào header mỗi lần sửa. Ai cần mang mã sang máy khác thì vào trang chi tiết tin bấm "Xem mã xác nhận".
+
 Thiếu trường bắt buộc thì nhận `400` với body `{ "message": "All fields are required" }`.
 
 ### `GET /pets/:petId` — xem chi tiết
