@@ -31,7 +31,7 @@ export const words = {
     'settings.helpTitle': 'Trung tâm trợ giúp',
     'settings.helpSub': 'Giải đáp mọi thắc mắc về app',
     'settings.helpOnline': 'Hỗ trợ trực tuyến',
-    'settings.helpHours': 'Giải đáp 24/7',
+    'settings.helpHours': 'Giải đáp 24/24',
     'settings.helpAction': 'Chat ngay',
     'settings.about': 'GIỚI THIỆU',
     'settings.language': 'Ngôn ngữ',

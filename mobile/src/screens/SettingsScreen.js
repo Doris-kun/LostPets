@@ -165,7 +165,17 @@ export default function SettingsScreen({ navigation }) {
             <Text style={styles.helpHours}>{t('settings.helpHours')}</Text>
           </View>
 
-          <Text style={styles.helpAction}>{t('settings.helpAction')} →</Text>
+          {/*
+            Mũi tên vẽ bằng icon, KHÔNG dùng ký tự → trong chuỗi chữ.
+
+            Ký tự → (U+2192) không có trong phông hệ thống của một số máy
+            Android, máy sẽ lấy phông thay thế và vẽ ra ký tự lạ. Phông icon
+            thì đóng gói sẵn bên trong app nên máy nào cũng vẽ giống nhau.
+          */}
+          <View style={styles.helpActionRow}>
+            <Text style={styles.helpAction}>{t('settings.helpAction')}</Text>
+            <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -250,6 +260,7 @@ const themedStyles = createThemedStyles((colors) =>
     helpBoxText: { flex: 1 },
     helpOnline: { fontSize: 14, fontWeight: '700', color: colors.text },
     helpHours: { fontSize: 11, color: colors.textMuted, marginTop: 1 },
+    helpActionRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
     helpAction: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
     sectionLabel: {

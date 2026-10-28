@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import api from '../api';
 import { API_URL } from '../config';
 import PetCard, { timeAgo } from '../components/PetCard';
@@ -412,7 +413,11 @@ function Featured({ pet, total, restCount, onPress }) {
 
           <View style={styles.featuredFoot}>
             <Text style={styles.featuredTime}>{timeAgo(pet.date, t, lang)}</Text>
-            <Text style={styles.featuredLink}>{t('home.view')} →</Text>
+            {/* Mũi tên vẽ bằng icon — xem lý do ở SettingsScreen */}
+            <View style={styles.featuredLinkRow}>
+              <Text style={styles.featuredLink}>{t('home.view')}</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -545,6 +550,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     paddingTop: spacing.md,
   },
   featuredTime: { fontSize: 11, color: colors.textMuted },
+  featuredLinkRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   featuredLink: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
   moreLabel: {
