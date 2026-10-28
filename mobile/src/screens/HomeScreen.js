@@ -193,7 +193,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header total={total} loading={loading} hasError={hasError} />
+      <Header />
 
       <View style={styles.filterRow}>
         {FILTERS.map((item) => {
@@ -265,6 +265,7 @@ export default function HomeScreen({ navigation }) {
           ListHeaderComponent={
             <Featured
               pet={pets[0]}
+              total={total}
               restCount={pets.length - 1}
               onPress={() => navigation.navigate('Detail', { id: pets[0]._id })}
             />
@@ -329,7 +330,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-function Header({ total, loading, hasError }) {
+function Header() {
   const { t } = useLanguage();
   const { isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -352,13 +353,6 @@ function Header({ total, loading, hasError }) {
         {/* Slogan — cũng là câu dùng trên web */}
         <Text style={styles.headerSlogan}>{t('brand.slogan')}</Text>
       </View>
-
-      {!loading && !hasError && (
-        <View style={styles.countPill}>
-          <Text style={styles.countText}>{total}</Text>
-        </View>
-      )}
-
     </View>
   );
 }
@@ -373,7 +367,7 @@ function Header({ total, loading, hasError }) {
  * đích là cho người vừa mở app một tin để đọc ngay, thay vì một danh sách
  * đều đều phải tự chọn.
  */
-function Featured({ pet, restCount, onPress }) {
+function Featured({ pet, total, restCount, onPress }) {
   const { t, lang } = useLanguage();
   const { colors, isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -385,6 +379,19 @@ function Featured({ pet, restCount, onPress }) {
 
   return (
     <View>
+      {/*
+        Số tin đang hiển thị, có kèm chữ.
+
+        Trước đây chỉ là một viên tròn ghi "19" ở góc thanh đầu trang — người
+        dùng nhìn vào không đoán được 19 là cái gì: 19 tin? 19 thông báo? 19
+        tin chưa đọc? Một con số trơ trọi thì luôn mơ hồ. Web ghi hẳn
+        "19 tin đang hiển thị" nên không ai phải đoán.
+
+        Chuyển xuống đây cũng đúng chỗ hơn: nó nói về DANH SÁCH bên dưới, chứ
+        không phải về tên app ở thanh đầu trang.
+      */}
+      <Text style={styles.resultCount}>{t('home.results', { n: total })}</Text>
+
       <TouchableOpacity style={styles.featured} onPress={onPress} activeOpacity={0.9}>
         <View style={styles.featuredImageBox}>
           {/* API trả image là CHUỖI RỖNG khi không có ảnh, không phải null */}
@@ -500,14 +507,11 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   headerTextBlock: { flex: 1, marginLeft: spacing.md },
   headerTitle: { fontSize: 19, fontWeight: '800', color: colors.navy, letterSpacing: -0.3 },
   headerSlogan: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
-  countPill: {
-    backgroundColor: colors.surfaceTint,
-    paddingHorizontal: 11,
-    paddingVertical: 5,
-    borderRadius: radius.full,
+  resultCount: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginBottom: spacing.md,
   },
-
-  countText: { fontSize: 13, fontWeight: '700', color: colors.teal },
 
 
   /* ---- Thẻ tin nổi bật ---- */
