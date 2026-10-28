@@ -40,15 +40,37 @@ export const lightColors = {
   // hai chế độ, nên chữ cũng phải giống nhau — không đổi theo sáng/tối.
   onStatus: '#FFFFFF',
 
-  danger: '#E05252', // nút xoá
+  danger: '#D92F2F', // nút xoá — đậm hơn bản cũ #E05252 để đạt 4.77:1
 
   // Nhãn trạng thái tin
   lost: brand.orange,
   found: brand.teal,
   resolved: brand.navy,
 
+/*
+ * MÀU CHỮ CỦA THƯƠNG HIỆU — mỗi chế độ một giá trị.
+ *
+ * Bốn màu thương hiệu ở trên GIỮ NGUYÊN cả sáng lẫn tối, vì logo không đổi
+ * màu theo nền. Nhưng dùng chính chúng làm MÀU CHỮ thì hỏng: màu nào đọc rõ
+ * trên nền trắng thì chìm trên nền tối, và ngược lại. Đo thật:
+ *
+ *   navy  (#1F5C7A) trên nền sáng 7.32:1 ✔   trên nền tối 2.41:1 ✘
+ *   orange(#E8912E) trên nền tối  7.16:1 ✔   trên nền sáng 2.46:1 ✘
+ *   teal  (#2FA3A8) trên nền tối  5.26:1 ✔   trên nền sáng 2.86:1 ✘
+ *
+ * Chuẩn WCAG đòi 4.5:1 cho chữ thường. Nên ba màu dưới đây là bản ĐÃ CHỈNH
+ * ĐỘ SÁNG của màu thương hiệu — giữ nguyên sắc, chỉ đậm hoặc nhạt đi cho đủ
+ * tương phản. Nhìn vẫn ra đúng màu đó, chỉ là đọc được.
+ */
+  brandTitle: brand.navy, // tên app ở đầu trang
+  accentText: '#A86212', // cam đậm lại, 4.75:1
+  tealText: '#237A7E', // xanh ngọc đậm lại, 5.05:1
+
   text: '#16293A',
-  textMuted: '#9AA7B2',
+  // Đo được 2.46:1 trên nền trắng — dưới ngưỡng 4.5:1 của chữ thường. Đậm lên
+  // thành 4.96:1. "Chữ xám trên nền xám" là lỗi bị nêu đích danh trong hướng
+  // dẫn giao diện, và đây đúng là nó.
+  textMuted: '#617281',
   textSoft: '#5B6B78',
 
   border: '#E3E9ED',
@@ -111,8 +133,17 @@ export const darkColors = {
   found: brand.teal,
   resolved: brand.sky, // navy không thấy gì trên nền tối -> dùng xanh nhạt
 
+  // Cùng vai trò với bộ bên chế độ sáng, nhưng đảo hướng: ở đây navy phải
+  // sáng lên, còn cam và xanh ngọc giữ nguyên vì chúng vốn đã nổi trên nền tối.
+  brandTitle: '#3D93C2', // 5.17:1, thay cho navy gốc chỉ được 2.41:1
+  accentText: brand.orange, // 7.16:1
+  // Nhích sáng hơn brand.teal một chút: trên lớp nổi nhất (surfaceTint) màu
+  // gốc chỉ được 4.50:1, đúng sát mép ngưỡng 4.5 — nhích lên cho chắc.
+  tealText: '#30A8AD', // 4.76:1
+
   text: '#E8EFF3',
-  textMuted: '#7E909C',
+  // Trên lớp nổi nhất (surfaceTint) chỉ đạt 4.13:1, nâng nhẹ cho đủ 4.52:1
+  textMuted: '#8697A2',
   textSoft: '#B6C5CE',
 
   border: '#243845',

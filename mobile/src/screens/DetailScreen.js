@@ -584,7 +584,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     borderRadius: radius.md,
     padding: spacing.md,
   },
-  contactLabel: { fontSize: 11, fontWeight: '700', color: colors.teal, letterSpacing: 0.5 },
+  contactLabel: { fontSize: 11, fontWeight: '700', color: colors.tealText, letterSpacing: 0.5 },
   contactValue: { fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 4 },
 
   scamBox: {

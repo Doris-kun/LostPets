@@ -507,7 +507,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   },
   headerLogo: { width: 42, height: 42, resizeMode: 'contain' },
   headerTextBlock: { flex: 1, marginLeft: spacing.md },
-  headerTitle: { fontSize: 19, fontWeight: '800', color: colors.navy, letterSpacing: -0.3 },
+  headerTitle: { fontSize: 19, fontWeight: '800', color: colors.brandTitle, letterSpacing: -0.3 },
   headerSlogan: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
   resultCount: {
     fontSize: 12,
@@ -545,7 +545,7 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   featuredLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: colors.orange,
+    color: colors.accentText,
     letterSpacing: 1.2,
     marginBottom: spacing.sm,
   },

@@ -299,7 +299,7 @@ const themedStyles = createThemedStyles((colors) =>
       paddingVertical: 3,
       borderRadius: radius.full,
     },
-    adminTagText: { fontSize: 10, fontWeight: '800', color: colors.teal, letterSpacing: 0.5 },
+    adminTagText: { fontSize: 10, fontWeight: '800', color: colors.tealText, letterSpacing: 0.5 },
 
     logoutButton: {
       minHeight: 44,
