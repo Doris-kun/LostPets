@@ -1,0 +1,46 @@
+name: Dọn tin đã đoàn tụ
+
+# Render gói miễn phí cho web service ngủ sau 15 phút không ai truy cập, nên
+# setInterval hay node-cron đặt trong app chạy chập chờn: instance ngủ thì
+# không có gì chạy cả. Hẹn giờ từ bên ngoài rồi gọi vào thì chắc chắn hơn —
+# chính request này đánh thức dịch vụ dậy.
+on:
+  schedule:
+    # 19:00 UTC = 02:00 giờ Việt Nam, lúc gần như không có ai dùng web.
+    - cron: '0 19 * * *'
+  # Cho phép bấm chạy tay ở tab Actions để kiểm tra mà không phải chờ tới đêm.
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: cleanup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Gọi endpoint dọn dẹp
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          CLEANUP_TOKEN: ${{ secrets.CLEANUP_TOKEN }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CLEANUP_TOKEN" ]; then
+            echo "Thiếu secret API_URL hoặc CLEANUP_TOKEN"
+            exit 1
+          fi
+
+          # Instance đang ngủ mất khoảng 50 giây để dậy, nên request đầu rất dễ
+          # hết giờ. --retry 3 với --retry-all-errors để lần sau gặp dịch vụ đã
+          # tỉnh. --max-time 120 cho mỗi lần thử, đủ cho cả khởi động lạnh.
+          code=$(curl --silent --show-error \
+            --retry 3 --retry-delay 20 --retry-all-errors --max-time 120 \
+            --output body.json --write-out '%{http_code}' \
+            -X POST "$API_URL/admin/cleanup" \
+            -H "x-cleanup-token: $CLEANUP_TOKEN")
+
+          echo "HTTP $code"
+          cat body.json
+          echo
+
+          if [ "$code" != "200" ]; then
+            echo "Dọn dẹp thất bại"
+            exit 1
+          fi
