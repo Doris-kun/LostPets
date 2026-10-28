@@ -62,10 +62,21 @@ export default function AuthScreen({ navigation }) {
     const email = form.email.trim();
     const { password } = form;
 
-    // Kiểm tra trước ở máy để báo nhanh, đỡ phải đợi một vòng gọi máy chủ.
-    // Back-end vẫn kiểm lại lần nữa — không bao giờ tin dữ liệu từ máy khách.
-    if (!email || !password || (isRegister && !name)) {
-      setError(t('auth.err.missing'));
+    /*
+     * Kiểm tra trước ở máy để báo nhanh, đỡ phải đợi một vòng gọi máy chủ.
+     * Back-end vẫn kiểm lại lần nữa — không bao giờ tin dữ liệu từ máy khách.
+     *
+     * Thiếu ĐÚNG MỘT ô thì gọi thẳng tên ô đó ra, người dùng biết ngay phải
+     * sửa chỗ nào. Thiếu từ hai ô trở lên thì quay về câu chung: liệt kê hết
+     * ra chỉ dài dòng, mà nhìn vào form cũng thấy ngay là còn trống nhiều.
+     */
+    const missing = [];
+    if (isRegister && !name) missing.push('auth.err.noName');
+    if (!email) missing.push('auth.err.noEmail');
+    if (!password) missing.push('auth.err.noPassword');
+
+    if (missing.length > 0) {
+      setError(t(missing.length === 1 ? missing[0] : 'auth.err.missing'));
       return;
     }
     if (isRegister && password.length < MIN_PASSWORD) {
