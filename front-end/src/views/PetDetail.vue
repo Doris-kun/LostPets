@@ -47,11 +47,22 @@
       </div>
 
       <!-- Resolved banner -->
-      <div v-if="pet.resolved" class="mx-6 mt-6 flex items-center gap-2 bg-teal-50 border border-teal-100 rounded-xl px-4 py-3">
-        <svg class="w-4 h-4 text-teal-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-        </svg>
-        <p class="text-sm font-semibold text-teal-700">{{ $t('detail.resolvedBanner') }}</p>
+      <div v-if="pet.resolved" class="mx-6 mt-6 bg-teal-50 border border-teal-100 rounded-xl px-4 py-3">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-teal-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-sm font-semibold text-teal-700">{{ $t('detail.resolvedBanner') }}</p>
+          <div class="flex-1"></div>
+          <!-- Đường lùi lại. Đánh dấu đoàn tụ là hẹn giờ xoá tin, nên bấm nhầm
+               mà không gỡ ra được thì người dùng mất tin vì một cú chạm. Ai không
+               giữ mã xác nhận thì máy chủ chặn, y như nút Sửa và Xoá bên dưới. -->
+          <button @click="unresolvePet" :disabled="resolving"
+            class="text-xs font-semibold text-teal-600 underline underline-offset-2 hover:text-teal-800 disabled:opacity-50 flex-shrink-0">
+            {{ $t('detail.unresolve') }}
+          </button>
+        </div>
+        <p class="text-xs text-teal-600 mt-1.5 leading-relaxed">{{ $t('detail.resolvedExpiry') }}</p>
       </div>
 
       <div class="p-6">
@@ -335,6 +346,21 @@ export default {
         const { data } = await api.updatePet(this.pet._id, { resolved: true });
         this.pet = data;
         this.$toast(this.$t('detail.resolvedBanner'));
+      } catch (err) {
+        this.$toast(this.claimMessage(err), 'error');
+      } finally {
+        this.resolving = false;
+      }
+    },
+    // Gỡ đánh dấu đoàn tụ. Máy chủ xoá luôn resolvedAt nên đồng hồ đếm ngược
+    // tới đợt dọn dừng hẳn, không phải tạm hoãn.
+    async unresolvePet() {
+      if (!confirm(this.$t('detail.unresolveConfirm'))) return;
+      this.resolving = true;
+      try {
+        const { data } = await api.updatePet(this.pet._id, { resolved: false });
+        this.pet = data;
+        this.$toast(this.$t('detail.unresolved'));
       } catch (err) {
         this.$toast(this.claimMessage(err), 'error');
       } finally {

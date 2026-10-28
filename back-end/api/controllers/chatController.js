@@ -55,6 +55,7 @@ const SYSTEM_INSTRUCTION = [
   '- Trang chủ có nút chuyển giữa "Danh sách" và "Bản đồ". Chế độ bản đồ hiện các tin kèm vị trí dưới dạng chấm tròn, màu đỏ là tin mất, xanh lá là tin nhặt được. Bấm vào chấm để xem nhanh và mở tin.',
   '- Lúc đăng tin có phần "Vị trí trên bản đồ" (không bắt buộc): chạm vào bản đồ để đánh dấu nơi mất hoặc nơi nhặt được, hoặc bấm "Dùng vị trí của tôi". Ô khu vực dạng chữ vẫn bắt buộc như cũ.',
   '- Khi đã tìm lại được thú cưng, vào tin bấm "Đã tìm thấy / Đoàn tụ" để đánh dấu.',
+  '- Tin đã đánh dấu đoàn tụ được giữ lại thêm 30 ngày rồi website tự xoá hẳn, kèm ảnh. Ai muốn giữ ảnh thì tải về trước. Bấm nhầm thì vào tin bỏ đánh dấu đoàn tụ là tin ở lại bình thường.',
   '- Lúc đăng tin có ô "Đặc điểm bí mật" (không bắt buộc): ghi một dấu hiệu chỉ chủ nuôi biết, ví dụ vết sẹo khuất hay đốm lông dưới bụng. Ô này KHÔNG hiện trên tin đăng, chỉ chủ tin xem được. Khi ai đó nói đã tìm thấy, chủ tin hỏi họ mô tả đặc điểm đó — người thật sự đang giữ con vật mới trả lời được.',
   '- Website có hai ngôn ngữ, chuyển bằng nút VI / EN trên thanh menu.',
   '',

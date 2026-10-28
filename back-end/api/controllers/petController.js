@@ -2,6 +2,7 @@ const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const crypto = require('crypto');
 const Pet = require('../models/petModel');
+const { discardImage } = require('../lib/images');
 
 // Mã xác nhận: người đăng nhận một lần lúc tạo tin, cần nó để sửa hoặc xoá.
 // Database chỉ lưu bản băm, mất mã thì không ai khôi phục được.
@@ -18,6 +19,11 @@ const EDITABLE_FIELDS = [
   'type', 'name', 'species', 'breed', 'color', 'area', 'contact', 'description', 'resolved',
   'secretDetail', 'lat', 'lng',
 ];
+
+// Gửi qua form thì boolean biến thành chuỗi, mà Boolean('false') lại ra true.
+// Cần biết giá trị thật trước khi Mongoose ép kiểu, để quyết định có đóng dấu
+// resolvedAt hay không.
+const isTruthy = (v) => v === true || v === 'true' || v === 1 || v === '1';
 
 // Chỉ nhận toạ độ khi có đủ cả hai và nằm trong khoảng hợp lệ.
 function isValidCoord(lat, lng) {
@@ -129,25 +135,6 @@ const uploadImage = async (buffer) => {
   } catch (err) {
     throw new ImageUploadError(err && err.message);
   }
-};
-
-// Tin đăng trước khi có trường imageId chỉ lưu URL. public_id nằm ngay trong URL,
-// sau đoạn /upload/ và v<số phiên bản>, nên vẫn moi ra được để dọn.
-// Chỉ đúng với URL không kèm biến đổi ảnh — chỗ này chưa bao giờ sinh loại đó.
-const publicIdFromUrl = (url) => {
-  const match = /\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i.exec(url || '');
-  return match ? match[1] : '';
-};
-
-// Dọn ảnh không còn ai trỏ tới. Đây là việc phụ, không phải việc chính: thất bại
-// thì để lại một file rác trên Cloudinary, còn tin của người dùng vẫn lưu xong.
-// Nên không await và không để nó làm request thất bại.
-const discardImage = (pet) => {
-  const publicId = pet.imageId || publicIdFromUrl(pet.image);
-  if (!publicId) return;
-  cloudinary.uploader
-    .destroy(publicId)
-    .catch((err) => console.error('Không xoá được ảnh cũ:', publicId, err && err.message));
 };
 
 // memoryStorage giữ nguyên file trong RAM, không giới hạn thì một file lớn
@@ -267,6 +254,18 @@ exports.update_a_pet = async (req, res) => {
     if (!current) return;
 
     const updates = pickEditable(req.body);
+
+    // Bấm nút "Đã tìm thấy" là khởi động đồng hồ đếm ngược tới đợt dọn tự động.
+    // resolvedAt cố tình nằm ngoài danh sách trắng: client không tự đặt được,
+    // nếu không thì ai cũng hoãn hoặc ép xoá tin của mình bằng một dòng body.
+    // Chỉ đóng dấu khi trạng thái THẬT SỰ đổi từ chưa sang rồi — sửa lại nội
+    // dung một tin đã đoàn tụ không được phép đẩy hạn xoá lùi thêm 30 ngày nữa.
+    if ('resolved' in updates) {
+      const nowResolved = isTruthy(updates.resolved);
+      updates.resolved = nowResolved;
+      if (nowResolved && !current.resolved) updates.resolvedAt = new Date();
+      else if (!nowResolved) updates.resolvedAt = null;
+    }
 
     // Ảnh không đi qua danh sách trắng: hoặc có file mới tải lên, hoặc người
     // dùng bấm xoá ảnh. Gán thẳng vào updates sau khi đã lọc body, nên dù client

@@ -27,6 +27,12 @@ const PetSchema = new Schema({
   imageId:     { type: String, default: '', select: false },
   description: { type: String, default: '' },
   resolved:    { type: Boolean, default: false },
+  // Thời điểm tin được đánh dấu đoàn tụ. Đây là đồng hồ đếm ngược cho đợt dọn
+  // tự động: tin đoàn tụ quá hạn giữ lại thì bị xoá kèm ảnh.
+  // Phải là trường riêng chứ không dùng `date` được — date là ngày ĐĂNG, một
+  // tin đăng từ năm ngoái mà hôm nay mới đoàn tụ thì tính theo date là xoá ngay.
+  // Bỏ đánh dấu đoàn tụ thì trả về null, đồng hồ dừng lại.
+  resolvedAt:  { type: Date, default: null, index: true },
   // Toạ độ nơi mất hoặc nơi nhặt được. Tuỳ chọn — ô "khu vực" dạng chữ vẫn là
   // thứ bắt buộc, bản đồ chỉ bổ sung cho ai muốn chỉ rõ hơn.
   //

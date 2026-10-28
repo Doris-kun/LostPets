@@ -48,6 +48,10 @@ const translations = {
     'detail.resolve': 'Đã tìm thấy / Đoàn tụ',
     'detail.resolveConfirm': 'Đánh dấu thú cưng đã đoàn tụ?',
     'detail.resolvedBanner': 'Thú cưng này đã được đoàn tụ',
+    'detail.resolvedExpiry': 'Tin này sẽ tự xoá sau 30 ngày, kèm cả ảnh. Muốn giữ ảnh thì tải về trước.',
+    'detail.unresolve': 'Bỏ đánh dấu',
+    'detail.unresolveConfirm': 'Bỏ đánh dấu đoàn tụ? Tin sẽ hiện lại bình thường và không bị tự xoá nữa.',
+    'detail.unresolved': 'Đã bỏ đánh dấu đoàn tụ.',
     'detail.share': 'Chia sẻ',
     'detail.linkCopied': 'Đã sao chép link!',
     'form.general': 'Thông tin chung',
@@ -127,6 +131,10 @@ const translations = {
     'admin.users': 'Tài khoản',
     'admin.resolvedRate': 'tin đã đoàn tụ',
     'admin.resolvedOf': 'tin được đánh dấu đã tìm thấy',
+    'admin.cleanupDue': '{count} tin đã đoàn tụ quá {days} ngày. Đợt dọn đêm nay sẽ xoá hẳn, kèm cả ảnh.',
+    'admin.cleanupNow': 'Dọn ngay',
+    'admin.cleanupRunning': 'Đang dọn...',
+    'admin.cleanupDone': 'Đã xoá {count} tin cũ.',
     'admin.topAreas': 'Khu vực nhiều tin nhất',
     'admin.topBreeds': 'Giống nhiều tin nhất',
     'admin.noData': 'Chưa có dữ liệu.',
@@ -141,6 +149,7 @@ const translations = {
     'admin.colDate': 'Ngày',
     'admin.guest': 'Khách',
     'admin.confirmDelete': 'Xoá tin này? Không khôi phục lại được.',
+    'admin.confirmCleanup': 'Xoá hẳn những tin đã đoàn tụ quá hạn, kèm ảnh? Không khôi phục lại được.',
     'mine.title': 'Tin của tôi',
     'mine.subtitle': 'Các tin bạn đã đăng bằng tài khoản này.',
     'mine.loading': 'Đang tải...',
@@ -258,6 +267,10 @@ const translations = {
     'detail.resolve': 'Mark as Reunited',
     'detail.resolveConfirm': 'Mark this pet as reunited with its owner?',
     'detail.resolvedBanner': 'This pet has been reunited',
+    'detail.resolvedExpiry': 'This post deletes itself in 30 days, photo included. Save the photo first if you want to keep it.',
+    'detail.unresolve': 'Undo',
+    'detail.unresolveConfirm': 'Remove the reunited mark? The post goes back to normal and will no longer be deleted.',
+    'detail.unresolved': 'Reunited mark removed.',
     'detail.share': 'Share',
     'detail.linkCopied': 'Link copied!',
     'form.general': 'General Info',
@@ -337,6 +350,10 @@ const translations = {
     'admin.users': 'Accounts',
     'admin.resolvedRate': 'of posts reunited',
     'admin.resolvedOf': 'posts marked as found',
+    'admin.cleanupDue': '{count} reunited posts are older than {days} days. Tonight\'s sweep deletes them for good, photos included.',
+    'admin.cleanupNow': 'Clean up now',
+    'admin.cleanupRunning': 'Cleaning...',
+    'admin.cleanupDone': 'Deleted {count} old posts.',
     'admin.topAreas': 'Areas with most posts',
     'admin.topBreeds': 'Most reported breeds',
     'admin.noData': 'No data yet.',
@@ -351,6 +368,7 @@ const translations = {
     'admin.colDate': 'Date',
     'admin.guest': 'Guest',
     'admin.confirmDelete': 'Delete this post? This cannot be undone.',
+    'admin.confirmCleanup': 'Permanently delete reunited posts past the retention period, photos included? This cannot be undone.',
     'mine.title': 'My posts',
     'mine.subtitle': 'Posts you created with this account.',
     'mine.loading': 'Loading...',
@@ -435,8 +453,15 @@ export function setLang(lang) {
 
 export const i18nMixin = {
   methods: {
-    $t(key) {
-      return translations[langStore.lang]?.[key] ?? key;
+    // vars thay các ô {tên} trong câu dịch. Cần vì tiếng Việt và tiếng Anh đặt
+    // con số ở vị trí khác nhau trong câu — ghép chuỗi ngoài chỗ gọi thì có câu
+    // dịch đúng ngữ pháp một thứ tiếng và sai thứ tiếng kia.
+    $t(key, vars) {
+      const text = translations[langStore.lang]?.[key] ?? key;
+      if (!vars) return text;
+      return text.replace(/\{(\w+)\}/g, (match, name) =>
+        (name in vars ? String(vars[name]) : match)
+      );
     },
     $setLang(lang) {
       setLang(lang);
