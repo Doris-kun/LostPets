@@ -10,7 +10,6 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api';
 import { API_URL } from '../config';
@@ -289,28 +288,13 @@ export default function HomeScreen({ navigation }) {
       )}
 
       {/*
-        Hai nút nổi xếp chồng ở góc phải dưới.
+        Chỉ còn MỘT nút nổi: nút + đăng bài.
 
-        Nút + là việc chính nên to hơn, màu đậm hơn, nằm dưới cùng — ngón cái
-        với tới dễ nhất. Trợ lý nhỏ hơn, nằm ngay trên.
-
-        Cả hai hạ sát thanh tab nhất có thể: chỉ chừa 4 điểm ảnh, vừa đủ để
-        không dính vào thanh tab.
+        Trợ lý trước đây cũng là một nút nổi nằm ngay trên nút +, nhưng hai nút
+        chồng nhau ở một góc thì không nói được cái nào quan trọng hơn, mà lại
+        che mất nội dung. Trợ lý đã dọn sang màn Cài đặt, thành mục "Trung tâm
+        trợ giúp" — đúng chỗ người ta đi tìm khi cần giúp đỡ.
       */}
-      <TouchableOpacity
-        style={styles.chatFab}
-        onPress={() => navigation.navigate('Chat')}
-        activeOpacity={0.85}
-        accessibilityLabel={t('chat.title')}
-      >
-        {/*
-          Bóng chat có ba chấm — ký hiệu quen thuộc nhất cho "nhắn tin hỗ trợ".
-          Trước dùng ✨ nhưng ngôi sao nghĩa là "AI", không nói được đây là chỗ
-          hỏi đáp. Người dùng nhìn phải đoán, mà đoán là đã thua.
-        */}
-        <Ionicons name="chatbubble-ellipses" size={20} color={colors.onPrimary} />
-      </TouchableOpacity>
-
       {/* Nút tròn nổi ở góc — kiểu nút quen thuộc trên điện thoại */}
       <TouchableOpacity
         style={styles.fab}
@@ -658,19 +642,6 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     ...shadow.float,
   },
 
-  chatFab: {
-    position: "absolute",
-    // Nằm ngay trên nút +: lề đáy của nút + (24) + chiều cao nút + (58) + khe hở (8)
-    bottom: spacing.xl + 58 + 8,
-    right: spacing.xl + 9,
-    width: 40,
-    height: 40,
-    borderRadius: radius.full,
-    backgroundColor: colors.aiAccent,
-    justifyContent: "center",
-    alignItems: "center",
-    ...shadow.card,
-  },
 
   fabIcon: { color: colors.onPrimary, fontSize: 30, lineHeight: 34, fontWeight: '300' },
   }),

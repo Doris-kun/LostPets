@@ -1,5 +1,6 @@
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
@@ -131,6 +132,43 @@ export default function SettingsScreen({ navigation }) {
         </Row>
       </View>
 
+      {/* ---- Trợ giúp ---- */}
+      {/*
+        Trợ lý dọn từ nút nổi ở trang chủ về đây.
+
+        Nút nổi chỉ là một bóng chat tròn, nhìn vào không biết bấm thì ra gì.
+        Đặt vào Cài đặt thành hẳn một mục có tên và có mô tả thì người cần giúp
+        đỡ sẽ tìm thấy — vì Cài đặt chính là chỗ người ta mở ra khi bí.
+      */}
+      <Text style={styles.sectionLabel}>{t('settings.help')}</Text>
+
+      <View style={styles.card}>
+        <View style={styles.helpHead}>
+          <Ionicons name="headset-outline" size={22} color={colors.primary} />
+          <View style={styles.helpHeadText}>
+            <Text style={styles.helpTitle}>{t('settings.helpTitle')}</Text>
+            <Text style={styles.helpSub}>{t('settings.helpSub')}</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.helpBox}
+          onPress={() => navigation.navigate('Chat')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.helpAvatar}>
+            <Ionicons name="chatbubble-ellipses" size={18} color={colors.onPrimary} />
+          </View>
+
+          <View style={styles.helpBoxText}>
+            <Text style={styles.helpOnline}>{t('settings.helpOnline')}</Text>
+            <Text style={styles.helpHours}>{t('settings.helpHours')}</Text>
+          </View>
+
+          <Text style={styles.helpAction}>{t('settings.helpAction')} →</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* ---- Giới thiệu ---- */}
       <Text style={styles.sectionLabel}>{t('settings.about')}</Text>
 
@@ -184,6 +222,35 @@ const themedStyles = createThemedStyles((colors) =>
       letterSpacing: -0.4,
       marginBottom: spacing.lg,
     },
+
+    /* ---- Trung tâm trợ giúp ---- */
+    helpHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    helpHeadText: { flex: 1 },
+    helpTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
+    helpSub: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
+
+    // Khung con lồng bên trong thẻ — nền nhạt hơn để tách khỏi phần tiêu đề
+    helpBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      marginTop: spacing.md,
+      padding: spacing.md,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceTint,
+    },
+    helpAvatar: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: colors.aiAccent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    helpBoxText: { flex: 1 },
+    helpOnline: { fontSize: 14, fontWeight: '700', color: colors.text },
+    helpHours: { fontSize: 11, color: colors.textMuted, marginTop: 1 },
+    helpAction: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
     sectionLabel: {
       fontSize: 11,
