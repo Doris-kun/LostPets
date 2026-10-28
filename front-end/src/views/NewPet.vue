@@ -171,6 +171,7 @@
 import api from '../api';
 import MapPicker from '../components/MapPicker.vue';
 import claim from '../claim';
+import auth from '../auth';
 
 export default {
   name: 'NewPet',
@@ -246,8 +247,18 @@ export default {
         if (this.image) formData.append('image', this.image);
         const { data } = await api.createPet(formData);
         // Mã chỉ trả về đúng lần này, lưu ngay để người đăng sửa/xoá được sau.
+        // Lưu cả khi đã đăng nhập: mất mật khẩu tài khoản thì trình duyệt này
+        // vẫn còn một đường vào tin.
         claim.save(data._id, data.claimCode);
-        this.$toast(`${this.$t('claim.saved')} ${data.claimCode}`);
+
+        // Không đọc mã ra màn hình nữa. Toast chỉ sống 3 giây — không ai chép
+        // kịp 10 ký tự hex, nên nó vừa vô dụng vừa làm người dùng tưởng mình
+        // đang đánh mất một thứ quan trọng. localStorage mới là chỗ làm việc
+        // thật, còn ai cần mang mã sang máy khác thì xem lại ở trang chi tiết.
+        //
+        // Đã đăng nhập thì càng không nhắc: tin gắn thẳng vào tài khoản, sửa ở
+        // máy nào cũng được, mã không còn vai trò gì.
+        this.$toast(this.$t(auth.isLoggedIn() ? 'claim.postedUser' : 'claim.postedGuest'));
         this.$router.push('/');
       } catch (err) {
         const status = err.response && err.response.status;

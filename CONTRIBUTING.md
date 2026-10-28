@@ -297,6 +297,8 @@ Phản hồi `201`: object pet vừa tạo, **kèm trường `claimCode`**. Serv
 
 `claimCode` là mã xác nhận, **chỉ trả về đúng lần này**. Database chỉ lưu bản băm SHA-256 nên không có cách nào đọc lại. Front-end lưu mã vào `localStorage` để người đăng sửa/xoá được sau.
 
+Front-end **không hiện mã này ra màn hình lúc đăng**. Toast chỉ sống 3 giây, không ai chép kịp 10 ký tự hex, nên hiện ra vừa vô dụng vừa khiến người dùng tưởng mình đang đánh mất thứ gì đó quan trọng. `localStorage` mới là chỗ làm việc thật — nó tự gắn mã vào header mỗi lần sửa. Ai cần mang mã sang máy khác thì vào trang chi tiết tin bấm "Xem mã xác nhận".
+
 Thiếu trường bắt buộc thì nhận `400` với body `{ "message": "All fields are required" }`.
 
 ### `GET /pets/:petId` — xem chi tiết
@@ -323,7 +325,15 @@ Tin đã có chủ thì khách vãng lai không sửa được, kể cả khi ti
 
 **Chỉ những trường này sửa được**: `type`, `name`, `species`, `breed`, `color`, `area`, `contact`, `description`, `resolved`, `secretDetail`, `lat`, `lng`. Gửi thêm trường khác thì bị bỏ qua chứ không báo lỗi.
 
-`owner`, `claimHash`, `postId` và `date` **cố tình không cho sửa** — mở ra thì ai sửa được tin cũng chiếm được quyền sở hữu, khoá tin lại bằng mã của mình, hoặc đổi ngày để tin nằm mãi ở đầu danh sách.
+`owner`, `claimHash`, `postId`, `date` và `resolvedAt` **cố tình không cho sửa** — mở ra thì ai sửa được tin cũng chiếm được quyền sở hữu, khoá tin lại bằng mã của mình, đổi ngày để tin nằm mãi ở đầu danh sách, hoặc tự hoãn hạn xoá của tin mình.
+
+#### Đánh dấu đoàn tụ
+
+Gửi `resolved: true` thì server tự đóng dấu `resolvedAt` là thời điểm hiện tại — đây là lúc đồng hồ đếm ngược tới đợt dọn tự động bắt đầu chạy (xem mục 7). Gửi `resolved: false` thì `resolvedAt` về `null` và đồng hồ dừng hẳn.
+
+Chỉ đóng dấu khi trạng thái **thật sự đổi** từ chưa sang rồi. Sửa nội dung một tin đã đoàn tụ mà form gửi kèm `resolved: true` thì mốc cũ giữ nguyên, không bị đẩy lùi thêm một kỳ hạn nữa.
+
+Gửi qua form thì boolean thành chuỗi, mà `Boolean('false')` lại ra `true` — server xử lý riêng nên `resolved: 'false'` vẫn hiểu đúng là bỏ đánh dấu.
 
 #### Đổi ảnh
 
@@ -367,9 +377,12 @@ Server lưu `public_id` của ảnh vào trường `imageId` (`select: false`, k
   "image": "https://res.cloudinary.com/.../lost-pets/abc.jpg",
   "description": "Mất chiều 12/10 gần công viên",
   "resolved": false,
+  "resolvedAt": null,
   "date": "2026-10-12T09:30:00.000Z"
 }
 ```
+
+`resolvedAt` là lúc tin được đánh dấu đoàn tụ, và là đồng hồ đếm ngược tới đợt dọn tự động (xem mục 7). Bỏ đánh dấu thì nó về `null` và đồng hồ dừng hẳn. Đây **không phải** trường gửi lên được: server tự đặt, gửi `resolvedAt` trong body thì bị bỏ qua — nếu không thì ai cũng hoãn hoặc ép xoá tin bằng một dòng body. Đừng nhầm với `date` là ngày đăng.
 
 **Toạ độ luôn được làm mờ trước khi lưu**: làm tròn về lưới 0,005 độ (khoảng 500m) ngay ở setter của model, nên bản chính xác không bao giờ nằm trong database. Thú cưng thường mất gần nhà, ghim chính xác là công khai địa chỉ nhà người đăng — ghép với số điện thoại hiện ngay bên cạnh thì quá nguy hiểm. Giao diện vẽ một vòng tròn bán kính 500m thay vì một chấm, để thể hiện đúng độ chính xác thật sự.
 
@@ -529,6 +542,7 @@ Mọi endpoint dưới đây cần `Authorization: Bearer <token>` của tài kh
 {
   "total": 19, "lost": 11, "found": 8, "resolved": 3, "open": 16,
   "withImage": 19, "users": 2, "resolvedRate": 16,
+  "pendingCleanup": 1, "cleanupDays": 30,
   "topAreas":  [{ "label": "Quận 1, TP.HCM", "count": 3 }],
   "topBreeds": [{ "label": "Corgi", "count": 2 }]
 }
@@ -543,6 +557,36 @@ Trả về `{ pets, total }`. Mỗi tin kèm `owner` là `{ name, email }` nếu
 ### `DELETE /admin/pets/:petId`
 
 Xoá bất kỳ tin nào, không cần mã xác nhận.
+
+### `POST /admin/cleanup` — dọn tin đã đoàn tụ
+
+Xoá hẳn những tin có `resolved: true` và `resolvedAt` cũ hơn `CLEANUP_AFTER_DAYS` ngày (mặc định 30), kèm ảnh trên Cloudinary.
+
+```json
+{ "deleted": 2, "stamped": 0, "days": 30 }
+```
+
+`stamped` là số tin đã đoàn tụ từ trước khi có trường `resolvedAt`, được đóng dấu mốc "bây giờ" trong lượt chạy này. Chúng **không** bị xoá ở cùng lượt — mỗi tin luôn được hưởng trọn kỳ hạn kể từ lúc có mốc. Cố ý không suy mốc cũ ra từ `date`: đoán sai một tin là xoá nhầm tin của người ta.
+
+**Hai đường vào:**
+
+| Cách gọi | Dùng khi |
+|---|---|
+| `Authorization: Bearer <token>` admin | quản trị viên bấm nút "Dọn ngay" trên trang quản trị |
+| `x-cleanup-token: <CLEANUP_TOKEN>` | cron gọi vào, vì cron không đăng nhập được nên không có JWT |
+
+Chưa đặt `CLEANUP_TOKEN` thì đường thứ hai **đóng hẳn**, chỉ còn admin bấm tay. Mặc định phải là đóng, không thì quên đặt biến môi trường là ai cũng gọi được endpoint xoá hàng loạt. So sánh mã dùng `crypto.timingSafeEqual` trên bản băm của hai chuỗi — băm trước để hai buffer luôn đủ 32 byte, vì chính độ dài mã cũng là một manh mối cho người đang dò.
+
+**Hẹn giờ chạy** nằm ở [`.github/workflows/cleanup.yml`](.github/workflows/cleanup.yml), 19:00 UTC mỗi ngày (02:00 giờ Việt Nam). Cần hai secret trong repo (Settings → Secrets and variables → Actions):
+
+- `API_URL` — địa chỉ back-end trên Render, không có dấu `/` ở cuối
+- `CLEANUP_TOKEN` — đúng chuỗi đã đặt trong biến môi trường của Render
+
+Không đặt `setInterval` hay `node-cron` trong app vì Render gói miễn phí cho web service ngủ sau 15 phút không ai truy cập: instance ngủ thì không có gì chạy cả. Hẹn giờ từ bên ngoài thì chính request đó đánh thức dịch vụ dậy.
+
+**Vì sao không dùng TTL index của MongoDB**, dù cách đó không tốn dòng code nào: TTL xoá thẳng dưới tầng database nên code của app không chạy, ảnh trên Cloudinary bị bỏ lại vĩnh viễn và không còn tin nào trỏ tới để biết đường dọn. Đổi vài chục dòng code lấy một đống rác không bao giờ dọn được thì không đáng.
+
+> Đổi `CLEANUP_AFTER_DAYS` thì nhớ sửa luôn hai chuỗi dịch `detail.resolvedExpiry` trong `front-end/src/i18n.js` và dòng nói về 30 ngày trong `SYSTEM_INSTRUCTION` của `chatController.js`, không thì giao diện nói một đằng hệ thống làm một nẻo.
 
 ## 8. Giới hạn tần suất
 
@@ -561,7 +605,41 @@ Các endpoint AI đều tốn quota Gemini nên phải chặn vòng lặp tự �
 
 > Bộ đếm nằm trong bộ nhớ nên nếu sau này chạy nhiều instance thì mỗi instance đếm riêng, phải chuyển sang bộ đếm dùng chung như Redis.
 
-## 9. Quy tắc chung
+## 9. Dữ liệu lưu trong trình duyệt
+
+Front-end giữ vài thứ trong `localStorage`. Không có gì được gửi lên server ngoài mã xác nhận lúc sửa/xoá tin.
+
+| Khoá | Nội dung | Module |
+|---|---|---|
+| `claim:<petId>` | mã xác nhận của tin đó | `src/claim.js` |
+| `nudge:ask:<petId>` | sớm nhất bao giờ được hỏi lại về tin đó (mốc ms) | `src/nudge.js` |
+| `nudge:scan` | sớm nhất bao giờ được dò lại toàn bộ (mốc ms) | `src/nudge.js` |
+| `lang` | ngôn ngữ đang chọn | `src/i18n.js` |
+| `token`, `user` | phiên đăng nhập | `src/auth.js` |
+
+`claim.list()` lọc theo tiền tố `claim:` nên không dính các khoá khác — lưu ý khi đặt tên khoá mới, đừng bắt đầu bằng `claim:`.
+
+### Dải nhắc "tìm được chưa?"
+
+`components/ResolveNudge.vue` nằm trong `App.vue`, chạy một lần mỗi lần tải trang.
+
+Nút "Đã tìm thấy" trên trang chi tiết gần như không ai bấm, vì người ta đoàn tụ xong là quên website này tồn tại. Mà cuộc đoàn tụ diễn ra **ngoài đời**: không có nhắn tin, không có thông báo, không có giao dịch — **không một dữ liệu nào trong hệ thống đổi khi con vật về nhà**. Không có tín hiệu thì không đoán được, chỉ hỏi được.
+
+Nên đừng viết quy tắc kiểu "tin quá 45 ngày thì tự đánh dấu đoàn tụ". Suy luận đó sai ở đúng những ca quan trọng nhất — người mất chó hai tháng vẫn đang tìm. Và nó phá hỏng con số tỉ lệ đoàn tụ ở trang quản trị: `resolved` có nghĩa là **một con người đã xác nhận**, cho quy tắc tự động set nó thì con số ấy không còn đo đoàn tụ nữa, nó đo chính cái hằng số timeout trong code.
+
+Cách hoạt động:
+
+1. Dò tối đa 12 tiếng một lần (`nudge:scan`), và tối đa 5 tin, để không bắn một loạt request mỗi lần tải trang.
+2. Chỉ hỏi tin **chưa đoàn tụ** và đã đăng quá **7 ngày**. Hỏi ngày hôm sau thì vô duyên, người ta còn đang tìm.
+3. Mỗi lần chỉ hỏi **một tin**, tin cũ nhất trước. Hỏi dồn thì người ta bấm bừa cho xong, dữ liệu thu về vô nghĩa.
+4. "Rồi" → `PUT { resolved: true }`. "Chưa" → im 7 ngày. Dấu X → im 1 ngày.
+5. Tin trả `404` (đã bị xoá) thì dọn luôn mã trong trình duyệt. Chỉ dọn khi server nói rõ `404` — mất mạng cũng vào nhánh lỗi, mà xoá mã vì rớt wifi thì người ta mất quyền sửa tin của chính mình.
+
+Đang đứng ngay trong trang chi tiết của tin đó thì dải không hiện, vì trang đó đã có nút riêng rồi.
+
+> Thử nhanh lúc phát triển: `localStorage.removeItem('nudge:scan')` rồi tải lại trang.
+
+## 10. Quy tắc chung
 
 - Không commit `.env`, `node_modules/`, `dist/`
 - Không push thẳng lên `main`

@@ -29,6 +29,19 @@
       <p class="text-xs text-gray-400 mt-2">
         {{ stats.resolved }} / {{ stats.total }} {{ $t('admin.resolvedOf') }}
       </p>
+
+      <!-- Chỉ hiện khi thật sự có tin quá hạn. Một dòng "0 tin sắp bị xoá" nằm
+           đó mỗi ngày thì chẳng mấy chốc không ai đọc nữa. -->
+      <div v-if="stats.pendingCleanup > 0"
+           class="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-center gap-3">
+        <p class="text-xs text-gray-500 flex-1 min-w-[14rem]">
+          {{ $t('admin.cleanupDue', { count: stats.pendingCleanup, days: stats.cleanupDays }) }}
+        </p>
+        <button @click="runCleanup" :disabled="cleaning"
+                class="text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+          {{ cleaning ? $t('admin.cleanupRunning') : $t('admin.cleanupNow') }}
+        </button>
+      </div>
     </div>
 
     <!-- Xếp hạng: thanh ngang một màu, độ dài mang nghĩa, số ghi thẳng ở cuối thanh -->
@@ -141,6 +154,7 @@ export default {
       loading: false,
       loadingMore: false,
       busyId: null,
+      cleaning: false,
       filters: { type: '', resolved: '', q: '' },
       timer: null,
     };
@@ -227,6 +241,23 @@ export default {
         this.$toast(this.$t('form.saveError'), 'error');
       } finally {
         this.busyId = null;
+      }
+    },
+    // Chạy đợt dọn ngay thay vì chờ cron. Chủ yếu để kiểm tra rằng nó hoạt động —
+    // chờ tới 2 giờ sáng mới biết mình cấu hình sai thì quá chậm.
+    async runCleanup() {
+      if (!confirm(this.$t('admin.confirmCleanup'))) return;
+      this.cleaning = true;
+      try {
+        const { data } = await api.adminCleanup();
+        this.$toast(this.$t('admin.cleanupDone', { count: data.deleted }));
+        // Tin vừa xoá có thể đang nằm trong bảng bên dưới, nạp lại cả hai.
+        this.fetchStats();
+        this.reload();
+      } catch {
+        this.$toast(this.$t('form.saveError'), 'error');
+      } finally {
+        this.cleaning = false;
       }
     },
     formatDate(date) {

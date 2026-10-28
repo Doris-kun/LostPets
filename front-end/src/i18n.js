@@ -6,6 +6,13 @@ const translations = {
     'nav.lost': 'Thú Cưng Bị Mất',
     'nav.found': 'Tìm Thấy Thú Cưng',
     'nav.post': 'Đăng Báo Cáo',
+    'nudge.askLost': 'Tin "{name}" bạn đăng {days} ngày trước — tìm được chưa?',
+    'nudge.askFound': 'Tin "{name}" bạn đăng {days} ngày trước — đã tìm được chủ chưa?',
+    'nudge.yes': 'Rồi',
+    'nudge.no': 'Chưa',
+    'nudge.later': 'Để sau',
+    'nudge.saving': 'Đang lưu...',
+    'nudge.thanks': 'Cảm ơn bạn đã cập nhật!',
     'badge.lost': 'Bị mất',
     'badge.found': 'Tìm thấy',
     'badge.resolved': 'Đã đoàn tụ',
@@ -52,6 +59,10 @@ const translations = {
     'detail.resolve': 'Đã tìm thấy / Đoàn tụ',
     'detail.resolveConfirm': 'Đánh dấu thú cưng đã đoàn tụ?',
     'detail.resolvedBanner': 'Thú cưng này đã được đoàn tụ',
+    'detail.resolvedExpiry': 'Tin này sẽ tự xoá sau 30 ngày, kèm cả ảnh. Muốn giữ ảnh thì tải về trước.',
+    'detail.unresolve': 'Bỏ đánh dấu',
+    'detail.unresolveConfirm': 'Bỏ đánh dấu đoàn tụ? Tin sẽ hiện lại bình thường và không bị tự xoá nữa.',
+    'detail.unresolved': 'Đã bỏ đánh dấu đoàn tụ.',
     'detail.share': 'Chia sẻ',
     'detail.linkCopied': 'Đã sao chép link!',
     'form.general': 'Thông tin chung',
@@ -115,7 +126,13 @@ const translations = {
     'match.none': 'Chưa tìm thấy thông tin nào trùng khớp.',
     'match.error': 'Đối chiếu thất bại. Thử lại sau.',
     'match.limit': 'Đã hết lượt miễn phí, thử lại sau một chút.',
-    'claim.saved': 'Đã đăng. Mã xác nhận của bạn — hãy lưu lại để sửa hoặc xoá tin sau:',
+    'claim.postedUser': 'Đã đăng tin. Bạn sửa hoặc xoá tin này lúc nào cũng được trong mục Tin của tôi.',
+    'claim.postedGuest': 'Đã đăng tin. Trình duyệt này sửa và xoá được tin — đăng nhập để sửa từ máy khác.',
+    'claim.view': 'Xem mã xác nhận',
+    'claim.viewTitle': 'Mã xác nhận của tin này',
+    'claim.viewHint': 'Trình duyệt này đã lưu mã nên bạn không cần nhập. Chỉ cần tới nó khi muốn sửa tin từ máy khác, hoặc sau khi xoá dữ liệu trình duyệt.',
+    'claim.copy': 'Sao chép',
+    'claim.copied': 'Đã sao chép',
     'claim.denied': 'Bạn cần mã xác nhận của tin này mới sửa hoặc xoá được.',
     'match.busy': 'AI đang quá tải, thử lại sau ít phút.',
     'admin.link': 'Quản trị',
@@ -125,6 +142,10 @@ const translations = {
     'admin.users': 'Tài khoản',
     'admin.resolvedRate': 'tin đã đoàn tụ',
     'admin.resolvedOf': 'tin được đánh dấu đã tìm thấy',
+    'admin.cleanupDue': '{count} tin đã đoàn tụ quá {days} ngày. Đợt dọn đêm nay sẽ xoá hẳn, kèm cả ảnh.',
+    'admin.cleanupNow': 'Dọn ngay',
+    'admin.cleanupRunning': 'Đang dọn...',
+    'admin.cleanupDone': 'Đã xoá {count} tin cũ.',
     'admin.topAreas': 'Khu vực nhiều tin nhất',
     'admin.topBreeds': 'Giống nhiều tin nhất',
     'admin.noData': 'Chưa có dữ liệu.',
@@ -139,6 +160,7 @@ const translations = {
     'admin.colDate': 'Ngày',
     'admin.guest': 'Khách',
     'admin.confirmDelete': 'Xoá tin này? Không khôi phục lại được.',
+    'admin.confirmCleanup': 'Xoá hẳn những tin đã đoàn tụ quá hạn, kèm ảnh? Không khôi phục lại được.',
     'mine.title': 'Tin của tôi',
     'mine.subtitle': 'Các tin bạn đã đăng bằng tài khoản này.',
     'mine.loading': 'Đang tải...',
@@ -214,6 +236,13 @@ const translations = {
     'nav.lost': 'Lost Pets',
     'nav.found': 'Found Pets',
     'nav.post': 'Post Report',
+    'nudge.askLost': 'Your post "{name}" from {days} days ago — found them yet?',
+    'nudge.askFound': 'Your post "{name}" from {days} days ago — found the owner yet?',
+    'nudge.yes': 'Yes',
+    'nudge.no': 'Not yet',
+    'nudge.later': 'Later',
+    'nudge.saving': 'Saving...',
+    'nudge.thanks': 'Thanks for the update!',
     'badge.lost': 'Lost',
     'badge.found': 'Found',
     'badge.resolved': 'Reunited',
@@ -260,6 +289,10 @@ const translations = {
     'detail.resolve': 'Mark as Reunited',
     'detail.resolveConfirm': 'Mark this pet as reunited with its owner?',
     'detail.resolvedBanner': 'This pet has been reunited',
+    'detail.resolvedExpiry': 'This post deletes itself in 30 days, photo included. Save the photo first if you want to keep it.',
+    'detail.unresolve': 'Undo',
+    'detail.unresolveConfirm': 'Remove the reunited mark? The post goes back to normal and will no longer be deleted.',
+    'detail.unresolved': 'Reunited mark removed.',
     'detail.share': 'Share',
     'detail.linkCopied': 'Link copied!',
     'form.general': 'General Info',
@@ -323,7 +356,13 @@ const translations = {
     'match.none': 'No close enough post found yet.',
     'match.error': 'Matching failed. Please try again.',
     'match.limit': 'Free quota reached, try again shortly.',
-    'claim.saved': 'Posted. Your confirmation code — save it to edit or delete this post later:',
+    'claim.postedUser': 'Posted. You can edit or delete it any time from My Posts.',
+    'claim.postedGuest': 'Posted. This browser can edit and delete it — log in to edit from another device.',
+    'claim.view': 'View confirmation code',
+    'claim.viewTitle': 'Confirmation code for this post',
+    'claim.viewHint': 'This browser saved the code, so you never need to type it. You only need it to edit from another device, or after clearing browser data.',
+    'claim.copy': 'Copy',
+    'claim.copied': 'Copied',
     'claim.denied': 'You need this post’s confirmation code to edit or delete it.',
     'match.busy': 'AI is overloaded, try again in a few minutes.',
     'admin.link': 'Admin',
@@ -333,6 +372,10 @@ const translations = {
     'admin.users': 'Accounts',
     'admin.resolvedRate': 'of posts reunited',
     'admin.resolvedOf': 'posts marked as found',
+    'admin.cleanupDue': '{count} reunited posts are older than {days} days. Tonight\'s sweep deletes them for good, photos included.',
+    'admin.cleanupNow': 'Clean up now',
+    'admin.cleanupRunning': 'Cleaning...',
+    'admin.cleanupDone': 'Deleted {count} old posts.',
     'admin.topAreas': 'Areas with most posts',
     'admin.topBreeds': 'Most reported breeds',
     'admin.noData': 'No data yet.',
@@ -347,6 +390,7 @@ const translations = {
     'admin.colDate': 'Date',
     'admin.guest': 'Guest',
     'admin.confirmDelete': 'Delete this post? This cannot be undone.',
+    'admin.confirmCleanup': 'Permanently delete reunited posts past the retention period, photos included? This cannot be undone.',
     'mine.title': 'My posts',
     'mine.subtitle': 'Posts you created with this account.',
     'mine.loading': 'Loading...',
@@ -431,8 +475,15 @@ export function setLang(lang) {
 
 export const i18nMixin = {
   methods: {
-    $t(key) {
-      return translations[langStore.lang]?.[key] ?? key;
+    // vars thay các ô {tên} trong câu dịch. Cần vì tiếng Việt và tiếng Anh đặt
+    // con số ở vị trí khác nhau trong câu — ghép chuỗi ngoài chỗ gọi thì có câu
+    // dịch đúng ngữ pháp một thứ tiếng và sai thứ tiếng kia.
+    $t(key, vars) {
+      const text = translations[langStore.lang]?.[key] ?? key;
+      if (!vars) return text;
+      return text.replace(/\{(\w+)\}/g, (match, name) =>
+        (name in vars ? String(vars[name]) : match)
+      );
     },
     $setLang(lang) {
       setLang(lang);
