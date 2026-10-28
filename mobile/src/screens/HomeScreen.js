@@ -14,10 +14,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api';
 import { API_URL } from '../config';
-import PetCard from '../components/PetCard';
+import PetCard, { timeAgo } from '../components/PetCard';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
 import { useLanguage } from '../context/language';
-import { radius, spacing } from '../theme';
+import { radius, spacing, statusStyle } from '../theme';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 
 /*
@@ -238,7 +238,11 @@ export default function HomeScreen({ navigation }) {
         </View>
       ) : (
         <FlatList
-          data={pets}
+          /*
+           * Bỏ tin đầu ra khỏi danh sách vì nó đã nằm trong thẻ nổi bật phía
+           * trên. Để nguyên thì tin mới nhất hiện HAI LẦN.
+           */
+          data={pets.slice(1)}
           keyExtractor={(item) => item._id}
           contentContainerStyle={[styles.list, { paddingBottom: 90 }]}
           showsVerticalScrollIndicator={false}
@@ -258,7 +262,22 @@ export default function HomeScreen({ navigation }) {
           // để tin mới kịp sẵn sàng trước khi người dùng cuộn tới nơi.
           onEndReached={loadMore}
           onEndReachedThreshold={0.4}
-          ListEmptyComponent={<EmptyState hasError={hasError} />}
+          ListHeaderComponent={
+            <Featured
+              pet={pets[0]}
+              restCount={pets.length - 1}
+              onPress={() => navigation.navigate('Detail', { id: pets[0]._id })}
+            />
+          }
+          /*
+           * CHỈ hiện khi thật sự không có tin nào.
+           *
+           * data của FlatList là pets.slice(1), nên lúc chỉ có đúng một tin thì
+           * data rỗng — mà rỗng thì FlatList tự bật ListEmptyComponent lên.
+           * Tin đó vẫn đang nằm trong thẻ nổi bật ngay trên, báo "chưa có bài
+           * nào" là nói sai.
+           */
+          ListEmptyComponent={pets.length === 0 ? <EmptyState hasError={hasError} /> : null}
           ListFooterComponent={
             <ListFooter loadingMore={loadingMore} shown={pets.length} total={total} />
           }
@@ -346,6 +365,74 @@ function Header({ total, loading, hasError }) {
 
 
 // Chân danh sách: đang tải thêm thì quay vòng, hết tin thì báo một dòng.
+/*
+ * Thẻ tin nổi bật ở đầu trang chủ — chính là tin MỚI NHẤT trong danh sách đang
+ * lọc, giống web (featured = pets[0] trong views/Home.vue).
+ *
+ * Làm to hẳn ra thay vì dùng PetCard thường: ảnh rộng cả màn, có mô tả. Mục
+ * đích là cho người vừa mở app một tin để đọc ngay, thay vì một danh sách
+ * đều đều phải tự chọn.
+ */
+function Featured({ pet, restCount, onPress }) {
+  const { t, lang } = useLanguage();
+  const { colors, isDark } = useTheme();
+  const styles = useThemedStyles(themedStyles);
+
+  // Danh sách rỗng thì không có gì để làm nổi bật.
+  if (!pet) return null;
+
+  const status = statusStyle(pet, colors);
+
+  return (
+    <View>
+      <TouchableOpacity style={styles.featured} onPress={onPress} activeOpacity={0.9}>
+        <View style={styles.featuredImageBox}>
+          {/* API trả image là CHUỖI RỖNG khi không có ảnh, không phải null */}
+          {pet.image ? (
+            <Image source={{ uri: pet.image }} style={styles.featuredImage} />
+          ) : (
+            <View style={[styles.featuredImage, styles.featuredImageEmpty]}>
+              <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.featuredLogo} />
+            </View>
+          )}
+
+          <View style={[styles.featuredBadge, { backgroundColor: status.color }]}>
+            <Text style={styles.featuredBadgeText}>{t(status.labelKey)}</Text>
+          </View>
+        </View>
+
+        <View style={styles.featuredBody}>
+          <Text style={styles.featuredLabel}>{t('home.featured')}</Text>
+          <Text style={styles.featuredTitle} numberOfLines={1}>
+            {pet.name || pet.breed}
+          </Text>
+          <Text style={styles.featuredSub} numberOfLines={1}>
+            {pet.species} · {pet.breed}
+          </Text>
+          <Text style={styles.featuredArea} numberOfLines={1}>
+            {pet.area}
+          </Text>
+
+          {!!pet.description && (
+            <Text style={styles.featuredDesc} numberOfLines={3}>
+              {pet.description}
+            </Text>
+          )}
+
+          <View style={styles.featuredFoot}>
+            <Text style={styles.featuredTime}>{timeAgo(pet.date, t, lang)}</Text>
+            <Text style={styles.featuredLink}>{t('home.view')} →</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+
+      {/* Tiêu đề cho phần còn lại. Chỉ có đúng một tin thì không có "phần còn
+          lại" nào để đặt tiêu đề cả. */}
+      {restCount > 0 && <Text style={styles.moreLabel}>{t('home.more')}</Text>}
+    </View>
+  );
+}
+
 function ListFooter({ loadingMore, shown, total }) {
   const { t } = useLanguage();
   const { colors } = useTheme();
@@ -422,6 +509,62 @@ const themedStyles = createThemedStyles((colors, shadow) =>
 
   countText: { fontSize: 13, fontWeight: '700', color: colors.teal },
 
+
+  /* ---- Thẻ tin nổi bật ---- */
+  featured: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    marginBottom: spacing.lg,
+    ...shadow.card,
+  },
+  featuredImageBox: { position: 'relative' },
+  // 16:9 — ảnh ngang, cao vừa phải để phần chữ bên dưới vẫn lọt màn hình
+  featuredImage: { width: '100%', aspectRatio: 16 / 9, backgroundColor: colors.surfaceTint },
+  featuredImageEmpty: { alignItems: 'center', justifyContent: 'center' },
+  featuredLogo: { width: 56, height: 56, opacity: 0.35, resizeMode: 'contain' },
+  featuredBadge: {
+    position: 'absolute',
+    top: spacing.md,
+    left: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 5,
+    borderRadius: radius.full,
+  },
+  featuredBadgeText: { fontSize: 11, fontWeight: '800', color: colors.onStatus },
+
+  featuredBody: { padding: spacing.lg },
+  featuredLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.orange,
+    letterSpacing: 1.2,
+    marginBottom: spacing.sm,
+  },
+  featuredTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
+  featuredSub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  featuredArea: { fontSize: 13, color: colors.textSoft, marginTop: spacing.sm },
+  featuredDesc: { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginTop: spacing.sm },
+  featuredFoot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  featuredTime: { fontSize: 11, color: colors.textMuted },
+  featuredLink: { fontSize: 13, fontWeight: '700', color: colors.primary },
+
+  moreLabel: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: spacing.md,
+  },
 
   filterRow: {
     flexDirection: 'row',
