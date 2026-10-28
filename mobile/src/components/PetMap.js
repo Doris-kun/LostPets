@@ -463,6 +463,8 @@ const themedStyles = createThemedStyles((colors) =>
       marginTop: spacing.sm,
     },
     btn: {
+      minHeight: 44,
+      justifyContent: 'center',
       borderWidth: 1,
       borderColor: colors.border,
       borderRadius: radius.sm,
@@ -506,6 +508,8 @@ const themedStyles = createThemedStyles((colors) =>
     modalError: { paddingHorizontal: spacing.lg },
 
     directions: {
+      minHeight: 44,
+      justifyContent: 'center',
       alignSelf: 'flex-start',
       borderWidth: 1,
       borderColor: colors.border,

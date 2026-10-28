@@ -188,6 +188,9 @@ export default function PetFilters({ visible, value, onClose, onApply }) {
               onPress={() => slideDownThen(onClose)}
               activeOpacity={0.7}
               accessibilityLabel={t('filter.close')}
+              // Vòng tròn 32x32, nới đều 6 phía cho đủ 44x44. Quanh nó không
+              // có nút nào khác nên nới ngang cũng không đụng ai.
+              hitSlop={6}
             >
               <Ionicons name="close" size={18} color={colors.textSoft} />
             </TouchableOpacity>
@@ -287,6 +290,10 @@ function ChipGroup({ options, selected, onSelect }) {
             key={option.value || 'any'}
             onPress={() => onSelect(option.value)}
             activeOpacity={0.8}
+            // Chip cao 36, nới 4 trên 4 dưới cho đủ 44. Chỉ nới dọc: các chip
+            // nằm sát nhau theo hàng ngang, nới ngang là vùng chạm chồng lên
+            // nhau, bấm chip này ra chip kia.
+            hitSlop={{ top: 5, bottom: 5 }}
             style={[styles.chip, active && styles.chipActive]}
           >
             <Text style={[styles.chipText, active && styles.chipTextActive]}>

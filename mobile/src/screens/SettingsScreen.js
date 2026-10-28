@@ -213,6 +213,8 @@ function Choice({ label, active, onPress }) {
     <TouchableOpacity
       style={[styles.choice, active && styles.choiceActive]}
       onPress={onPress}
+      // Nút cao 30, nới 7 trên 7 dưới cho đủ 44 (chỉ nới dọc)
+      hitSlop={{ top: 7, bottom: 7 }}
       activeOpacity={0.8}
     >
       <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{label}</Text>
@@ -300,6 +302,8 @@ const themedStyles = createThemedStyles((colors) =>
     adminTagText: { fontSize: 10, fontWeight: '800', color: colors.teal, letterSpacing: 0.5 },
 
     logoutButton: {
+      minHeight: 44,
+      justifyContent: 'center',
       marginTop: spacing.lg,
       paddingVertical: 12,
       borderRadius: radius.md,
@@ -311,6 +315,8 @@ const themedStyles = createThemedStyles((colors) =>
 
     // Cùng khuôn với nút Đăng xuất để hai nút xếp thẳng hàng, chỉ khác màu chữ
     adminButton: {
+      minHeight: 44,
+      justifyContent: 'center',
       marginTop: spacing.lg,
       paddingVertical: 12,
       borderRadius: radius.md,

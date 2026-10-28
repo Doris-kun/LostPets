@@ -122,6 +122,8 @@ export default function ChatScreen() {
                     style={styles.suggestion}
                     onPress={() => send(question)}
                     activeOpacity={0.8}
+                    // Chip cao 33, nới 6 trên 6 dưới cho đủ 44 (chỉ nới dọc)
+                    hitSlop={{ top: 6, bottom: 6 }}
                   >
                     <Text style={styles.suggestionText}>{question}</Text>
                   </TouchableOpacity>
@@ -271,6 +273,9 @@ const themedStyles = createThemedStyles((colors) =>
       color: colors.text,
     },
     sendButton: {
+      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+      minHeight: 44,
+      justifyContent: 'center',
       backgroundColor: colors.aiAccent,
       paddingHorizontal: spacing.lg,
       paddingVertical: 12,

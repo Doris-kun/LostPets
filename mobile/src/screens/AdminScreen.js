@@ -342,6 +342,8 @@ function ChipRow({ items, value, onChange }) {
             style={[styles.chip, active && styles.chipActive]}
             onPress={() => onChange(item.value)}
             activeOpacity={0.8}
+            // Chip cao 28, nới 8 trên 8 dưới cho đủ 44 (chỉ nới dọc)
+            hitSlop={{ top: 8, bottom: 8 }}
           >
             <Text style={[styles.chipText, active && styles.chipTextActive]}>
               {t(item.labelKey)}

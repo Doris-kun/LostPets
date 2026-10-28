@@ -741,6 +741,8 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   row: { flexDirection: 'row', gap: spacing.md },
 
   choice: {
+    minHeight: 44,
+    justifyContent: 'center',
     flex: 1,
     paddingVertical: 12,
     borderRadius: radius.md,

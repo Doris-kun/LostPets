@@ -221,6 +221,8 @@ const themedStyles = createThemedStyles((colors) =>
       marginBottom: spacing.lg,
     },
     tab: {
+    minHeight: 44,
+    justifyContent: 'center',
       flex: 1,
       paddingVertical: 10,
       borderRadius: radius.sm,

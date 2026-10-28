@@ -203,6 +203,8 @@ export default function HomeScreen({ navigation }) {
               key={item.value || 'all'}
               onPress={() => changeFilter(item.value)}
               activeOpacity={0.8}
+              // Chip cao 32, nới thêm 6 trên 6 dưới cho đủ 44
+              hitSlop={{ top: 6, bottom: 6 }}
               style={[
                 styles.chip,
                 active && { backgroundColor: colors[item.colorKey], borderColor: colors[item.colorKey] },
@@ -220,6 +222,7 @@ export default function HomeScreen({ navigation }) {
           style={[styles.filterButton, activeCount > 0 && styles.filterButtonActive]}
           onPress={() => setFiltersOpen(true)}
           activeOpacity={0.8}
+          hitSlop={{ top: 6, bottom: 6 }}
         >
           {/*
             Icon bộ lọc chứ không phải bánh răng. Bánh răng nghĩa là "cài đặt",
