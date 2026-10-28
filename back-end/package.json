@@ -6,7 +6,8 @@
   "scripts": {
     "start": "nodemon server.js",
     "test": "jest --forceExit",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "embed": "node scripts/backfill-embeddings.js"
   },
   "jest": {
     "testEnvironment": "node",

@@ -11,6 +11,26 @@
 
     <!-- Filter bar -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 mb-10 space-y-3">
+      <!-- Ô tìm kiếm: đặt trên cùng vì đây là đường vào chính, các nút lọc
+           bên dưới chỉ để thu hẹp thêm. -->
+      <div class="relative">
+        <svg class="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+        </svg>
+        <input v-model="filters.q" @input="debounceSearch" type="text" maxlength="200"
+          :placeholder="$t('search.placeholder')"
+          class="w-full border border-gray-200 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent placeholder-gray-400"/>
+        <button v-if="filters.q" @click="clearSearch" :aria-label="$t('search.clear')"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 p-1 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <p v-if="filters.q" class="text-xs text-gray-400 -mt-1">{{ $t('search.hint') }}</p>
+
       <!-- Type tabs -->
       <div class="flex items-center gap-2 flex-wrap">
         <button v-for="tab in typeTabs" :key="tab.value"
@@ -44,8 +64,11 @@
             {{ $t(d.labelKey) }}
           </button>
         </div>
-        <select v-model="filters.sort" @change="fetchPets"
-          class="border border-gray-200 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white cursor-pointer">
+        <!-- Đang tìm kiếm thì kết quả sắp theo độ liên quan, chọn ngày ở đây
+             không còn tác dụng — khoá lại còn hơn để người ta bấm rồi tưởng hỏng. -->
+        <select v-model="filters.sort" @change="fetchPets" :disabled="!!filters.q"
+          :title="filters.q ? $t('search.sortLocked') : ''"
+          class="border border-gray-200 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
           <option value="newest">{{ $t('sort.newest') }}</option>
           <option value="oldest">{{ $t('sort.oldest') }}</option>
         </select>
@@ -228,7 +251,8 @@ export default {
       loading: false,
       loadingMore: false,
       areaTimer: null,
-      filters: { type: '', species: '', area: '', sort: 'newest', days: '' },
+      filters: { type: '', species: '', area: '', sort: 'newest', days: '', q: '' },
+      searchTimer: null,
       typeTabs: [
         { value: '',      labelKey: 'filter.all',   activeClass: 'bg-gray-900 text-white' },
         { value: 'lost',  labelKey: 'filter.lost',  activeClass: 'bg-rose-500 text-white' },
@@ -268,6 +292,13 @@ export default {
     this.filters.type = this.$route.query.type || '';
     this.fetchPets();
   },
+  // Rời trang trong lúc hẹn giờ đang chạy thì nó vẫn nổ và gọi refresh() trên
+  // component đã huỷ. Vô hại ở đây nhưng là một request thừa, mà request tìm
+  // kiếm thì tốn quota Gemini.
+  beforeDestroy() {
+    clearTimeout(this.areaTimer);
+    clearTimeout(this.searchTimer);
+  },
   methods: {
     setView(view) {
       this.view = view;
@@ -301,12 +332,24 @@ export default {
       clearTimeout(this.areaTimer);
       this.areaTimer = setTimeout(() => this.refresh(), 400);
     },
+    // Chờ lâu hơn ô khu vực vì mỗi lượt tìm kiếm phải nhúng câu hỏi qua Gemini,
+    // tức là tốn quota. Gõ xong cả câu rồi mới gửi, đừng gửi theo từng ký tự.
+    debounceSearch() {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(() => this.refresh(), 500);
+    },
+    clearSearch() {
+      clearTimeout(this.searchTimer);
+      this.filters.q = '';
+      this.refresh();
+    },
     buildParams(skip = 0) {
       const p = { skip, limit: this.limit, sort: this.filters.sort };
       if (this.filters.type)    p.type    = this.filters.type;
       if (this.filters.species) p.species = this.filters.species;
       if (this.filters.area)    p.area    = this.filters.area;
       if (this.filters.days)    p.days    = this.filters.days;
+      if (this.filters.q.trim()) p.q      = this.filters.q.trim();
       return p;
     },
     async fetchPets() {
