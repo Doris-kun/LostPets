@@ -558,6 +558,52 @@ Body JSON: `email`, `password`. Phản hồi giống `register`.
 
 Sai email hoặc sai mật khẩu đều trả `401` với **cùng một thông báo**, để không lộ email nào đã có trong hệ thống.
 
+### Đăng nhập bằng Google và Facebook
+
+| Endpoint | Gửi gì | Việc |
+|---|---|---|
+| `GET /auth/providers` | — | `{ google, facebook }`: front-end hỏi để biết nên vẽ nút nào |
+| `POST /auth/google` | `{ credential }` — ID token từ Google Identity Services | trả `{ token, user }` y như `/auth/login` |
+| `POST /auth/facebook` | `{ accessToken }` — token từ Facebook JS SDK | trả `{ token, user }` |
+
+Cả hai trả về **JWT của chính dự án này**, không phải token của nhà cung cấp. Phần còn lại của web không biết và không cần biết người dùng đã đăng nhập bằng cách nào.
+
+#### Quy tắc gắn tài khoản
+
+Đây là chỗ dễ sai nhất, nên viết rõ. Khi nhận một hồ sơ từ nhà cung cấp:
+
+1. Đã có tài khoản mang đúng **mã định danh** đó → đăng nhập vào tài khoản đó.
+2. Chưa có, nhưng **email trùng** một tài khoản cũ → gắn thêm, **với điều kiện nhà cung cấp khẳng định email đã xác minh**.
+3. Không trùng gì → tạo tài khoản mới, **không có mật khẩu**.
+
+Điều kiện "đã xác minh" ở bước 2 không phải thủ tục cho đẹp. Nhận cả email chưa xác minh thì kẻ gian chỉ cần tạo một tài khoản ở nhà cung cấp mang email `nam@gmail.com` — không phải chứng minh mình sở hữu hộp thư đó — rồi đăng nhập vào đây và **chiếm trọn tài khoản của người tên Nam, kèm mọi tin đã đăng**. Khi từ chối, server trả `403`.
+
+**Khớp theo mã định danh chứ không theo email.** Người ta đổi được email Google của mình; nếu hệ thống chỉ nhận ra nhau qua email thì đổi xong là mất tài khoản. Mã định danh lưu ở `user.google` / `user.facebook`, cả hai đều `select: false` nên không bao giờ lọt ra API.
+
+Một người gắn được **cả hai** nhà cung cấp vào cùng một tài khoản, và vẫn đăng nhập bằng mật khẩu như cũ nếu tài khoản vốn có mật khẩu.
+
+#### Hai điểm an toàn không được bỏ
+
+- **Google**: `verifyIdToken` phải truyền `audience`. Không kiểm `aud` thì ID token lấy từ **bất kỳ web nào khác** cũng đăng nhập được vào đây.
+- **Facebook**: phải gọi `debug_token` và đối chiếu `app_id` với app của mình. Token Facebook là token *mang đi được* — chủ một web bất kỳ xin được token của chính người dùng họ, rồi dùng token đó đăng nhập vào đây. Google kiểm sẵn giúp qua `aud`, Facebook thì phải tự làm.
+
+#### Tài khoản không có mật khẩu
+
+`passwordHash` chuyển thành bắt buộc **có điều kiện**: chỉ bắt buộc khi tài khoản không gắn nhà cung cấp nào.
+
+Người tạo tài khoản bằng Google mà đi gõ mật khẩu ở form đăng nhập sẽ nhận `401` **cùng một câu thông báo** với trường hợp sai mật khẩu. Cố ý giữ một câu chung: nói "tài khoản này đăng nhập bằng Google" là để lộ email nào đã đăng ký và đăng ký kiểu gì. Phải chặn trước khi gọi `bcrypt.compare`, vì truyền `undefined` vào đó là ném lỗi và người dùng nhận `500` thay vì `401`.
+
+#### Cấu hình
+
+| Nơi | Biến |
+|---|---|
+| Back-end (Render) | `GOOGLE_CLIENT_ID`, `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` |
+| Front-end (lúc build) | `VUE_APP_GOOGLE_CLIENT_ID`, `VUE_APP_FACEBOOK_APP_ID` |
+
+Nút chỉ hiện khi **đủ cả hai phía**. Thiếu bên nào thì nút ẩn đi và phần đăng nhập bằng mật khẩu vẫn chạy bình thường — giống cách `JWT_SECRET` tắt hẳn phần đăng nhập mà không làm sập web.
+
+> Biến `VUE_APP_*` được nhúng vào bundle **lúc build**, không đọc lúc chạy. Đổi giá trị trên Render thì phải build lại front-end mới có tác dụng.
+
 ### `GET /pets/mine` — tin của chính mình
 
 Cần `Authorization: Bearer <token>`. Trả về `{ pets, total }` gồm các tin do tài khoản đó đăng, mới nhất trước.
@@ -653,6 +699,7 @@ Chặn trùng ("bạn đã báo cáo tin này") chỉ nằm ở `localStorage`, 
 | `/ai/*` (mỗi endpoint đếm riêng) | 30 lượt / 10 phút | `AI_RATE_LIMIT` |
 | `POST /auth/register` | 30 lượt / giờ | `REGISTER_RATE_LIMIT` |
 | `POST /auth/login` | 20 lượt / 15 phút | `LOGIN_RATE_LIMIT` |
+| `POST /auth/google`, `POST /auth/facebook` | 30 lượt / giờ (đếm chung) | `REGISTER_RATE_LIMIT` |
 | `GET /pets` **khi có `q`** | 60 lượt / 10 phút | `SEARCH_RATE_LIMIT` |
 | `POST /pets/:petId/report` | 20 lượt / giờ | `REPORT_RATE_LIMIT` |
 
