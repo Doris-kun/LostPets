@@ -8,13 +8,16 @@
 
     <div class="flex flex-col items-center gap-2.5">
       <!-- Nút Google gồm HAI lớp chồng nhau.
-           Google chỉ cho ba kiểu dựng sẵn — trắng viền, xanh đặc, đen đặc —
-           không có kiểu nền xám. Nên lớp dưới là nút mình tự vẽ để nhìn, còn
-           lớp trên là nút thật của Google để trong suốt, giữ nguyên phần bấm.
-           Không tự gọi thẳng SDK vì luồng lấy ID token chỉ chạy qua nút của họ. -->
+           Lớp dưới là nút mình tự vẽ để nhìn, lớp trên là nút thật của Google
+           để trong suốt, giữ nguyên phần bấm. Không tự gọi thẳng SDK vì luồng
+           lấy ID token chỉ chạy qua nút do Google dựng.
+
+           Vẫn phải tự vẽ dù kiểu "outline" của Google trông gần giống: kiểu
+           đó có bo góc, cỡ chữ và sắc viền riêng, đặt cạnh nút Facebook là lộ
+           ra lệch. Tự vẽ cả hai thì chắc chắn trùng nhau. -->
       <div v-show="showGoogle" class="relative group" :style="sizeStyle">
         <div aria-hidden="true"
-          class="absolute inset-0 flex items-center rounded-full bg-[#f1f3f4] group-hover:bg-[#e8eaed] transition-colors">
+          class="absolute inset-0 flex items-center rounded-full border border-gray-200 bg-white group-hover:bg-gray-50 transition-colors">
           <span class="absolute left-3 flex items-center">
             <svg class="w-5 h-5" viewBox="0 0 48 48" aria-hidden="true">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
