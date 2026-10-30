@@ -29,8 +29,7 @@
     <div v-else class="mt-5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <!-- Image -->
       <div class="relative aspect-video bg-gray-100">
-        <img v-if="pet.image" :src="pet.image" :alt="pet.breed" class="w-full h-full object-cover"/>
-        <NoPhoto v-else :type="pet.type" :resolved="pet.resolved"/>
+        <PetPhoto :src="pet.image" :alt="pet.breed" :type="pet.type" :resolved="pet.resolved"/>
         <span :class="pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
           class="absolute top-4 left-4 text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-md">
           {{ $t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found') }}
@@ -253,7 +252,6 @@
 <script>
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
-import NoPhoto from '../components/NoPhoto.vue';
 import { directionsUrl } from '../map';
 import claim from '../claim';
 import report from '../report';
@@ -261,7 +259,7 @@ import ReportDialog from '../components/ReportDialog.vue';
 
 export default {
   name: 'PetDetail',
-  components: { PetMap, ReportDialog, NoPhoto },
+  components: { PetMap, ReportDialog, PetPhoto },
   data() {
     return {
       pet: null, loading: false, deleting: false, resolving: false,

@@ -36,10 +36,10 @@
       <div v-for="pet in pets" :key="pet._id"
         class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 items-start">
         <router-link :to="`/pet/${pet._id}`" class="shrink-0">
-          <img v-if="pet.image" :src="pet.image" :alt="pet.breed" class="w-24 h-24 rounded-xl object-cover"/>
           <!-- Ô 96px, chữ "Chưa có ảnh" không vừa nên chỉ để dấu chân. -->
-          <div class="w-24 h-24 rounded-xl overflow-hidden" v-else>
-            <NoPhoto :type="pet.type" :resolved="pet.resolved" :label="false"/>
+          <div class="w-24 h-24 rounded-xl overflow-hidden">
+            <PetPhoto :src="pet.image" :alt="pet.breed" :type="pet.type"
+              :resolved="pet.resolved" :label="false"/>
           </div>
         </router-link>
 
@@ -79,11 +79,10 @@
 
 <script>
 import api from '../api';
-import NoPhoto from '../components/NoPhoto.vue';
 
 export default {
   name: 'MyPets',
-  components: { NoPhoto },
+  components: { PetPhoto },
   data() {
     return { pets: [], loading: false, busyId: null };
   },
