@@ -502,7 +502,7 @@ Body JSON:
 {
   "messages": [
     { "role": "user", "content": "làm sao đăng tin" },
-    { "role": "assistant", "content": "Bạn bấm nút Đăng Báo Cáo..." },
+    { "role": "assistant", "content": "Bạn bấm nút Đăng tin..." },
     { "role": "user", "content": "không biết giống thì sao" }
   ]
 }

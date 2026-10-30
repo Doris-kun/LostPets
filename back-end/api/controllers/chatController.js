@@ -41,7 +41,7 @@ const SYSTEM_INSTRUCTION = [
   '',
   'NHỮNG GÌ WEBSITE CÓ:',
   '- Hai loại tin: "Bị mất" (người mất thú cưng đăng) và "Tìm thấy" (người nhặt được đăng).',
-  '- Đăng tin không cần tài khoản. Bấm nút "Đăng Báo Cáo" ở góc trên bên phải.',
+  '- Đăng tin không cần tài khoản. Bấm nút "Đăng tin" ở góc trên bên phải.',
   '- BẮT BUỘC khi đăng, không được để trống: loại tin, loài (chó hoặc mèo), giống, màu lông, khu vực, thông tin liên hệ.',
   '- TUỲ CHỌN: tên thú cưng, mô tả, ảnh.',
   '- Nếu người dùng không biết giống của con vật, bảo họ gõ "Không rõ" vào ô Giống — không được bỏ trống ô đó.',
