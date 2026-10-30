@@ -275,6 +275,28 @@ Model `gemini-embedding-001`, **768 chiều**. Đây là số đo được chứ
 
 > Việc xếp hạng chạy trong bộ nhớ Node, đọc tối đa 500 tin mỗi lượt tìm. Quá ngưỡng đó thì phải chuyển sang Atlas Vector Search.
 
+### `GET /pets/map` — dữ liệu cho bản đồ
+
+Nhận **đúng những tham số lọc của `GET /pets`** (kể cả `q`), bỏ qua `sort`, `limit` và `skip`.
+
+Phản hồi `200`:
+
+```json
+{ "pets": [ ... ], "total": 14, "withoutCoords": 5, "capped": false }
+```
+
+Khác `GET /pets` ở ba điểm, và cả ba đều có lý do:
+
+| Điểm khác | Vì sao |
+|---|---|
+| Chỉ trả tin **đã ghim toạ độ** | tin không có `lat`/`lng` thì không vẽ lên được |
+| **Không phân trang**, chặn cứng ở 500 tin | không thể vẽ nửa bản đồ rồi bắt bấm "xem thêm"; chạm ngưỡng thì `capped: true` chứ không âm thầm giấu |
+| Chỉ gửi `_id postId type name breed color area image lat lng resolved` | màn hình chỉ vẽ chấm tròn và popup nhỏ, kéo nguyên 500 mô tả dài về là phí vài MB |
+
+`withoutCoords` là số tin **khớp bộ lọc nhưng không vẽ được** vì thiếu toạ độ. Giao diện hiện con số này để người dùng biết bản đồ không phải toàn bộ sự thật.
+
+> Đừng gọi `GET /pets` kèm `limit` cao cho bản đồ. Server chặn cứng `Math.min(limit, 50)`, nên bản đồ sẽ mất tin mà không báo gì — đúng cái lỗi endpoint này sinh ra để sửa.
+
 ### `POST /pets` — đăng tin mới
 
 Gửi dạng `multipart/form-data` nếu có ảnh (field tên `image`, 1 file). Không có ảnh thì gửi JSON cũng được.
@@ -614,6 +636,7 @@ Front-end giữ vài thứ trong `localStorage`. Không có gì được gửi l
 | `claim:<petId>` | mã xác nhận của tin đó | `src/claim.js` |
 | `nudge:ask:<petId>` | sớm nhất bao giờ được hỏi lại về tin đó (mốc ms) | `src/nudge.js` |
 | `nudge:scan` | sớm nhất bao giờ được dò lại toàn bộ (mốc ms) | `src/nudge.js` |
+| `map:me` | vị trí người dùng lần gần nhất, để bản đồ mở ra đúng chỗ | `components/PetMap.vue` |
 | `lang` | ngôn ngữ đang chọn | `src/i18n.js` |
 | `token`, `user` | phiên đăng nhập | `src/auth.js` |
 
@@ -638,6 +661,20 @@ Cách hoạt động:
 Đang đứng ngay trong trang chi tiết của tin đó thì dải không hiện, vì trang đó đã có nút riêng rồi.
 
 > Thử nhanh lúc phát triển: `localStorage.removeItem('nudge:scan')` rồi tải lại trang.
+
+### Bản đồ trang chủ
+
+`components/PetMap.vue` dùng ở hai chỗ với hai chế độ. Trang chi tiết tin truyền mặc định (`controls` tắt): một chấm, ôm khít, không gom nhóm. Trang chủ truyền `controls` để bật nút "Gần tôi" và phần gom nhóm.
+
+**Bản đồ mở ra ở đâu là quyết định quan trọng nhất của tính năng này.** Bản cũ ôm hết mọi điểm bằng `fitBounds`. Nghe thì hợp lý, nhưng dữ liệu thật trải từ Cần Thơ tới Hà Nội — khoảng 1.220km — nên màn hình thu về mức cả nước, mọi chấm thành hạt bụi, hai tin cách nhau 5km chồng thành một. **Càng nhiều tin đăng thì bản đồ càng vô dụng.** Thứ tự bây giờ:
+
+1. Có vị trí nhớ từ lần trước (`map:me`) → mở ngay ở đó, mức `NEAR_ZOOM`
+2. Không có → mở ở **cụm tin đông nhất**, chứ không ôm hết
+3. Rồi mới tự định vị, và **chỉ khi trình duyệt đã cho phép từ trước** (`navigator.permissions`). Tự xin quyền lúc vừa mở bản đồ là ném hộp thoại vào mặt người mới vào xem
+
+Gom nhóm theo **khoảng cách trên màn hình** (lưới 64px), không theo khoảng cách thật — vì hai tin chồng lên nhau hay không là chuyện của mức thu phóng. Vì vậy phải gom lại mỗi lần `zoomend`. Chấm gộp có vành chia theo tỉ lệ mất/nhặt để thu nhỏ vẫn đọc được, bấm vào thì phóng vừa đủ tách chùm đó ra.
+
+Bán kính "gần tôi" **chỉ vẽ vòng tròn và đếm**, không lọc bỏ chấm nào. Cùng lý do với ô tìm kiếm: trên web tìm thú cưng, giấu nhầm một tin tốn kém hơn nhiều so với hiện thừa một tin.
 
 ## 10. Quy tắc chung
 

@@ -214,22 +214,30 @@ async function searchByMeaning(q, filter) {
   return usable.map((row) => row.pet);
 }
 
+// Bộ lọc cứng, dùng chung cho danh sách và bản đồ. Hai chỗ phải lọc giống hệt
+// nhau, nếu không thì bấm qua lại giữa "Danh sách" và "Bản đồ" sẽ ra hai tập
+// tin khác nhau mà không ai hiểu vì sao.
+const buildFilter = (query = {}) => {
+  const filter = {};
+  if (query.type)    filter.type    = query.type;
+  if (query.species) filter.species = new RegExp(query.species, 'i');
+  if (query.breed)   filter.breed   = new RegExp(query.breed,   'i');
+  if (query.color)   filter.color   = new RegExp(query.color,   'i');
+  if (query.area)    filter.area    = new RegExp(query.area,    'i');
+  if (query.resolved !== undefined) filter.resolved = query.resolved === 'true';
+  // parseInt('abc') ra NaN, setDate(NaN) ra Invalid Date và MongoDB ném lỗi.
+  const days = Number.parseInt(query.days, 10);
+  if (Number.isFinite(days) && days > 0) {
+    const since = new Date();
+    since.setDate(since.getDate() - Math.min(days, 3650));
+    filter.date = { $gte: since };
+  }
+  return filter;
+};
+
 exports.list_all_pets = async (req, res) => {
   try {
-    const filter = {};
-    if (req.query.type)    filter.type    = req.query.type;
-    if (req.query.species) filter.species = new RegExp(req.query.species, 'i');
-    if (req.query.breed)   filter.breed   = new RegExp(req.query.breed,   'i');
-    if (req.query.color)   filter.color   = new RegExp(req.query.color,   'i');
-    if (req.query.area)    filter.area    = new RegExp(req.query.area,    'i');
-    if (req.query.resolved !== undefined) filter.resolved = req.query.resolved === 'true';
-    // parseInt('abc') ra NaN, setDate(NaN) ra Invalid Date và MongoDB ném lỗi.
-    const days = Number.parseInt(req.query.days, 10);
-    if (Number.isFinite(days) && days > 0) {
-      const since = new Date();
-      since.setDate(since.getDate() - Math.min(days, 3650));
-      filter.date = { $gte: since };
-    }
+    const filter = buildFilter(req.query);
 
     const sort  = req.query.sort === 'oldest' ? { date: 1 } : { date: -1 };
     const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 9, 1), 50);
@@ -247,6 +255,53 @@ exports.list_all_pets = async (req, res) => {
     ]);
 
     res.json({ pets, total });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Bản đồ cần MỌI tin khớp bộ lọc cùng lúc, không phân trang — không thể vẽ
+// nửa bản đồ rồi bắt người dùng bấm "xem thêm". Nhưng cũng không thể trả về
+// vô hạn, nên chặn ở 500 và nói thẳng ra là đã bị chặn thay vì âm thầm giấu.
+const MAP_POOL = 500;
+
+// Chỉ những trường bản đồ thật sự vẽ ra. Tin đăng có mô tả dài, trả nguyên 500
+// tin đầy đủ là vài MB cho một màn hình chỉ hiện chấm tròn và popup nhỏ.
+const MAP_FIELDS = '_id postId type name breed color area image lat lng resolved';
+
+const hasCoords = (pet) => Number.isFinite(pet.lat) && Number.isFinite(pet.lng);
+
+exports.list_pets_for_map = async (req, res) => {
+  try {
+    const filter = buildFilter(req.query);
+    // Tin không ghim vị trí thì không vẽ lên bản đồ được. Lọc ngay ở database
+    // chứ không tải về rồi mới bỏ đi.
+    const located = { ...filter, lat: { $ne: null }, lng: { $ne: null } };
+
+    const q = String(req.query.q || '').trim().slice(0, MAX_QUERY_CHARS);
+    if (q) {
+      // Dùng chung ô tìm kiếm với danh sách, nếu không thì gõ chữ rồi bấm sang
+      // bản đồ sẽ thấy cả những tin vừa bị loại. Thứ hạng bỏ đi: trên bản đồ
+      // mọi chấm đều hiện cùng lúc nên không có khái niệm "đứng trên".
+      // Tìm trên toàn bộ bộ lọc rồi mới tách, để còn đếm được bao nhiêu tin
+      // khớp nhưng không vẽ lên được vì thiếu toạ độ.
+      const ranked = await searchByMeaning(q, filter);
+      const onMap = ranked.filter(hasCoords);
+      return res.json({
+        pets: onMap.slice(0, MAP_POOL),
+        total: onMap.length,
+        withoutCoords: ranked.length - onMap.length,
+        capped: onMap.length > MAP_POOL,
+      });
+    }
+
+    const [pets, total, matching] = await Promise.all([
+      Pet.find(located).sort({ date: -1 }).limit(MAP_POOL).select(MAP_FIELDS).lean(),
+      Pet.countDocuments(located),
+      Pet.countDocuments(filter),
+    ]);
+
+    res.json({ pets, total, withoutCoords: matching - total, capped: total > MAP_POOL });
   } catch {
     res.status(500).json({ message: 'Server error' });
   }
