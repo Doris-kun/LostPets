@@ -3,6 +3,25 @@ const multer = require('multer');
 const crypto = require('crypto');
 const Pet = require('../models/petModel');
 const { discardImage } = require('../lib/images');
+const { textForPet, embedDocument, embedQuery, cosine } = require('../lib/embedding');
+
+// Những trường mà sửa đi thì vector cũ không còn đúng nữa. contact và
+// secretDetail không có trong đây vì chúng không được nhúng ngay từ đầu.
+const EMBEDDED_FIELDS = ['type', 'name', 'species', 'breed', 'color', 'area', 'description'];
+
+// Nhúng lại tin, chạy ngầm. Cố ý KHÔNG await ở chỗ gọi: nhúng mất vài trăm ms
+// và cần mạng ra Gemini, bắt người đăng tin ngồi chờ thì vô lý — họ đang vội
+// tìm con vật của mình. Hỏng thì tin vẫn nằm đó, chỉ là chưa tìm theo nghĩa
+// được, chạy scripts/backfill-embeddings.js là bù lại.
+const refreshEmbedding = (pet) => {
+  if (!pet) return;
+  embedDocument(textForPet(pet))
+    .then((vector) => {
+      if (!vector) return;
+      return Pet.updateOne({ _id: pet._id }, { $set: { embedding: vector } });
+    })
+    .catch((err) => console.error('Không cập nhật được vector:', err && err.message));
+};
 
 // Mã xác nhận: người đăng nhận một lần lúc tạo tin, cần nó để sửa hoặc xoá.
 // Database chỉ lưu bản băm, mất mã thì không ai khôi phục được.
@@ -155,6 +174,46 @@ const generatePostId = (type) => {
   return `${prefix}-${random}`;
 };
 
+const MAX_QUERY_CHARS = 200;
+// Tìm kiếm xếp hạng trong bộ nhớ nên phải đọc vector của mọi tin khớp bộ lọc.
+// 768 số mỗi tin là khoảng 6KB, nên 500 tin là 3MB mỗi lượt tìm — chấp nhận
+// được ở quy mô này. Vượt ngưỡng thì phải chuyển sang Atlas Vector Search.
+const SEARCH_POOL = 500;
+
+// Xếp hạng theo nghĩa, trong phần đã bị bộ lọc cứng chặn lại.
+//
+// Vector chỉ được quyền SẮP THỨ TỰ, không được quyền LOẠI BỎ. Đo thật trên
+// tiếng Việt cho thấy không có ngưỡng điểm nào dùng được: câu rác "xe máy
+// Honda Wave bị mất" đạt 0.646 trong khi câu tra số điện thoại thật chỉ 0.639.
+// Cắt theo ngưỡng là vừa giấu nhầm tin thật vừa không chặn nổi tin rác.
+//
+// Mà với web tìm thú cưng thì bỏ sót nguy hiểm hơn thừa: thấy nhầm một con chó
+// hơi giống thì mất hai giây, giấu mất con chó của người ta thì mất luôn.
+async function searchByMeaning(q, filter) {
+  const docs = await Pet.find(filter).select('+embedding').limit(SEARCH_POOL).lean();
+  const vector = await embedQuery(q);
+  const needle = q.toLowerCase();
+
+  const scored = docs.map((doc) => {
+    const { embedding, ...pet } = doc;
+    return {
+      pet,
+      // Khớp nguyên văn thì luôn đứng trên, bất kể điểm ngữ nghĩa. Dành cho
+      // người gõ thẳng mã tin, số điện thoại hay tên riêng — những thứ phải
+      // chắc chắn ra đúng tin đó chứ không phải "khả năng cao là đúng".
+      exact: textForPet(doc).toLowerCase().includes(needle),
+      score: vector ? cosine(vector, embedding) : 0,
+    };
+  });
+
+  // Nhúng hỏng (mất key, hết quota) thì lui về lọc theo chữ, còn hơn trả về
+  // một danh sách xếp bừa rồi người dùng tưởng là kết quả tìm kiếm.
+  const usable = vector ? scored : scored.filter((row) => row.exact);
+
+  usable.sort((a, b) => (b.exact - a.exact) || (b.score - a.score));
+  return usable.map((row) => row.pet);
+}
+
 exports.list_all_pets = async (req, res) => {
   try {
     const filter = {};
@@ -175,6 +234,12 @@ exports.list_all_pets = async (req, res) => {
     const sort  = req.query.sort === 'oldest' ? { date: 1 } : { date: -1 };
     const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 9, 1), 50);
     const skip  = Math.max(Number.parseInt(req.query.skip, 10) || 0, 0);
+
+    const q = String(req.query.q || '').trim().slice(0, MAX_QUERY_CHARS);
+    if (q) {
+      const ranked = await searchByMeaning(q, filter);
+      return res.json({ pets: ranked.slice(skip, skip + limit), total: ranked.length });
+    }
 
     const [pets, total] = await Promise.all([
       Pet.find(filter).sort(sort).skip(skip).limit(limit),
@@ -214,6 +279,7 @@ exports.create_a_pet = async (req, res) => {
       // Đăng khi đã đăng nhập thì tin gắn luôn vào tài khoản.
       owner: req.user ? req.user.sub : null,
     });
+    refreshEmbedding(pet);
     // claimCode chỉ xuất hiện đúng lần này, không có endpoint nào đọc lại được.
     // select: false chỉ lọc ở truy vấn, tài liệu vừa tạo vẫn giữ claimHash nên phải bỏ tay.
     const { claimHash: _h, secretDetail: _s, imageId: _i, ...created } = pet.toObject();
@@ -293,6 +359,10 @@ exports.update_a_pet = async (req, res) => {
     // Dọn ảnh cũ chỉ sau khi tin đã lưu xong. Dọn trước mà lưu lỗi thì tin còn
     // trỏ vào một ảnh vừa bị xoá, người xem nhận về ô ảnh hỏng.
     if (replaced) discardImage(current);
+
+    // Chỉ nhúng lại khi nội dung mô tả thật sự đổi. Bấm "Đã tìm thấy" hay đổi
+    // số điện thoại không làm vector sai đi, nhúng lại là đốt quota vô ích.
+    if (EMBEDDED_FIELDS.some((field) => field in updates)) refreshEmbedding(pet);
 
     res.json(pet);
   } catch (err) {

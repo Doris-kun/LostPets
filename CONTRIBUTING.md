@@ -109,6 +109,16 @@ npm test
 
 Test dùng `mongodb-memory-server` nên không cần MongoDB thật, cũng không cần `.env`.
 
+### Nhúng vector cho ô tìm kiếm
+
+```bash
+cd back-end
+npm run embed           # nhúng những tin còn thiếu vector
+npm run embed -- --all  # nhúng lại toàn bộ (khi đổi model hoặc số chiều)
+```
+
+Tin đăng mới tự nhúng ngầm. Chạy lệnh này cho tin đăng **trước khi** có tính năng tìm kiếm, hoặc cho tin đăng đúng lúc Gemini hết quota. Cần `GEMINI_API_KEY` và `MONGODB_URI` trong `.env`. Chạy lại nhiều lần đều an toàn — nó chỉ ghi thêm trường `embedding`, không đụng nội dung tin.
+
 ---
 
 ## 3. Quy trình làm việc trên Git
@@ -213,6 +223,7 @@ Tham số query, tất cả đều tuỳ chọn:
 
 | Tham số | Kiểu | Ý nghĩa |
 |---|---|---|
+| `q` | string | tìm kiếm theo nghĩa, tối đa 200 ký tự — xem mục dưới |
 | `type` | `lost` hoặc `found` | lọc theo loại tin |
 | `species` | string | lọc theo loài, khớp một phần, không phân biệt hoa thường |
 | `breed` | string | lọc theo giống, khớp một phần |
@@ -234,6 +245,35 @@ Phản hồi `200`:
 ```
 
 `total` là tổng số bản ghi **khớp bộ lọc**, không phải số bản ghi trả về trong trang hiện tại. Dùng nó để tính số trang.
+
+#### Tìm kiếm theo nghĩa (`q`)
+
+Gửi `q` thì server nhúng câu hỏi thành vector bằng Gemini rồi xếp hạng các tin theo độ gần. Người dùng mô tả bằng lời thường — *"chó nâu chân ngắn mất gần công viên"* — không cần trúng từ nào trong tin.
+
+**Vector chỉ được quyền sắp thứ tự, không được quyền loại bỏ.** Các bộ lọc cứng (`type`, `species`, `area`, `days`…) vẫn chặn trước như cũ; `q` chỉ sắp xếp lại phần còn lại. Có `q` thì `sort` bị bỏ qua.
+
+Lý do không cắt theo ngưỡng điểm — đã đo thật trên dữ liệu tiếng Việt:
+
+| Câu hỏi | Điểm cao nhất |
+|---|---|
+| `chó Corgi nâu trắng quận 1` (thật) | 0.788 |
+| `mèo tam thể` (thật) | 0.715 |
+| **`xe máy Honda Wave bị mất`** (rác) | **0.646** |
+| `0987654321` (thật, tra số điện thoại) | **0.639** |
+
+Câu rác ăn điểm cao hơn câu thật. Không có ngưỡng nào vừa giữ được câu thật vừa chặn được câu rác, nên đừng thêm. Và với web tìm thú cưng thì bỏ sót nguy hiểm hơn thừa: thấy nhầm một con chó hơi giống thì mất hai giây, giấu mất con chó của người ta thì mất luôn.
+
+**Khớp nguyên văn luôn đứng trên** mọi kết quả xếp theo nghĩa. Dành cho người gõ thẳng mã tin, số điện thoại hay tên riêng — những thứ cần chắc chắn chứ không cần "khả năng cao".
+
+Nhúng chạy **ngầm** sau khi lưu tin, nên tin mới đăng có thể chưa tìm theo nghĩa được trong vài giây. Gemini lỗi thì tin vẫn đăng bình thường, chỉ là vector rỗng — tin đó vẫn hiện trong danh sách, chỉ xếp sau. Chạy `npm run embed` để nhúng bù.
+
+Chỉ nhúng lại khi `type`, `name`, `species`, `breed`, `color`, `area` hoặc `description` thay đổi. Bấm "Đã tìm thấy" hay đổi số điện thoại không làm vector sai đi.
+
+`contact` và `secretDetail` **không được nhúng**. `secretDetail` là bí mật dùng để xác minh chủ thật — đưa nó vào vector là làm rò theo một đường khác.
+
+Model `gemini-embedding-001`, **768 chiều**. Đây là số đo được chứ không phải chọn bừa: 256 chiều cho độ chính xác xếp hạng như nhau nhưng tách câu rác kém hẳn (rác lên tới 0.761), còn 3072 chiều không khá hơn 768 mà nặng gấp bốn. 768 số kiểu double là ~6KB mỗi tin, 500 tin hết 3MB.
+
+> Việc xếp hạng chạy trong bộ nhớ Node, đọc tối đa 500 tin mỗi lượt tìm. Quá ngưỡng đó thì phải chuyển sang Atlas Vector Search.
 
 ### `POST /pets` — đăng tin mới
 
@@ -349,6 +389,8 @@ Server lưu `public_id` của ảnh vào trường `imageId` (`select: false`, k
 `lat` và `lng` là `null` khi người đăng không chọn vị trí. Server chỉ nhận khi **có đủ cả hai** và nằm trong khoảng hợp lệ; gửi một trong hai, gửi chữ, hay gửi số ngoài khoảng thì bỏ qua cả cặp. Gửi `null` là xoá vị trí.
 
 `image` là chuỗi rỗng khi tin không có ảnh — nhớ xử lý trường hợp này ở front-end.
+
+Model còn có trường `embedding` (vector 768 chiều cho ô tìm kiếm) nhưng nó `select: false` nên **không bao giờ xuất hiện trong response**. Đừng trông đợi nó ở front-end.
 
 ### `POST /ai/analyze-image` — AI đọc ảnh, điền giúp thông tin
 
@@ -555,6 +597,9 @@ Không đặt `setInterval` hay `node-cron` trong app vì Render gói miễn ph�
 | `/ai/*` (mỗi endpoint đếm riêng) | 30 lượt / 10 phút | `AI_RATE_LIMIT` |
 | `POST /auth/register` | 30 lượt / giờ | `REGISTER_RATE_LIMIT` |
 | `POST /auth/login` | 20 lượt / 15 phút | `LOGIN_RATE_LIMIT` |
+| `GET /pets` **khi có `q`** | 60 lượt / 10 phút | `SEARCH_RATE_LIMIT` |
+
+Tìm kiếm bị đếm vì mỗi lượt gọi Gemini để nhúng câu hỏi. Duyệt danh sách bình thường (không có `q`) **không** bị đếm, nên cuộn trang chủ bao nhiêu cũng được.
 
 Các endpoint AI đều tốn quota Gemini nên phải chặn vòng lặp tự động. Ngưỡng đăng ký đặt rộng vì cả một lớp học có thể dùng chung một IP.
 

@@ -52,6 +52,7 @@ const SYSTEM_INSTRUCTION = [
   '- Vào tin rồi bấm "Chỉnh sửa" để sửa lại mọi thông tin đã đăng. Sửa được cả ảnh: chạm vào ảnh để chọn ảnh khác, hoặc bấm "Xoá ảnh khỏi tin" để gỡ ảnh ra. Ảnh chỉ thật sự đổi sau khi bấm Lưu.',
   '- Trang chi tiết mỗi tin có nút "Tìm thông tin trùng khớp": AI đối chiếu tin đó với các tin ngược loại (mất ↔ nhặt được) dựa trên ảnh, giống, màu lông, khu vực và thời gian, rồi chấm điểm phần trăm kèm giải thích.',
   '- Trang chủ lọc được theo: loại tin, loài, khu vực, mốc 7 ngày hoặc 30 ngày, và sắp xếp mới nhất hoặc cũ nhất.',
+  '- Trang chủ có ô tìm kiếm hiểu tiếng Việt tự nhiên: cứ mô tả con vật bằng lời thường, ví dụ "chó nâu chân ngắn mất gần công viên", không cần gõ đúng từ trong tin. Kết quả sắp theo mức độ giống mô tả. Gõ thẳng mã tin hay số điện thoại cũng ra đúng tin đó. Đang tìm kiếm thì danh sách sắp theo độ liên quan nên nút sắp xếp theo ngày tạm khoá.',
   '- Trang chủ có nút chuyển giữa "Danh sách" và "Bản đồ". Chế độ bản đồ hiện các tin kèm vị trí dưới dạng chấm tròn, màu đỏ là tin mất, xanh lá là tin nhặt được. Bấm vào chấm để xem nhanh và mở tin.',
   '- Lúc đăng tin có phần "Vị trí trên bản đồ" (không bắt buộc): chạm vào bản đồ để đánh dấu nơi mất hoặc nơi nhặt được, hoặc bấm "Dùng vị trí của tôi". Ô khu vực dạng chữ vẫn bắt buộc như cũ.',
   '- Khi đã tìm lại được thú cưng, vào tin bấm "Đã tìm thấy / Đoàn tụ" để đánh dấu.',
