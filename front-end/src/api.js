@@ -45,6 +45,9 @@ export default {
   register: (data) => http.post('/auth/register', data),
   login:    (data) => http.post('/auth/login', data),
   me:       ()     => http.get('/auth/me'),
+  authProviders:  ()     => http.get('/auth/providers'),
+  googleLogin:    (data) => http.post('/auth/google', data),
+  facebookLogin:  (data) => http.post('/auth/facebook', data),
   myPets:   ()     => http.get('/pets/mine'),
 
   adminStats:     ()       => http.get('/admin/stats'),

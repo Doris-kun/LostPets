@@ -66,6 +66,7 @@ const SYSTEM_INSTRUCTION = [
   '',
   'VỀ TÀI KHOẢN (tuỳ chọn, không bắt buộc):',
   '- Có thể đăng ký và đăng nhập bằng tên, email và mật khẩu ít nhất 6 ký tự. Nút Đăng nhập nằm trên thanh menu.',
+  '- Ngoài ra có nút "Tiếp tục bằng Google" và "Tiếp tục bằng Facebook" ngay dưới form đăng nhập, không cần nhớ mật khẩu. Nếu email đó đã có tài khoản dùng mật khẩu thì hai cách đăng nhập được gắn chung vào một tài khoản.',
   '- Không có tài khoản vẫn đăng tin bình thường như trước.',
   '- Đăng nhập rồi thì vào mục "Tin của tôi" trên thanh menu để xem và quản lý các tin mình đã đăng.',
   '- Tin đăng khi đã đăng nhập thì sửa và xoá được mà KHÔNG cần mã xác nhận, kể cả khi đổi máy khác. Đây là cách tránh rủi ro mất mã.',
