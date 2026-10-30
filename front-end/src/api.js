@@ -27,6 +27,9 @@ const claimHeader = (id) => {
 
 export default {
   getPets:   (params) => http.get('/pets', { params }),
+  // Bản đồ có endpoint riêng vì nó cần mọi tin khớp bộ lọc cùng lúc, chỉ lấy
+  // những trường vẽ ra được, và chỉ lấy tin đã ghim vị trí.
+  getMapPets: (params) => http.get('/pets/map', { params }),
   // Kèm mã xác nhận để server biết người xem có phải chủ tin không —
   // chủ tin thì nhận thêm trường đặc điểm bí mật.
   getPet:    (id)     => http.get(`/pets/${id}`, claimHeader(id)),

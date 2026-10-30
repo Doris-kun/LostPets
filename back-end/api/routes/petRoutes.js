@@ -26,6 +26,10 @@ router.route('/')
 
 router.get('/mine', requireAuth, petController.list_my_pets);
 
+// Phải đứng trên '/:petId', nếu không Express hiểu 'map' là một mã tin.
+// Cùng bộ chặn tần suất với danh sách vì cũng nhận tham số q.
+router.get('/map', limitWhenSearching, petController.list_pets_for_map);
+
 // upload ở cả PUT để sửa tin đổi được ảnh. Multer bỏ qua request không phải
 // multipart, nên những chỗ gửi JSON như nút "Đã tìm thấy" vẫn chạy như cũ.
 router.route('/:petId')

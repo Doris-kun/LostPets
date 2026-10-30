@@ -95,7 +95,7 @@
       <div v-else-if="!locatedCount" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
         <p class="text-sm text-gray-500">{{ $t('map.noLocated') }}</p>
       </div>
-      <PetMap v-else :pets="mapPets"/>
+      <PetMap v-else controls :pets="mapPets" :unlocated-count="mapWithoutCoords" :capped="mapCapped"/>
     </div>
 
     <!-- Skeleton loaders -->
@@ -245,6 +245,8 @@ export default {
       total: 0,
       view: 'list',
       mapPets: [],
+      mapWithoutCoords: 0,
+      mapCapped: false,
       mapLoading: false,
       skip: 0,
       limit: 9,
@@ -304,15 +306,20 @@ export default {
       this.view = view;
       if (view === 'map') this.fetchMapPets();
     },
-    // Bản đồ cần toàn bộ tin khớp bộ lọc, không phân trang như danh sách.
+    // Bản đồ dùng endpoint riêng: nó cần mọi tin khớp bộ lọc cùng lúc, trong
+    // khi GET /pets chặn cứng ở 50 tin mỗi trang. Gọi /pets kèm limit cao hơn
+    // thì server vẫn cắt về 50 và bản đồ âm thầm giấu mất tin.
     async fetchMapPets() {
       this.mapLoading = true;
       try {
-        const params = { ...this.buildParams(0), limit: 50 };
-        const { data } = await api.getPets(params);
+        const { data } = await api.getMapPets(this.buildParams(0));
         this.mapPets = data.pets;
+        this.mapWithoutCoords = data.withoutCoords || 0;
+        this.mapCapped = !!data.capped;
       } catch {
         this.mapPets = [];
+        this.mapWithoutCoords = 0;
+        this.mapCapped = false;
       } finally {
         this.mapLoading = false;
       }
