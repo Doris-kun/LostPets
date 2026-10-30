@@ -7,25 +7,45 @@
     </div>
 
     <div class="flex flex-col items-center gap-2.5">
-      <!-- Google tự vẽ nút của họ vào đây. Dùng nút của Google thay vì tự vẽ để
-           khỏi sai quy định thương hiệu, và để họ lo phần đa ngôn ngữ. Đổi lại,
-           mình không chỉnh được kiểu dáng của nó — nên nút Facebook bên dưới
-           phải chạy theo nó, chứ không phải ngược lại. -->
-      <div v-show="showGoogle" ref="googleBtn" class="h-10"></div>
+      <!-- Nút Google gồm HAI lớp chồng nhau.
+           Google chỉ cho ba kiểu dựng sẵn — trắng viền, xanh đặc, đen đặc —
+           không có kiểu nền xám. Nên lớp dưới là nút mình tự vẽ để nhìn, còn
+           lớp trên là nút thật của Google để trong suốt, giữ nguyên phần bấm.
+           Không tự gọi thẳng SDK vì luồng lấy ID token chỉ chạy qua nút của họ. -->
+      <div v-show="showGoogle" class="relative group" :style="sizeStyle">
+        <div aria-hidden="true"
+          class="absolute inset-0 flex items-center rounded-full bg-[#f1f3f4] group-hover:bg-[#e8eaed] transition-colors">
+          <span class="absolute left-3 flex items-center">
+            <svg class="w-5 h-5" viewBox="0 0 48 48" aria-hidden="true">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+          </span>
+          <span class="w-full text-center text-sm font-medium text-[#3c4043] px-11 truncate">
+            {{ $t('auth.withGoogle') }}
+          </span>
+        </div>
+        <!-- Nút thật: trong suốt nhưng vẫn nhận cú bấm, phủ đúng bằng lớp dưới. -->
+        <div ref="googleBtn" class="absolute inset-0 opacity-0 overflow-hidden"></div>
+      </div>
 
-      <!-- Cao 40px, bo tròn hết cỡ, viền xám, nền trắng, chữ 14px — đo theo
-           đúng nút "outline" cỡ large của Google để hai nút nhìn như một cặp. -->
       <button v-if="showFacebook" type="button" @click="loginFacebook" :disabled="busy"
-        :style="{ width: btnWidth + 'px' }"
-        class="h-10 inline-flex items-center justify-center gap-2.5 rounded-full border border-gray-300 bg-white text-[#3c4043] text-sm font-medium hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white transition-colors">
-        <svg v-if="busy" class="w-5 h-5 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-        </svg>
-        <svg v-else class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/>
-        </svg>
-        {{ busy ? $t('auth.loggingIn') : $t('auth.withFacebook') }}
+        :style="sizeStyle"
+        class="relative flex items-center rounded-full border border-gray-200 bg-white hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white transition-colors">
+        <span class="absolute left-3 flex items-center">
+          <svg v-if="busy" class="w-5 h-5 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+          </svg>
+          <svg v-else class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/>
+          </svg>
+        </span>
+        <span class="w-full text-center text-sm font-medium text-[#3c4043] px-11 truncate">
+          {{ busy ? $t('auth.loggingIn') : $t('auth.withFacebook') }}
+        </span>
       </button>
     </div>
 
@@ -71,6 +91,12 @@ export default {
     };
   },
   computed: {
+    // Một nguồn duy nhất cho kích thước, để lớp vẽ, nút thật của Google và nút
+    // Facebook không bao giờ lệch nhau. 40px là chiều cao nút cỡ large của
+    // Google — lớp phủ phải trùng khít, lệch là hở ra chỗ bấm không ăn.
+    sizeStyle() {
+      return { width: `${this.btnWidth}px`, height: '40px' };
+    },
     showGoogle() { return this.serverHas.google && Boolean(googleClientId()); },
     showFacebook() { return this.serverHas.facebook && Boolean(facebookAppId()); },
   },
