@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const Pet = require('../models/petModel');
 const User = require('../models/userModel');
-const { discardImages } = require('../lib/images');
+const Report = require('../models/reportModel');
+const { discardImage, discardImages } = require('../lib/images');
 
 const TOP_LIMIT = 5;
 const PAGE_SIZE = 20;
@@ -20,7 +21,7 @@ const cutoffDate = () => new Date(Date.now() - cleanupAfterDays() * 24 * 60 * 60
 // trang không phải chờ lần lượt.
 exports.stats = async (_req, res) => {
   try {
-    const [total, lost, found, resolved, withImage, users, pendingCleanup, topAreas, topBreeds] = await Promise.all([
+    const [total, lost, found, resolved, withImage, users, pendingCleanup, openReports, topAreas, topBreeds] = await Promise.all([
       Pet.countDocuments(),
       Pet.countDocuments({ type: 'lost' }),
       Pet.countDocuments({ type: 'found' }),
@@ -28,6 +29,7 @@ exports.stats = async (_req, res) => {
       Pet.countDocuments({ image: { $ne: '' } }),
       User.countDocuments(),
       Pet.countDocuments({ resolved: true, resolvedAt: { $lte: cutoffDate() } }),
+      Report.countDocuments(),
       Pet.aggregate([
         { $group: { _id: '$area', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
@@ -53,6 +55,9 @@ exports.stats = async (_req, res) => {
       // Số tin đã quá hạn giữ lại, tức là đợt dọn kế tiếp sẽ xoá đúng ngần này.
       pendingCleanup,
       cleanupDays: cleanupAfterDays(),
+      // Số báo cáo chưa ai xử lý. Hiện lên trang quản trị để hàng chờ không
+      // nằm im không ai biết — nút báo cáo mà không ai đọc thì tệ hơn không có.
+      openReports,
       topAreas: topAreas.map((a) => ({ label: a._id, count: a.count })),
       topBreeds: topBreeds.map((b) => ({ label: b._id, count: b.count })),
     });
@@ -114,7 +119,10 @@ exports.cleanup = async (_req, res) => {
       .select('+imageId');
 
     if (doomed.length > 0) {
-      await Pet.deleteMany({ _id: { $in: doomed.map((p) => p._id) } });
+      const ids = doomed.map((p) => p._id);
+      await Pet.deleteMany({ _id: { $in: ids } });
+      // Tin đi thì báo cáo về tin đó cũng hết nghĩa.
+      await Report.deleteMany({ pet: { $in: ids } });
       // Xoá ảnh sau khi tin đã biến mất, giống lúc xoá tin lẻ: làm ngược lại mà
       // lệnh xoá hỏng giữa chừng thì tin còn đó nhưng trỏ vào ảnh đã mất.
       discardImages(doomed);
@@ -136,9 +144,60 @@ exports.delete_pet = async (req, res) => {
     return res.status(404).json({ message: 'Pet not found' });
   }
   try {
-    const pet = await Pet.findByIdAndDelete(req.params.petId);
+    // Nạp trước rồi mới xoá, vì cần imageId để biết ảnh nằm ở public_id nào mà
+    // dọn. Thiếu bước này thì xoá tin xong ảnh vẫn nằm lại Cloudinary vĩnh
+    // viễn — đường xoá của người dùng vẫn dọn, chỉ đường của quản trị viên là
+    // bỏ sót.
+    //
+    // KHÔNG gộp thành findByIdAndDelete().select('+imageId'): select không có
+    // tác dụng trên findOneAndDelete, imageId trả về undefined và ảnh lại bị
+    // bỏ quên y như cũ. Đã đo, không phải phỏng đoán.
+    const pet = await Pet.findById(req.params.petId).select('+imageId');
     if (!pet) return res.status(404).json({ message: 'Pet not found' });
+    await Pet.findByIdAndDelete(pet._id);
+
+    discardImage(pet);
+    // Tin đi thì báo cáo về tin đó cũng hết nghĩa, để lại chỉ làm hàng chờ đầy
+    // những dòng trỏ vào khoảng không.
+    await Report.deleteMany({ pet: pet._id });
+
     res.json({ message: 'Pet deleted successfully' });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Hàng chờ báo cáo, mới nhất trước, kèm tin bị báo cáo để xem là hiểu ngay
+// chuyện gì chứ không phải mở từng tin ra đọc.
+exports.list_reports = async (req, res) => {
+  try {
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const [reports, total] = await Promise.all([
+      Report.find()
+        .sort({ date: -1 })
+        .skip((page - 1) * PAGE_SIZE)
+        .limit(PAGE_SIZE)
+        .populate('pet', 'postId type species breed color area image resolved')
+        .lean(),
+      Report.countDocuments(),
+    ]);
+
+    res.json({ reports, total, page, pages: Math.ceil(total / PAGE_SIZE) });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Bỏ qua một báo cáo: xem rồi, thấy tin không sao. Xoá hẳn dòng báo cáo chứ
+// không đánh dấu đã xử lý — hàng chờ này để hành động, không phải để lưu trữ.
+exports.dismiss_report = async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.reportId)) {
+    return res.status(404).json({ message: 'Report not found' });
+  }
+  try {
+    const gone = await Report.findByIdAndDelete(req.params.reportId);
+    if (!gone) return res.status(404).json({ message: 'Report not found' });
+    res.json({ message: 'Report dismissed' });
   } catch {
     res.status(500).json({ message: 'Server error' });
   }

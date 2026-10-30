@@ -44,6 +44,52 @@
       </div>
     </div>
 
+    <!-- Hàng chờ báo cáo. Đặt trên bảng tin vì đây là thứ cần người xử lý,
+         còn bảng tin chỉ để tra cứu. Ẩn hẳn khi hàng chờ trống. -->
+    <div v-if="reports.length" class="bg-white rounded-2xl border border-rose-100 shadow-sm p-5 mb-6">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+        <p class="text-sm font-bold text-gray-900">{{ $t('admin.reports') }}</p>
+        <span class="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">{{ reportTotal }}</span>
+      </div>
+
+      <div v-for="r in reports" :key="r._id"
+        class="flex gap-3 items-start border border-gray-100 rounded-xl p-3 mb-2">
+        <img v-if="r.pet && r.pet.image" :src="r.pet.image" alt=""
+          class="w-14 h-14 rounded-lg object-cover flex-shrink-0"/>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">
+              {{ $t('report.reason.' + r.reason) }}
+            </span>
+            <router-link v-if="r.pet" :to="`/pet/${r.pet._id}`"
+              class="text-sm font-semibold text-gray-900 hover:text-orange-600 truncate">
+              {{ r.pet.breed }} · {{ r.pet.area }}
+            </router-link>
+            <!-- Tin có thể đã bị xoá bởi chính chủ tin trong lúc báo cáo nằm chờ. -->
+            <span v-else class="text-sm text-gray-400 italic">{{ $t('admin.reportPetGone') }}</span>
+          </div>
+          <p v-if="r.note" class="text-xs text-gray-500 mt-1.5 leading-relaxed break-words">{{ r.note }}</p>
+          <p class="text-xs text-gray-300 mt-1 font-mono">{{ r.pet ? r.pet.postId : '' }}</p>
+        </div>
+        <div class="flex flex-col gap-1.5 flex-shrink-0">
+          <button v-if="r.pet" @click="removeReported(r)" :disabled="busyReport === r._id"
+            class="text-xs font-medium px-3 py-1.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">
+            {{ $t('admin.reportDeletePost') }}
+          </button>
+          <button @click="dismissReport(r)" :disabled="busyReport === r._id"
+            class="text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+            {{ $t('admin.reportDismiss') }}
+          </button>
+        </div>
+      </div>
+
+      <button v-if="reports.length < reportTotal" @click="fetchReports(reportPage + 1)"
+        class="w-full text-xs font-medium text-gray-500 hover:text-gray-900 py-2">
+        {{ $t('home.more') }}
+      </button>
+    </div>
+
     <!-- Xếp hạng: thanh ngang một màu, độ dài mang nghĩa, số ghi thẳng ở cuối thanh -->
     <div v-if="stats" class="grid md:grid-cols-2 gap-4 mb-6">
       <div v-for="rank in rankings" :key="rank.title"
@@ -155,6 +201,10 @@ export default {
       loadingMore: false,
       busyId: null,
       cleaning: false,
+      reports: [],
+      reportTotal: 0,
+      reportPage: 1,
+      busyReport: null,
       filters: { type: '', resolved: '', q: '' },
       timer: null,
     };
@@ -178,6 +228,7 @@ export default {
   },
   created() {
     this.fetchStats();
+    this.fetchReports();
     this.reload();
   },
   methods: {
@@ -228,6 +279,48 @@ export default {
         this.loadingMore = false;
       }
     },
+    // page = 1 nạp lại từ đầu, page > 1 nối thêm vào cuối.
+    async fetchReports(page = 1) {
+      try {
+        const { data } = await api.adminReports({ page });
+        this.reports = page === 1 ? data.reports : [...this.reports, ...data.reports];
+        this.reportTotal = data.total;
+        this.reportPage = data.page;
+      } catch {
+        if (page === 1) this.reports = [];
+      }
+    },
+    // Xoá hẳn tin bị báo cáo. Server xoá kèm mọi báo cáo về tin đó, nên không
+    // phải dọn tay từng dòng trong hàng chờ.
+    async removeReported(r) {
+      if (!confirm(this.$t('admin.confirmDelete'))) return;
+      this.busyReport = r._id;
+      try {
+        await api.adminDeletePet(r.pet._id);
+        this.$toast(this.$t('delete.success'));
+        this.pets = this.pets.filter((p) => p._id !== r.pet._id);
+        this.fetchReports();
+        this.fetchStats();
+      } catch {
+        this.$toast(this.$t('form.saveError'), 'error');
+      } finally {
+        this.busyReport = null;
+      }
+    },
+    // Bỏ qua: xem rồi, tin không sao. Chỉ gỡ dòng báo cáo, tin giữ nguyên.
+    async dismissReport(r) {
+      this.busyReport = r._id;
+      try {
+        await api.adminDismissReport(r._id);
+        this.reports = this.reports.filter((x) => x._id !== r._id);
+        this.reportTotal -= 1;
+        this.fetchStats();
+      } catch {
+        this.$toast(this.$t('form.saveError'), 'error');
+      } finally {
+        this.busyReport = null;
+      }
+    },
     async remove(pet) {
       if (!confirm(this.$t('admin.confirmDelete'))) return;
       this.busyId = pet._id;
@@ -237,6 +330,7 @@ export default {
         this.total -= 1;
         this.$toast(this.$t('delete.success'));
         this.fetchStats();
+        this.fetchReports();
       } catch {
         this.$toast(this.$t('form.saveError'), 'error');
       } finally {
@@ -251,8 +345,10 @@ export default {
       try {
         const { data } = await api.adminCleanup();
         this.$toast(this.$t('admin.cleanupDone', { count: data.deleted }));
-        // Tin vừa xoá có thể đang nằm trong bảng bên dưới, nạp lại cả hai.
+        // Tin vừa xoá có thể đang nằm trong bảng bên dưới, và báo cáo về chúng
+        // cũng đã bị xoá theo, nên nạp lại cả ba.
         this.fetchStats();
+        this.fetchReports();
         this.reload();
       } catch {
         this.$toast(this.$t('form.saveError'), 'error');

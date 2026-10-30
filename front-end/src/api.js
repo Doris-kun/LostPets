@@ -36,6 +36,7 @@ export default {
   createPet: (data)   => http.post('/pets', data),
   updatePet: (id, data) => http.put(`/pets/${id}`, data, claimHeader(id)),
   deletePet: (id)     => http.delete(`/pets/${id}`, claimHeader(id)),
+  reportPet: (id, data) => http.post(`/pets/${id}/report`, data),
   analyzeImage: (data) => http.post('/ai/analyze-image', data),
   // Đối chiếu nhiều ảnh nên lâu hơn hẳn các request khác, cho hạn rộng ra.
   findMatches: (id)   => http.get(`/ai/match/${id}`, { timeout: 120000 }),
@@ -50,4 +51,6 @@ export default {
   adminPets:      (params) => http.get('/admin/pets', { params }),
   adminDeletePet: (id)     => http.delete(`/admin/pets/${id}`),
   adminCleanup:   ()       => http.post('/admin/cleanup'),
+  adminReports:   (params) => http.get('/admin/reports', { params }),
+  adminDismissReport: (id) => http.delete(`/admin/reports/${id}`),
 };

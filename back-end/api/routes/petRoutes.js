@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const petController = require('../controllers/petController');
+const reportController = require('../controllers/reportController');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
 const rateLimit = require('../middleware/rateLimit');
 
@@ -29,6 +30,18 @@ router.get('/mine', requireAuth, petController.list_my_pets);
 // Phải đứng trên '/:petId', nếu không Express hiểu 'map' là một mã tin.
 // Cùng bộ chặn tần suất với danh sách vì cũng nhận tham số q.
 router.get('/map', limitWhenSearching, petController.list_pets_for_map);
+
+// Báo cáo tin xấu. Không cần đăng nhập, nhưng chặn tần suất chặt hơn các
+// route khác: một người thật báo cáo vài tin là cùng, ai gửi hàng trăm lượt
+// thì đang cố nhấn chìm hàng chờ của quản trị viên chứ không phải đang tố cáo.
+const reportLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: () => Number(process.env.REPORT_RATE_LIMIT) || 20,
+  message: 'Bạn đã gửi quá nhiều báo cáo, thử lại sau một giờ',
+  // Một bộ đếm chung cho mọi tin, không phải mỗi tin một bộ.
+  scope: 'pets:report',
+});
+router.post('/:petId/report', reportLimit, reportController.create_a_report);
 
 // upload ở cả PUT để sửa tin đổi được ảnh. Multer bỏ qua request không phải
 // multipart, nên những chỗ gửi JSON như nút "Đã tìm thấy" vẫn chạy như cũ.
