@@ -377,6 +377,24 @@ Server lưu `public_id` của ảnh vào trường `imageId` (`select: false`, k
 
 Ảnh vượt 5MB nhận `413`, tệp không phải ảnh nhận `400`, Cloudinary lỗi nhận `502` — tất cả đều là JSON có `message`.
 
+### `POST /pets/:petId/report` — báo cáo tin xấu
+
+```json
+{ "reason": "scam", "note": "Người này đòi tiền chuộc" }
+```
+
+`reason` bắt buộc, phải là một trong: `scam`, `fake_image`, `wrong_contact`, `offensive`, `duplicate`, `other`. `note` tuỳ chọn, cắt ở 500 ký tự. Trả `201` kèm đúng một câu xác nhận.
+
+**Không cần đăng nhập.** Người cần báo cáo nhất thường là người *không* có tài khoản — họ không đăng tin nào cả, số điện thoại của họ bị kẻ khác đem đi đăng tin giả. Bắt đăng nhập là chặn đúng người cần kênh này nhất.
+
+**Phản hồi cố ý không nói tin đã bị báo cáo bao nhiêu lần.** Lộ con số đó thì kẻ xấu biết mình đã dồn đủ chưa, người thường thì đoán ra tin nào sắp bị gỡ.
+
+| Mã | Khi nào |
+|---|---|
+| `400` | thiếu `reason`, hoặc `reason` không nằm trong danh sách |
+| `404` | không có tin nào với `petId` đó |
+| `429` | quá 20 lượt/giờ/IP (`REPORT_RATE_LIMIT`) |
+
 ### `DELETE /pets/:petId` — xoá
 
 **Cần mã xác nhận**, giống `PUT`. Phản hồi `200` với body `{ "message": "Pet deleted successfully" }`.
@@ -610,6 +628,22 @@ Không đặt `setInterval` hay `node-cron` trong app vì Render gói miễn ph�
 
 > Đổi `CLEANUP_AFTER_DAYS` thì nhớ sửa luôn hai chuỗi dịch `detail.resolvedExpiry` trong `front-end/src/i18n.js` và dòng nói về 30 ngày trong `SYSTEM_INSTRUCTION` của `chatController.js`, không thì giao diện nói một đằng hệ thống làm một nẻo.
 
+### Hàng chờ báo cáo
+
+| Endpoint | Việc |
+|---|---|
+| `GET /admin/reports?page=1` | hàng chờ, mới nhất trước, 20 dòng mỗi trang, kèm tin bị báo cáo |
+| `DELETE /admin/reports/:reportId` | bỏ qua một báo cáo — xem rồi, tin không sao |
+| `DELETE /admin/pets/:petId` | xoá tin, **kèm mọi báo cáo về tin đó** |
+
+`GET /admin/stats` trả thêm `openReports` để trang quản trị hiện số đỏ.
+
+**Luật không được phá: không bao giờ tự ẩn hay tự xoá tin theo số lượt báo cáo.** Cho số lượt tự ẩn thì kẻ xấu mở ba tab trình duyệt là chôn được tin thật của một người đang đi tìm chó. Hiện nhầm một tin rác thì người ta lướt qua mất hai giây; ẩn nhầm tin thật thì con vật không về. Đây là cùng một nguyên tắc với ô tìm kiếm và bán kính trên bản đồ: **bỏ sót tốn kém hơn hiện thừa**. Có một test canh đúng điều này (`report.test.js`, "không có quy tắc nào tự ẩn tin").
+
+Chặn trùng ("bạn đã báo cáo tin này") chỉ nằm ở `localStorage`, là **ma sát chống bấm bừa chứ không phải bảo mật** — xoá dữ liệu trình duyệt là báo cáo lại được. Chặn thật nằm ở bộ đếm tần suất theo IP. Bộ đếm đó dùng `scope: 'pets:report'` để tính chung mọi tin; bỏ `scope` đi thì khoá đếm lấy theo đường dẫn, mà đường dẫn chứa `:petId`, nên mỗi tin một hạn mức riêng và spam 20 lượt cho từng tin vẫn lọt.
+
+> Bỏ qua báo cáo là **xoá hẳn dòng đó**, không đánh dấu "đã xử lý". Hàng chờ này để hành động, không phải để lưu trữ.
+
 ## 8. Giới hạn tần suất
 
 Đếm theo IP, trong bộ nhớ của tiến trình. Vượt ngưỡng thì nhận `429` kèm header `Retry-After`.
@@ -620,6 +654,7 @@ Không đặt `setInterval` hay `node-cron` trong app vì Render gói miễn ph�
 | `POST /auth/register` | 30 lượt / giờ | `REGISTER_RATE_LIMIT` |
 | `POST /auth/login` | 20 lượt / 15 phút | `LOGIN_RATE_LIMIT` |
 | `GET /pets` **khi có `q`** | 60 lượt / 10 phút | `SEARCH_RATE_LIMIT` |
+| `POST /pets/:petId/report` | 20 lượt / giờ | `REPORT_RATE_LIMIT` |
 
 Tìm kiếm bị đếm vì mỗi lượt gọi Gemini để nhúng câu hỏi. Duyệt danh sách bình thường (không có `q`) **không** bị đếm, nên cuộn trang chủ bao nhiêu cũng được.
 
@@ -637,6 +672,7 @@ Front-end giữ vài thứ trong `localStorage`. Không có gì được gửi l
 | `nudge:ask:<petId>` | sớm nhất bao giờ được hỏi lại về tin đó (mốc ms) | `src/nudge.js` |
 | `nudge:scan` | sớm nhất bao giờ được dò lại toàn bộ (mốc ms) | `src/nudge.js` |
 | `map:me` | vị trí người dùng lần gần nhất, để bản đồ mở ra đúng chỗ | `components/PetMap.vue` |
+| `report:<petId>` | đã báo cáo tin này rồi | `src/report.js` |
 | `lang` | ngôn ngữ đang chọn | `src/i18n.js` |
 | `token`, `user` | phiên đăng nhập | `src/auth.js` |
 

@@ -231,6 +231,27 @@
       </p>
       <p v-if="matchError" class="text-sm text-rose-500 mt-4 text-center">{{ matchError }}</p>
     </div>
+
+    <!-- Báo cáo tin xấu. Để cuối trang và cố ý nhạt màu: đây là lối thoát hiểm,
+         không phải việc người xem bình thường cần làm. -->
+    <div v-if="pet" class="text-center mt-6">
+      <span v-if="reported" class="inline-flex items-center gap-1.5 text-xs text-gray-400">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ $t('report.already') }}
+      </span>
+      <button v-else @click="showReport = true"
+        class="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-rose-600 transition-colors">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z"/>
+        </svg>
+        {{ $t('report.action') }}
+      </button>
+    </div>
+
+    <ReportDialog v-if="showReport" :pet-id="pet._id" @close="onReportClosed"/>
   </div>
 </template>
 
@@ -239,15 +260,18 @@ import api from '../api';
 import PetMap from '../components/PetMap.vue';
 import { directionsUrl } from '../map';
 import claim from '../claim';
+import report from '../report';
+import ReportDialog from '../components/ReportDialog.vue';
 
 export default {
   name: 'PetDetail',
-  components: { PetMap },
+  components: { PetMap, ReportDialog },
   data() {
     return {
       pet: null, loading: false, deleting: false, resolving: false,
       matches: [], matchLoading: false, matchError: '', matchDone: false,
       claimCode: '', showCode: false, copied: false,
+      showReport: false, reported: false,
     };
   },
   computed: {
@@ -285,6 +309,7 @@ export default {
     async fetchPet() {
       this.loading = true;
       this.claimCode = claim.get(this.$route.params.id);
+      this.reported = report.has(this.$route.params.id);
       try {
         const { data } = await api.getPet(this.$route.params.id);
         this.pet = data;
@@ -293,6 +318,10 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    onReportClosed(sent) {
+      this.showReport = false;
+      if (sent) this.reported = true;
     },
     async copyCode() {
       try {

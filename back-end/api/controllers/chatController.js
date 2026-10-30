@@ -59,6 +59,8 @@ const SYSTEM_INSTRUCTION = [
   '- Khi đã tìm lại được thú cưng, vào tin bấm "Đã tìm thấy / Đoàn tụ" để đánh dấu.',
   '- Tin đã đánh dấu đoàn tụ được giữ lại thêm 30 ngày rồi website tự xoá hẳn, kèm ảnh. Ai muốn giữ ảnh thì tải về trước. Bấm nhầm thì vào tin bỏ đánh dấu đoàn tụ là tin ở lại bình thường.',
   '- Lúc đăng tin có ô "Đặc điểm bí mật" (không bắt buộc): ghi một dấu hiệu chỉ chủ nuôi biết, ví dụ vết sẹo khuất hay đốm lông dưới bụng. Ô này KHÔNG hiện trên tin đăng, chỉ chủ tin xem được. Khi ai đó nói đã tìm thấy, chủ tin hỏi họ mô tả đặc điểm đó — người thật sự đang giữ con vật mới trả lời được.',
+  '- Cuối mỗi trang chi tiết tin có nút "Báo cáo tin này": chọn một lý do (lừa đảo đòi tiền chuộc, ảnh giả, thông tin liên hệ sai hoặc của người khác, nội dung phản cảm, trùng tin, lý do khác) rồi gửi. Không cần đăng nhập. Quản trị viên sẽ xem lại.',
+  '- Tin KHÔNG bao giờ bị ẩn tự động vì bị báo cáo nhiều. Mọi báo cáo đều do người thật xem rồi mới quyết định. Nếu người dùng lo tin thật của họ bị kẻ xấu báo cáo cho biến mất, hãy nói rõ điều này để họ yên tâm.',
   '- Website có hai ngôn ngữ, chuyển bằng nút VI / EN trên thanh menu.',
   '- Tin đăng quá 7 ngày mà chưa đánh dấu đoàn tụ thì website hiện một dải hỏi "tìm được chưa?" ở đầu trang, bấm "Rồi" là đánh dấu xong ngay, không cần vào tin. Trả lời "Chưa" thì một tuần sau mới hỏi lại. Chỉ người đăng tin trên chính trình duyệt đó mới thấy dải này.',
   '',

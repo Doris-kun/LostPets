@@ -35,4 +35,7 @@ router.get('/stats', adminController.stats);
 router.get('/pets', adminController.list_pets);
 router.delete('/pets/:petId', adminController.delete_pet);
 
+router.get('/reports', adminController.list_reports);
+router.delete('/reports/:reportId', adminController.dismiss_report);
+
 module.exports = router;

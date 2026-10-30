@@ -18,7 +18,10 @@ const SWEEP_EVERY_MS = 60 * 1000;
 // nạp lại toàn bộ ứng dụng.
 const resolve = (value) => (typeof value === 'function' ? value() : value);
 
-function rateLimit({ windowMs, max, message }) {
+// scope: đặt tên cố định cho bộ đếm thay vì lấy theo đường dẫn. Cần cho những
+// route có tham số trong URL — '/:petId/report' mà đếm theo đường dẫn thì mỗi
+// tin một hạn mức riêng, gửi 20 lượt cho từng tin vẫn lọt qua hết.
+function rateLimit({ windowMs, max, message, scope }) {
   return (req, res, next) => {
     const now = Date.now();
     const limit = resolve(max);
@@ -29,7 +32,7 @@ function rateLimit({ windowMs, max, message }) {
     }
 
     // req.ip đúng là IP người dùng nhờ app.set('trust proxy') trong app.js.
-    const key = `${req.baseUrl}${req.path}:${req.ip}`;
+    const key = `${scope || req.baseUrl + req.path}:${req.ip}`;
     const entry = buckets.get(key);
 
     if (!entry || entry.resetAt <= now) {
