@@ -143,23 +143,24 @@
       <router-link :to="`/pet/${featured._id}`"
         class="group block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 mb-5">
         <div class="flex flex-col sm:flex-row">
-          <div class="relative sm:w-3/5 aspect-video overflow-hidden bg-gray-100">
-            <img v-if="featured.image" :src="featured.image" :alt="featured.breed"
+          <!-- Không có ảnh thì bỏ hẳn cột ảnh, nhường chỗ cho phần chữ. Một ô
+               xám to bằng 3/5 thẻ chỉ để chứa biểu tượng thì nhìn như web hỏng. -->
+          <div v-if="featured.image" class="relative sm:w-3/5 aspect-video overflow-hidden bg-gray-100">
+            <img :src="featured.image" :alt="featured.breed"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-            <div v-else class="w-full h-full flex items-center justify-center">
-              <svg class="w-16 h-16 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-            </div>
             <span :class="featured.resolved ? 'bg-teal-500' : featured.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
               class="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
               {{ $t(featured.resolved ? 'badge.resolved' : featured.type === 'lost' ? 'badge.lost' : 'badge.found') }}
             </span>
           </div>
-          <div class="sm:w-2/5 p-6 sm:p-8 flex flex-col justify-between">
+          <div :class="featured.image ? 'sm:w-2/5' : 'w-full'" class="p-6 sm:p-8 flex flex-col justify-between">
             <div>
               <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-3">{{ $t('home.featured') }}</p>
+              <!-- Mất cột ảnh thì mất luôn chỗ gắn nhãn loại tin, dựng lại ở đây. -->
+              <span v-if="!featured.image" :class="featured.resolved ? 'bg-teal-500' : featured.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
+                class="inline-block text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm mb-3">
+                {{ $t(featured.resolved ? 'badge.resolved' : featured.type === 'lost' ? 'badge.lost' : 'badge.found') }}
+              </span>
               <h2 class="text-2xl font-bold text-gray-900 leading-tight mb-1">{{ featured.name || featured.breed }}</h2>
               <p class="text-sm text-gray-400 mb-3">{{ featured.species }} · {{ featured.breed }}</p>
               <div class="flex items-center gap-1.5 mb-4">
@@ -187,12 +188,7 @@
             <div class="relative aspect-[4/3] overflow-hidden bg-gray-100">
               <img v-if="pet.image" :src="pet.image" :alt="pet.breed"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-              <div v-else class="w-full h-full flex items-center justify-center">
-                <svg class="w-12 h-12 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-              </div>
+              <NoPhoto v-else :type="pet.type" :resolved="pet.resolved"/>
               <span :class="pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
                 class="absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
                 {{ $t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found') }}
@@ -235,10 +231,11 @@
 <script>
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
+import NoPhoto from '../components/NoPhoto.vue';
 
 export default {
   name: 'Home',
-  components: { PetMap },
+  components: { PetMap, NoPhoto },
   data() {
     return {
       pets: [],

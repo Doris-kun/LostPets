@@ -30,12 +30,7 @@
       <!-- Image -->
       <div class="relative aspect-video bg-gray-100">
         <img v-if="pet.image" :src="pet.image" :alt="pet.breed" class="w-full h-full object-cover"/>
-        <div v-else class="w-full h-full flex items-center justify-center">
-          <svg class="w-20 h-20 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-        </div>
+        <NoPhoto v-else :type="pet.type" :resolved="pet.resolved"/>
         <span :class="pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
           class="absolute top-4 left-4 text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-md">
           {{ $t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found') }}
@@ -258,6 +253,7 @@
 <script>
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
+import NoPhoto from '../components/NoPhoto.vue';
 import { directionsUrl } from '../map';
 import claim from '../claim';
 import report from '../report';
@@ -265,7 +261,7 @@ import ReportDialog from '../components/ReportDialog.vue';
 
 export default {
   name: 'PetDetail',
-  components: { PetMap, ReportDialog },
+  components: { PetMap, ReportDialog, NoPhoto },
   data() {
     return {
       pet: null, loading: false, deleting: false, resolving: false,
