@@ -31,7 +31,9 @@ import loadScript from '../loadScript';
 
 const GOOGLE_SDK = 'https://accounts.google.com/gsi/client';
 const FACEBOOK_SDK = 'https://connect.facebook.net/vi_VN/sdk.js';
-const FACEBOOK_API_VERSION = 'v21.0';
+// Facebook bắt FB.init phải khai phiên bản Graph API. Meta cho mỗi phiên bản
+// sống khoảng hai năm rồi ngắt, nên con số này cần ngó lại mỗi năm học.
+const FACEBOOK_API_VERSION = 'v26.0';
 
 const googleClientId = () => process.env.VUE_APP_GOOGLE_CLIENT_ID || '';
 const facebookAppId = () => process.env.VUE_APP_FACEBOOK_APP_ID || '';

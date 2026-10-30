@@ -11,7 +11,7 @@ const { OAuth2Client } = require('google-auth-library');
 
 class OAuthError extends Error {}
 
-const GOOGLE_TIMEOUT_MS = 10000;
+const HTTP_TIMEOUT_MS = 10000;
 
 let googleClient = null;
 const getGoogleClient = () => {
@@ -54,6 +54,11 @@ exports.verifyGoogle = async (idToken) => {
 };
 
 // Facebook không ký token theo kiểu đọc được tại chỗ, phải hỏi ngược lại Graph API.
+//
+// Cố ý KHÔNG ghim số phiên bản vào địa chỉ. Gọi không ghim thì Facebook dùng
+// phiên bản cũ nhất còn sống, tức là địa chỉ này không bao giờ chết vì hết hạn
+// phiên bản. Hai trường mình cần (debug_token và id/name/email) có hình dạng
+// y hệt nhau qua mọi phiên bản nên không mất gì.
 exports.verifyFacebook = async (accessToken) => {
   if (!accessToken) throw new OAuthError('Thiếu token');
   const appId = process.env.FACEBOOK_APP_ID;
@@ -63,7 +68,7 @@ exports.verifyFacebook = async (accessToken) => {
   try {
     const res = await axios.get('https://graph.facebook.com/debug_token', {
       params: { input_token: String(accessToken), access_token: appToken },
-      timeout: GOOGLE_TIMEOUT_MS,
+      timeout: HTTP_TIMEOUT_MS,
     });
     debug = res.data && res.data.data;
   } catch {
@@ -82,7 +87,7 @@ exports.verifyFacebook = async (accessToken) => {
   try {
     const res = await axios.get('https://graph.facebook.com/me', {
       params: { fields: 'id,name,email', access_token: String(accessToken) },
-      timeout: GOOGLE_TIMEOUT_MS,
+      timeout: HTTP_TIMEOUT_MS,
     });
     me = res.data;
   } catch {
