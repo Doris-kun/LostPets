@@ -79,6 +79,7 @@
 
 <script>
 import api from '../api';
+import PetPhoto from '../components/PetPhoto.vue';
 
 export default {
   name: 'MyPets',

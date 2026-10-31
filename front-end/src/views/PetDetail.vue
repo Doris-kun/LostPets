@@ -256,6 +256,7 @@ import { directionsUrl } from '../map';
 import claim from '../claim';
 import report from '../report';
 import ReportDialog from '../components/ReportDialog.vue';
+import PetPhoto from '../components/PetPhoto.vue';
 
 export default {
   name: 'PetDetail',
