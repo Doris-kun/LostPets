@@ -119,6 +119,20 @@ npm run embed -- --all  # nhúng lại toàn bộ (khi đổi model hoặc số 
 
 Tin đăng mới tự nhúng ngầm. Chạy lệnh này cho tin đăng **trước khi** có tính năng tìm kiếm, hoặc cho tin đăng đúng lúc Gemini hết quota. Cần `GEMINI_API_KEY` và `MONGODB_URI` trong `.env`. Chạy lại nhiều lần đều an toàn — nó chỉ ghi thêm trường `embedding`, không đụng nội dung tin.
 
+### Vá ảnh mẫu đã chết
+
+```bash
+cd back-end
+npm run fix-images            # chỉ xem trước, KHÔNG ghi gì
+npm run fix-images -- --apply # ghi thật
+```
+
+Ảnh của dữ liệu mẫu nằm trên máy chủ người khác, mà máy chủ thì sập — `cataas.com` chết là cả 8 tin mèo trắng bóc cùng lúc. Script gọi thử từng ảnh, chỉ đụng vào ảnh thật sự chết, và **gọi thử cả ảnh thay thế trước khi ghi** để khỏi đổi từ host chết này sang host chết khác.
+
+**Không bao giờ đụng vào ảnh trên Cloudinary.** Đó là ảnh người dùng tự tải lên — ảnh thật của con vật thật. Ảnh đó chết thì script chỉ in ra cảnh báo để người xử lý, chứ lặng lẽ thay bằng một con mèo ngẫu nhiên trên mạng là việc khác hẳn.
+
+> Giao diện đã có đường lui rồi (`PetPhoto` rơi về ô "chưa có ảnh" khi tải hỏng), nên script này chỉ để dữ liệu demo nhìn đẹp, không phải để web chạy được.
+
 ---
 
 ## 3. Quy trình làm việc trên Git
