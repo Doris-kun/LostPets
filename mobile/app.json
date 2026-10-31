@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "LostPets",
+    "slug": "lostpets",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lostpets.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.lostpets.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/logo-full.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "image": "./assets/logo-dark.png",
+            "imageWidth": 220,
+            "resizeMode": "contain",
+            "backgroundColor": "#0E1A23"
+          }
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "LostPets dùng vị trí của bạn để đánh dấu nơi mất hoặc nơi nhặt được thú cưng trên bản đồ. Vị trí được làm mờ thành một vùng rộng khoảng 500m trước khi lưu."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8ab7a83a-6352-4e16-b8a4-8e96c33f2afd"
+      }
+    }
+  }
+}

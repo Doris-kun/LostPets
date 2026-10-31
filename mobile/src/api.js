@@ -1,0 +1,88 @@
+import axios from 'axios';
+import { API_URL, REQUEST_TIMEOUT } from './config';
+import claim from './claim';
+import { getToken, reportUnauthorized } from './context/auth';
+
+/*
+ * Gọi back-end. Giống front-end-react/src/api.js, chỉ khác chỗ lấy địa chỉ
+ * và cách gửi mã xác nhận.
+ *
+ * Phải có timeout: trên điện thoại, sai IP hoặc tường lửa chặn thì request treo
+ * rất lâu rồi mới báo lỗi. Đặt timeout để app báo sớm, người dùng đỡ tưởng treo máy.
+ * Con số cụ thể do config.js quyết định — máy chủ miễn phí cần chờ lâu hơn
+ * nhiều vì nó phải thức dậy trước khi trả lời.
+ */
+const http = axios.create({
+  baseURL: API_URL,
+  timeout: REQUEST_TIMEOUT,
+});
+
+/*
+ * Đã đăng nhập thì mọi request tự kèm token, server nhìn vào đó để biết ai
+ * đang gọi. Chặn ở một chỗ duy nhất, các màn hình không phải nhớ gắn tay.
+ */
+http.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+/*
+ * Token hết hạn hoặc bị thu hồi -> server trả 401. Xoá phiên để giao diện
+ * quay về trạng thái khách, thay vì cứ thử mãi với một token đã chết.
+ */
+http.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) reportUnauthorized();
+    return Promise.reject(err);
+  },
+);
+
+/*
+ * Sửa và xoá cần mã xác nhận, gửi qua header x-claim-code.
+ * Tin không có mã (tin cũ, tin seed) thì back-end vẫn cho qua, nên gửi header
+ * rỗng cũng không sao — bỏ hẳn header cho gọn.
+ *
+ * Đã đăng nhập mà là chủ tin thì back-end cho qua bằng token, không cần mã.
+ */
+const withClaim = (claimCode) => (claimCode ? { headers: { 'x-claim-code': claimCode } } : {});
+
+export default {
+  getPets: (params) => http.get('/pets', { params }),
+  // Kèm mã xác nhận để server biết người xem có phải chủ bài không —
+  // chủ bài thì nhận thêm trường đặc điểm bí mật. Mã lấy ở AsyncStorage nên
+  // phải await, khác web đọc localStorage ra ngay.
+  getPet: async (id) => http.get(`/pets/${id}`, withClaim(await claim.get(id))),
+  createPet: (data) => http.post('/pets', data),
+  updatePet: (id, data, claimCode) => http.put(`/pets/${id}`, data, withClaim(claimCode)),
+  deletePet: (id, claimCode) => http.delete(`/pets/${id}`, withClaim(claimCode)),
+
+  // AI. Phân tích ảnh mất 10-20 giây, lâu hơn hẳn request thường, nên nới
+  // riêng thời gian chờ cho nó thay vì nới cho cả app.
+  analyzeImage: (data) => http.post('/ai/analyze-image', data, { timeout: 60000 }),
+
+  // Đối chiếu lâu hơn phân tích ảnh nhiều: server phải tải về và so từng
+  // ảnh ứng viên. Cho hẳn 2 phút.
+  findMatches: (id) => http.get(`/ai/match/${id}`, { timeout: 120000 }),
+
+  // Trợ lý: gửi cả đoạn hội thoại lên mỗi lần, vì server không nhớ gì giữa
+  // các lần gọi. Tối đa 20 lượt, mỗi tin 1000 ký tự.
+  chat: (messages) => http.post('/ai/chat', { messages }, { timeout: 60000 }),
+
+  // Tài khoản
+  register: (data) => http.post('/auth/register', data),
+  login: (data) => http.post('/auth/login', data),
+  me: () => http.get('/auth/me'),
+  myPets: () => http.get('/pets/mine'),
+
+  /*
+   * Quản trị. Back-end chặn cả ba đường này bằng requireAdmin, nên người
+   * thường có gọi thẳng cũng chỉ nhận 403 — việc giấu nút đi ở màn Cài đặt
+   * chỉ là cho gọn mắt, KHÔNG phải là lớp bảo vệ.
+   */
+  adminStats: () => http.get('/admin/stats'),
+  adminPets: (params) => http.get('/admin/pets', { params }),
+  // Quản trị viên xoá được bất kỳ tin nào, không cần mã xác nhận.
+  adminDeletePet: (id) => http.delete(`/admin/pets/${id}`),
+};
