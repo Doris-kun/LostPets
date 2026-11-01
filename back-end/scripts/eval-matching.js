@@ -46,6 +46,7 @@ const TARGET_RECALL = 0.7; // Objective 3: >= 70% top-3
 const args = process.argv.slice(2);
 const useVector = args.includes('--vector');
 const useAi = args.includes('--ai');
+const useSearch = args.includes('--search');
 const writeReport = args.includes('--report');
 
 const pct = (n, d) => (d === 0 ? 0 : Math.round((n / d) * 1000) / 10);
@@ -215,6 +216,58 @@ async function measureEndToEnd(meta) {
   return rows;
 }
 
+// --------------------------------------------------- đường TÌM KIẾM (B07)
+
+// Đo đường tìm kiếm, không phải đường so khớp. Hai đường khác nhau: so khớp
+// bắt đầu từ một tin có sẵn, tìm kiếm bắt đầu từ câu người ta gõ vào ô.
+//
+// Câu hỏi dùng chính phần mô tả của tin báo mất, còn đáp án là tin nhặt được
+// cùng cặp. Hai tin ấy được viết bằng từ ngữ khác hẳn nhau, nên đây đúng là
+// bài toán proposal mục 2.2 nêu ra: tìm ra nhau dù không chung chữ nào.
+//
+// Gọi qua HTTP thật để đo cả phần nối dây, không chỉ đo hàm xếp hạng.
+async function measureSearch(meta, label) {
+  const request = require('supertest');
+  const app = require('../app');
+  const byPair = new Map();
+  for (const [id, m] of meta) {
+    if (!m.pairId) continue;
+    const entry = byPair.get(m.pairId) || {};
+    entry[m.key.endsWith('-lost') ? 'lost' : 'found'] = id;
+    byPair.set(m.pairId, entry);
+  }
+
+  const rows = [];
+  let i = 0;
+  for (const [pairId, pair] of byPair) {
+    i += 1;
+    process.stdout.write(`\r  ${label}... ${i}/${byPair.size}`);
+    const lost = await Pet.findById(pair.lost);
+    const started = Date.now();
+    const res = await request(app)
+      .get('/pets')
+      .query({ q: lost.description, type: 'found', limit: 60 });
+    const pets = (res.body && res.body.pets) || [];
+    rows.push({
+      pairId,
+      status: res.status,
+      rank: pets.findIndex((p) => String(p._id) === pair.found) + 1,
+      ms: Date.now() - started,
+    });
+  }
+  process.stdout.write('\n');
+  return rows;
+}
+
+const hitsAt = (rows, k) => rows.filter((r) => r.rank > 0 && r.rank <= k).length;
+
+// Trung vị chứ không trung bình: một lượt gọi nghẽn 20 giây sẽ kéo lệch trung
+// bình và làm người đọc tưởng mọi lượt tìm đều chậm như thế.
+const medianMs = (rows) => {
+  const xs = rows.map((r) => r.ms).sort((a, b) => a - b);
+  return xs.length ? xs[Math.floor(xs.length / 2)] : 0;
+};
+
 // ---------------------------------------------------------------- in ấn
 
 function section(title) {
@@ -244,7 +297,7 @@ function printBreakdown(cases, field, by, label) {
   }
 }
 
-function buildReport(cases, endToEnd) {
+function buildReport(cases, endToEnd, search) {
   const lines = [];
   const stamp = new Date().toISOString().slice(0, 10);
   lines.push('# Kết quả đo độ chính xác so khớp Lost↔Found');
@@ -278,6 +331,20 @@ function buildReport(cases, endToEnd) {
     lines.push('## Đầu-cuối qua endpoint thật');
     lines.push('');
     lines.push(`top-3 accuracy: **${pct(hit, endToEnd.length)}%** (${hit}/${endToEnd.length})`);
+    lines.push('');
+  }
+  if (search) {
+    lines.push('## Đường tìm kiếm — tầng tái xếp hạng (B07)');
+    lines.push('');
+    lines.push('Câu hỏi là phần mô tả của tin báo mất, đáp án là tin nhặt được cùng cặp.');
+    lines.push('Hai lượt đo chỉ khác nhau biến `SEARCH_RERANK`.');
+    lines.push('');
+    lines.push('| k | chỉ vector | vector + tái xếp hạng |');
+    lines.push('|---|---|---|');
+    for (const k of K_VALUES) {
+      lines.push(`| precision@${k} | ${pct(hitsAt(search.base, k), search.base.length)}% | ${pct(hitsAt(search.ranked, k), search.ranked.length)}% |`);
+    }
+    lines.push(`| thời gian mỗi lượt (trung vị) | ${medianMs(search.base)}ms | ${medianMs(search.ranked)}ms |`);
     lines.push('');
   }
   lines.push('## Chi tiết từng cặp');
@@ -339,7 +406,32 @@ async function run() {
       console.log(`  top-3 accuracy: ${pct(hit, endToEnd.length)}% (${hit}/${endToEnd.length})`);
     }
 
-    if (writeReport) buildReport(cases, endToEnd);
+    let search = null;
+    if (useSearch) {
+      // Hai lượt đo chỉ khác nhau một biến môi trường, chạy trên cùng dữ liệu,
+      // cùng câu hỏi, cùng thứ tự. Khác biệt đo được là của riêng tầng tái
+      // xếp hạng chứ không lẫn thứ gì khác.
+      process.env.SEARCH_RATE_LIMIT = '1000';
+      section('Đường tìm kiếm — có và không có tái xếp hạng (B07)');
+      process.env.SEARCH_RERANK = 'off';
+      const base = await measureSearch(meta, 'chỉ vector');
+      process.env.SEARCH_RERANK = 'on';
+      const ranked = await measureSearch(meta, 'vector + tái xếp hạng');
+      search = { base, ranked };
+
+      console.log(`\n  ${'k'.padEnd(4)} ${'chỉ vector'.padEnd(14)} vector + tái xếp hạng`);
+      for (const k of K_VALUES) {
+        const b = hitsAt(base, k);
+        const r = hitsAt(ranked, k);
+        const arrow = r > b ? ' tốt hơn' : r < b ? ' kém hơn' : ' như nhau';
+        console.log(`  @${String(k).padEnd(3)} ${`${pct(b, base.length)}%`.padEnd(14)} ${`${pct(r, ranked.length)}%`.padEnd(8)}${arrow}`);
+      }
+      const mb = medianMs(base);
+      const mr = medianMs(ranked);
+      console.log(`\n  Thời gian mỗi lượt tìm (trung vị): ${mb}ms  ->  ${mr}ms  (+${mr - mb}ms)`);
+    }
+
+    if (writeReport) buildReport(cases, endToEnd, search);
   } finally {
     await mongoose.disconnect();
     await server.stop();

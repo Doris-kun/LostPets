@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const Pet = require('../models/petModel');
 const { discardImage } = require('../lib/images');
 const { textForPet, embedDocument, embedQuery, cosine } = require('../lib/embedding');
+const { rerank, shouldRerank } = require('../lib/rerank');
 
 // Những trường mà sửa đi thì vector cũ không còn đúng nữa. contact và
 // secretDetail không có trong đây vì chúng không được nhúng ngay từ đầu.
@@ -211,7 +212,14 @@ async function searchByMeaning(q, filter) {
   const usable = vector ? scored : scored.filter((row) => row.exact);
 
   usable.sort((a, b) => (b.exact - a.exact) || (b.score - a.score));
-  return usable.map((row) => row.pet);
+
+  // Tầng tái xếp hạng chỉ đụng vào phần KHÔNG khớp nguyên văn. Tin khớp nguyên
+  // văn là người ta gõ thẳng mã tin hay số điện thoại — đã chắc chắn đúng tin
+  // đó rồi, để model xếp lại thì chỉ có nước xếp hỏng.
+  const exacts = usable.filter((row) => row.exact).map((row) => row.pet);
+  const rest = usable.filter((row) => !row.exact).map((row) => row.pet);
+  if (!shouldRerank(q)) return exacts.concat(rest);
+  return exacts.concat(await rerank(q, rest));
 }
 
 // Bộ lọc cứng, dùng chung cho danh sách và bản đồ. Hai chỗ phải lọc giống hệt
