@@ -53,7 +53,7 @@ const FULL_HEIGHT = Math.round((FULL_WIDTH * 590) / 471);
 const DARK_WIDTH = 220;
 const DARK_HEIGHT = Math.round((DARK_WIDTH * 591) / 471);
 
-export default function SplashScreen({ onFinish }) {
+export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const { t } = useLanguage();
   const { isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);

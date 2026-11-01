@@ -1,7 +1,10 @@
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import type { ReactNode } from 'react';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/auth';
+import type { MainTabParamList, RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing } from '../theme';
@@ -22,7 +25,12 @@ const APP_VERSION = '1.0.0';
 const LOGO_MARK = require('../../assets/logo-mark.png');
 const LOGO_MARK_DARK = require('../../assets/logo-mark-dark.png');
 
-export default function SettingsScreen({ navigation }) {
+type Props = {
+  navigation: NativeStackScreenProps<RootStackParamList>['navigation'] &
+    NativeStackScreenProps<MainTabParamList>['navigation'];
+};
+
+export default function SettingsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { t, lang, setLang } = useLanguage();
   const { colors, isDark, scheme, setScheme } = useTheme();
@@ -195,7 +203,7 @@ export default function SettingsScreen({ navigation }) {
 }
 
 // Một dòng cài đặt: nhãn bên trái, các lựa chọn bên phải.
-function Row({ label, children }) {
+function Row({ label, children }: { label: string; children: ReactNode }) {
   const styles = useThemedStyles(themedStyles);
 
   return (
@@ -206,7 +214,7 @@ function Row({ label, children }) {
   );
 }
 
-function Choice({ label, active, onPress }) {
+function Choice({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const styles = useThemedStyles(themedStyles);
 
   return (

@@ -88,7 +88,13 @@ export default function App() {
  * Khung gốc. Tách ra khỏi App vì useTheme() chỉ gọi được BÊN TRONG
  * ThemeProvider — viết thẳng trong App thì nó nằm ngoài, React báo lỗi ngay.
  */
-function Root({ showSplash, onSplashFinish }) {
+function Root({
+  showSplash,
+  onSplashFinish,
+}: {
+  showSplash: boolean;
+  onSplashFinish: () => void;
+}) {
   const { colors, isDark } = useTheme();
 
   return (

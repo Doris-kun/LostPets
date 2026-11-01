@@ -5,7 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../api';
 import PetCard from '../components/PetCard';
 import { useAuth } from '../context/auth';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useLanguage } from '../context/language';
+import type { MainTabParamList, Pet, RootStackParamList } from '../types';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { spacing } from '../theme';
 
@@ -19,14 +21,24 @@ import { spacing } from '../theme';
  * Chưa đăng nhập thì màn này mời đăng nhập thay vì gọi API rồi nhận 401.
  */
 
-export default function MyPetsScreen({ navigation }) {
+/*
+ * Màn này nằm trong tab, nhưng lại điều hướng sang Detail và Form vốn thuộc
+ * Stack bên ngoài. Nên lấy kiểu navigation của Stack: tab tự chuyển tiếp lên
+ * cha khi không tự xử lý được.
+ */
+type Props = {
+  navigation: NativeStackScreenProps<RootStackParamList>['navigation'] &
+    NativeStackScreenProps<MainTabParamList>['navigation'];
+};
+
+export default function MyPetsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
   const { isLoggedIn, loading: authLoading } = useAuth();
 
-  const [pets, setPets] = useState([]);
+  const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hasError, setHasError] = useState(false);

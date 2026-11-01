@@ -11,8 +11,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import api from '../api';
+import api, { errorStatus } from '../api';
 import { useLanguage } from '../context/language';
+import type { ChatMessage } from '../types';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing } from '../theme';
 
@@ -45,14 +46,14 @@ export default function ChatScreen() {
    * ngược lên server là bắt AI đọc lại chính lời chào của mình — tốn chỗ và
    * dễ làm nó lẫn lộn.
    */
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
-  const listRef = useRef(null);
+  const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  const send = async (text) => {
+  const send = async (text: string) => {
     const content = text.trim();
     if (!content || sending) return;
 
@@ -61,7 +62,12 @@ export default function ChatScreen() {
       return;
     }
 
-    const next = [...messages, { role: 'user', content: content.slice(0, MAX_CHARS) }];
+    // Khai kiểu rõ ràng, nếu không TypeScript đoán role là string chứ không
+    // phải 'user' | 'assistant', rồi api.chat từ chối nhận.
+    const next: ChatMessage[] = [
+      ...messages,
+      { role: 'user', content: content.slice(0, MAX_CHARS) },
+    ];
     setMessages(next);
     setDraft('');
     setError('');
@@ -71,9 +77,15 @@ export default function ChatScreen() {
       const { data } = await api.chat(next);
       setMessages([...next, { role: 'assistant', content: data.reply }]);
     } catch (err) {
-      const status = err.response?.status;
+      const status = errorStatus(err);
       const key =
-        status === 503 ? 'chat.off' : [429, 504].includes(status) ? 'chat.busy' : 'chat.error';
+        status === 503
+          ? 'chat.off'
+          : // includes() doi dung mot so, ma status co the la undefined khi khong
+            // goi toi duoc may chu. Chan bang ?? 0 — khong ma nao la 0 ca.
+            [429, 504].includes(status ?? 0)
+            ? 'chat.busy'
+            : 'chat.error';
       setError(t(key));
 
       // Bỏ câu vừa gửi ra khỏi hội thoại và trả lại vào ô nhập, để người dùng

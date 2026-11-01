@@ -83,6 +83,19 @@ export interface PetQuery {
  */
 type PetPayload = FormData | Record<string, unknown>;
 
+/*
+ * Lấy mã HTTP ra từ một lỗi bắt được.
+ *
+ * TypeScript khai biến trong catch là unknown — đúng, vì JavaScript ném được
+ * bất cứ thứ gì, kể cả một chuỗi. Nên err.response?.status là đọc mò.
+ *
+ * axios.isAxiosError là hàm thu hẹp kiểu của chính axios: qua được nó thì
+ * TypeScript biết chắc đây là lỗi của axios và có .response. Gom vào một chỗ
+ * để mười mấy màn hình không phải mỗi nơi tự xoay một kiểu.
+ */
+export const errorStatus = (err: unknown): number | undefined =>
+  axios.isAxiosError(err) ? err.response?.status : undefined;
+
 export default {
   getPets: (params?: PetQuery) => http.get<PetPage>('/pets', { params }),
   // Kèm mã xác nhận để server biết người xem có phải chủ bài không —
@@ -114,7 +127,9 @@ export default {
     http.post<AuthResult>('/auth/register', data),
   login: (data: { email: string; password: string }) => http.post<AuthResult>('/auth/login', data),
   me: () => http.get<User>('/auth/me'),
-  myPets: () => http.get<Pet[]>('/pets/mine'),
+  // Tra ve { pets, total } chu khong phai mang tran - xem list_my_pets
+  // trong api/controllers/petController.js.
+  myPets: () => http.get<PetPage>('/pets/mine'),
 
   /*
    * Quản trị. Back-end chặn cả ba đường này bằng requireAdmin, nên người

@@ -147,3 +147,37 @@ export interface AdminStats {
   topAreas: AdminRank[];
   topBreeds: AdminRank[];
 }
+
+// ---- Điều hướng ----
+
+/*
+ * Danh sách màn hình và tham số mỗi màn nhận.
+ *
+ * Khai ở đây rồi thì ba thứ được chặn ngay lúc gõ code:
+ *   - navigate('Detial') — gõ sai tên màn hình, báo lỗi ngay
+ *   - navigate('Detail') — quên tham số id, báo lỗi ngay
+ *   - route.params.ids   — đọc sai tên tham số, báo lỗi ngay
+ *
+ * Trước đây cả ba đều phải chạy thật mới biết, mà lỗi hiện ra lại là một màn
+ * hình trắng chứ không nói mình sai ở đâu.
+ */
+export type RootStackParamList = {
+  Tabs: undefined;
+  Detail: { id: string };
+  /*
+   * Hai dạng tham số, không gộp làm một được: đăng mới thì CHƯA CÓ tin nào,
+   * còn sửa thì BẮT BUỘC phải có. Viết thành liên hợp (union) nên quên truyền
+   * pet lúc sửa là báo lỗi, mà truyền thừa pet lúc đăng mới cũng báo lỗi.
+   */
+  Form: { mode: 'create'; pet?: undefined } | { mode: 'edit'; pet: Pet };
+  Auth: undefined;
+  Chat: undefined;
+  Admin: undefined;
+};
+
+/** Ba tab dưới đáy. Không tab nào nhận tham số. */
+export type MainTabParamList = {
+  Home: undefined;
+  MyPets: undefined;
+  Settings: undefined;
+};
