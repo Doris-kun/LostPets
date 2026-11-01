@@ -289,8 +289,14 @@ export interface StatusStyle {
   color: string;
   /** Màu chữ trên nhãn đó — mỗi nhãn một nền nên không dùng chung được. */
   onColor: string;
-  /** Key để nơi gọi tự dịch bằng t(). */
-  labelKey: string;
+  /**
+   * Key để nơi gọi tự dịch bằng t().
+   *
+   * Khai đúng ba giá trị có thật chứ không khai string: t() chỉ nhận tên câu
+   * có trong word.ts, nên khai string là nơi gọi phải ép kiểu — mà ép kiểu ở
+   * chỗ này thì mất luôn cái lợi của việc kiểm tra tên câu.
+   */
+  labelKey: 'badge.resolved' | 'badge.lost' | 'badge.found';
 }
 
 /** Chỉ cần hai trường này, nên không bắt nơi gọi phải đưa cả một Pet đầy đủ. */

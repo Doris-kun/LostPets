@@ -30,7 +30,27 @@ import { radius, spacing } from '../theme';
  * Dùng nó thì một nửa người dùng không nhập mã được.
  */
 
-export default function ClaimCodeModal({ visible, mode, code, error, onSubmit, onClose }) {
+export interface ClaimCodeModalProps {
+  visible: boolean;
+  /** 'show' = khoe mã vừa sinh ra. 'ask' = bắt nhập mã để sửa/xoá. */
+  mode: 'show' | 'ask';
+  /** Chỉ dùng ở chế độ 'show'. */
+  code?: string;
+  /** Câu lỗi hiện dưới ô nhập, chế độ 'ask'. */
+  error?: string;
+  /** Chế độ 'ask' truyền mã vừa nhập; chế độ 'show' gọi không tham số. */
+  onSubmit: (code?: string) => void;
+  onClose: () => void;
+}
+
+export default function ClaimCodeModal({
+  visible,
+  mode,
+  code,
+  error,
+  onSubmit,
+  onClose,
+}: ClaimCodeModalProps) {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);

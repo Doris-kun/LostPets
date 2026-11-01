@@ -1,8 +1,9 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLanguage } from '../context/language';
+import { useLanguage, type LanguageValue } from '../context/language';
+import type { Pet } from '../types';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, shadow as _shadow, spacing, statusStyle } from '../theme';
+import { radius, spacing, statusStyle } from '../theme';
 
 /*
  * Thẻ một bài đăng trong danh sách.
@@ -23,7 +24,7 @@ const LOGO_MARK_DARK = require('../../assets/logo-mark-dark.png');
  * Nhận t và lang từ bên ngoài chứ không tự gọi useLanguage(): đây là hàm
  * thường, không phải component, mà hook chỉ gọi được trong component.
  */
-export function timeAgo(date, t, lang) {
+export function timeAgo(date: string, t: LanguageValue['t'], lang: LanguageValue['lang']): string {
   const diff = Date.now() - new Date(date).getTime();
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
@@ -41,7 +42,12 @@ export function timeAgo(date, t, lang) {
   });
 }
 
-export default function PetCard({ pet, onPress }) {
+export interface PetCardProps {
+  pet: Pet;
+  onPress: () => void;
+}
+
+export default function PetCard({ pet, onPress }: PetCardProps) {
   const { t, lang } = useLanguage();
   const { colors, isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);

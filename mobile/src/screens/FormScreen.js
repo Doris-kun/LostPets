@@ -803,7 +803,10 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   },
 
   sheetRoot: { flex: 1, justifyContent: "flex-end", backgroundColor: colors.scrim },
-  sheetBackdrop: { ...StyleSheet.absoluteFillObject },
+  // absoluteFill, không phải absoluteFillObject — xem giải thích trong
+  // components/PetMap.tsx. Dùng sai thì nền mờ này rộng 0 điểm ảnh, và
+  // "chạm ra ngoài để đóng" lặng lẽ không hoạt động.
+  sheetBackdrop: { ...StyleSheet.absoluteFill },
   sheet: {
     backgroundColor: colors.background,
     borderTopLeftRadius: 24,

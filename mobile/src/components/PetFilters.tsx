@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   KeyboardAvoidingView,
@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useLanguage } from '../context/language';
+import { useLanguage, type LanguageValue } from '../context/language';
+import type { Filters } from '../types';
 import { radius, spacing } from '../theme';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 
@@ -36,11 +37,11 @@ import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme'
 
 // Trạng thái "chưa lọc gì cả". HomeScreen lấy cái này làm giá trị khởi đầu,
 // và nút "Xoá lọc" cũng quay về đúng đây.
-export const EMPTY_FILTERS = { species: '', area: '', days: '', sort: 'newest' };
+export const EMPTY_FILTERS: Filters = { species: '', area: '', days: '', sort: 'newest' };
 
 // Đếm xem đang bật mấy điều kiện, để HomeScreen hiện con số nhỏ trên nút Lọc.
 // 'newest' là mặc định nên không tính là một điều kiện.
-export function countActiveFilters(filters) {
+export function countActiveFilters(filters: Filters): number {
   let count = 0;
   if (filters.species) count += 1;
   if (filters.area.trim()) count += 1;
@@ -56,20 +57,33 @@ export function countActiveFilters(filters) {
  * tiếng Việt, nên dù người dùng đang xem giao diện tiếng Anh thì vẫn phải gửi
  * đúng chữ tiếng Việt lên, không thì lọc ra rỗng. Chỉ cái nhãn đổi theo ngôn ngữ.
  */
-const SPECIES_OPTIONS = [
+/** Một lựa chọn trong hàng chip. labelKey để tự dịch, value là thứ gửi lên máy chủ. */
+interface ChipOption {
+  value: string;
+  /**
+   * Phải là tên một câu CÓ THẬT trong word.ts.
+   *
+   * Khai string thì TypeScript cho qua mọi chuỗi, và chip sẽ hiện ra đúng cái
+   * tên key thay vì câu chữ — đúng kiểu lỗi mà việc chuyển sang TypeScript
+   * sinh ra để chặn.
+   */
+  labelKey: Parameters<LanguageValue['t']>[0];
+}
+
+const SPECIES_OPTIONS: ChipOption[] = [
   { value: '', labelKey: 'filter.allSpecies' },
   { value: 'Chó', labelKey: 'filter.dog' },
   { value: 'Mèo', labelKey: 'filter.cat' },
 ];
 
 // Gửi lên dưới dạng tham số days — back-end tự quy ra mốc ngày.
-const DAYS_OPTIONS = [
+const DAYS_OPTIONS: ChipOption[] = [
   { value: '', labelKey: 'filter.days.all' },
   { value: '7', labelKey: 'filter.days.7' },
   { value: '30', labelKey: 'filter.days.30' },
 ];
 
-const SORT_OPTIONS = [
+const SORT_OPTIONS: ChipOption[] = [
   { value: 'newest', labelKey: 'sort.newest' },
   { value: 'oldest', labelKey: 'sort.oldest' },
 ];
@@ -77,7 +91,15 @@ const SORT_OPTIONS = [
 // Chiều cao tạm cho lần mở đầu tiên, lúc chưa đo được bảng cao bao nhiêu.
 const FALLBACK_HEIGHT = 520;
 
-export default function PetFilters({ visible, value, onClose, onApply }) {
+export interface PetFiltersProps {
+  visible: boolean;
+  /** Bộ lọc đang áp dụng ở màn ngoài. Bảng này sửa trên một bản nháp riêng. */
+  value: Filters;
+  onClose: () => void;
+  onApply: (filters: Filters) => void;
+}
+
+export default function PetFilters({ visible, value, onClose, onApply }: PetFiltersProps) {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors } = useTheme();
@@ -121,7 +143,7 @@ export default function PetFilters({ visible, value, onClose, onApply }) {
    * Gọi onClose() ngay thì Modal biến mất tức khắc, mất hẳn hiệu ứng.
    * Chờ chạy xong hiệu ứng rồi mới gọi thì mắt nhìn thấy nó đi xuống.
    */
-  const slideDownThen = (callback) => {
+  const slideDownThen = (callback: () => void) => {
     Animated.timing(translateY, {
       toValue: sheetHeight.current,
       duration: 220,
@@ -129,7 +151,8 @@ export default function PetFilters({ visible, value, onClose, onApply }) {
     }).start(() => callback());
   };
 
-  const setField = (key, next) => setDraft((prev) => ({ ...prev, [key]: next }));
+  const setField = (key: keyof Filters, next: string) =>
+    setDraft((prev) => ({ ...prev, [key]: next }));
 
   return (
     <Modal
@@ -263,7 +286,7 @@ export default function PetFilters({ visible, value, onClose, onApply }) {
 }
 
 // Một nhóm: nhãn chữ nhỏ in hoa, bên dưới là nội dung.
-function Field({ label, children }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
   return (
@@ -276,7 +299,15 @@ function Field({ label, children }) {
 
 // Hàng nút chọn một-trong-nhiều. Thay cho <select> của web — trên điện thoại
 // bấm thẳng vào nút nhanh hơn nhiều so với mở danh sách xổ xuống.
-function ChipGroup({ options, selected, onSelect }) {
+function ChipGroup({
+  options,
+  selected,
+  onSelect,
+}: {
+  options: ChipOption[];
+  selected: string;
+  onSelect: (value: string) => void;
+}) {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -9,13 +9,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
+import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing, statusStyle } from '../theme';
 import { directionsUrl, hasPoint, mapHtml } from '../map';
+import type { Pet } from '../types';
 
 /*
  * Bản đồ của app. Một component, hai việc — chọn bằng prop mode:
@@ -48,11 +50,42 @@ import { directionsUrl, hasPoint, mapHtml } from '../map';
  * Dùng chuỗi thay vì object để React so sánh được bằng ===: chuỗi không đổi
  * thì không tiêm lại, khỏi vẽ lại bản đồ vô ích.
  */
-function MapCanvas({ pick = false, interactive = true, payload, onPick, commitRef, style }) {
+interface MapCanvasProps {
+  pick?: boolean;
+  interactive?: boolean;
+  /** Câu lệnh JavaScript tiêm sang trang, dạng chuỗi. */
+  payload: string;
+  onPick?: (point: { lat: number; lng: number }) => void;
+  /** Cha gán vào đây một hàm để chốt điểm đang ngắm. Chiều gọi là cha -> con. */
+  commitRef?: MutableRefObject<(() => void) | null>;
+  style?: StyleProp<ViewStyle>;
+}
+
+function MapCanvas({
+  pick = false,
+  interactive = true,
+  payload,
+  onPick,
+  commitRef,
+  style,
+}: MapCanvasProps) {
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
   const styles = useThemedStyles(themedStyles);
-  const ref = useRef(null);
+  /*
+   * <object> ở đây KHÔNG phải thừa.
+   *
+   * Kiểu của react-native-webview 14.0.1 khai lớp là:
+   *   class WebView<P = undefined> extends Component<WebViewProps & P>
+   *
+   * Mà trong TypeScript, "WebViewProps & undefined" rút gọn thành never —
+   * nghĩa là với giá trị mặc định, component này không nhận được prop nào cả.
+   * Đây là lỗi của thư viện, không phải của mình. Truyền <object> vào thay
+   * cho undefined là hết, không phải ép kiểu lần nào.
+   *
+   * Gỡ được khi thư viện sửa; lúc đó xoá <object> ở cả hai chỗ là xong.
+   */
+  const ref = useRef<WebView<object>>(null);
   const [ready, setReady] = useState(false);
 
   const html = useMemo(() => mapHtml({ pick, interactive, isDark }), [pick, interactive, isDark]);
@@ -83,7 +116,7 @@ function MapCanvas({ pick = false, interactive = true, payload, onPick, commitRe
     ref.current?.injectJavaScript(`${payload}; true;`);
   }, [ready, payload]);
 
-  const handleMessage = (event) => {
+  const handleMessage = (event: WebViewMessageEvent) => {
     let msg;
     try {
       msg = JSON.parse(event.nativeEvent.data);
@@ -97,7 +130,7 @@ function MapCanvas({ pick = false, interactive = true, payload, onPick, commitRe
 
   return (
     <View style={[styles.canvas, style]}>
-      <WebView
+      <WebView<object>
         ref={ref}
         /*
          * baseUrl BẮT BUỘC phải có, dù trang không đọc file nào bên cạnh.
@@ -130,20 +163,34 @@ function MapCanvas({ pick = false, interactive = true, payload, onPick, commitRe
   );
 }
 
+export interface PetMapProps {
+  /** 'view' = hiện vị trí của tin. 'pick' = chọn một điểm. */
+  mode?: 'view' | 'pick';
+  /** mode="view": các tin cần vẽ. Tin không có toạ độ tự bị bỏ qua. */
+  pets?: Pet[];
+  /** mode="pick": điểm đang chọn, null khi chưa chọn gì. */
+  lat?: number | null;
+  lng?: number | null;
+  onChange?: (point: { lat: number | null; lng: number | null }) => void;
+  /** false = bản đồ tĩnh, không bắt cử chỉ. Bắt buộc khi nằm trong màn cuộn. */
+  interactive?: boolean;
+  /** Cho phép chạm vào bản đồ tĩnh để mở ra toàn màn hình. */
+  expandable?: boolean;
+  height?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
 export default function PetMap({
   mode = 'view',
-  // mode="view"
   pets = [],
-  // mode="pick"
   lat = null,
   lng = null,
   onChange,
-  // dùng chung
   interactive = true,
   expandable = false,
   height,
   style,
-}) {
+}: PetMapProps) {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const styles = useThemedStyles(themedStyles);
@@ -153,7 +200,7 @@ export default function PetMap({
 
   const [open, setOpen] = useState(false);
   const [locating, setLocating] = useState(false);
-  const commitPoint = useRef(null);
+  const commitPoint = useRef<(() => void) | null>(null);
   const [error, setError] = useState('');
 
   /*
@@ -193,12 +240,12 @@ export default function PetMap({
    *   - xem trước: luôn dời về điểm đã chọn, vì nó chỉ để nhìn
    *   - toàn màn hình: chỉ dời lúc mới mở, sau đó để người dùng tự kéo
    */
-  const pointPayload = (withFocus) =>
+  const pointPayload = (withFocus: boolean) =>
     point
       ? `window.lp.setPoint(${point.lat}, ${point.lng}, '${colors.primary}', ${withFocus})`
       : `window.lp.setPoint(null, null, '${colors.primary}', false)`;
 
-  const emit = (next, fromMap) => {
+  const emit = (next: { lat: number | null; lng: number | null }, fromMap: boolean) => {
     setError('');
     setFocus(!fromMap);
     onChange?.(next);
@@ -400,16 +447,24 @@ export default function PetMap({
  * Mở link chung của Google Maps, hệ điều hành tự bắt lấy rồi mở app bản đồ đã
  * cài. Không cần khoá API, không cần cài thêm gì.
  */
-export function DirectionsButton({ lat, lng }) {
+export function DirectionsButton({ lat, lng }: { lat: number | null; lng: number | null }) {
   const { t } = useLanguage();
   const styles = useThemedStyles(themedStyles);
 
-  if (!hasPoint({ lat, lng })) return null;
+  /*
+   * Gán ra biến rồi mới kiểm tra, chứ không kiểm thẳng { lat, lng }.
+   *
+   * hasPoint thu hẹp kiểu cho CHÍNH cái nó nhận vào. Truyền một object vừa
+   * tạo tại chỗ thì object đó được thu hẹp, còn hai biến lat/lng bên ngoài
+   * vẫn là "number | null" — và dòng dưới lại phải ép kiểu.
+   */
+  const point = { lat, lng };
+  if (!hasPoint(point)) return null;
 
   return (
     <TouchableOpacity
       style={styles.directions}
-      onPress={() => Linking.openURL(directionsUrl(lat, lng))}
+      onPress={() => Linking.openURL(directionsUrl(point.lat, point.lng))}
     >
       <Text style={styles.directionsText}>{t('map.directions')}</Text>
     </TouchableOpacity>
@@ -431,8 +486,19 @@ const themedStyles = createThemedStyles((colors) =>
     // lại, không thì chế độ tối nháy trắng mỗi lần mở bản đồ.
     web: { flex: 1, backgroundColor: 'transparent' },
 
+    /*
+     * absoluteFill chứ KHÔNG phải absoluteFillObject.
+     *
+     * React Native 0.88 đã bỏ hẳn absoluteFillObject — nó chỉ còn trong một
+     * dòng chú thích của thư viện, không còn giá trị thật. Mà trải một thứ
+     * undefined vào object thì JavaScript cho qua im lặng: style ra thiếu mất
+     * phần định vị, lớp phủ thôi không phủ nữa mà nằm xuống như một khối
+     * thường. Không báo lỗi, không ai biết.
+     *
+     * TypeScript bắt được đúng chỗ này lúc chuyển file sang .tsx.
+     */
     loading: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       alignItems: 'center',
       justifyContent: 'center',
       gap: spacing.sm,

@@ -80,8 +80,21 @@ const toNumber = (v: unknown): number =>
  * kiểm tra. Khai là number thì TypeScript tin luôn rồi hàm thành vô dụng —
  * mà dữ liệu thật từ máy chủ có thể là null, hoặc chuỗi khi đi qua FormData.
  */
-export const hasPoint = (o: { lat?: unknown; lng?: unknown } | null | undefined): boolean =>
-  !!o && Number.isFinite(toNumber(o.lat)) && Number.isFinite(toNumber(o.lng));
+/*
+ * Kiểu trả về viết là "o is ..." chứ không phải boolean, nên sau khi gọi hàm
+ * này TypeScript TỰ BIẾT lat và lng chắc chắn là số:
+ *
+ *   if (!hasPoint(p)) return null;
+ *   directionsUrl(p.lat, p.lng);   // không phải ép kiểu, không phải kiểm lại
+ *
+ * Viết là boolean thì nơi gọi vẫn thấy "number | null" và phải ép kiểu — mà
+ * ép kiểu là tự tay tắt đúng cái mình vừa bật lên.
+ */
+export function hasPoint<T extends { lat?: unknown; lng?: unknown }>(
+  o: T | null | undefined,
+): o is T & { lat: number; lng: number } {
+  return !!o && Number.isFinite(toNumber(o.lat)) && Number.isFinite(toNumber(o.lng));
+}
 
 /*
  * Mở app bản đồ của chính điện thoại để chỉ đường.
