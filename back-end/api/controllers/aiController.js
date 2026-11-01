@@ -167,9 +167,8 @@ exports.analyze_image = async (req, res) => {
 
 const mongoose = require('mongoose');
 const Pet = require('../models/petModel');
+const { findCandidates } = require('../lib/matching');
 
-const MAX_CANDIDATES = 3;
-const CANDIDATE_WINDOW_DAYS = 120;
 const MIN_SCORE = 40;
 const IMAGE_FETCH_TIMEOUT_MS = 8000;
 // Mỗi request gửi tối đa 4 ảnh. Giữ tổng dung lượng thấp hơn hẳn giới hạn của
@@ -244,21 +243,10 @@ exports.match_posts = async (req, res) => {
   }
 
   try {
-    const source = await Pet.findById(req.params.petId);
+    const source = await Pet.findById(req.params.petId).select('+embedding');
     if (!source) return res.status(404).json({ message: 'Pet not found' });
 
-    const since = new Date();
-    since.setDate(since.getDate() - CANDIDATE_WINDOW_DAYS);
-
-    const candidates = await Pet.find({
-      _id: { $ne: source._id },
-      type: source.type === 'lost' ? 'found' : 'lost',
-      species: source.species,
-      resolved: false,
-      date: { $gte: since },
-    })
-      .sort({ date: -1 })
-      .limit(MAX_CANDIDATES);
+    const candidates = await findCandidates(source);
 
     if (candidates.length === 0) {
       return res.json({ matches: [] });
