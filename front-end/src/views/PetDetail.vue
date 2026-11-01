@@ -229,15 +229,15 @@
     <!-- Báo cáo tin xấu. Để cuối trang và cố ý nhạt màu: đây là lối thoát hiểm,
          không phải việc người xem bình thường cần làm. -->
     <div v-if="pet" class="text-center mt-6">
-      <span v-if="reported" class="inline-flex items-center gap-1.5 text-xs text-gray-400">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <span v-if="reported" class="inline-flex items-center gap-2 text-sm text-gray-400 px-4 py-2.5 rounded-full border border-gray-100">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>
         {{ $t('report.already') }}
       </span>
       <button v-else @click="showReport = true"
-        class="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-rose-600 transition-colors">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        class="inline-flex items-center gap-2 text-sm text-gray-500 px-4 py-2.5 rounded-full border border-gray-200 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50/50 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z"/>
         </svg>
