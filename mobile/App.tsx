@@ -19,6 +19,7 @@ import MyPetsScreen from './src/screens/MyPetsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import SplashScreen from './src/screens/SplashScreen';
+import type { MainTabParamList, RootStackParamList } from './src/types';
 
 /*
  * Điều hướng giữa các màn hình.
@@ -47,8 +48,15 @@ ExpoSplashScreen.preventAutoHideAsync().catch(() => {
   // Gọi hai lần hoặc splash đã tắt rồi thì ném lỗi. Không ảnh hưởng gì.
 });
 
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+/*
+ * Truyền danh sách màn hình vào đây là mấu chốt.
+ *
+ * Nhờ nó, <Stack.Screen name="Detial"> gõ sai tên là báo lỗi ngay tại chỗ, và
+ * mỗi màn hình nhận đúng kiểu tham số đã khai trong types.ts. Để trống thì
+ * navigator nhận bừa mọi tên, mọi tham số.
+ */
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);

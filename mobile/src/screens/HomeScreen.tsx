@@ -12,7 +12,11 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../api';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import api, { type PetQuery } from '../api';
+import type { Colors } from '../theme';
+import type { Filters, MainTabParamList, Pet, RootStackParamList } from '../types';
+import type { WordKey } from '../word';
 import { API_URL } from '../config';
 import PetCard, { timeAgo } from '../components/PetCard';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
@@ -54,10 +58,14 @@ const PAGE_SIZE = 10;
  *
  * skip = bỏ qua bao nhiêu tin đầu. Trang 1 là 0, trang 2 là 10...
  */
-function buildParams(filterType, activeFilters, skip) {
+function buildParams(filterType: string, activeFilters: Filters, skip: number): PetQuery {
   // Chỉ gửi những tham số thật sự có giá trị. Gửi kèm chuỗi rỗng thì
   // back-end vẫn dựng biểu thức tìm kiếm rỗng và lọc sai.
-  const params = { limit: PAGE_SIZE, skip, sort: activeFilters.sort };
+  //
+  // Khai kiểu PetQuery ngay ở đây, không để TypeScript tự đoán: tự đoán thì
+  // nó chốt hình dạng theo ba trường đầu, rồi mấy dòng gán thêm bên dưới
+  // thành gán vào trường "không tồn tại".
+  const params: PetQuery = { limit: PAGE_SIZE, skip, sort: activeFilters.sort };
   if (filterType) params.type = filterType;
   if (activeFilters.species) params.species = activeFilters.species;
   if (activeFilters.area.trim()) params.area = activeFilters.area.trim();
@@ -70,13 +78,22 @@ function buildParams(filterType, activeFilters, skip) {
  * lúc đó chưa ai biết người dùng đang để chế độ sáng hay tối. Lưu TÊN màu,
  * lúc vẽ mới tra ra màu thật bằng colors[item.colorKey].
  */
-const FILTERS = [
+/*
+ * colorKey chứ không phải màu sẵn — xem giải thích bên dưới. Khai keyof Colors
+ * nên gõ sai tên màu là báo lỗi, thay vì lấy ra undefined rồi chip mất màu.
+ */
+const FILTERS: { value: string; labelKey: WordKey; colorKey: keyof Colors }[] = [
   { value: '', labelKey: 'filter.all', colorKey: 'primary' },
   { value: 'lost', labelKey: 'filter.lost', colorKey: 'lost' },
   { value: 'found', labelKey: 'filter.found', colorKey: 'found' },
 ];
 
-export default function HomeScreen({ navigation }) {
+type Props = {
+  navigation: NativeStackScreenProps<RootStackParamList>['navigation'] &
+    NativeStackScreenProps<MainTabParamList>['navigation'];
+};
+
+export default function HomeScreen({ navigation }: Props) {
   // insets.bottom = chiều cao vạch Home (iPhone) hoặc thanh điều hướng (Android).
   // Máy có nút bấm vật lý thì trả về 0, nên không thừa khoảng trống.
   const insets = useSafeAreaInsets();
@@ -88,7 +105,7 @@ export default function HomeScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
 
-  const [pets, setPets] = useState([]);
+  const [pets, setPets] = useState<Pet[]>([]);
   const [total, setTotal] = useState(0);
   const [type, setType] = useState('');
   // Các điều kiện lọc còn lại, do bảng trượt PetFilters quản lý
@@ -103,7 +120,7 @@ export default function HomeScreen({ navigation }) {
   const [hasError, setHasError] = useState(false);
 
   // Tải TRANG ĐẦU: thay sạch danh sách cũ. Dùng khi mở màn, đổi lọc, kéo làm mới.
-  const loadPets = useCallback(async (filterType, activeFilters) => {
+  const loadPets = useCallback(async (filterType: string, activeFilters: Filters) => {
     try {
       const { data } = await api.getPets(buildParams(filterType, activeFilters, 0));
       setPets(data.pets);
@@ -167,13 +184,13 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  const changeFilter = (value) => {
+  const changeFilter = (value: string) => {
     if (value === type) return;
     setType(value);
     setLoading(true);
   };
 
-  const applyFilters = (next) => {
+  const applyFilters = (next: Filters) => {
     setFiltersOpen(false);
 
     /*
@@ -291,7 +308,11 @@ export default function HomeScreen({ navigation }) {
            * Tin đó vẫn đang nằm trong thẻ nổi bật ngay trên, báo "chưa có bài
            * nào" là nói sai.
            */
-          ListEmptyComponent={pets.length === 0 ? <EmptyState hasError={hasError} /> : null}
+          ListEmptyComponent={
+            // undefined chu khong phai null: FlatList khai slot nay la
+            // Element | ComponentType | undefined, khong nhan null.
+            pets.length === 0 ? <EmptyState hasError={hasError} /> : undefined
+          }
           ListFooterComponent={
             <ListFooter loadingMore={loadingMore} shown={pets.length} total={total} />
           }
@@ -365,7 +386,18 @@ function Header() {
  * đích là cho người vừa mở app một tin để đọc ngay, thay vì một danh sách
  * đều đều phải tự chọn.
  */
-function Featured({ pet, total, restCount, onPress }) {
+function Featured({
+  pet,
+  total,
+  restCount,
+  onPress,
+}: {
+  /** undefined khi danh sách rỗng — lúc đó không có gì để làm nổi bật. */
+  pet?: Pet;
+  total: number;
+  restCount: number;
+  onPress: () => void;
+}) {
   const { t, lang } = useLanguage();
   const { colors, isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -444,7 +476,15 @@ function Featured({ pet, total, restCount, onPress }) {
   );
 }
 
-function ListFooter({ loadingMore, shown, total }) {
+function ListFooter({
+  loadingMore,
+  shown,
+  total,
+}: {
+  loadingMore: boolean;
+  shown: number;
+  total: number;
+}) {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -470,7 +510,7 @@ function ListFooter({ loadingMore, shown, total }) {
   return null;
 }
 
-function EmptyState({ hasError }) {
+function EmptyState({ hasError }: { hasError: boolean }) {
   const { t } = useLanguage();
   const { colors, isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);

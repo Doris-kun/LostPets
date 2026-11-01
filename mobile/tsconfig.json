@@ -13,17 +13,11 @@
     "strict": true,
 
     /*
-     * Cho phép .js và .ts sống chung trong lúc chuyển dần từng file.
-     *
-     * Chuyển một lượt 23 file rồi mới chạy thử là cách chắc chắn sẽ vỡ mà
-     * không biết vỡ ở đâu. Bật cái này thì mỗi lần đổi một file vẫn chạy app
-     * được, sai chỗ nào biết ngay chỗ đó.
-     *
-     * Khi đã chuyển hết thì nên XOÁ hai dòng này đi, để không ai lỡ tay thêm
-     * file .js mới vào nữa.
+     * Đã chuyển xong cả 23 file nên tắt hẳn. Từ giờ thêm một file .js mới vào
+     * src/ là TypeScript không nhìn tới nó nữa — coi như file đó nằm ngoài
+     * vòng kiểm tra, mà đó đúng là thứ cần chặn.
      */
-    "allowJs": true,
-    "checkJs": false,
+    "allowJs": false,
 
     // Import ảnh PNG trong require() — RN cho phép, TypeScript cần biết
     "resolveJsonModule": true,
@@ -32,6 +26,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
   "exclude": ["node_modules", "dist", ".expo"]
 }

@@ -12,7 +12,10 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import api from '../api';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import api, { type PetQuery } from '../api';
+import type { AdminStats, Pet, RootStackParamList } from '../types';
+import type { Lang, WordKey } from '../word';
 import { timeAgo } from '../components/PetCard';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
@@ -36,27 +39,29 @@ const PAGE_SIZE = 20;
 // khi người dùng ngừng gõ rồi mới gọi — bằng web.
 const SEARCH_DELAY = 400;
 
-const TYPE_FILTERS = [
+const TYPE_FILTERS: { value: string; labelKey: WordKey }[] = [
   { value: '', labelKey: 'admin.allTypes' },
   { value: 'lost', labelKey: 'admin.lost' },
   { value: 'found', labelKey: 'admin.found' },
 ];
 
-const STATUS_FILTERS = [
+const STATUS_FILTERS: { value: string; labelKey: WordKey }[] = [
   { value: '', labelKey: 'admin.allStatus' },
   { value: 'false', labelKey: 'admin.open' },
   { value: 'true', labelKey: 'admin.resolved' },
 ];
 
-export default function AdminScreen({ navigation }) {
+type Props = NativeStackScreenProps<RootStackParamList, 'Admin'>;
+
+export default function AdminScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { t, lang } = useLanguage();
   const { isAdmin } = useAuth();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
 
-  const [stats, setStats] = useState(null);
-  const [pets, setPets] = useState([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [pets, setPets] = useState<Pet[]>([]);
   const [total, setTotal] = useState(0);
 
   const [type, setType] = useState('');
@@ -71,7 +76,7 @@ export default function AdminScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [hasError, setHasError] = useState(false);
   // Tin nào đang xoá — để chỉ khoá đúng nút đó, không khoá cả danh sách
-  const [busyId, setBusyId] = useState(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setQuery(search), SEARCH_DELAY);
@@ -79,8 +84,10 @@ export default function AdminScreen({ navigation }) {
   }, [search]);
 
   const params = useCallback(
-    (skip) => {
-      const p = { limit: PAGE_SIZE, skip };
+    (skip: number): PetQuery => {
+      // Khai kiểu ngay, không để TypeScript tự đoán theo hai trường đầu — tự
+      // đoán thì mấy dòng gán thêm bên dưới thành gán vào trường không tồn tại.
+      const p: PetQuery = { limit: PAGE_SIZE, skip };
       if (type) p.type = type;
       if (resolved) p.resolved = resolved;
       if (query.trim()) p.q = query.trim();
@@ -137,7 +144,7 @@ export default function AdminScreen({ navigation }) {
     }
   };
 
-  const remove = (pet) => {
+  const remove = (pet: Pet) => {
     Alert.alert(t('admin.deleteTitle'), t('admin.confirmDelete'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -219,7 +226,9 @@ export default function AdminScreen({ navigation }) {
         <Text style={styles.emptyText}>{t(hasError ? 'admin.loadFailed' : 'admin.noPosts')}</Text>
       }
       ListFooterComponent={
-        loadingMore ? <ActivityIndicator style={styles.footer} color={colors.teal} /> : null
+        // undefined chu khong phai null: FlatList khai slot nay la
+        // Element | ComponentType | undefined, khong nhan null.
+        loadingMore ? <ActivityIndicator style={styles.footer} color={colors.teal} /> : undefined
       }
       renderItem={({ item }) => (
         <Row
@@ -234,7 +243,27 @@ export default function AdminScreen({ navigation }) {
   );
 }
 
-function Header({ stats, total, hasError, type, setType, resolved, setResolved, search, setSearch }) {
+function Header({
+  stats,
+  total,
+  hasError,
+  type,
+  setType,
+  resolved,
+  setResolved,
+  search,
+  setSearch,
+}: {
+  stats: AdminStats | null;
+  total: number;
+  hasError: boolean;
+  type: string;
+  setType: (value: string) => void;
+  resolved: string;
+  setResolved: (value: string) => void;
+  search: string;
+  setSearch: (value: string) => void;
+}) {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -293,7 +322,7 @@ function Header({ stats, total, hasError, type, setType, resolved, setResolved, 
   );
 }
 
-function Tile({ label, value, tint }) {
+function Tile({ label, value, tint }: { label: string; value: number; tint?: string }) {
   const styles = useThemedStyles(themedStyles);
   return (
     <View style={styles.tile}>
@@ -303,7 +332,7 @@ function Tile({ label, value, tint }) {
   );
 }
 
-function Rank({ title, rows }) {
+function Rank({ title, rows }: { title: string; rows?: { label: string; count: number }[] }) {
   const { t } = useLanguage();
   const styles = useThemedStyles(themedStyles);
 
@@ -328,7 +357,15 @@ function Rank({ title, rows }) {
   );
 }
 
-function ChipRow({ items, value, onChange }) {
+function ChipRow({
+  items,
+  value,
+  onChange,
+}: {
+  items: { value: string; labelKey: WordKey }[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
   const { t } = useLanguage();
   const styles = useThemedStyles(themedStyles);
 
@@ -355,7 +392,19 @@ function ChipRow({ items, value, onChange }) {
   );
 }
 
-function Row({ pet, busy, onOpen, onDelete, lang }) {
+function Row({
+  pet,
+  busy,
+  onOpen,
+  onDelete,
+  lang,
+}: {
+  pet: Pet;
+  busy: boolean;
+  onOpen: () => void;
+  onDelete: () => void;
+  lang: Lang;
+}) {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);

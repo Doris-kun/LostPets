@@ -10,7 +10,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import api from '../api';
+import type { ComponentProps } from 'react';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import api, { errorStatus } from '../api';
+import type { RootStackParamList } from '../types';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
@@ -31,7 +34,9 @@ import { radius, spacing } from '../theme';
 
 const MIN_PASSWORD = 6; // khớp với MIN_PASSWORD_LENGTH bên back-end
 
-export default function AuthScreen({ navigation }) {
+type Props = NativeStackScreenProps<RootStackParamList, 'Auth'>;
+
+export default function AuthScreen({ navigation }: Props) {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -44,14 +49,15 @@ export default function AuthScreen({ navigation }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const update = (key: 'name' | 'email' | 'password', value: string) =>
+    setForm((current) => ({ ...current, [key]: value }));
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: t(isRegister ? 'auth.register' : 'auth.login') });
   }, [navigation, isRegister, t]);
 
   // Đổi tab thì xoá lỗi cũ đi, không để lỗi của tab kia còn nằm đó
-  const switchTab = (next) => {
+  const switchTab = (next: boolean) => {
     if (next === isRegister) return;
     setIsRegister(next);
     setError('');
@@ -70,7 +76,9 @@ export default function AuthScreen({ navigation }) {
      * sửa chỗ nào. Thiếu từ hai ô trở lên thì quay về câu chung: liệt kê hết
      * ra chỉ dài dòng, mà nhìn vào form cũng thấy ngay là còn trống nhiều.
      */
-    const missing = [];
+    // Khai kiểu rõ ràng, nếu không TypeScript đoán là string[] và t() từ chối
+    // nhận — t() chỉ ăn tên câu có thật trong word.ts.
+    const missing: Parameters<typeof t>[0][] = [];
     if (isRegister && !name) missing.push('auth.err.noName');
     if (!email) missing.push('auth.err.noEmail');
     if (!password) missing.push('auth.err.noPassword');
@@ -96,9 +104,9 @@ export default function AuthScreen({ navigation }) {
       login(data.token, data.user);
       navigation.goBack();
     } catch (err) {
-      const status = err.response?.status;
+      const status = errorStatus(err);
 
-      const byStatus = {
+      const byStatus: Record<number, Parameters<typeof t>[0]> = {
         400: isRegister ? 'auth.err.short' : 'auth.err.missing',
         401: 'auth.err.wrong',
         409: 'auth.err.taken',
@@ -106,7 +114,9 @@ export default function AuthScreen({ navigation }) {
         503: 'auth.err.off',
       };
 
-      setError(t(byStatus[status] || 'auth.err.network'));
+      // status có thể là undefined khi không gọi tới được máy chủ, nên tra
+      // bằng ?? 0 — không mã HTTP nào là 0 cả, luôn rơi về câu lỗi mạng.
+      setError(t(byStatus[status ?? 0] ?? 'auth.err.network'));
       setSending(false);
     }
   };
@@ -181,7 +191,7 @@ export default function AuthScreen({ navigation }) {
   );
 }
 
-function Tab({ label, active, onPress }) {
+function Tab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const styles = useThemedStyles(themedStyles);
 
   return (
@@ -195,7 +205,13 @@ function Tab({ label, active, onPress }) {
   );
 }
 
-function Field({ label, ...props }) {
+/*
+ * Nhận mọi prop của TextInput, cộng thêm label.
+ *
+ * ComponentProps<typeof TextInput> lấy thẳng kiểu từ chính TextInput, nên
+ * không phải chép tay danh sách prop và cũng không bao giờ lạc hậu.
+ */
+function Field({ label, ...props }: ComponentProps<typeof TextInput> & { label: string }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
 

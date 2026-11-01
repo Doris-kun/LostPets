@@ -38,8 +38,11 @@ export interface ClaimCodeModalProps {
   code?: string;
   /** Câu lỗi hiện dưới ô nhập, chế độ 'ask'. */
   error?: string;
-  /** Chế độ 'ask' truyền mã vừa nhập; chế độ 'show' gọi không tham số. */
-  onSubmit: (code?: string) => void;
+  /**
+   * Chỉ chế độ 'ask' cần: truyền mã vừa nhập lên cho nơi gọi kiểm tra.
+   * Chế độ 'show' chỉ khoe mã rồi đóng, không có gì để gửi đi.
+   */
+  onSubmit?: (code?: string) => void;
   onClose: () => void;
 }
 
@@ -122,7 +125,7 @@ export default function ClaimCodeModal({
 
               <TouchableOpacity
                 style={[styles.primaryButton, !typed.trim() && styles.disabled]}
-                onPress={() => onSubmit(typed.trim())}
+                onPress={() => onSubmit?.(typed.trim())}
                 disabled={!typed.trim()}
                 activeOpacity={0.85}
               >

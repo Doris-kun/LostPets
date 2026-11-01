@@ -18,7 +18,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../api';
+import type { ComponentProps, ReactNode } from 'react';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import api, { errorStatus } from '../api';
+import type { AnalyzeResult, PetType, RootStackParamList } from '../types';
 import claim from '../claim';
 import ClaimCodeModal from '../components/ClaimCodeModal';
 import PetMap from '../components/PetMap';
@@ -38,7 +41,7 @@ import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme'
  * là do bản Vue cũ làm vậy, chứ không phải bắt buộc.
  */
 
-const EMPTY_FORM = {
+const EMPTY_FORM: FormState = {
   type: 'lost',
   name: '',
   species: '',
@@ -77,7 +80,52 @@ const EMPTY_FORM = {
  */
 const MAX_WIDTH = 1600;
 
-async function shrink(asset) {
+/*
+ * Ảnh đã chọn. Khai tối thiểu đúng ba trường mình dùng, vì shrink() trả về
+ * khi thì kết quả của ImageManipulator, khi thì chính asset gốc của
+ * ImagePicker — hai kiểu khác nhau nhưng đều có đủ ba trường này.
+ */
+interface PickedImage {
+  uri: string;
+  width: number;
+  height: number;
+}
+
+/*
+ * File gửi kèm trong FormData.
+ *
+ * React Native mô tả file bằng { uri, name, type } rồi nhét thẳng object đó
+ * vào FormData. Kiểu chuẩn của trình duyệt chỉ nhận string hoặc Blob, nên
+ * phải ép kiểu — đây là KHÁC BIỆT CÓ THẬT giữa hai nền tảng, không phải lách.
+ *
+ * Gom vào một hàm để chỉ có đúng một chỗ ép kiểu trong cả app, có giải thích
+ * kèm theo, thay vì rải cast khắp nơi rồi quên mất vì sao.
+ */
+interface RNFile {
+  uri: string;
+  name: string;
+  type: string;
+}
+
+const appendFile = (formData: FormData, key: string, file: RNFile) =>
+  formData.append(key, file as unknown as Blob);
+
+/** Các ô trong form. lat/lng là SỐ, mọi ô còn lại là chuỗi. */
+interface FormState {
+  type: PetType;
+  name: string;
+  species: string;
+  breed: string;
+  color: string;
+  area: string;
+  contact: string;
+  description: string;
+  secretDetail: string;
+  lat: number | null;
+  lng: number | null;
+}
+
+async function shrink(asset: PickedImage): Promise<PickedImage> {
   try {
     const result = await ImageManipulator.manipulateAsync(
       asset.uri,
@@ -92,7 +140,9 @@ async function shrink(asset) {
   }
 }
 
-export default function FormScreen({ route, navigation }) {
+type Props = NativeStackScreenProps<RootStackParamList, 'Form'>;
+
+export default function FormScreen({ route, navigation }: Props) {
   const { mode, pet } = route.params;
   const isEdit = mode === 'edit';
   const insets = useSafeAreaInsets();
@@ -101,7 +151,7 @@ export default function FormScreen({ route, navigation }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
 
-  const [form, setForm] = useState(() => {
+  const [form, setForm] = useState<FormState>(() => {
     if (!isEdit) return EMPTY_FORM;
 
     // Chỉ lấy 8 trường form cần. Nhét cả object từ API vào rồi gửi ngược lên sẽ
@@ -131,7 +181,7 @@ export default function FormScreen({ route, navigation }) {
   const canEditSecret = !isEdit || pet.secretDetail !== undefined;
 
   // Ảnh mới chọn từ máy. Chỉ dùng khi đăng mới — PUT không nhận upload file.
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState<PickedImage | null>(null);
 
   /*
    * Người dùng đã bấm xoá ảnh chưa.
@@ -157,7 +207,7 @@ export default function FormScreen({ route, navigation }) {
 
   // Phần AI: đang chạy, kết quả, và lỗi nếu có
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState(null);
+  const [aiResult, setAiResult] = useState<AnalyzeResult | null>(null);
   const [aiError, setAiError] = useState('');
 
   // Mã vừa nhận sau khi đăng bài, chỉ dùng cho khách chưa đăng nhập
@@ -169,7 +219,9 @@ export default function FormScreen({ route, navigation }) {
    */
   const aiRun = useRef(0);
 
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  // Generic: gõ update('breed', 5) là báo lỗi ngay, vì breed phải là chuỗi.
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((current) => ({ ...current, [key]: value }));
 
   // Đổi tiêu đề trên thanh điều hướng theo chế độ.
   useLayoutEffect(() => {
@@ -217,7 +269,7 @@ export default function FormScreen({ route, navigation }) {
    * Nguyên tắc: CHỈ điền vào ô còn trống. Người dùng đã tự gõ gì thì giữ
    * nguyên — AI là trợ lý, không phải người quyết định.
    */
-  const analyzePhoto = async (picked) => {
+  const analyzePhoto = async (picked?: PickedImage) => {
     const photo = picked || image;
     if (!photo) return;
 
@@ -241,10 +293,12 @@ export default function FormScreen({ route, navigation }) {
        * tự mô tả bằng { uri, name, type }. Giống hệt lúc đăng bài có ảnh.
        */
       const fileName = photo.uri.split('/').pop() || 'photo.jpg';
-      const extension = fileName.split('.').pop().toLowerCase();
+      // ?? '' vì split() về lý thuyết có thể trả mảng rỗng. Không bao giờ xảy
+      // ra với chuỗi thật, nhưng TypeScript không biết thế nên cứ chặn cho gọn.
+      const extension = (fileName.split('.').pop() ?? '').toLowerCase();
 
       const formData = new FormData();
-      formData.append('image', {
+      appendFile(formData, 'image', {
         uri: photo.uri,
         name: fileName,
         type: extension === 'png' ? 'image/png' : 'image/jpeg',
@@ -265,9 +319,12 @@ export default function FormScreen({ route, navigation }) {
     } catch (err) {
       if (aiRun.current !== runId) return;
 
-      const status = err.response?.status;
+      const status = errorStatus(err);
       // 422 = ảnh không có chó mèo. 429/504 = AI quá tải hoặc hết lượt.
-      const key = status === 422 ? 'ai.notPet' : [429, 504].includes(status) ? 'ai.busy' : 'ai.error';
+      // ?? 0 vì status là undefined khi không gọi tới được máy chủ, mà
+      // includes() đòi đúng một số. Không mã HTTP nào là 0 cả.
+      const key =
+        status === 422 ? 'ai.notPet' : [429, 504].includes(status ?? 0) ? 'ai.busy' : 'ai.error';
       setAiError(t(key));
     } finally {
       if (aiRun.current === runId) setAiLoading(false);
@@ -276,7 +333,15 @@ export default function FormScreen({ route, navigation }) {
 
   const validate = () => {
     // Back-end trả 400 nếu thiếu, nhưng kiểm tra trước ở đây để báo lỗi rõ ràng hơn.
-    const required = ['species', 'breed', 'color', 'area', 'contact'];
+    /*
+     * "as const" là thứ làm dòng t(`form.f.${key}`) bên dưới chạy được.
+     *
+     * Thiếu nó thì TypeScript coi key là string bất kỳ, nên `form.f.${key}`
+     * cũng là chuỗi bất kỳ — mà t() chỉ nhận tên câu có thật. Có nó thì key
+     * chỉ là một trong năm tên này, và cả năm câu form.f.* đều có trong
+     * word.ts, nên hợp lệ.
+     */
+    const required = ['species', 'breed', 'color', 'area', 'contact'] as const;
 
     for (const key of required) {
       if (!form[key].trim()) {
@@ -323,18 +388,20 @@ export default function FormScreen({ route, navigation }) {
    * thẻ input. React Native không có File — phải tự mô tả bằng một object
    * { uri, name, type }, và chính object đó được đưa vào FormData.
    */
-  const buildFormData = (fields) => {
+  const buildFormData = (fields: Record<string, unknown>) => {
     const formData = new FormData();
-    Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+    // Mọi giá trị qua FormData đều thành chuỗi, kể cả null -> "null".
+    // Back-end đã lường trước đúng chuỗi đó, xem pickEditable bên petController.
+    Object.entries(fields).forEach(([key, value]) => formData.append(key, String(value)));
 
     if (image) {
-      const fileName = image.uri.split("/").pop() || "photo.jpg";
-      const extension = fileName.split(".").pop().toLowerCase();
+      const fileName = image.uri.split('/').pop() || 'photo.jpg';
+      const extension = (fileName.split('.').pop() ?? '').toLowerCase();
 
-      formData.append("image", {
+      appendFile(formData, 'image', {
         uri: image.uri,
         name: fileName,
-        type: extension === "png" ? "image/png" : "image/jpeg",
+        type: extension === 'png' ? 'image/png' : 'image/jpeg',
       });
     } else if (removeImage) {
       // Qua FormData mọi giá trị đều thành chuỗi, nên máy chủ nhận "true"
@@ -352,7 +419,12 @@ export default function FormScreen({ route, navigation }) {
 
     // Không có quyền sửa đặc điểm bí mật thì bỏ hẳn trường đó ra khỏi dữ liệu
     // gửi lên, để server giữ nguyên giá trị cũ.
-    const payload = { ...form };
+    /*
+     * Kiểu lỏng (Record) chứ không phải FormState, vì dòng dưới XOÁ HẲN một
+     * trường đi. TypeScript không cho delete một trường bắt buộc — đúng, vì
+     * sau đó object không còn đúng kiểu đã khai nữa.
+     */
+    const payload: Record<string, unknown> = { ...form };
     if (!canEditSecret) delete payload.secretDetail;
 
     try {
@@ -376,7 +448,9 @@ export default function FormScreen({ route, navigation }) {
          * Back-end trả claimCode đúng MỘT LẦN này, và chỉ lưu bản băm.
          * Không cất lại ngay là mất quyền sửa/xoá tin vừa đăng vĩnh viễn.
          */
-        await claim.save(data._id, data.claimCode);
+        // claimCode chỉ có ở lần tạo tin. ?? '' để claim.save tự bỏ qua khi
+        // vì lý do nào đó máy chủ không trả về.
+        await claim.save(data._id, data.claimCode ?? '');
 
         /*
          * Đã đăng nhập thì KHÔNG báo gì cả.
@@ -393,7 +467,7 @@ export default function FormScreen({ route, navigation }) {
 
       navigation.goBack();
     } catch (err) {
-      const status = err.response?.status;
+      const status = errorStatus(err);
 
       /*
        * Mỗi mã lỗi một câu riêng.
@@ -406,11 +480,25 @@ export default function FormScreen({ route, navigation }) {
        * Gộp 5xx vào nhóm "kiểm tra kết nối" là chỉ sai chỗ: người dùng đi
        * kiểm tra Wi-Fi trong khi lỗi nằm ở máy chủ.
        */
-      const known = [400, 403, 413, 502].includes(status);
-      const serverFault = status >= 500;
+      // Khai rõ từng mã một thay vì ghép chuỗi `form.err.${status}`: ghép
+      // chuỗi thì TypeScript không biết kết quả có phải tên câu có thật không.
+      const byStatus: Record<number, Parameters<typeof t>[0]> = {
+        400: 'form.err.400',
+        403: 'form.err.403',
+        413: 'form.err.413',
+        502: 'form.err.502',
+      };
+      const known = status !== undefined && status in byStatus;
+      const serverFault = (status ?? 0) >= 500;
       Alert.alert(
         t('form.failTitle'),
-        t(known ? `form.err.${status}` : serverFault ? 'form.err.server' : 'form.err.network'),
+        t(
+          known
+            ? byStatus[status as number]
+            : serverFault
+              ? 'form.err.server'
+              : 'form.err.network',
+        ),
       );
       setSaving(false);
     }
@@ -686,7 +774,17 @@ export default function FormScreen({ route, navigation }) {
   );
 }
 
-function Choice({ label, active, activeColor, onPress }) {
+function Choice({
+  label,
+  active,
+  activeColor,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  activeColor: string;
+  onPress: () => void;
+}) {
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
   return (
@@ -700,7 +798,12 @@ function Choice({ label, active, activeColor, onPress }) {
   );
 }
 
-function Field({ label, icon, multiline, ...props }) {
+function Field({
+  label,
+  icon,
+  multiline,
+  ...props
+}: ComponentProps<typeof TextInput> & { label: string; icon?: ReactNode }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
   return (

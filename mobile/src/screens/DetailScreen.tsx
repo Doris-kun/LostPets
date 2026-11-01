@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../api';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import api, { errorStatus } from '../api';
+import type { MatchResult, Pet, RootStackParamList } from '../types';
 import claim from '../claim';
 import ClaimCodeModal from '../components/ClaimCodeModal';
 import PetMap, { DirectionsButton } from '../components/PetMap';
@@ -29,7 +31,12 @@ import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme'
  * Tương đương pages/PetDetail.jsx bên web, bỏ phần chia sẻ và đánh dấu đoàn tụ.
  */
 
-export default function DetailScreen({ route, navigation }) {
+type Props = NativeStackScreenProps<RootStackParamList, 'Detail'>;
+
+/** Hành động đang chờ người dùng nhập mã xác nhận. null = không chờ gì. */
+type AskCode = 'delete' | 'resolve' | 'edit' | null;
+
+export default function DetailScreen({ route, navigation }: Props) {
   // Tham số truyền từ màn trước: navigation.navigate('Detail', { id: ... })
   // Tương đương useParams() của react-router bên web.
   const { id } = route.params;
@@ -37,7 +44,7 @@ export default function DetailScreen({ route, navigation }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
 
-  const [pet, setPet] = useState(null);
+  const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   // Đang gửi yêu cầu đánh dấu đoàn tụ -> khoá nút, đổi chữ thành "Đang lưu..."
@@ -45,11 +52,11 @@ export default function DetailScreen({ route, navigation }) {
 
   // Phần AI đối chiếu: đang chạy, kết quả, lỗi
   const [matchLoading, setMatchLoading] = useState(false);
-  const [matchResult, setMatchResult] = useState(null);
+  const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const [matchError, setMatchError] = useState('');
 
   // Đang xin mã cho việc gì: 'delete', 'resolve', hoặc null khi không hỏi
-  const [askCode, setAskCode] = useState(null);
+  const [askCode, setAskCode] = useState<AskCode>(null);
   const [codeError, setCodeError] = useState('');
   // Đang kiểm tra quyền sửa, khoá nút để tránh bấm hai lần
   const [checkingEdit, setCheckingEdit] = useState(false);
@@ -87,7 +94,7 @@ export default function DetailScreen({ route, navigation }) {
    * code === undefined nghĩa là "tự lấy mã trong máy", còn truyền chuỗi vào
    * nghĩa là "dùng đúng mã này".
    */
-  const doResolve = async (code) => {
+  const doResolve = async (code?: string) => {
     setResolving(true);
     try {
       // PUT chỉ gửi trường muốn đổi, các trường khác giữ nguyên.
@@ -101,7 +108,7 @@ export default function DetailScreen({ route, navigation }) {
       setAskCode(null);
       return true;
     } catch (err) {
-      if (err.response?.status === 403) return false;
+      if (errorStatus(err) === 403) return false;
 
       Alert.alert(t('error.title'), t('error.saveFailed'));
       setAskCode(null);
@@ -146,14 +153,22 @@ export default function DetailScreen({ route, navigation }) {
       const { data } = await api.findMatches(id);
       setMatchResult(data);
     } catch (err) {
-      const status = err.response?.status;
-      setMatchError(t([429, 504].includes(status) ? 'match.busy' : 'match.error'));
+      const status = errorStatus(err);
+      // ?? 0 vi status la undefined khi khong goi toi duoc may chu.
+      setMatchError(t([429, 504].includes(status ?? 0) ? 'match.busy' : 'match.error'));
     } finally {
       setMatchLoading(false);
     }
   };
 
   const handleShare = async () => {
+    /*
+     * Chan ngay tu dau cho TypeScript yen tam. Thuc te nut Chia se chi ve ra
+     * khi da tai xong tin, nhung TypeScript khong suy ra duoc dieu do tu cho
+     * khac trong file - ma viet ra mot dong nhu vay cung chang mat gi.
+     */
+    if (!pet) return;
+
     /*
      * Share của React Native gọi thẳng bảng chia sẻ của HỆ ĐIỀU HÀNH — cái
      * bảng trượt lên có sẵn Zalo, Messenger, Tin nhắn, Sao chép...
@@ -190,14 +205,14 @@ export default function DetailScreen({ route, navigation }) {
    * quyền, nhưng danh sách trường được phép sửa lọc ra rỗng nên không có gì
    * thay đổi. Đúng quyền thì trả 200, sai thì 403. Không cần thêm endpoint mới.
    */
-  const canEdit = async (code) => {
+  const canEdit = async (code?: string) => {
     try {
       const useCode = code ?? (await claim.get(id));
       await api.updatePet(id, {}, useCode);
       if (code) await claim.save(id, code);
       return true;
     } catch (err) {
-      if (err.response?.status === 403) return false;
+      if (errorStatus(err) === 403) return false;
       // Lỗi khác (mất mạng, server hỏng) thì cứ cho vào form, để người dùng
       // gặp lỗi thật lúc bấm Lưu thay vì bị chặn ở đây mà không hiểu vì sao.
       return true;
@@ -216,7 +231,16 @@ export default function DetailScreen({ route, navigation }) {
       const { data } = await api.getPet(id);
       navigation.navigate('Form', { mode: 'edit', pet: data });
     } catch {
-      navigation.navigate('Form', { mode: 'edit', pet });
+      /*
+       * Xin lai that bai thi dung ban dang co san - van sua duoc, chi la
+       * thieu dac diem bi mat.
+       *
+       * Nhung phai co ban do da: man sua BAT BUOC phai nhan mot tin. Truoc
+       * day cho nay truyen thang pet vao, ma pet co the la null - luc do man
+       * sua se do route.params.pet.type cua mot gia tri null va app sap.
+       * Khong ai gap vi phai dung luc mang hong thi moi vao duoc nhanh nay.
+       */
+      if (pet) navigation.navigate('Form', { mode: 'edit', pet });
     }
   };
 
@@ -234,7 +258,7 @@ export default function DetailScreen({ route, navigation }) {
     setAskCode('edit');
   };
 
-  const doDelete = async (code) => {
+  const doDelete = async (code?: string) => {
     setDeleting(true);
     try {
       // Mã xác nhận được cất lúc đăng bài. Bài cũ hoặc bài đăng từ máy khác
@@ -246,7 +270,7 @@ export default function DetailScreen({ route, navigation }) {
       return true;
     } catch (err) {
       setDeleting(false);
-      if (err.response?.status === 403) return false;
+      if (errorStatus(err) === 403) return false;
 
       Alert.alert(t('error.title'), t('error.deleteFailed'));
       setAskCode(null);
@@ -525,7 +549,7 @@ export default function DetailScreen({ route, navigation }) {
   );
 }
 
-function InfoBox({ label, value }) {
+function InfoBox({ label, value }: { label: string; value: string }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
   return (
