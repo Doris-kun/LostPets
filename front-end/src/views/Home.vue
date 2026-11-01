@@ -232,6 +232,7 @@
 <script>
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
+import PetPhoto from '../components/PetPhoto.vue';
 
 export default {
   name: 'Home',
