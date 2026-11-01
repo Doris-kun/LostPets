@@ -15,10 +15,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * mã trong máy. Back-end cho qua với tin không có mã, còn tin có mã thì trả 403.
  */
 
-const key = (id) => `claim:${id}`;
+const key = (id: string) => `claim:${id}`;
 
 export default {
-  async save(id, code) {
+  async save(id: string, code: string): Promise<void> {
     if (!id || !code) return;
     try {
       await AsyncStorage.setItem(key(id), code);
@@ -28,7 +28,7 @@ export default {
     }
   },
 
-  async get(id) {
+  async get(id: string): Promise<string> {
     try {
       return (await AsyncStorage.getItem(key(id))) || '';
     } catch {
@@ -36,7 +36,7 @@ export default {
     }
   },
 
-  async remove(id) {
+  async remove(id: string): Promise<void> {
     try {
       await AsyncStorage.removeItem(key(id));
     } catch {

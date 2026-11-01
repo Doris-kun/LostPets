@@ -1,0 +1,149 @@
+/*
+ * Kiểu dữ liệu dùng chung cho cả app.
+ *
+ * Mô tả ĐÚNG những gì back-end trả về, không phải những gì mình mong nó trả
+ * về. Khai sai ở đây còn tệ hơn không khai: TypeScript sẽ yên tâm cho qua
+ * những chỗ thật ra đang hỏng.
+ *
+ * Nguồn đối chiếu:
+ *   back-end/api/models/petModel.js       cấu trúc một tin
+ *   back-end/api/controllers/aiController.js   kết quả AI
+ *   back-end/api/controllers/authController.js publicUser()
+ */
+
+/** 'lost' = tin báo mất, 'found' = tin báo nhặt được. Back-end chỉ nhận hai giá trị này. */
+export type PetType = 'lost' | 'found';
+
+/**
+ * Một tin đăng.
+ *
+ * Mấy trường đánh dấu tuỳ chọn (`?`) là những trường back-end đặt select:false
+ * hoặc chỉ trả về trong một số trường hợp — đọc thẳng mà không kiểm tra là
+ * đúng loại lỗi TypeScript sinh ra để chặn.
+ */
+export interface Pet {
+  _id: string;
+  /** Mã tin dạng LOST-xxxx, chỉ để người dùng đọc và tra cứu. */
+  postId?: string;
+  type: PetType;
+  name: string;
+  species: string;
+  breed: string;
+  color: string;
+  area: string;
+  contact: string;
+  description: string;
+  /** Chuỗi RỖNG khi không có ảnh, KHÔNG phải null. Đừng kiểm tra bằng `=== null`. */
+  image: string;
+  resolved: boolean;
+  /**
+   * Toạ độ, đã được back-end làm tròn về lưới ~550m.
+   *
+   * null khi người đăng không chọn vị trí. Dùng hasPoint() trong src/map.ts
+   * để kiểm tra, đừng tự viết Number(lat) — Number(null) ra 0, là một toạ độ
+   * hợp lệ giữa Đại Tây Dương. Lỗi này đã xảy ra thật một lần rồi.
+   */
+  lat: number | null;
+  lng: number | null;
+  /** Ngày đăng, dạng chuỗi ISO. */
+  date: string;
+  /**
+   * Đặc điểm chỉ chủ nuôi biết.
+   *
+   * Back-end đặt select:false nên CHỈ trả về cho chủ bài. Người khác xem tin
+   * sẽ nhận undefined — khác hẳn với chuỗi rỗng, vốn nghĩa là chủ bài có
+   * quyền xem nhưng chưa điền gì. Gửi chuỗi rỗng lên khi chỉ nhận được
+   * undefined là XOÁ MẤT dữ liệu của chủ bài.
+   */
+  secretDetail?: string;
+  /** Chỉ có ở danh sách của trang quản trị, và chỉ khi tin đăng bởi tài khoản. */
+  owner?: { _id: string; name: string; email: string } | null;
+  /**
+   * Mã xác nhận, back-end trả về ĐÚNG MỘT LẦN lúc tạo tin.
+   * Không lưu lại ngay là mất quyền sửa/xoá tin đó vĩnh viễn.
+   */
+  claimCode?: string;
+}
+
+/** Trang danh sách tin: GET /pets */
+export interface PetPage {
+  pets: Pet[];
+  total: number;
+}
+
+// ---- Tài khoản ----
+
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'user' | 'admin';
+}
+
+export interface AuthResult {
+  token: string;
+  user: User;
+}
+
+// ---- AI ----
+
+/** POST /ai/analyze-image — AI nhìn ảnh rồi đoán hộ các ô trong form. */
+export interface AnalyzeResult {
+  species: string;
+  breed: string;
+  color: string;
+  description: string;
+  /** 0-100. */
+  confidence: number;
+}
+
+/** Một tin có thể là cùng con vật. */
+export interface MatchItem {
+  pet: Pet;
+  /** 0-100. */
+  score: number;
+  reason: string;
+}
+
+/** GET /ai/match/:id */
+export interface MatchResult {
+  matches: MatchItem[];
+  candidatesChecked: number;
+}
+
+/** Một lượt trong hội thoại với trợ lý. */
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+// ---- Bộ lọc ----
+
+export interface Filters {
+  species: string;
+  area: string;
+  /** Số ngày gần đây, chuỗi rỗng nghĩa là không giới hạn. */
+  days: string;
+  sort: string;
+}
+
+// ---- Số liệu trang quản trị: GET /admin/stats ----
+
+export interface AdminRank {
+  label: string;
+  count: number;
+}
+
+export interface AdminStats {
+  total: number;
+  lost: number;
+  found: number;
+  resolved: number;
+  open: number;
+  withImage: number;
+  users: number;
+  /** Phần trăm tin đã đánh dấu đoàn tụ, 0-100. */
+  resolvedRate: number;
+  topAreas: AdminRank[];
+  topBreeds: AdminRank[];
+}

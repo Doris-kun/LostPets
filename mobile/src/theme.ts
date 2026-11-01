@@ -1,3 +1,5 @@
+import type { Pet } from './types';
+
 /*
  * Màu và khoảng cách dùng chung — lấy trực tiếp từ logo LostPets.
  *
@@ -149,7 +151,16 @@ export const lightColors = {
  *   background (nền sâu nhất)  ->  surface (thẻ tin)  ->  surfaceTint (nổi nhất)
  * Ngược hẳn với chế độ sáng, nơi lớp nổi lên thì trắng hơn.
  */
-export const darkColors = {
+/*
+ * Bộ tên màu, lấy thẳng từ bảng màu sáng.
+ *
+ * Nhờ vậy bảng màu TỐI bên dưới bị buộc phải có ĐÚNG từng ấy màu: thiếu một
+ * cái là TypeScript báo lỗi ngay, thay vì tới lúc chạy mới hiện ra một ô
+ * trống giữa màn hình tối. Trước đây hai bảng này chỉ "tình cờ" khớp nhau.
+ */
+export type Colors = typeof lightColors;
+
+export const darkColors: Colors = {
   ...brand,
 
   // navy gốc chìm nghỉm trên nền tối, phải sáng hơn hẳn mới nhìn ra là nút bấm
@@ -273,7 +284,20 @@ export const darkShadow = {
  * Trả về labelKey chứ không trả thẳng chữ: hàm này không biết người dùng đang
  * xem tiếng gì. Nơi gọi tự dịch bằng t(status.labelKey).
  */
-export function statusStyle(pet, colors) {
+export interface StatusStyle {
+  /** Màu nền của nhãn. */
+  color: string;
+  /** Màu chữ trên nhãn đó — mỗi nhãn một nền nên không dùng chung được. */
+  onColor: string;
+  /** Key để nơi gọi tự dịch bằng t(). */
+  labelKey: string;
+}
+
+/** Chỉ cần hai trường này, nên không bắt nơi gọi phải đưa cả một Pet đầy đủ. */
+export function statusStyle(
+  pet: Pick<Pet, 'resolved' | 'type'>,
+  colors: Colors,
+): StatusStyle {
   // Trả về cả màu CHỮ, vì mỗi nhãn một nền khác nhau nên không dùng chung
   // được một màu chữ. Nơi gọi chỉ việc lấy ra dùng, không phải tự nghĩ.
   if (pet.resolved) {

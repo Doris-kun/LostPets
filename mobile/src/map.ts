@@ -71,10 +71,16 @@ export const AREA_RADIUS_M = 550;
  * Back-end cũng có đúng cái bẫy này và đã chú thích sẵn, xem pickEditable
  * trong api/controllers/petController.js. Tôi đọc qua rồi vẫn dẫm phải.
  */
-const toNumber = (v) => (v === null || v === undefined || v === '' ? NaN : Number(v));
+const toNumber = (v: unknown): number =>
+  v === null || v === undefined || v === '' ? NaN : Number(v);
 
 // Toạ độ chỉ dùng được khi có đủ cả hai. Thiếu một nửa thì coi như chưa có.
-export const hasPoint = (o) =>
+/*
+ * Nhận unknown cho lat/lng chứ không nhận number, vì chính chỗ này là nơi
+ * kiểm tra. Khai là number thì TypeScript tin luôn rồi hàm thành vô dụng —
+ * mà dữ liệu thật từ máy chủ có thể là null, hoặc chuỗi khi đi qua FormData.
+ */
+export const hasPoint = (o: { lat?: unknown; lng?: unknown } | null | undefined): boolean =>
   !!o && Number.isFinite(toNumber(o.lat)) && Number.isFinite(toNumber(o.lng));
 
 /*
@@ -83,7 +89,7 @@ export const hasPoint = (o) =>
  * Dùng đường liên kết chung của Google Maps: không cần khoá API, và trên điện
  * thoại hệ điều hành tự bắt lấy link này rồi mở app Maps thay vì trình duyệt.
  */
-export const directionsUrl = (lat, lng) =>
+export const directionsUrl = (lat: number, lng: number): string =>
   `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 
 /*
@@ -97,7 +103,15 @@ export const directionsUrl = (lat, lng) =>
  *                 chạm vào bản đồ thì trang đứng im.
  *   isDark      — chế độ tối
  */
-export function mapHtml({ pick = false, interactive = true, isDark = false } = {}) {
+export interface MapHtmlOptions {
+  /** true: chạm để chọn một điểm. false: chỉ hiện pin có sẵn. */
+  pick?: boolean;
+  /** false thì khoá hết thao tác, bản đồ thành một tấm ảnh. */
+  interactive?: boolean;
+  isDark?: boolean;
+}
+
+export function mapHtml({ pick = false, interactive = false, isDark = false }: MapHtmlOptions = {}): string {
   return `<!doctype html>
 <html>
 <head>

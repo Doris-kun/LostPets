@@ -59,7 +59,7 @@ const PORT = 3000;
  *   - Bản APK thật: mã nằm sẵn trong máy, đường dẫn là file:// chứ không phải http
  *   - Máy ảo Android: trả về 10.0.2.2, vốn đã đúng sẵn nên cũng không sao
  */
-function detectHost() {
+function detectHost(): string | null {
   /*
    * Phải thử hai cách, vì SDK 58 bật "kiến trúc mới" của React Native:
    *
@@ -84,7 +84,13 @@ function detectHost() {
    * Dự phòng: đọc đường dẫn mã nguồn đã tải. Cách này cũ, kiến trúc mới của
    * React Native có thể không còn, nên chỉ dùng khi cách trên không ra.
    */
-  const url = NativeModules?.SourceCode?.scriptURL;
+  /*
+   * Phải ép kiểu ở đây. Kiểu sẵn có của React Native không khai SourceCode,
+   * vì kiến trúc mới đã bỏ nó — đúng như chú thích bên trên. Giữ lại chỉ để
+   * dự phòng cho bản cũ, nên ép kiểu là đúng chứ không phải lách.
+   */
+  const url = (NativeModules as Record<string, { scriptURL?: string } | undefined>)?.SourceCode
+    ?.scriptURL;
   if (typeof url !== 'string') return null;
 
   const match = /^https?:\/\/([^:/]+)/.exec(url);

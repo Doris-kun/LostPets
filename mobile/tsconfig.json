@@ -1,0 +1,37 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    /*
+     * strict: true là lý do chính để dùng TypeScript.
+     *
+     * Tắt nó đi thì TypeScript chỉ còn là JavaScript có thêm vài dòng chú
+     * thích — không bắt được hai lỗi mình đã mất công tìm trong dự án này:
+     *   - đọc image.uri khi image còn là null (AI không quét ảnh)
+     *   - dùng removeImage trước dòng khai báo nó (nút Xoá ảnh không ăn)
+     * Cả hai chỉ bị chặn khi strict đang bật.
+     */
+    "strict": true,
+
+    /*
+     * Cho phép .js và .ts sống chung trong lúc chuyển dần từng file.
+     *
+     * Chuyển một lượt 23 file rồi mới chạy thử là cách chắc chắn sẽ vỡ mà
+     * không biết vỡ ở đâu. Bật cái này thì mỗi lần đổi một file vẫn chạy app
+     * được, sai chỗ nào biết ngay chỗ đó.
+     *
+     * Khi đã chuyển hết thì nên XOÁ hai dòng này đi, để không ai lỡ tay thêm
+     * file .js mới vào nữa.
+     */
+    "allowJs": true,
+    "checkJs": false,
+
+    // Import ảnh PNG trong require() — RN cho phép, TypeScript cần biết
+    "resolveJsonModule": true,
+
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  "exclude": ["node_modules", "dist", ".expo"]
+}
