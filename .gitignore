@@ -9,3 +9,6 @@ dist/
 
 # File tạm khi thử nghiệm
 *.tmp.js
+
+# Bộ nhớ đệm vector của phép đo, sinh lại được
+back-end/eval/.embeddings-cache.json

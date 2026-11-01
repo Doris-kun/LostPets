@@ -8,7 +8,8 @@
     "test": "jest --forceExit",
     "seed": "node scripts/seed.js",
     "embed": "node scripts/backfill-embeddings.js",
-    "fix-images": "node scripts/fix-dead-images.js"
+    "fix-images": "node scripts/fix-dead-images.js",
+    "eval:matching": "node scripts/eval-matching.js"
   },
   "jest": {
     "testEnvironment": "node",

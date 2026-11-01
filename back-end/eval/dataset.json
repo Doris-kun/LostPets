@@ -1,0 +1,95 @@
+{
+  "about": "Bộ dữ liệu gán nhãn để đo độ chính xác so khớp Lost<->Found (mục tiêu B11 / Objective 3).",
+  "design": [
+    "20 cặp đúng: mỗi cặp là MỘT con vật được hai người khác nhau đăng, một tin báo mất và một tin báo nhặt được.",
+    "Hai tin trong cùng một cặp CỐ Ý dùng từ ngữ khác nhau: 'Poodle trắng kem' đối lại 'chó nhỏ lông xù màu trắng ngà'.",
+    "Nếu viết giống chữ nhau thì phép đo chỉ chứng minh so khớp chuỗi hoạt động, không nói gì về ngữ nghĩa.",
+    "Các tin nhiễu là con vật KHÁC nhưng cùng loài, nhiều tin cùng khu vực và màu gần giống, để bài toán không tầm thường.",
+    "Ngày đăng rải rác trong 120 ngày; tin nhặt được luôn sau tin báo mất.",
+    "Số điện thoại đều là số giả (09000000xx), không phải dữ liệu người thật."
+  ],
+  "pets": [
+    { "key": "p01-lost",  "pairId": "p01", "type": "lost",  "species": "Chó", "breed": "Poodle", "color": "Trắng kem", "area": "Quận 1, TP.HCM", "name": "Bông", "description": "Poodle trắng kem, đeo vòng cổ màu đỏ, nặng khoảng 4kg, lạc gần chợ Bến Thành chiều tối.", "daysAgo": 95, "contact": "0900000001" },
+    { "key": "p01-found", "pairId": "p01", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Trắng ngà", "area": "Quận 1, TP.HCM", "description": "Nhặt được một con chó nhỏ lông xoăn xù màu trắng ngà, cổ còn đeo dây màu đỏ, khu vực chợ Bến Thành.", "daysAgo": 92, "contact": "0900000002" },
+
+    { "key": "p02-lost",  "pairId": "p02", "type": "lost",  "species": "Chó", "breed": "Corgi", "color": "Nâu trắng", "area": "Gò Vấp, TP.HCM", "name": "Sushi", "description": "Corgi chân ngắn mình dài, lông nâu pha trắng, lạc ở công viên Gò Vấp.", "daysAgo": 88, "contact": "0900000003" },
+    { "key": "p02-found", "pairId": "p02", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Nâu và trắng", "area": "Gò Vấp, TP.HCM", "description": "Thấy một con chó lùn chân rất ngắn thân dài hai màu nâu trắng đi lạc quanh công viên.", "daysAgo": 85, "contact": "0900000004" },
+
+    { "key": "p03-lost",  "pairId": "p03", "type": "lost",  "species": "Mèo", "breed": "Mèo ta", "color": "Tam thể", "area": "Quận 3, TP.HCM", "name": "Mít", "description": "Mèo tam thể cái, đuôi cộc bẩm sinh, mất trong hẻm đường Võ Văn Tần.", "daysAgo": 84, "contact": "0900000005" },
+    { "key": "p03-found", "pairId": "p03", "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Ba màu", "area": "Quận 3, TP.HCM", "description": "Bắt được mèo lông ba màu vàng đen trắng xen kẽ, đuôi ngắn bất thường, gần Võ Văn Tần.", "daysAgo": 81, "contact": "0900000006" },
+
+    { "key": "p04-lost",  "pairId": "p04", "type": "lost",  "species": "Chó", "breed": "Husky", "color": "Đen trắng", "area": "Thủ Đức, TP.HCM", "name": "Rex", "description": "Husky đực mắt xanh dương, lông đen trắng, sổng chuồng tối qua.", "daysAgo": 78, "contact": "0900000007" },
+    { "key": "p04-found", "pairId": "p04", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Đen pha trắng", "area": "Thủ Đức, TP.HCM", "description": "Một con chó to trông giống chó sói, lông đen trắng, hai mắt màu xanh lam, lang thang khu Thủ Đức.", "daysAgo": 75, "contact": "0900000008" },
+
+    { "key": "p05-lost",  "pairId": "p05", "type": "lost",  "species": "Mèo", "breed": "Mèo Anh lông ngắn", "color": "Xám xanh", "area": "Bình Thạnh, TP.HCM", "name": "Mochi", "description": "Mèo Anh lông ngắn màu xám xanh, người mập, mặt tròn, mất ở Bình Thạnh.", "daysAgo": 72, "contact": "0900000009" },
+    { "key": "p05-found", "pairId": "p05", "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Xám tro", "area": "Bình Thạnh, TP.HCM", "description": "Mèo mặt tròn bè, thân mập, lông ngắn màu xám tro, đi vào nhà tôi khu Bình Thạnh.", "daysAgo": 70, "contact": "0900000010" },
+
+    { "key": "p06-lost",  "pairId": "p06", "type": "lost",  "species": "Chó", "breed": "Chihuahua", "color": "Vàng", "area": "Quận 7, TP.HCM", "name": "Tí", "description": "Chihuahua màu vàng, chỉ nặng 2kg, hay run rẩy, mất ở Phú Mỹ Hưng.", "daysAgo": 68, "contact": "0900000011" },
+    { "key": "p06-found", "pairId": "p06", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Vàng nhạt", "area": "Quận 7, TP.HCM", "description": "Nhặt được con chó cảnh rất nhỏ lông vàng, cứ run liên tục, khu Phú Mỹ Hưng.", "daysAgo": 65, "contact": "0900000012" },
+
+    { "key": "p07-lost",  "pairId": "p07", "type": "lost",  "species": "Chó", "breed": "Golden Retriever", "color": "Vàng kem", "area": "Quận 2, TP.HCM", "name": "Max", "description": "Golden Retriever vàng kem, nặng khoảng 25kg, rất quấn người, mất ở Thảo Điền.", "daysAgo": 64, "contact": "0900000013" },
+    { "key": "p07-found", "pairId": "p07", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Vàng nhạt", "area": "Quận 2, TP.HCM", "description": "Có con chó cỡ lớn lông dài màu vàng nhạt, rất thân thiện, đi theo tôi ở Thảo Điền.", "daysAgo": 61, "contact": "0900000014" },
+
+    { "key": "p08-lost",  "pairId": "p08", "type": "lost",  "species": "Mèo", "breed": "Mèo ta", "color": "Đen", "area": "Tân Bình, TP.HCM", "name": "Mun", "description": "Mèo mun đen tuyền không có đốm trắng nào, mắt vàng, mất khu Tân Bình.", "daysAgo": 60, "contact": "0900000015" },
+    { "key": "p08-found", "pairId": "p08", "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Đen tuyền", "area": "Tân Bình, TP.HCM", "description": "Mèo đen toàn thân, không một sợi lông khác màu, mắt màu hổ phách, nhặt ở Tân Bình.", "daysAgo": 57, "contact": "0900000016" },
+
+    { "key": "p09-lost",  "pairId": "p09", "type": "lost",  "species": "Chó", "breed": "Phốc sóc", "color": "Cam", "area": "Quận 10, TP.HCM", "name": "Mỡ", "description": "Phốc sóc màu cam, lông bông xù như gấu bông, mất ở quận 10.", "daysAgo": 56, "contact": "0900000017" },
+    { "key": "p09-found", "pairId": "p09", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Cam đậm", "area": "Quận 10, TP.HCM", "description": "Chó nhỏ lông rất dày màu cam đậm, trông y như gấu bông, thấy ở quận 10.", "daysAgo": 53, "contact": "0900000018" },
+
+    { "key": "p10-lost",  "pairId": "p10", "type": "lost",  "species": "Chó", "breed": "Becgie Đức", "color": "Đen vàng", "area": "Cầu Giấy, Hà Nội", "name": "Sói", "description": "Becgie Đức 3 tuổi, lông đen pha vàng, tai dựng, mất ở Cầu Giấy.", "daysAgo": 52, "contact": "0900000019" },
+    { "key": "p10-found", "pairId": "p10", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Đen pha vàng", "area": "Cầu Giấy, Hà Nội", "description": "Một con chó to giống chó nghiệp vụ, lông đen pha vàng, tai nhọn dựng đứng, khu Cầu Giấy.", "daysAgo": 49, "contact": "0900000020" },
+
+    { "key": "p11-lost",  "pairId": "p11", "type": "lost",  "species": "Mèo", "breed": "Mèo Xiêm", "color": "Kem nâu", "area": "Hải Châu, Đà Nẵng", "name": "Xíu", "description": "Mèo Xiêm thân màu kem, mặt và tai màu nâu sẫm, mắt xanh, mất ở Hải Châu.", "daysAgo": 48, "contact": "0900000021" },
+    { "key": "p11-found", "pairId": "p11", "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Kem và nâu", "area": "Hải Châu, Đà Nẵng", "description": "Mèo thân kem nhạt nhưng mặt, tai và chân sẫm màu, mắt xanh biếc, nhặt ở Đà Nẵng.", "daysAgo": 45, "contact": "0900000022" },
+
+    { "key": "p12-lost",  "pairId": "p12", "type": "lost",  "species": "Chó", "breed": "Pug", "color": "Nâu", "area": "Phú Nhuận, TP.HCM", "name": "Ủn", "description": "Pug màu nâu, mặt nhăn nheo, thở khò khè, mất ở Phú Nhuận.", "daysAgo": 44, "contact": "0900000023" },
+    { "key": "p12-found", "pairId": "p12", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Nâu", "area": "Phú Nhuận, TP.HCM", "description": "Chó mặt xệ nhiều nếp nhăn, màu nâu, thở rất nặng nhọc, thấy ở Phú Nhuận.", "daysAgo": 41, "contact": "0900000024" },
+
+    { "key": "p13-lost",  "pairId": "p13", "type": "lost",  "species": "Chó", "breed": "Alaska", "color": "Xám trắng", "area": "Quận 9, TP.HCM", "name": "Tuyết", "description": "Alaska lông rất dày màu xám và trắng, mất ở quận 9.", "daysAgo": 40, "contact": "0900000025" },
+    { "key": "p13-found", "pairId": "p13", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Xám và trắng", "area": "Quận 9, TP.HCM", "description": "Con chó to giống chó kéo xe tuyết, bộ lông cực dày màu xám trắng, khu vực quận 9.", "daysAgo": 37, "contact": "0900000026" },
+
+    { "key": "p14-lost",  "pairId": "p14", "type": "lost",  "species": "Mèo", "breed": "Mèo ta", "color": "Vàng vằn", "area": "Bình Tân, TP.HCM", "name": "Hổ", "description": "Mèo đực lông vàng có vằn kẻ sọc như con hổ, mất ở Bình Tân.", "daysAgo": 36, "contact": "0900000027" },
+    { "key": "p14-found", "pairId": "p14", "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Vàng sọc", "area": "Bình Tân, TP.HCM", "description": "Mèo lông vàng có các vằn ngang sẫm màu, trông như hổ con, nhặt ở Bình Tân.", "daysAgo": 33, "contact": "0900000028" },
+
+    { "key": "p15-lost",  "pairId": "p15", "type": "lost",  "species": "Chó", "breed": "Shiba Inu", "color": "Đỏ cam", "area": "Quận 4, TP.HCM", "name": "Kuro", "description": "Shiba Inu màu đỏ cam, đuôi cuộn tròn trên lưng, mất ở quận 4.", "daysAgo": 32, "contact": "0900000029" },
+    { "key": "p15-found", "pairId": "p15", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Cam", "area": "Quận 4, TP.HCM", "description": "Chó giống Nhật lông màu cam, đuôi xoắn vòng nằm trên lưng, tai nhỏ dựng, quận 4.", "daysAgo": 29, "contact": "0900000030" },
+
+    { "key": "p16-lost",  "pairId": "p16", "type": "lost",  "species": "Mèo", "breed": "Mèo Ba Tư", "color": "Trắng", "area": "Quận 5, TP.HCM", "name": "Tuyết", "description": "Mèo Ba Tư lông dài màu trắng, mũi tẹt, mất ở quận 5.", "daysAgo": 28, "contact": "0900000031" },
+    { "key": "p16-found", "pairId": "p16", "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Trắng", "area": "Quận 5, TP.HCM", "description": "Mèo lông dài trắng toát, mặt bẹt mũi ngắn, nhặt được ở quận 5.", "daysAgo": 25, "contact": "0900000032" },
+
+    { "key": "p17-lost",  "pairId": "p17", "type": "lost",  "species": "Chó", "breed": "Bắc Kinh", "color": "Trắng vàng", "area": "Hóc Môn, TP.HCM", "name": "Bí", "description": "Chó Bắc Kinh lông dài trắng pha vàng, mõm ngắn, mất ở Hóc Môn.", "daysAgo": 24, "contact": "0900000033" },
+    { "key": "p17-found", "pairId": "p17", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Trắng điểm vàng", "area": "Hóc Môn, TP.HCM", "description": "Chó nhỏ lông dài màu trắng có mảng vàng, mặt tẹt mõm rất ngắn, thấy ở Hóc Môn.", "daysAgo": 21, "contact": "0900000034" },
+
+    { "key": "p18-lost",  "pairId": "p18", "type": "lost",  "species": "Mèo", "breed": "Mèo ta", "color": "Trắng đen", "area": "Quận 12, TP.HCM", "name": "Sữa", "description": "Mèo trắng có mảng đen lớn trên lưng, mất ở quận 12.", "daysAgo": 20, "contact": "0900000035" },
+    { "key": "p18-found", "pairId": "p18", "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Khoang trắng đen", "area": "Quận 12, TP.HCM", "description": "Mèo khoang trắng đen, phần lưng gần như đen hết, bụng trắng, quận 12.", "daysAgo": 17, "contact": "0900000036" },
+
+    { "key": "p19-lost",  "pairId": "p19", "type": "lost",  "species": "Chó", "breed": "Labrador", "color": "Đen", "area": "Quận 6, TP.HCM", "name": "Bo", "description": "Labrador đen tuyền, nặng khoảng 30kg, rất hiền, mất ở quận 6.", "daysAgo": 16, "contact": "0900000037" },
+    { "key": "p19-found", "pairId": "p19", "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Đen", "area": "Quận 6, TP.HCM", "description": "Chó lớn lông ngắn màu đen bóng, tính rất hiền, đi lạc ở quận 6.", "daysAgo": 13, "contact": "0900000038" },
+
+    { "key": "p20-lost",  "pairId": "p20", "type": "lost",  "species": "Mèo", "breed": "Mèo ta", "color": "Xám", "area": "Củ Chi, TP.HCM", "name": "Khói", "description": "Mèo lông ngắn màu xám, tai trái bị khuyết một miếng, mất ở Củ Chi.", "daysAgo": 12, "contact": "0900000039" },
+    { "key": "p20-found", "pairId": "p20", "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Xám", "area": "Củ Chi, TP.HCM", "description": "Mèo màu xám, một bên tai bị sứt, nhặt được ở Củ Chi.", "daysAgo": 9, "contact": "0900000040" },
+
+    { "key": "n01", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Trắng", "area": "Quận 1, TP.HCM", "description": "Chó nhỏ lông trắng ngắn, không đeo vòng cổ, nhặt ở quận 1.", "daysAgo": 90, "contact": "0900000041" },
+    { "key": "n02", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Trắng kem", "area": "Quận 1, TP.HCM", "description": "Chó lông xù màu trắng kem nhưng khá lớn, khoảng 10kg, quận 1.", "daysAgo": 86, "contact": "0900000042" },
+    { "key": "n03", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Nâu", "area": "Gò Vấp, TP.HCM", "description": "Chó nâu chân cao, đuôi dài, thấy ở Gò Vấp.", "daysAgo": 83, "contact": "0900000043" },
+    { "key": "n04", "pairId": null, "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Tam thể", "area": "Quận 3, TP.HCM", "description": "Mèo tam thể đuôi dài bình thường, rất nhát, quận 3.", "daysAgo": 80, "contact": "0900000044" },
+    { "key": "n05", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Đen trắng", "area": "Thủ Đức, TP.HCM", "description": "Chó đen trắng cỡ trung, mắt nâu, Thủ Đức.", "daysAgo": 74, "contact": "0900000045" },
+    { "key": "n06", "pairId": null, "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Xám xanh", "area": "Bình Thạnh, TP.HCM", "description": "Mèo xám xanh lông ngắn nhưng gầy, mặt dài, Bình Thạnh.", "daysAgo": 69, "contact": "0900000046" },
+    { "key": "n07", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Vàng", "area": "Quận 7, TP.HCM", "description": "Chó vàng cỡ vừa khoảng 8kg, quận 7.", "daysAgo": 66, "contact": "0900000047" },
+    { "key": "n08", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Vàng kem", "area": "Quận 2, TP.HCM", "description": "Chó lông vàng kem cỡ lớn nhưng lông ngắn, Thảo Điền.", "daysAgo": 62, "contact": "0900000048" },
+    { "key": "n09", "pairId": null, "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Đen", "area": "Tân Bình, TP.HCM", "description": "Mèo đen có đốm trắng ở ngực, Tân Bình.", "daysAgo": 58, "contact": "0900000049" },
+    { "key": "n10", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Cam", "area": "Quận 10, TP.HCM", "description": "Chó lông cam ngắn, tai cụp, quận 10.", "daysAgo": 54, "contact": "0900000050" },
+    { "key": "n11", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Đen vàng", "area": "Cầu Giấy, Hà Nội", "description": "Chó đen vàng cỡ trung, tai cụp xuống, Cầu Giấy.", "daysAgo": 50, "contact": "0900000051" },
+    { "key": "n12", "pairId": null, "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Kem", "area": "Hải Châu, Đà Nẵng", "description": "Mèo lông kem đồng màu toàn thân, mắt vàng, Đà Nẵng.", "daysAgo": 46, "contact": "0900000052" },
+    { "key": "n13", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Nâu", "area": "Phú Nhuận, TP.HCM", "description": "Chó nâu mõm dài, không nhăn, Phú Nhuận.", "daysAgo": 42, "contact": "0900000053" },
+    { "key": "n14", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Xám trắng", "area": "Quận 9, TP.HCM", "description": "Chó xám trắng lông ngắn, cỡ trung, quận 9.", "daysAgo": 38, "contact": "0900000054" },
+    { "key": "n15", "pairId": null, "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Vàng", "area": "Bình Tân, TP.HCM", "description": "Mèo vàng trơn không vằn, Bình Tân.", "daysAgo": 34, "contact": "0900000055" },
+    { "key": "n16", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Cam", "area": "Quận 4, TP.HCM", "description": "Chó lông cam đuôi thẳng dài, quận 4.", "daysAgo": 30, "contact": "0900000056" },
+    { "key": "n17", "pairId": null, "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Trắng", "area": "Quận 5, TP.HCM", "description": "Mèo trắng lông ngắn, mũi bình thường, quận 5.", "daysAgo": 26, "contact": "0900000057" },
+    { "key": "n18", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Trắng vàng", "area": "Hóc Môn, TP.HCM", "description": "Chó trắng vàng lông ngắn mõm dài, Hóc Môn.", "daysAgo": 22, "contact": "0900000058" },
+    { "key": "n19", "pairId": null, "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Trắng đen", "area": "Quận 12, TP.HCM", "description": "Mèo trắng đen nhưng mảng đen nằm ở mặt, quận 12.", "daysAgo": 18, "contact": "0900000059" },
+    { "key": "n20", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Đen", "area": "Quận 6, TP.HCM", "description": "Chó đen lông dài cỡ trung, quận 6.", "daysAgo": 14, "contact": "0900000060" },
+    { "key": "n21", "pairId": null, "type": "found", "species": "Mèo", "breed": "Không rõ", "color": "Xám", "area": "Củ Chi, TP.HCM", "description": "Mèo xám hai tai lành lặn, lông hơi dài, Củ Chi.", "daysAgo": 10, "contact": "0900000061" },
+    { "key": "n22", "pairId": null, "type": "found", "species": "Chó", "breed": "Không rõ", "color": "Trắng kem", "area": "Quận 1, TP.HCM", "description": "Chó trắng kem lông xoăn, nhặt gần công viên 23/9.", "daysAgo": 94, "contact": "0900000062" }
+  ]
+}
