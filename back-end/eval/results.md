@@ -20,9 +20,18 @@ Tập ứng viên trung bình: 22 tin sau bộ lọc cứng, bị cắt còn 3 t
 | Chó | 16.7% | 100% | 12 |
 | Mèo | 25% | 100% | 8 |
 
-## Đầu-cuối qua endpoint thật
+## Đường tìm kiếm — tầng tái xếp hạng (B07)
 
-top-3 accuracy: **100%** (20/20)
+Câu hỏi là phần mô tả của tin báo mất, đáp án là tin nhặt được cùng cặp.
+Hai lượt đo chỉ khác nhau biến `SEARCH_RERANK`.
+
+| k | chỉ vector | vector + tái xếp hạng |
+|---|---|---|
+| precision@1 | 65% | 100% |
+| precision@3 | 100% | 100% |
+| precision@5 | 100% | 100% |
+| precision@10 | 100% | 100% |
+| thời gian mỗi lượt (trung vị) | 437ms | 5509ms |
 
 ## Chi tiết từng cặp
 
