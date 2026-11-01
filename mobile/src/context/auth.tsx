@@ -1,5 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { User } from '../types';
 
 /*
  * Quản lý phiên đăng nhập: token và thông tin tài khoản.
@@ -30,19 +39,30 @@ const USER_KEY = 'auth:user';
  * Chiều phụ thuộc chỉ đi MỘT HƯỚNG: api.js -> file này. File này tuyệt đối
  * không import api.js, nếu không hai file sẽ gọi vòng tròn lẫn nhau.
  */
-let currentToken = null;
-let handleUnauthorized = () => {};
+let currentToken: string | null = null;
+let handleUnauthorized: () => void = () => {};
 
-export const getToken = () => currentToken;
+export const getToken = (): string | null => currentToken;
 
 // api.js gọi hàm này khi server trả 401 — token hết hạn hoặc bị thu hồi.
 export const reportUnauthorized = () => handleUnauthorized();
 
-const AuthContext = createContext(null);
+export interface AuthValue {
+  token: string | null;
+  user: User | null;
+  /** true = chưa đọc xong ổ đĩa. KHÁC với "đã đọc xong và không ai đăng nhập". */
+  loading: boolean;
+  isLoggedIn: boolean;
+  isAdmin: boolean;
+  login: (token: string, user: User) => void;
+  logout: () => void;
+}
 
-export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
+const AuthContext = createContext<AuthValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   // Chưa đọc xong ổ đĩa. Khác với "đã đọc xong và không có ai đăng nhập".
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +101,7 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = useCallback((nextToken, nextUser) => {
+  const login = useCallback((nextToken: string, nextUser: User) => {
     currentToken = nextToken;
     setToken(nextToken);
     setUser(nextUser);

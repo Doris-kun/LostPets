@@ -1,7 +1,21 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { darkColors, darkShadow, lightColors, lightShadow } from '../theme';
+import { darkColors, darkShadow, lightColors, lightShadow, type Colors } from '../theme';
+
+/** Hai chế độ hiển thị app hỗ trợ. */
+export type Scheme = 'light' | 'dark';
+
+/** Bộ đổ bóng, lấy tên từ bảng sáng — bảng tối bị buộc phải có đúng từng ấy. */
+export type Shadow = typeof lightShadow;
 
 /*
  * Quản lý chế độ hiển thị: sáng (light) hay tối (dark).
@@ -19,9 +33,17 @@ import { darkColors, darkShadow, lightColors, lightShadow } from '../theme';
 
 const STORAGE_KEY = 'theme';
 
-const ThemeContext = createContext(null);
+export interface ThemeValue {
+  scheme: Scheme;
+  setScheme: (scheme: Scheme) => void;
+  colors: Colors;
+  shadow: Shadow;
+  isDark: boolean;
+}
 
-export function ThemeProvider({ children }) {
+const ThemeContext = createContext<ThemeValue | null>(null);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
   /*
    * Cài đặt sáng/tối của chính điện thoại. Trả 'light', 'dark', hoặc null khi
    * chưa đọc được. Người dùng đổi trong Cài đặt máy thì giá trị này tự đổi.
@@ -29,7 +51,7 @@ export function ThemeProvider({ children }) {
   const systemScheme = useColorScheme();
 
   // null = chưa đọc xong ổ đĩa, đang tạm theo máy.
-  const [savedScheme, setSavedScheme] = useState(null);
+  const [savedScheme, setSavedScheme] = useState<Scheme | null>(null);
 
   // Lựa chọn riêng trong app luôn thắng cài đặt máy. Chưa chọn gì thì theo máy.
   const scheme = savedScheme ?? systemScheme ?? 'light';
@@ -53,7 +75,7 @@ export function ThemeProvider({ children }) {
     };
   }, []);
 
-  const setScheme = useCallback((next) => {
+  const setScheme = useCallback((next: Scheme) => {
     setSavedScheme(next);
     // Không await: màn hình phải đổi ngay, còn việc ghi xuống ổ đĩa chậm vài
     // mili giây cũng không ai chờ.
@@ -112,7 +134,9 @@ export function useTheme() {
  *     ...
  *   }
  */
-export function createThemedStyles(make) {
+export function createThemedStyles<T>(
+  make: (colors: Colors, shadow: Shadow, isDark: boolean) => T,
+): Record<Scheme, T> {
   // Tham số thứ ba isDark cho những chỗ cần đổi KÍCH THƯỚC chứ không chỉ màu.
   // Ví dụ: ảnh logo bản tối có vầng sáng toả ra nên phải chừa lề trong ảnh,
   // khiến vòng tròn chiếm ít chỗ hơn — phải phóng to bù lại.
@@ -122,7 +146,12 @@ export function createThemedStyles(make) {
   };
 }
 
-export function useThemedStyles(themed) {
+/*
+ * Kiểu T đi xuyên suốt từ createThemedStyles tới đây, nên trong màn hình
+ * styles.abcXyz sai tên là báo lỗi ngay. Trước đây gõ nhầm tên style chỉ làm
+ * component mất sạch định dạng mà không ai biết vì sao.
+ */
+export function useThemedStyles<T>(themed: Record<Scheme, T>): T {
   const { scheme } = useTheme();
   return themed[scheme];
 }

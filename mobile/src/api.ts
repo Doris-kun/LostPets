@@ -2,6 +2,16 @@ import axios from 'axios';
 import { API_URL, REQUEST_TIMEOUT } from './config';
 import claim from './claim';
 import { getToken, reportUnauthorized } from './context/auth';
+import type {
+  AdminStats,
+  AnalyzeResult,
+  AuthResult,
+  ChatMessage,
+  MatchResult,
+  Pet,
+  PetPage,
+  User,
+} from './types';
 
 /*
  * Gọi back-end. Giống front-end-react/src/api.js, chỉ khác chỗ lấy địa chỉ
@@ -46,43 +56,73 @@ http.interceptors.response.use(
  *
  * Đã đăng nhập mà là chủ tin thì back-end cho qua bằng token, không cần mã.
  */
-const withClaim = (claimCode) => (claimCode ? { headers: { 'x-claim-code': claimCode } } : {});
+const withClaim = (claimCode?: string) =>
+  claimCode ? { headers: { 'x-claim-code': claimCode } } : {};
+
+/*
+ * Tham số lọc gửi lên /pets và /admin/pets.
+ *
+ * Để lỏng (string | number) vì back-end nhận hết rồi tự chuyển đổi, nhưng
+ * vẫn chặn được việc gõ sai TÊN tham số — đó mới là lỗi hay xảy ra.
+ */
+export interface PetQuery {
+  limit?: number;
+  skip?: number;
+  sort?: string;
+  type?: string;
+  species?: string;
+  area?: string;
+  days?: string | number;
+  resolved?: string;
+  q?: string;
+}
+
+/*
+ * Ảnh gửi lên phải đi kèm các trường khác nên luôn là FormData.
+ * Sửa tin KHÔNG kèm ảnh thì gửi JSON thường được — nên nhận cả hai.
+ */
+type PetPayload = FormData | Record<string, unknown>;
 
 export default {
-  getPets: (params) => http.get('/pets', { params }),
+  getPets: (params?: PetQuery) => http.get<PetPage>('/pets', { params }),
   // Kèm mã xác nhận để server biết người xem có phải chủ bài không —
   // chủ bài thì nhận thêm trường đặc điểm bí mật. Mã lấy ở AsyncStorage nên
   // phải await, khác web đọc localStorage ra ngay.
-  getPet: async (id) => http.get(`/pets/${id}`, withClaim(await claim.get(id))),
-  createPet: (data) => http.post('/pets', data),
-  updatePet: (id, data, claimCode) => http.put(`/pets/${id}`, data, withClaim(claimCode)),
-  deletePet: (id, claimCode) => http.delete(`/pets/${id}`, withClaim(claimCode)),
+  getPet: async (id: string) => http.get<Pet>(`/pets/${id}`, withClaim(await claim.get(id))),
+  createPet: (data: PetPayload) => http.post<Pet>('/pets', data),
+  updatePet: (id: string, data: PetPayload, claimCode?: string) =>
+    http.put<Pet>(`/pets/${id}`, data, withClaim(claimCode)),
+  deletePet: (id: string, claimCode?: string) =>
+    http.delete<{ message: string }>(`/pets/${id}`, withClaim(claimCode)),
 
   // AI. Phân tích ảnh mất 10-20 giây, lâu hơn hẳn request thường, nên nới
   // riêng thời gian chờ cho nó thay vì nới cho cả app.
-  analyzeImage: (data) => http.post('/ai/analyze-image', data, { timeout: 60000 }),
+  analyzeImage: (data: FormData) =>
+    http.post<AnalyzeResult>('/ai/analyze-image', data, { timeout: 60000 }),
 
   // Đối chiếu lâu hơn phân tích ảnh nhiều: server phải tải về và so từng
   // ảnh ứng viên. Cho hẳn 2 phút.
-  findMatches: (id) => http.get(`/ai/match/${id}`, { timeout: 120000 }),
+  findMatches: (id: string) => http.get<MatchResult>(`/ai/match/${id}`, { timeout: 120000 }),
 
   // Trợ lý: gửi cả đoạn hội thoại lên mỗi lần, vì server không nhớ gì giữa
   // các lần gọi. Tối đa 20 lượt, mỗi tin 1000 ký tự.
-  chat: (messages) => http.post('/ai/chat', { messages }, { timeout: 60000 }),
+  chat: (messages: ChatMessage[]) =>
+    http.post<{ reply: string }>('/ai/chat', { messages }, { timeout: 60000 }),
 
   // Tài khoản
-  register: (data) => http.post('/auth/register', data),
-  login: (data) => http.post('/auth/login', data),
-  me: () => http.get('/auth/me'),
-  myPets: () => http.get('/pets/mine'),
+  register: (data: { name: string; email: string; password: string }) =>
+    http.post<AuthResult>('/auth/register', data),
+  login: (data: { email: string; password: string }) => http.post<AuthResult>('/auth/login', data),
+  me: () => http.get<User>('/auth/me'),
+  myPets: () => http.get<Pet[]>('/pets/mine'),
 
   /*
    * Quản trị. Back-end chặn cả ba đường này bằng requireAdmin, nên người
    * thường có gọi thẳng cũng chỉ nhận 403 — việc giấu nút đi ở màn Cài đặt
    * chỉ là cho gọn mắt, KHÔNG phải là lớp bảo vệ.
    */
-  adminStats: () => http.get('/admin/stats'),
-  adminPets: (params) => http.get('/admin/pets', { params }),
+  adminStats: () => http.get<AdminStats>('/admin/stats'),
+  adminPets: (params?: PetQuery) => http.get<PetPage>('/admin/pets', { params }),
   // Quản trị viên xoá được bất kỳ tin nào, không cần mã xác nhận.
-  adminDeletePet: (id) => http.delete(`/admin/pets/${id}`),
+  adminDeletePet: (id: string) => http.delete<{ message: string }>(`/admin/pets/${id}`),
 };

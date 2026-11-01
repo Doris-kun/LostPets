@@ -1,6 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { words } from '../word';
+import { words, type Lang, type WordKey } from '../word';
 
 /*
  * Quản lý ngôn ngữ đang dùng (vi / en).
@@ -18,12 +26,23 @@ import { words } from '../word';
  */
 
 const STORAGE_KEY = 'lang';
-const DEFAULT_LANG = 'vi';
+const DEFAULT_LANG: Lang = 'vi';
 
-const LanguageContext = createContext(null);
+export interface LanguageValue {
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+  toggleLang: () => void;
+  /**
+   * Lấy chữ theo tên. Tên phải là một trong 251 key có thật — gõ sai là
+   * TypeScript báo ngay, không đợi tới lúc chữ lạ hiện ra màn hình.
+   */
+  t: (key: WordKey, params?: Record<string, string | number>) => string;
+}
 
-export function LanguageProvider({ children }) {
-  const [lang, setLangState] = useState(DEFAULT_LANG);
+const LanguageContext = createContext<LanguageValue | null>(null);
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>(DEFAULT_LANG);
 
   // Đọc lựa chọn của lần chạy trước. Chạy đúng một lần lúc app mở.
   useEffect(() => {
@@ -44,7 +63,7 @@ export function LanguageProvider({ children }) {
     };
   }, []);
 
-  const setLang = useCallback((nextLang) => {
+  const setLang = useCallback((nextLang: Lang) => {
     setLangState(nextLang);
     // Không await: đổi ngôn ngữ trên màn hình phải xảy ra ngay, còn việc ghi
     // xuống ổ đĩa chậm vài mili giây cũng không ai chờ.
@@ -65,8 +84,8 @@ export function LanguageProvider({ children }) {
    * 'detail.edit' — nhìn là biết ngay thiếu chữ, thay vì một khoảng trống câm.
    */
   const t = useCallback(
-    (key, params) => {
-      let text = words[lang]?.[key] ?? key;
+    (key: WordKey, params?: Record<string, string | number>) => {
+      let text: string = words[lang]?.[key] ?? key;
 
       if (params) {
         for (const [name, value] of Object.entries(params)) {
