@@ -49,9 +49,26 @@ exports.verifyGoogle = async (idToken) => {
   if (!idToken) throw new OAuthError('Thiếu token');
 
   // Danh sách rỗng là lỗi cấu hình phía mình, không phải lỗi người đăng nhập.
-  // Chặn hẳn ở đây vì không rõ thư viện xử lý mảng rỗng ra sao — nếu nó hiểu
-  // là "không cần kiểm aud" thì token của bất kỳ ứng dụng nào cũng lọt.
-  // Chặn trước khối try để thông báo không bị nuốt thành "token không hợp lệ".
+  //
+  // Mảng rỗng KHÔNG gây lỗ hổng — đã đọc google-auth-library, phần kiểm aud là:
+  //
+  //   if (typeof requiredAudience !== 'undefined' && requiredAudience !== null) {
+  //     if (requiredAudience.constructor === Array)
+  //       audVerified = requiredAudience.indexOf(aud) > -1;   // [] -> -1 -> false
+  //     if (!audVerified) throw new Error('Wrong recipient...');
+  //   }
+  //
+  // Mảng rỗng làm indexOf trả -1 nên nó TỪ CHỐI SẠCH, an toàn. Thứ nguy hiểm
+  // là `undefined` hoặc `null`: cả khối bị bỏ qua, token của ứng dụng bất kỳ
+  // cũng lọt. Nên googleAudience() luôn trả về mảng, không bao giờ undefined.
+  //
+  // Vậy dòng chặn này không phải để vá bảo mật, mà để BÁO ĐÚNG BỆNH: không có
+  // nó thì người dùng nhận "Token Google không hợp lệ" trong khi lỗi nằm ở chỗ
+  // mình quên khai biến môi trường. Chặn trước khối try để thông báo không bị
+  // khối catch nuốt mất.
+  //
+  // (authController còn một lớp nữa: thiếu GOOGLE_CLIENT_ID thì trả 503 trước
+  // khi tới được đây.)
   const audience = googleAudience();
   if (audience.length === 0) throw new OAuthError('Chưa cấu hình đăng nhập Google');
 
