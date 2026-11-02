@@ -22,6 +22,11 @@
     // Import ảnh PNG trong require() — RN cho phép, TypeScript cần biết
     "resolveJsonModule": true,
 
+    // Khai bao cua Jest (describe, it, expect) cho cac file trong __tests__
+    // jest: describe/it/expect. node: fs va path cho source.test.ts — bai test
+    // doc ma nguon thay vi chay ma, nen can doc file that.
+    "types": ["jest", "node"],
+
     "paths": {
       "@/*": ["./src/*"]
     }
