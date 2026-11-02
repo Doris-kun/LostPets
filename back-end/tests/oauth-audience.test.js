@@ -64,10 +64,21 @@ describe('danh sách aud được chấp nhận', () => {
   });
 
   it('không hề gọi thư viện khi chưa khai mã nào', async () => {
-    // Quan trọng: mảng rỗng có thể bị hiểu là "khỏi kiểm aud", mà khỏi kiểm
-    // thì token của ứng dụng bất kỳ cũng đăng nhập được vào đây.
     await expect(verifyGoogle('token-gia')).rejects.toThrow(OAuthError);
     expect(mockVerifyIdToken).not.toHaveBeenCalled();
+  });
+
+  it('không bao giờ truyền undefined hay null xuống thư viện', async () => {
+    // Đây mới là giá trị nguy hiểm. google-auth-library bỏ qua TOÀN BỘ bước
+    // kiểm aud khi nhận undefined hoặc null, tức token của ứng dụng bất kỳ
+    // cũng đăng nhập được. Mảng rỗng thì ngược lại, nó từ chối sạch.
+    // Test này canh để lần sau ai đó đừng viết lại thành một biến trần.
+    process.env.GOOGLE_CLIENT_ID = WEB;
+    await verifyGoogle('token-gia');
+    const aud = audiencePassed();
+    expect(Array.isArray(aud)).toBe(true);
+    expect(aud).not.toBeUndefined();
+    expect(aud).not.toBeNull();
   });
 
   it('báo đúng là lỗi cấu hình, không đổ cho token', async () => {
