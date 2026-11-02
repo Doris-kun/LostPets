@@ -32,6 +32,20 @@ exports.googleConfigured = () => Boolean(process.env.GOOGLE_CLIENT_ID);
 //
 // filter(Boolean) bỏ các biến chưa khai, nên thiếu mã mobile thì web vẫn chạy
 // bình thường thay vì gãy.
+// Báo đã khai hay chưa, KHÔNG trả về giá trị.
+//
+// Có để kiểm được từ ngoài rằng biến môi trường đã tới nơi. Biến back-end
+// không lộ ra đâu cả — đúng như phải thế — nên khai thiếu một biến là im lặng
+// hoàn toàn cho tới lúc có người đăng nhập hỏng. Dự án này đã mất một buổi vì
+// đúng kiểu im lặng đó ở phía front-end.
+//
+// An toàn vì client ID là mã công khai, mà ở đây còn không trả cả mã, chỉ trả
+// true/false.
+exports.googleMobileConfigured = () => ({
+  ios: Boolean(process.env.GOOGLE_CLIENT_ID_IOS),
+  android: Boolean(process.env.GOOGLE_CLIENT_ID_ANDROID),
+});
+
 const googleAudience = () =>
   [
     process.env.GOOGLE_CLIENT_ID,

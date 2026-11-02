@@ -247,7 +247,32 @@ describe('GET /auth/providers', () => {
   it('cho front-end biết nên vẽ nút nào', async () => {
     const res = await request(app).get('/auth/providers');
 
-    expect(res.body).toEqual({ google: true, facebook: true });
+    expect(res.body).toEqual({
+      google: true,
+      facebook: true,
+      googleMobile: { ios: false, android: false },
+    });
+  });
+
+  it('báo biến cho app mobile đã khai hay chưa', async () => {
+    process.env.GOOGLE_CLIENT_ID_IOS = 'ios-test.apps.googleusercontent.com';
+
+    const res = await request(app).get('/auth/providers');
+    expect(res.body.googleMobile).toEqual({ ios: true, android: false });
+
+    delete process.env.GOOGLE_CLIENT_ID_IOS;
+  });
+
+  it('không bao giờ trả về giá trị của mã, chỉ true/false', async () => {
+    const secretish = 'khong-duoc-lo-ra-ngoai.apps.googleusercontent.com';
+    process.env.GOOGLE_CLIENT_ID_ANDROID = secretish;
+
+    const res = await request(app).get('/auth/providers');
+    // Mã client vốn công khai, nhưng endpoint này không có lý do gì để phát
+    // tán chúng. Trả đúng thứ cần trả.
+    expect(JSON.stringify(res.body)).not.toContain(secretish);
+
+    delete process.env.GOOGLE_CLIENT_ID_ANDROID;
   });
 
   it('báo false cho nhà cung cấp chưa cấu hình', async () => {
