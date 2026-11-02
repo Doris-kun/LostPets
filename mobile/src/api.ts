@@ -127,6 +127,22 @@ export default {
     http.post<AuthResult>('/auth/register', data),
   login: (data: { email: string; password: string }) => http.post<AuthResult>('/auth/login', data),
   me: () => http.get<User>('/auth/me'),
+
+  /*
+   * Đăng nhập bằng Google / Facebook.
+   *
+   * App KHÔNG tự xác minh gì cả: nó chỉ lấy được một tờ giấy chứng nhận từ
+   * Google hoặc Facebook rồi chuyển thẳng lên back-end. Back-end mới là nơi
+   * hỏi lại Google/Facebook xem tờ giấy đó có thật không.
+   *
+   * Phải làm vậy vì app nằm trong tay người dùng — ai cũng mở ra sửa được.
+   * Tin lời app nói "tôi là user X" là ai cũng đăng nhập thành ai cũng được.
+   */
+  authProviders: () => http.get<{ google: boolean; facebook: boolean }>('/auth/providers'),
+  // credential = ID token của Google. Tên trường phải khớp đúng back-end.
+  googleLogin: (data: { credential: string }) => http.post<AuthResult>('/auth/google', data),
+  facebookLogin: (data: { accessToken: string }) =>
+    http.post<AuthResult>('/auth/facebook', data),
   // Tra ve { pets, total } chu khong phai mang tran - xem list_my_pets
   // trong api/controllers/petController.js.
   myPets: () => http.get<PetPage>('/pets/mine'),

@@ -52,7 +52,8 @@
         {
           "locationWhenInUsePermission": "LostPets dùng vị trí của bạn để đánh dấu nơi mất hoặc nơi nhặt được thú cưng trên bản đồ. Vị trí được làm mờ thành một vùng rộng khoảng 500m trước khi lưu."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

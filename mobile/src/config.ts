@@ -42,6 +42,37 @@ const PRODUCTION_URL = '';
  */
 export const WEB_URL = 'https://lostpets-1.onrender.com';
 
+/*
+ * MÃ ỨNG DỤNG để đăng nhập Google / Facebook.
+ *
+ * Đây KHÔNG phải mật khẩu. Client ID là thứ công khai, nằm ngay trong mã
+ * nguồn của mọi app dùng Google — phần bí mật (client secret) chỉ back-end
+ * giữ. Nên để thẳng ở đây là đúng, không cần giấu.
+ *
+ * CHƯA ĐIỀN. Cách lấy, vào console.cloud.google.com > APIs & Services >
+ * Credentials > Create OAuth client ID, tạo HAI cái:
+ *
+ *   iOS      — nhập Bundle ID:  com.lostpets.app
+ *   Android  — nhập Package:    com.lostpets.app
+ *              và dấu vân tay SHA-1 của khoá ký (lấy bằng:
+ *              eas credentials -p android)
+ *
+ * Google BẮT BUỘC mỗi nền tảng một mã riêng, không dùng chung mã của web
+ * được. Và vì vậy back-end phải chấp nhận cả ba mã — xem ghi chú trong
+ * api/lib/oauth.js, chỗ "audience".
+ *
+ * Để trống thì nút Google tự ẩn đi, phần còn lại của app vẫn chạy bình thường.
+ */
+export const GOOGLE_CLIENT_ID_IOS = '';
+export const GOOGLE_CLIENT_ID_ANDROID = '';
+
+/*
+ * Facebook chỉ cần MỘT mã cho mọi nền tảng, khác Google.
+ * Lấy ở developers.facebook.com, và nhớ bật thêm nền tảng iOS/Android trong
+ * phần cài đặt của chính app Facebook đó.
+ */
+export const FACEBOOK_APP_ID = '';
+
 const PORT = 3000;
 
 /*

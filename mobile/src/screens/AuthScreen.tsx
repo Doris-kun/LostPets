@@ -13,6 +13,7 @@ import {
 import type { ComponentProps } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import api, { errorStatus } from '../api';
+import SocialLogin from '../components/SocialLogin';
 import type { RootStackParamList } from '../types';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
@@ -184,6 +185,15 @@ export default function AuthScreen({ navigation }: Props) {
             </Text>
           )}
         </TouchableOpacity>
+
+        {/*
+          Đặt DƯỚI phần email chứ không phải trên.
+
+          Trên web nút mạng xã hội hay nằm trên cùng, nhưng ở đây đăng nhập
+          bằng email là cách DUY NHẤT chắc chắn chạy được — hai nút kia còn
+          tuỳ back-end có bật không. Để thứ chắc chắn chạy lên trước.
+        */}
+        <SocialLogin />
 
         <Text style={styles.note}>{t('auth.guestText')}</Text>
       </ScrollView>
