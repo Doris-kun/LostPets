@@ -109,6 +109,30 @@ npm test
 
 Test dùng `mongodb-memory-server` nên không cần MongoDB thật, cũng không cần `.env`.
 
+### Nhúng vector cho ô tìm kiếm
+
+```bash
+cd back-end
+npm run embed           # nhúng những tin còn thiếu vector
+npm run embed -- --all  # nhúng lại toàn bộ (khi đổi model hoặc số chiều)
+```
+
+Tin đăng mới tự nhúng ngầm. Chạy lệnh này cho tin đăng **trước khi** có tính năng tìm kiếm, hoặc cho tin đăng đúng lúc Gemini hết quota. Cần `GEMINI_API_KEY` và `MONGODB_URI` trong `.env`. Chạy lại nhiều lần đều an toàn — nó chỉ ghi thêm trường `embedding`, không đụng nội dung tin.
+
+### Vá ảnh mẫu đã chết
+
+```bash
+cd back-end
+npm run fix-images            # chỉ xem trước, KHÔNG ghi gì
+npm run fix-images -- --apply # ghi thật
+```
+
+Ảnh của dữ liệu mẫu nằm trên máy chủ người khác, mà máy chủ thì sập — `cataas.com` chết là cả 8 tin mèo trắng bóc cùng lúc. Script gọi thử từng ảnh, chỉ đụng vào ảnh thật sự chết, và **gọi thử cả ảnh thay thế trước khi ghi** để khỏi đổi từ host chết này sang host chết khác.
+
+**Không bao giờ đụng vào ảnh trên Cloudinary.** Đó là ảnh người dùng tự tải lên — ảnh thật của con vật thật. Ảnh đó chết thì script chỉ in ra cảnh báo để người xử lý, chứ lặng lẽ thay bằng một con mèo ngẫu nhiên trên mạng là việc khác hẳn.
+
+> Giao diện đã có đường lui rồi (`PetPhoto` rơi về ô "chưa có ảnh" khi tải hỏng), nên script này chỉ để dữ liệu demo nhìn đẹp, không phải để web chạy được.
+
 ---
 
 ## 3. Quy trình làm việc trên Git
@@ -237,6 +261,7 @@ Tham số query, tất cả đều tuỳ chọn:
 
 | Tham số | Kiểu | Ý nghĩa |
 |---|---|---|
+| `q` | string | tìm kiếm theo nghĩa, tối đa 200 ký tự — xem mục dưới |
 | `type` | `lost` hoặc `found` | lọc theo loại tin |
 | `species` | string | lọc theo loài, khớp một phần, không phân biệt hoa thường |
 | `breed` | string | lọc theo giống, khớp một phần |
@@ -259,6 +284,57 @@ Phản hồi `200`:
 
 `total` là tổng số bản ghi **khớp bộ lọc**, không phải số bản ghi trả về trong trang hiện tại. Dùng nó để tính số trang.
 
+#### Tìm kiếm theo nghĩa (`q`)
+
+Gửi `q` thì server nhúng câu hỏi thành vector bằng Gemini rồi xếp hạng các tin theo độ gần. Người dùng mô tả bằng lời thường — *"chó nâu chân ngắn mất gần công viên"* — không cần trúng từ nào trong tin.
+
+**Vector chỉ được quyền sắp thứ tự, không được quyền loại bỏ.** Các bộ lọc cứng (`type`, `species`, `area`, `days`…) vẫn chặn trước như cũ; `q` chỉ sắp xếp lại phần còn lại. Có `q` thì `sort` bị bỏ qua.
+
+Lý do không cắt theo ngưỡng điểm — đã đo thật trên dữ liệu tiếng Việt:
+
+| Câu hỏi | Điểm cao nhất |
+|---|---|
+| `chó Corgi nâu trắng quận 1` (thật) | 0.788 |
+| `mèo tam thể` (thật) | 0.715 |
+| **`xe máy Honda Wave bị mất`** (rác) | **0.646** |
+| `0987654321` (thật, tra số điện thoại) | **0.639** |
+
+Câu rác ăn điểm cao hơn câu thật. Không có ngưỡng nào vừa giữ được câu thật vừa chặn được câu rác, nên đừng thêm. Và với web tìm thú cưng thì bỏ sót nguy hiểm hơn thừa: thấy nhầm một con chó hơi giống thì mất hai giây, giấu mất con chó của người ta thì mất luôn.
+
+**Khớp nguyên văn luôn đứng trên** mọi kết quả xếp theo nghĩa. Dành cho người gõ thẳng mã tin, số điện thoại hay tên riêng — những thứ cần chắc chắn chứ không cần "khả năng cao".
+
+Nhúng chạy **ngầm** sau khi lưu tin, nên tin mới đăng có thể chưa tìm theo nghĩa được trong vài giây. Gemini lỗi thì tin vẫn đăng bình thường, chỉ là vector rỗng — tin đó vẫn hiện trong danh sách, chỉ xếp sau. Chạy `npm run embed` để nhúng bù.
+
+Chỉ nhúng lại khi `type`, `name`, `species`, `breed`, `color`, `area` hoặc `description` thay đổi. Bấm "Đã tìm thấy" hay đổi số điện thoại không làm vector sai đi.
+
+`contact` và `secretDetail` **không được nhúng**. `secretDetail` là bí mật dùng để xác minh chủ thật — đưa nó vào vector là làm rò theo một đường khác.
+
+Model `gemini-embedding-001`, **768 chiều**. Đây là số đo được chứ không phải chọn bừa: 256 chiều cho độ chính xác xếp hạng như nhau nhưng tách câu rác kém hẳn (rác lên tới 0.761), còn 3072 chiều không khá hơn 768 mà nặng gấp bốn. 768 số kiểu double là ~6KB mỗi tin, 500 tin hết 3MB.
+
+> Việc xếp hạng chạy trong bộ nhớ Node, đọc tối đa 500 tin mỗi lượt tìm. Quá ngưỡng đó thì phải chuyển sang Atlas Vector Search.
+
+### `GET /pets/map` — dữ liệu cho bản đồ
+
+Nhận **đúng những tham số lọc của `GET /pets`** (kể cả `q`), bỏ qua `sort`, `limit` và `skip`.
+
+Phản hồi `200`:
+
+```json
+{ "pets": [ ... ], "total": 14, "withoutCoords": 5, "capped": false }
+```
+
+Khác `GET /pets` ở ba điểm, và cả ba đều có lý do:
+
+| Điểm khác | Vì sao |
+|---|---|
+| Chỉ trả tin **đã ghim toạ độ** | tin không có `lat`/`lng` thì không vẽ lên được |
+| **Không phân trang**, chặn cứng ở 500 tin | không thể vẽ nửa bản đồ rồi bắt bấm "xem thêm"; chạm ngưỡng thì `capped: true` chứ không âm thầm giấu |
+| Chỉ gửi `_id postId type name breed color area image lat lng resolved` | màn hình chỉ vẽ chấm tròn và popup nhỏ, kéo nguyên 500 mô tả dài về là phí vài MB |
+
+`withoutCoords` là số tin **khớp bộ lọc nhưng không vẽ được** vì thiếu toạ độ. Giao diện hiện con số này để người dùng biết bản đồ không phải toàn bộ sự thật.
+
+> Đừng gọi `GET /pets` kèm `limit` cao cho bản đồ. Server chặn cứng `Math.min(limit, 50)`, nên bản đồ sẽ mất tin mà không báo gì — đúng cái lỗi endpoint này sinh ra để sửa.
+
 ### `POST /pets` — đăng tin mới
 
 Gửi dạng `multipart/form-data` nếu có ảnh (field tên `image`, 1 file). Không có ảnh thì gửi JSON cũng được.
@@ -280,6 +356,8 @@ Gửi dạng `multipart/form-data` nếu có ảnh (field tên `image`, 1 file).
 Phản hồi `201`: object pet vừa tạo, **kèm trường `claimCode`**. Server tự sinh `postId` dạng `L-XXXXXX` cho tin lost, `F-XXXXXX` cho tin found.
 
 `claimCode` là mã xác nhận, **chỉ trả về đúng lần này**. Database chỉ lưu bản băm SHA-256 nên không có cách nào đọc lại. Front-end lưu mã vào `localStorage` để người đăng sửa/xoá được sau.
+
+Front-end **không hiện mã này ra màn hình lúc đăng**. Toast chỉ sống 3 giây, không ai chép kịp 10 ký tự hex, nên hiện ra vừa vô dụng vừa khiến người dùng tưởng mình đang đánh mất thứ gì đó quan trọng. `localStorage` mới là chỗ làm việc thật — nó tự gắn mã vào header mỗi lần sửa. Ai cần mang mã sang máy khác thì vào trang chi tiết tin bấm "Xem mã xác nhận".
 
 Thiếu trường bắt buộc thì nhận `400` với body `{ "message": "All fields are required" }`.
 
@@ -307,7 +385,15 @@ Tin đã có chủ thì khách vãng lai không sửa được, kể cả khi ti
 
 **Chỉ những trường này sửa được**: `type`, `name`, `species`, `breed`, `color`, `area`, `contact`, `description`, `resolved`, `secretDetail`, `lat`, `lng`. Gửi thêm trường khác thì bị bỏ qua chứ không báo lỗi.
 
-`owner`, `claimHash`, `postId` và `date` **cố tình không cho sửa** — mở ra thì ai sửa được tin cũng chiếm được quyền sở hữu, khoá tin lại bằng mã của mình, hoặc đổi ngày để tin nằm mãi ở đầu danh sách.
+`owner`, `claimHash`, `postId`, `date` và `resolvedAt` **cố tình không cho sửa** — mở ra thì ai sửa được tin cũng chiếm được quyền sở hữu, khoá tin lại bằng mã của mình, đổi ngày để tin nằm mãi ở đầu danh sách, hoặc tự hoãn hạn xoá của tin mình.
+
+#### Đánh dấu đoàn tụ
+
+Gửi `resolved: true` thì server tự đóng dấu `resolvedAt` là thời điểm hiện tại — đây là lúc đồng hồ đếm ngược tới đợt dọn tự động bắt đầu chạy (xem mục 7). Gửi `resolved: false` thì `resolvedAt` về `null` và đồng hồ dừng hẳn.
+
+Chỉ đóng dấu khi trạng thái **thật sự đổi** từ chưa sang rồi. Sửa nội dung một tin đã đoàn tụ mà form gửi kèm `resolved: true` thì mốc cũ giữ nguyên, không bị đẩy lùi thêm một kỳ hạn nữa.
+
+Gửi qua form thì boolean thành chuỗi, mà `Boolean('false')` lại ra `true` — server xử lý riêng nên `resolved: 'false'` vẫn hiểu đúng là bỏ đánh dấu.
 
 #### Đổi ảnh
 
@@ -328,6 +414,24 @@ Lý do không cho gửi URL dạng chuỗi: ai sửa được tin sẽ trỏ ả
 Server lưu `public_id` của ảnh vào trường `imageId` (`select: false`, không bao giờ trả ra API) để còn biết đường gọi xoá. Tin đăng trước khi có trường này chỉ có URL — code tự moi `public_id` ra từ URL nên vẫn dọn được.
 
 Ảnh vượt 5MB nhận `413`, tệp không phải ảnh nhận `400`, Cloudinary lỗi nhận `502` — tất cả đều là JSON có `message`.
+
+### `POST /pets/:petId/report` — báo cáo tin xấu
+
+```json
+{ "reason": "scam", "note": "Người này đòi tiền chuộc" }
+```
+
+`reason` bắt buộc, phải là một trong: `scam`, `fake_image`, `wrong_contact`, `offensive`, `duplicate`, `other`. `note` tuỳ chọn, cắt ở 500 ký tự. Trả `201` kèm đúng một câu xác nhận.
+
+**Không cần đăng nhập.** Người cần báo cáo nhất thường là người *không* có tài khoản — họ không đăng tin nào cả, số điện thoại của họ bị kẻ khác đem đi đăng tin giả. Bắt đăng nhập là chặn đúng người cần kênh này nhất.
+
+**Phản hồi cố ý không nói tin đã bị báo cáo bao nhiêu lần.** Lộ con số đó thì kẻ xấu biết mình đã dồn đủ chưa, người thường thì đoán ra tin nào sắp bị gỡ.
+
+| Mã | Khi nào |
+|---|---|
+| `400` | thiếu `reason`, hoặc `reason` không nằm trong danh sách |
+| `404` | không có tin nào với `petId` đó |
+| `429` | quá 20 lượt/giờ/IP (`REPORT_RATE_LIMIT`) |
 
 ### `DELETE /pets/:petId` — xoá
 
@@ -351,15 +455,20 @@ Server lưu `public_id` của ảnh vào trường `imageId` (`select: false`, k
   "image": "https://res.cloudinary.com/.../lost-pets/abc.jpg",
   "description": "Mất chiều 12/10 gần công viên",
   "resolved": false,
+  "resolvedAt": null,
   "date": "2026-10-12T09:30:00.000Z"
 }
 ```
+
+`resolvedAt` là lúc tin được đánh dấu đoàn tụ, và là đồng hồ đếm ngược tới đợt dọn tự động (xem mục 7). Bỏ đánh dấu thì nó về `null` và đồng hồ dừng hẳn. Đây **không phải** trường gửi lên được: server tự đặt, gửi `resolvedAt` trong body thì bị bỏ qua — nếu không thì ai cũng hoãn hoặc ép xoá tin bằng một dòng body. Đừng nhầm với `date` là ngày đăng.
 
 **Toạ độ luôn được làm mờ trước khi lưu**: làm tròn về lưới 0,005 độ (khoảng 500m) ngay ở setter của model, nên bản chính xác không bao giờ nằm trong database. Thú cưng thường mất gần nhà, ghim chính xác là công khai địa chỉ nhà người đăng — ghép với số điện thoại hiện ngay bên cạnh thì quá nguy hiểm. Giao diện vẽ một vòng tròn bán kính 500m thay vì một chấm, để thể hiện đúng độ chính xác thật sự.
 
 `lat` và `lng` là `null` khi người đăng không chọn vị trí. Server chỉ nhận khi **có đủ cả hai** và nằm trong khoảng hợp lệ; gửi một trong hai, gửi chữ, hay gửi số ngoài khoảng thì bỏ qua cả cặp. Gửi `null` là xoá vị trí.
 
 `image` là chuỗi rỗng khi tin không có ảnh — nhớ xử lý trường hợp này ở front-end.
+
+Model còn có trường `embedding` (vector 768 chiều cho ô tìm kiếm) nhưng nó `select: false` nên **không bao giờ xuất hiện trong response**. Đừng trông đợi nó ở front-end.
 
 ### `POST /ai/analyze-image` — AI đọc ảnh, điền giúp thông tin
 
@@ -431,7 +540,7 @@ Body JSON:
 {
   "messages": [
     { "role": "user", "content": "làm sao đăng tin" },
-    { "role": "assistant", "content": "Bạn bấm nút Đăng Báo Cáo..." },
+    { "role": "assistant", "content": "Bạn bấm nút Đăng tin..." },
     { "role": "user", "content": "không biết giống thì sao" }
   ]
 }
@@ -487,6 +596,52 @@ Body JSON: `email`, `password`. Phản hồi giống `register`.
 
 Sai email hoặc sai mật khẩu đều trả `401` với **cùng một thông báo**, để không lộ email nào đã có trong hệ thống.
 
+### Đăng nhập bằng Google và Facebook
+
+| Endpoint | Gửi gì | Việc |
+|---|---|---|
+| `GET /auth/providers` | — | `{ google, facebook }`: front-end hỏi để biết nên vẽ nút nào |
+| `POST /auth/google` | `{ credential }` — ID token từ Google Identity Services | trả `{ token, user }` y như `/auth/login` |
+| `POST /auth/facebook` | `{ accessToken }` — token từ Facebook JS SDK | trả `{ token, user }` |
+
+Cả hai trả về **JWT của chính dự án này**, không phải token của nhà cung cấp. Phần còn lại của web không biết và không cần biết người dùng đã đăng nhập bằng cách nào.
+
+#### Quy tắc gắn tài khoản
+
+Đây là chỗ dễ sai nhất, nên viết rõ. Khi nhận một hồ sơ từ nhà cung cấp:
+
+1. Đã có tài khoản mang đúng **mã định danh** đó → đăng nhập vào tài khoản đó.
+2. Chưa có, nhưng **email trùng** một tài khoản cũ → gắn thêm, **với điều kiện nhà cung cấp khẳng định email đã xác minh**.
+3. Không trùng gì → tạo tài khoản mới, **không có mật khẩu**.
+
+Điều kiện "đã xác minh" ở bước 2 không phải thủ tục cho đẹp. Nhận cả email chưa xác minh thì kẻ gian chỉ cần tạo một tài khoản ở nhà cung cấp mang email `nam@gmail.com` — không phải chứng minh mình sở hữu hộp thư đó — rồi đăng nhập vào đây và **chiếm trọn tài khoản của người tên Nam, kèm mọi tin đã đăng**. Khi từ chối, server trả `403`.
+
+**Khớp theo mã định danh chứ không theo email.** Người ta đổi được email Google của mình; nếu hệ thống chỉ nhận ra nhau qua email thì đổi xong là mất tài khoản. Mã định danh lưu ở `user.google` / `user.facebook`, cả hai đều `select: false` nên không bao giờ lọt ra API.
+
+Một người gắn được **cả hai** nhà cung cấp vào cùng một tài khoản, và vẫn đăng nhập bằng mật khẩu như cũ nếu tài khoản vốn có mật khẩu.
+
+#### Hai điểm an toàn không được bỏ
+
+- **Google**: `verifyIdToken` phải truyền `audience`. Không kiểm `aud` thì ID token lấy từ **bất kỳ web nào khác** cũng đăng nhập được vào đây.
+- **Facebook**: phải gọi `debug_token` và đối chiếu `app_id` với app của mình. Token Facebook là token *mang đi được* — chủ một web bất kỳ xin được token của chính người dùng họ, rồi dùng token đó đăng nhập vào đây. Google kiểm sẵn giúp qua `aud`, Facebook thì phải tự làm.
+
+#### Tài khoản không có mật khẩu
+
+`passwordHash` chuyển thành bắt buộc **có điều kiện**: chỉ bắt buộc khi tài khoản không gắn nhà cung cấp nào.
+
+Người tạo tài khoản bằng Google mà đi gõ mật khẩu ở form đăng nhập sẽ nhận `401` **cùng một câu thông báo** với trường hợp sai mật khẩu. Cố ý giữ một câu chung: nói "tài khoản này đăng nhập bằng Google" là để lộ email nào đã đăng ký và đăng ký kiểu gì. Phải chặn trước khi gọi `bcrypt.compare`, vì truyền `undefined` vào đó là ném lỗi và người dùng nhận `500` thay vì `401`.
+
+#### Cấu hình
+
+| Nơi | Biến |
+|---|---|
+| Back-end (Render) | `GOOGLE_CLIENT_ID`, `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` |
+| Front-end (lúc build) | `VUE_APP_GOOGLE_CLIENT_ID`, `VUE_APP_FACEBOOK_APP_ID` |
+
+Nút chỉ hiện khi **đủ cả hai phía**. Thiếu bên nào thì nút ẩn đi và phần đăng nhập bằng mật khẩu vẫn chạy bình thường — giống cách `JWT_SECRET` tắt hẳn phần đăng nhập mà không làm sập web.
+
+> Biến `VUE_APP_*` được nhúng vào bundle **lúc build**, không đọc lúc chạy. Đổi giá trị trên Render thì phải build lại front-end mới có tác dụng.
+
 ### `GET /pets/mine` — tin của chính mình
 
 Cần `Authorization: Bearer <token>`. Trả về `{ pets, total }` gồm các tin do tài khoản đó đăng, mới nhất trước.
@@ -511,6 +666,7 @@ Mọi endpoint dưới đây cần `Authorization: Bearer <token>` của tài kh
 {
   "total": 19, "lost": 11, "found": 8, "resolved": 3, "open": 16,
   "withImage": 19, "users": 2, "resolvedRate": 16,
+  "pendingCleanup": 1, "cleanupDays": 30,
   "topAreas":  [{ "label": "Quận 1, TP.HCM", "count": 3 }],
   "topBreeds": [{ "label": "Corgi", "count": 2 }]
 }
@@ -526,6 +682,52 @@ Trả về `{ pets, total }`. Mỗi tin kèm `owner` là `{ name, email }` nếu
 
 Xoá bất kỳ tin nào, không cần mã xác nhận.
 
+### `POST /admin/cleanup` — dọn tin đã đoàn tụ
+
+Xoá hẳn những tin có `resolved: true` và `resolvedAt` cũ hơn `CLEANUP_AFTER_DAYS` ngày (mặc định 30), kèm ảnh trên Cloudinary.
+
+```json
+{ "deleted": 2, "stamped": 0, "days": 30 }
+```
+
+`stamped` là số tin đã đoàn tụ từ trước khi có trường `resolvedAt`, được đóng dấu mốc "bây giờ" trong lượt chạy này. Chúng **không** bị xoá ở cùng lượt — mỗi tin luôn được hưởng trọn kỳ hạn kể từ lúc có mốc. Cố ý không suy mốc cũ ra từ `date`: đoán sai một tin là xoá nhầm tin của người ta.
+
+**Hai đường vào:**
+
+| Cách gọi | Dùng khi |
+|---|---|
+| `Authorization: Bearer <token>` admin | quản trị viên bấm nút "Dọn ngay" trên trang quản trị |
+| `x-cleanup-token: <CLEANUP_TOKEN>` | cron gọi vào, vì cron không đăng nhập được nên không có JWT |
+
+Chưa đặt `CLEANUP_TOKEN` thì đường thứ hai **đóng hẳn**, chỉ còn admin bấm tay. Mặc định phải là đóng, không thì quên đặt biến môi trường là ai cũng gọi được endpoint xoá hàng loạt. So sánh mã dùng `crypto.timingSafeEqual` trên bản băm của hai chuỗi — băm trước để hai buffer luôn đủ 32 byte, vì chính độ dài mã cũng là một manh mối cho người đang dò.
+
+**Hẹn giờ chạy** nằm ở [`.github/workflows/cleanup.yml`](.github/workflows/cleanup.yml), 19:00 UTC mỗi ngày (02:00 giờ Việt Nam). Cần hai secret trong repo (Settings → Secrets and variables → Actions):
+
+- `API_URL` — địa chỉ back-end trên Render, không có dấu `/` ở cuối
+- `CLEANUP_TOKEN` — đúng chuỗi đã đặt trong biến môi trường của Render
+
+Không đặt `setInterval` hay `node-cron` trong app vì Render gói miễn phí cho web service ngủ sau 15 phút không ai truy cập: instance ngủ thì không có gì chạy cả. Hẹn giờ từ bên ngoài thì chính request đó đánh thức dịch vụ dậy.
+
+**Vì sao không dùng TTL index của MongoDB**, dù cách đó không tốn dòng code nào: TTL xoá thẳng dưới tầng database nên code của app không chạy, ảnh trên Cloudinary bị bỏ lại vĩnh viễn và không còn tin nào trỏ tới để biết đường dọn. Đổi vài chục dòng code lấy một đống rác không bao giờ dọn được thì không đáng.
+
+> Đổi `CLEANUP_AFTER_DAYS` thì nhớ sửa luôn hai chuỗi dịch `detail.resolvedExpiry` trong `front-end/src/i18n.js` và dòng nói về 30 ngày trong `SYSTEM_INSTRUCTION` của `chatController.js`, không thì giao diện nói một đằng hệ thống làm một nẻo.
+
+### Hàng chờ báo cáo
+
+| Endpoint | Việc |
+|---|---|
+| `GET /admin/reports?page=1` | hàng chờ, mới nhất trước, 20 dòng mỗi trang, kèm tin bị báo cáo |
+| `DELETE /admin/reports/:reportId` | bỏ qua một báo cáo — xem rồi, tin không sao |
+| `DELETE /admin/pets/:petId` | xoá tin, **kèm mọi báo cáo về tin đó** |
+
+`GET /admin/stats` trả thêm `openReports` để trang quản trị hiện số đỏ.
+
+**Luật không được phá: không bao giờ tự ẩn hay tự xoá tin theo số lượt báo cáo.** Cho số lượt tự ẩn thì kẻ xấu mở ba tab trình duyệt là chôn được tin thật của một người đang đi tìm chó. Hiện nhầm một tin rác thì người ta lướt qua mất hai giây; ẩn nhầm tin thật thì con vật không về. Đây là cùng một nguyên tắc với ô tìm kiếm và bán kính trên bản đồ: **bỏ sót tốn kém hơn hiện thừa**. Có một test canh đúng điều này (`report.test.js`, "không có quy tắc nào tự ẩn tin").
+
+Chặn trùng ("bạn đã báo cáo tin này") chỉ nằm ở `localStorage`, là **ma sát chống bấm bừa chứ không phải bảo mật** — xoá dữ liệu trình duyệt là báo cáo lại được. Chặn thật nằm ở bộ đếm tần suất theo IP. Bộ đếm đó dùng `scope: 'pets:report'` để tính chung mọi tin; bỏ `scope` đi thì khoá đếm lấy theo đường dẫn, mà đường dẫn chứa `:petId`, nên mỗi tin một hạn mức riêng và spam 20 lượt cho từng tin vẫn lọt.
+
+> Bỏ qua báo cáo là **xoá hẳn dòng đó**, không đánh dấu "đã xử lý". Hàng chờ này để hành động, không phải để lưu trữ.
+
 ## 8. Giới hạn tần suất
 
 Đếm theo IP, trong bộ nhớ của tiến trình. Vượt ngưỡng thì nhận `429` kèm header `Retry-After`.
@@ -535,12 +737,67 @@ Xoá bất kỳ tin nào, không cần mã xác nhận.
 | `/ai/*` (mỗi endpoint đếm riêng) | 30 lượt / 10 phút | `AI_RATE_LIMIT` |
 | `POST /auth/register` | 30 lượt / giờ | `REGISTER_RATE_LIMIT` |
 | `POST /auth/login` | 20 lượt / 15 phút | `LOGIN_RATE_LIMIT` |
+| `POST /auth/google`, `POST /auth/facebook` | 30 lượt / giờ (đếm chung) | `REGISTER_RATE_LIMIT` |
+| `GET /pets` **khi có `q`** | 60 lượt / 10 phút | `SEARCH_RATE_LIMIT` |
+| `POST /pets/:petId/report` | 20 lượt / giờ | `REPORT_RATE_LIMIT` |
+
+Tìm kiếm bị đếm vì mỗi lượt gọi Gemini để nhúng câu hỏi. Duyệt danh sách bình thường (không có `q`) **không** bị đếm, nên cuộn trang chủ bao nhiêu cũng được.
 
 Các endpoint AI đều tốn quota Gemini nên phải chặn vòng lặp tự động. Ngưỡng đăng ký đặt rộng vì cả một lớp học có thể dùng chung một IP.
 
 > Bộ đếm nằm trong bộ nhớ nên nếu sau này chạy nhiều instance thì mỗi instance đếm riêng, phải chuyển sang bộ đếm dùng chung như Redis.
 
-## 9. Quy tắc chung
+## 9. Dữ liệu lưu trong trình duyệt
+
+Front-end giữ vài thứ trong `localStorage`. Không có gì được gửi lên server ngoài mã xác nhận lúc sửa/xoá tin.
+
+| Khoá | Nội dung | Module |
+|---|---|---|
+| `claim:<petId>` | mã xác nhận của tin đó | `src/claim.js` |
+| `nudge:ask:<petId>` | sớm nhất bao giờ được hỏi lại về tin đó (mốc ms) | `src/nudge.js` |
+| `nudge:scan` | sớm nhất bao giờ được dò lại toàn bộ (mốc ms) | `src/nudge.js` |
+| `map:me` | vị trí người dùng lần gần nhất, để bản đồ mở ra đúng chỗ | `components/PetMap.vue` |
+| `report:<petId>` | đã báo cáo tin này rồi | `src/report.js` |
+| `lang` | ngôn ngữ đang chọn | `src/i18n.js` |
+| `token`, `user` | phiên đăng nhập | `src/auth.js` |
+
+`claim.list()` lọc theo tiền tố `claim:` nên không dính các khoá khác — lưu ý khi đặt tên khoá mới, đừng bắt đầu bằng `claim:`.
+
+### Dải nhắc "tìm được chưa?"
+
+`components/ResolveNudge.vue` nằm trong `App.vue`, chạy một lần mỗi lần tải trang.
+
+Nút "Đã tìm thấy" trên trang chi tiết gần như không ai bấm, vì người ta đoàn tụ xong là quên website này tồn tại. Mà cuộc đoàn tụ diễn ra **ngoài đời**: không có nhắn tin, không có thông báo, không có giao dịch — **không một dữ liệu nào trong hệ thống đổi khi con vật về nhà**. Không có tín hiệu thì không đoán được, chỉ hỏi được.
+
+Nên đừng viết quy tắc kiểu "tin quá 45 ngày thì tự đánh dấu đoàn tụ". Suy luận đó sai ở đúng những ca quan trọng nhất — người mất chó hai tháng vẫn đang tìm. Và nó phá hỏng con số tỉ lệ đoàn tụ ở trang quản trị: `resolved` có nghĩa là **một con người đã xác nhận**, cho quy tắc tự động set nó thì con số ấy không còn đo đoàn tụ nữa, nó đo chính cái hằng số timeout trong code.
+
+Cách hoạt động:
+
+1. Dò tối đa 12 tiếng một lần (`nudge:scan`), và tối đa 5 tin, để không bắn một loạt request mỗi lần tải trang.
+2. Chỉ hỏi tin **chưa đoàn tụ** và đã đăng quá **7 ngày**. Hỏi ngày hôm sau thì vô duyên, người ta còn đang tìm.
+3. Mỗi lần chỉ hỏi **một tin**, tin cũ nhất trước. Hỏi dồn thì người ta bấm bừa cho xong, dữ liệu thu về vô nghĩa.
+4. "Rồi" → `PUT { resolved: true }`. "Chưa" → im 7 ngày. Dấu X → im 1 ngày.
+5. Tin trả `404` (đã bị xoá) thì dọn luôn mã trong trình duyệt. Chỉ dọn khi server nói rõ `404` — mất mạng cũng vào nhánh lỗi, mà xoá mã vì rớt wifi thì người ta mất quyền sửa tin của chính mình.
+
+Đang đứng ngay trong trang chi tiết của tin đó thì dải không hiện, vì trang đó đã có nút riêng rồi.
+
+> Thử nhanh lúc phát triển: `localStorage.removeItem('nudge:scan')` rồi tải lại trang.
+
+### Bản đồ trang chủ
+
+`components/PetMap.vue` dùng ở hai chỗ với hai chế độ. Trang chi tiết tin truyền mặc định (`controls` tắt): một chấm, ôm khít, không gom nhóm. Trang chủ truyền `controls` để bật nút "Gần tôi" và phần gom nhóm.
+
+**Bản đồ mở ra ở đâu là quyết định quan trọng nhất của tính năng này.** Bản cũ ôm hết mọi điểm bằng `fitBounds`. Nghe thì hợp lý, nhưng dữ liệu thật trải từ Cần Thơ tới Hà Nội — khoảng 1.220km — nên màn hình thu về mức cả nước, mọi chấm thành hạt bụi, hai tin cách nhau 5km chồng thành một. **Càng nhiều tin đăng thì bản đồ càng vô dụng.** Thứ tự bây giờ:
+
+1. Có vị trí nhớ từ lần trước (`map:me`) → mở ngay ở đó, mức `NEAR_ZOOM`
+2. Không có → mở ở **cụm tin đông nhất**, chứ không ôm hết
+3. Rồi mới tự định vị, và **chỉ khi trình duyệt đã cho phép từ trước** (`navigator.permissions`). Tự xin quyền lúc vừa mở bản đồ là ném hộp thoại vào mặt người mới vào xem
+
+Gom nhóm theo **khoảng cách trên màn hình** (lưới 64px), không theo khoảng cách thật — vì hai tin chồng lên nhau hay không là chuyện của mức thu phóng. Vì vậy phải gom lại mỗi lần `zoomend`. Chấm gộp có vành chia theo tỉ lệ mất/nhặt để thu nhỏ vẫn đọc được, bấm vào thì phóng vừa đủ tách chùm đó ra.
+
+Bán kính "gần tôi" **chỉ vẽ vòng tròn và đếm**, không lọc bỏ chấm nào. Cùng lý do với ô tìm kiếm: trên web tìm thú cưng, giấu nhầm một tin tốn kém hơn nhiều so với hiện thừa một tin.
+
+## 10. Quy tắc chung
 
 - Không commit `.env`, `node_modules/`, `dist/`
 - Không push thẳng lên `main`

@@ -122,6 +122,7 @@
         </div>
       </div>
     </nav>
+    <ResolveNudge />
     <main>
       <router-view />
     </main>
@@ -133,10 +134,11 @@
 <script>
 import Toast from './components/Toast.vue';
 import ChatWidget from './components/ChatWidget.vue';
+import ResolveNudge from './components/ResolveNudge.vue';
 import auth from './auth';
 export default {
   name: 'App',
-  components: { Toast, ChatWidget },
+  components: { Toast, ChatWidget, ResolveNudge },
   data() {
     return { auth, menuOpen: false };
   },

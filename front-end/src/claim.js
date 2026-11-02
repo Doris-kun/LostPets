@@ -14,4 +14,17 @@ export default {
   remove(id) {
     try { localStorage.removeItem(key(id)); } catch { /* không sao */ }
   },
+  // Id mọi tin đã đăng từ trình duyệt này. Dùng để hỏi lại xem tin nào đã xong.
+  // Đây là nguồn duy nhất biết được khách vãng lai đã đăng những tin nào —
+  // họ không có tài khoản nên server không gắn tin với ai cả.
+  list() {
+    try {
+      return Object.keys(localStorage)
+        .filter((k) => k.startsWith('claim:'))
+        .map((k) => k.slice('claim:'.length))
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  },
 };

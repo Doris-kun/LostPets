@@ -11,6 +11,26 @@
 
     <!-- Filter bar -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 mb-10 space-y-3">
+      <!-- Ô tìm kiếm: đặt trên cùng vì đây là đường vào chính, các nút lọc
+           bên dưới chỉ để thu hẹp thêm. -->
+      <div class="relative">
+        <svg class="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+        </svg>
+        <input v-model="filters.q" @input="debounceSearch" type="text" maxlength="200"
+          :placeholder="$t('search.placeholder')"
+          class="w-full border border-gray-200 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent placeholder-gray-400"/>
+        <button v-if="filters.q" @click="clearSearch" :aria-label="$t('search.clear')"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 p-1 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <p v-if="filters.q" class="text-xs text-gray-400 -mt-1">{{ $t('search.hint') }}</p>
+
       <!-- Type tabs -->
       <div class="flex items-center gap-2 flex-wrap">
         <button v-for="tab in typeTabs" :key="tab.value"
@@ -44,8 +64,11 @@
             {{ $t(d.labelKey) }}
           </button>
         </div>
-        <select v-model="filters.sort" @change="fetchPets"
-          class="border border-gray-200 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white cursor-pointer">
+        <!-- Đang tìm kiếm thì kết quả sắp theo độ liên quan, chọn ngày ở đây
+             không còn tác dụng — khoá lại còn hơn để người ta bấm rồi tưởng hỏng. -->
+        <select v-model="filters.sort" @change="fetchPets" :disabled="!!filters.q"
+          :title="filters.q ? $t('search.sortLocked') : ''"
+          class="border border-gray-200 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
           <option value="newest">{{ $t('sort.newest') }}</option>
           <option value="oldest">{{ $t('sort.oldest') }}</option>
         </select>
@@ -72,7 +95,7 @@
       <div v-else-if="!locatedCount" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
         <p class="text-sm text-gray-500">{{ $t('map.noLocated') }}</p>
       </div>
-      <PetMap v-else :pets="mapPets"/>
+      <PetMap v-else controls :pets="mapPets" :unlocated-count="mapWithoutCoords" :capped="mapCapped"/>
     </div>
 
     <!-- Skeleton loaders -->
@@ -120,23 +143,25 @@
       <router-link :to="`/pet/${featured._id}`"
         class="group block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 mb-5">
         <div class="flex flex-col sm:flex-row">
-          <div class="relative sm:w-3/5 aspect-video overflow-hidden bg-gray-100">
-            <img v-if="featured.image" :src="featured.image" :alt="featured.breed"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-            <div v-else class="w-full h-full flex items-center justify-center">
-              <svg class="w-16 h-16 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-            </div>
+          <!-- Không có ảnh thì bỏ hẳn cột ảnh, nhường chỗ cho phần chữ. Một ô
+               xám to bằng 3/5 thẻ chỉ để chứa biểu tượng thì nhìn như web hỏng. -->
+          <div v-if="featured.image" class="relative sm:w-3/5 aspect-video overflow-hidden bg-gray-100">
+            <PetPhoto :src="featured.image" :alt="featured.breed"
+              :type="featured.type" :resolved="featured.resolved"
+              img-class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
             <span :class="featured.resolved ? 'bg-teal-500' : featured.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
               class="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
               {{ $t(featured.resolved ? 'badge.resolved' : featured.type === 'lost' ? 'badge.lost' : 'badge.found') }}
             </span>
           </div>
-          <div class="sm:w-2/5 p-6 sm:p-8 flex flex-col justify-between">
+          <div :class="featured.image ? 'sm:w-2/5' : 'w-full'" class="p-6 sm:p-8 flex flex-col justify-between">
             <div>
               <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-3">{{ $t('home.featured') }}</p>
+              <!-- Mất cột ảnh thì mất luôn chỗ gắn nhãn loại tin, dựng lại ở đây. -->
+              <span v-if="!featured.image" :class="featured.resolved ? 'bg-teal-500' : featured.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
+                class="inline-block text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm mb-3">
+                {{ $t(featured.resolved ? 'badge.resolved' : featured.type === 'lost' ? 'badge.lost' : 'badge.found') }}
+              </span>
               <h2 class="text-2xl font-bold text-gray-900 leading-tight mb-1">{{ featured.name || featured.breed }}</h2>
               <p class="text-sm text-gray-400 mb-3">{{ featured.species }} · {{ featured.breed }}</p>
               <div class="flex items-center gap-1.5 mb-4">
@@ -162,14 +187,9 @@
           <router-link v-for="pet in rest" :key="pet._id" :to="`/pet/${pet._id}`"
             class="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div class="relative aspect-[4/3] overflow-hidden bg-gray-100">
-              <img v-if="pet.image" :src="pet.image" :alt="pet.breed"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-              <div v-else class="w-full h-full flex items-center justify-center">
-                <svg class="w-12 h-12 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-              </div>
+              <PetPhoto :src="pet.image" :alt="pet.breed"
+                :type="pet.type" :resolved="pet.resolved"
+                img-class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
               <span :class="pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
                 class="absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
                 {{ $t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found') }}
@@ -212,23 +232,27 @@
 <script>
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
+import PetPhoto from '../components/PetPhoto.vue';
 
 export default {
   name: 'Home',
-  components: { PetMap },
+  components: { PetMap, PetPhoto },
   data() {
     return {
       pets: [],
       total: 0,
       view: 'list',
       mapPets: [],
+      mapWithoutCoords: 0,
+      mapCapped: false,
       mapLoading: false,
       skip: 0,
       limit: 9,
       loading: false,
       loadingMore: false,
       areaTimer: null,
-      filters: { type: '', species: '', area: '', sort: 'newest', days: '' },
+      filters: { type: '', species: '', area: '', sort: 'newest', days: '', q: '' },
+      searchTimer: null,
       typeTabs: [
         { value: '',      labelKey: 'filter.all',   activeClass: 'bg-gray-900 text-white' },
         { value: 'lost',  labelKey: 'filter.lost',  activeClass: 'bg-rose-500 text-white' },
@@ -268,20 +292,32 @@ export default {
     this.filters.type = this.$route.query.type || '';
     this.fetchPets();
   },
+  // Rời trang trong lúc hẹn giờ đang chạy thì nó vẫn nổ và gọi refresh() trên
+  // component đã huỷ. Vô hại ở đây nhưng là một request thừa, mà request tìm
+  // kiếm thì tốn quota Gemini.
+  beforeDestroy() {
+    clearTimeout(this.areaTimer);
+    clearTimeout(this.searchTimer);
+  },
   methods: {
     setView(view) {
       this.view = view;
       if (view === 'map') this.fetchMapPets();
     },
-    // Bản đồ cần toàn bộ tin khớp bộ lọc, không phân trang như danh sách.
+    // Bản đồ dùng endpoint riêng: nó cần mọi tin khớp bộ lọc cùng lúc, trong
+    // khi GET /pets chặn cứng ở 50 tin mỗi trang. Gọi /pets kèm limit cao hơn
+    // thì server vẫn cắt về 50 và bản đồ âm thầm giấu mất tin.
     async fetchMapPets() {
       this.mapLoading = true;
       try {
-        const params = { ...this.buildParams(0), limit: 50 };
-        const { data } = await api.getPets(params);
+        const { data } = await api.getMapPets(this.buildParams(0));
         this.mapPets = data.pets;
+        this.mapWithoutCoords = data.withoutCoords || 0;
+        this.mapCapped = !!data.capped;
       } catch {
         this.mapPets = [];
+        this.mapWithoutCoords = 0;
+        this.mapCapped = false;
       } finally {
         this.mapLoading = false;
       }
@@ -301,12 +337,24 @@ export default {
       clearTimeout(this.areaTimer);
       this.areaTimer = setTimeout(() => this.refresh(), 400);
     },
+    // Chờ lâu hơn ô khu vực vì mỗi lượt tìm kiếm phải nhúng câu hỏi qua Gemini,
+    // tức là tốn quota. Gõ xong cả câu rồi mới gửi, đừng gửi theo từng ký tự.
+    debounceSearch() {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(() => this.refresh(), 500);
+    },
+    clearSearch() {
+      clearTimeout(this.searchTimer);
+      this.filters.q = '';
+      this.refresh();
+    },
     buildParams(skip = 0) {
       const p = { skip, limit: this.limit, sort: this.filters.sort };
       if (this.filters.type)    p.type    = this.filters.type;
       if (this.filters.species) p.species = this.filters.species;
       if (this.filters.area)    p.area    = this.filters.area;
       if (this.filters.days)    p.days    = this.filters.days;
+      if (this.filters.q.trim()) p.q      = this.filters.q.trim();
       return p;
     },
     async fetchPets() {

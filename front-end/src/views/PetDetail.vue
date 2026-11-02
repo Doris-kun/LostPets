@@ -29,13 +29,7 @@
     <div v-else class="mt-5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <!-- Image -->
       <div class="relative aspect-video bg-gray-100">
-        <img v-if="pet.image" :src="pet.image" :alt="pet.breed" class="w-full h-full object-cover"/>
-        <div v-else class="w-full h-full flex items-center justify-center">
-          <svg class="w-20 h-20 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-        </div>
+        <PetPhoto :src="pet.image" :alt="pet.breed" :type="pet.type" :resolved="pet.resolved"/>
         <span :class="pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
           class="absolute top-4 left-4 text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-md">
           {{ $t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found') }}
@@ -47,11 +41,22 @@
       </div>
 
       <!-- Resolved banner -->
-      <div v-if="pet.resolved" class="mx-6 mt-6 flex items-center gap-2 bg-teal-50 border border-teal-100 rounded-xl px-4 py-3">
-        <svg class="w-4 h-4 text-teal-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-        </svg>
-        <p class="text-sm font-semibold text-teal-700">{{ $t('detail.resolvedBanner') }}</p>
+      <div v-if="pet.resolved" class="mx-6 mt-6 bg-teal-50 border border-teal-100 rounded-xl px-4 py-3">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-teal-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-sm font-semibold text-teal-700">{{ $t('detail.resolvedBanner') }}</p>
+          <div class="flex-1"></div>
+          <!-- Đường lùi lại. Đánh dấu đoàn tụ là hẹn giờ xoá tin, nên bấm nhầm
+               mà không gỡ ra được thì người dùng mất tin vì một cú chạm. Ai không
+               giữ mã xác nhận thì máy chủ chặn, y như nút Sửa và Xoá bên dưới. -->
+          <button @click="unresolvePet" :disabled="resolving"
+            class="text-xs font-semibold text-teal-600 underline underline-offset-2 hover:text-teal-800 disabled:opacity-50 flex-shrink-0">
+            {{ $t('detail.unresolve') }}
+          </button>
+        </div>
+        <p class="text-xs text-teal-600 mt-1.5 leading-relaxed">{{ $t('detail.resolvedExpiry') }}</p>
       </div>
 
       <div class="p-6">
@@ -149,6 +154,33 @@
             {{ deleting ? $t('detail.deleting') : $t('detail.delete') }}
           </button>
         </div>
+
+        <!--
+          Mã xác nhận chỉ hiện khi trình duyệt này có mã của tin, và phải bấm
+          mới hiện. Người dùng bình thường không cần biết nó tồn tại — mã nằm
+          sẵn trong localStorage và tự gắn vào mỗi lần sửa. Chỗ này dành cho
+          đúng một việc: mang mã sang máy khác.
+        -->
+        <div v-if="claimCode" class="mt-4 pt-4 border-t border-gray-100">
+          <button v-if="!showCode" type="button" @click="showCode = true"
+            class="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+            {{ $t('claim.view') }}
+          </button>
+
+          <div v-else class="space-y-2">
+            <p class="text-xs font-semibold text-gray-500">{{ $t('claim.viewTitle') }}</p>
+            <div class="flex items-center gap-3 flex-wrap">
+              <!-- select-all: bôi đen cả mã chỉ bằng một cú nhấp, phòng khi
+                   trình duyệt không cho dùng clipboard. -->
+              <code class="font-mono text-base font-bold tracking-[0.2em] text-gray-900 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 select-all">{{ claimCode }}</code>
+              <button type="button" @click="copyCode"
+                class="text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors">
+                {{ copied ? $t('claim.copied') : $t('claim.copy') }}
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">{{ $t('claim.viewHint') }}</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -193,6 +225,27 @@
       </p>
       <p v-if="matchError" class="text-sm text-rose-500 mt-4 text-center">{{ matchError }}</p>
     </div>
+
+    <!-- Báo cáo tin xấu. Để cuối trang và cố ý nhạt màu: đây là lối thoát hiểm,
+         không phải việc người xem bình thường cần làm. -->
+    <div v-if="pet" class="text-center mt-6">
+      <span v-if="reported" class="inline-flex items-center gap-2 text-sm text-gray-400 px-4 py-2.5 rounded-full border border-gray-100">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ $t('report.already') }}
+      </span>
+      <button v-else @click="showReport = true"
+        class="inline-flex items-center gap-2 text-sm text-gray-500 px-4 py-2.5 rounded-full border border-gray-200 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50/50 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z"/>
+        </svg>
+        {{ $t('report.action') }}
+      </button>
+    </div>
+
+    <ReportDialog v-if="showReport" :pet-id="pet._id" @close="onReportClosed"/>
   </div>
 </template>
 
@@ -200,14 +253,20 @@
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
 import { directionsUrl } from '../map';
+import claim from '../claim';
+import report from '../report';
+import ReportDialog from '../components/ReportDialog.vue';
+import PetPhoto from '../components/PetPhoto.vue';
 
 export default {
   name: 'PetDetail',
-  components: { PetMap },
+  components: { PetMap, ReportDialog, PetPhoto },
   data() {
     return {
       pet: null, loading: false, deleting: false, resolving: false,
       matches: [], matchLoading: false, matchError: '', matchDone: false,
+      claimCode: '', showCode: false, copied: false,
+      showReport: false, reported: false,
     };
   },
   computed: {
@@ -232,12 +291,20 @@ export default {
       this.matches = [];
       this.matchError = '';
       this.matchDone = false;
+      // Mã của tin cũ mà còn nằm đây thì người dùng chép nhầm mã sang tin khác.
+      this.showCode = false;
+      this.copied = false;
       this.fetchPet();
     },
+  },
+  beforeDestroy() {
+    if (this.copyTimer) clearTimeout(this.copyTimer);
   },
   methods: {
     async fetchPet() {
       this.loading = true;
+      this.claimCode = claim.get(this.$route.params.id);
+      this.reported = report.has(this.$route.params.id);
       try {
         const { data } = await api.getPet(this.$route.params.id);
         this.pet = data;
@@ -245,6 +312,21 @@ export default {
         this.pet = null;
       } finally {
         this.loading = false;
+      }
+    },
+    onReportClosed(sent) {
+      this.showReport = false;
+      if (sent) this.reported = true;
+    },
+    async copyCode() {
+      try {
+        await navigator.clipboard.writeText(this.claimCode);
+        this.copied = true;
+        if (this.copyTimer) clearTimeout(this.copyTimer);
+        this.copyTimer = setTimeout(() => { this.copied = false; }, 2000);
+      } catch {
+        // Trình duyệt cũ, hoặc trang không chạy HTTPS, thì không có clipboard.
+        // Mã đã để select-all nên vẫn bôi đen một nhấp rồi Ctrl+C được.
       }
     },
     async findMatches() {
@@ -288,6 +370,21 @@ export default {
         const { data } = await api.updatePet(this.pet._id, { resolved: true });
         this.pet = data;
         this.$toast(this.$t('detail.resolvedBanner'));
+      } catch (err) {
+        this.$toast(this.claimMessage(err), 'error');
+      } finally {
+        this.resolving = false;
+      }
+    },
+    // Gỡ đánh dấu đoàn tụ. Máy chủ xoá luôn resolvedAt nên đồng hồ đếm ngược
+    // tới đợt dọn dừng hẳn, không phải tạm hoãn.
+    async unresolvePet() {
+      if (!confirm(this.$t('detail.unresolveConfirm'))) return;
+      this.resolving = true;
+      try {
+        const { data } = await api.updatePet(this.pet._id, { resolved: false });
+        this.pet = data;
+        this.$toast(this.$t('detail.unresolved'));
       } catch (err) {
         this.$toast(this.claimMessage(err), 'error');
       } finally {

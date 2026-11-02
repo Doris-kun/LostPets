@@ -28,6 +28,7 @@
         {{ $t('auth.noAccount') }}
         <router-link to="/register" class="text-orange-600 font-semibold hover:underline">{{ $t('auth.registerBtn') }}</router-link>
       </p>
+      <SocialLogin @done="afterSocial"/>
     </form>
 
     <p class="text-xs text-gray-400 text-center mt-4">{{ $t('auth.optionalNote') }}</p>
@@ -37,13 +38,20 @@
 <script>
 import api from '../api';
 import auth from '../auth';
+import SocialLogin from '../components/SocialLogin.vue';
 
 export default {
   name: 'Login',
+  components: { SocialLogin },
   data() {
     return { form: { email: '', password: '' }, loading: false, error: '' };
   },
   methods: {
+    // SocialLogin đã tự lưu phiên, ở đây chỉ còn việc chào và chuyển trang.
+    afterSocial(user) {
+      this.$toast(`${this.$t('auth.welcome')} ${user.name}`);
+      this.$router.push(this.$route.query.next || '/');
+    },
     async submit() {
       this.error = '';
       this.loading = true;
