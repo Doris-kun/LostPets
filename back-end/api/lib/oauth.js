@@ -22,6 +22,22 @@ const getGoogleClient = () => {
 exports.OAuthError = OAuthError;
 
 exports.googleConfigured = () => Boolean(process.env.GOOGLE_CLIENT_ID);
+
+// Mỗi nền tảng một client ID. Google bắt buộc web, iOS và Android đăng ký
+// riêng, nên ID token phát cho app mobile mang `aud` khác hẳn bản web — chỉ
+// nhận đúng một mã thì mobile đăng nhập là bị từ chối ngay.
+//
+// Nhận ba mã KHÔNG có nghĩa là lỏng hơn: vẫn phải là một trong ba mã của chính
+// dự án này. Token của ứng dụng lạ vẫn bị loại y như trước.
+//
+// filter(Boolean) bỏ các biến chưa khai, nên thiếu mã mobile thì web vẫn chạy
+// bình thường thay vì gãy.
+const googleAudience = () =>
+  [
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_ID_IOS,
+    process.env.GOOGLE_CLIENT_ID_ANDROID,
+  ].filter(Boolean);
 exports.facebookConfigured = () =>
   Boolean(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET);
 
@@ -31,11 +47,19 @@ exports.facebookConfigured = () =>
 // khác cũng đăng nhập được vào đây.
 exports.verifyGoogle = async (idToken) => {
   if (!idToken) throw new OAuthError('Thiếu token');
+
+  // Danh sách rỗng là lỗi cấu hình phía mình, không phải lỗi người đăng nhập.
+  // Chặn hẳn ở đây vì không rõ thư viện xử lý mảng rỗng ra sao — nếu nó hiểu
+  // là "không cần kiểm aud" thì token của bất kỳ ứng dụng nào cũng lọt.
+  // Chặn trước khối try để thông báo không bị nuốt thành "token không hợp lệ".
+  const audience = googleAudience();
+  if (audience.length === 0) throw new OAuthError('Chưa cấu hình đăng nhập Google');
+
   let payload;
   try {
     const ticket = await getGoogleClient().verifyIdToken({
       idToken: String(idToken),
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience,
     });
     payload = ticket.getPayload();
   } catch {
