@@ -34,10 +34,9 @@
           class="absolute top-4 left-4 text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-md">
           {{ $t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found') }}
         </span>
-        <span v-if="pet.postId"
-          class="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white text-xs font-mono px-2.5 py-1.5 rounded-full">
-          {{ pet.postId }}
-        </span>
+        <!-- Mã tin không hiện ở đây nữa: trang này dành cho người đang tìm
+             con vật, không phải cho việc tra cứu nội bộ. Chủ tin xem mã ở
+             "Tin của tôi", quản trị viên xem ở trang quản trị. -->
       </div>
 
       <!-- Resolved banner -->
