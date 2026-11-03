@@ -204,9 +204,12 @@
                 </svg>
                 <p class="text-sm text-gray-400 truncate">{{ pet.area }}</p>
               </div>
-              <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+              <!-- Mã tin cố ý KHÔNG hiện ở đây. Người lạ lướt danh sách không
+                   cần tới nó, mà in ra thì vừa rối mắt vừa giống thứ gì đó
+                   quan trọng. Chủ tin vẫn xem được mã của mình ở "Tin của tôi",
+                   và gõ mã vào ô tìm kiếm vẫn ra đúng tin như cũ. -->
+              <div class="mt-3 pt-3 border-t border-gray-50">
                 <p class="text-xs text-gray-400">{{ relativeTime(pet.date) }}</p>
-                <p v-if="pet.postId" class="text-xs text-gray-300 font-mono">{{ pet.postId }}</p>
               </div>
             </div>
           </router-link>
