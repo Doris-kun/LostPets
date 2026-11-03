@@ -71,6 +71,7 @@ export default {
         const message = err.response && err.response.data && err.response.data.message;
         if (status === 409) this.error = this.$t('auth.emailTaken');
         else if (status === 400) this.error = message || this.$t('auth.invalidInput');
+        else if (status === 429) this.error = this.$t('auth.tooMany');
         else if (status === 503) this.error = this.$t('auth.disabled');
         else this.error = this.$t('auth.failed');
       } finally {

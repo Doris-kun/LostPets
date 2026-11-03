@@ -63,6 +63,7 @@ export default {
       } catch (err) {
         const status = err.response && err.response.status;
         if (status === 401) this.error = this.$t('auth.wrongCredentials');
+        else if (status === 429) this.error = this.$t('auth.tooMany');
         else if (status === 503) this.error = this.$t('auth.disabled');
         else this.error = this.$t('auth.failed');
       } finally {
