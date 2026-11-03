@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import * as Facebook from 'expo-auth-session/providers/facebook';
 import * as WebBrowser from 'expo-web-browser';
@@ -38,6 +39,16 @@ import { radius, spacing } from '../theme';
  */
 WebBrowser.maybeCompleteAuthSession();
 
+/*
+ * Moi lỗi mỗi nơi để câu mô tả ở một tên khác nhau: Google dùng description,
+ * axios dùng message. Gom lại một chỗ thay vì mỗi chỗ bắt lỗi tự mò.
+ */
+function moTaLoi(err: unknown): string {
+  if (typeof err !== 'object' || err === null) return '';
+  const o = err as { description?: string; message?: string; code?: string };
+  return o.description ?? o.message ?? o.code ?? '';
+}
+
 export default function SocialLogin() {
   const { t } = useLanguage();
   const { colors } = useTheme();
@@ -58,6 +69,13 @@ export default function SocialLogin() {
   }>({ google: false, facebook: false });
   const [busy, setBusy] = useState<'google' | 'facebook' | null>(null);
   const [error, setError] = useState('');
+  /*
+   * Dòng mô tả kỹ thuật kèm theo lỗi, lấy nguyên văn từ Google hoặc back-end.
+   *
+   * Có vì một câu "Đăng nhập không thành công" không đủ để sửa. Lần dò lỗi
+   * vừa rồi mất mấy tiếng chỉ vì không nhìn thấy máy chủ chê cái gì.
+   */
+  const [detail, setDetail] = useState('');
 
   useEffect(() => {
     let ignore = false;
@@ -92,9 +110,21 @@ export default function SocialLogin() {
    * rồi đặt kết quả vào đúng chỗ cũ là params.id_token. Nên phần đọc kết quả
    * bên dưới không phải sửa gì.
    */
-  const [, googleResult, googlePrompt] = Google.useAuthRequest({
+  const [googleRequest, googleResult, googlePrompt] = Google.useAuthRequest({
     iosClientId: GOOGLE_CLIENT_ID_IOS || undefined,
     androidClientId: GOOGLE_CLIENT_ID_ANDROID || undefined,
+
+    /*
+     * TỰ ĐỔI PHIẾU LẤY GIẤY, KHÔNG ĐỂ THƯ VIỆN LÀM HỘ.
+     *
+     * Để nó tự làm thì nó gọi performAsync(...).then(...) mà KHÔNG có .catch
+     * (expo-auth-session/build/providers/Google.js). Nên khi Google từ chối,
+     * lỗi rơi vào hư không: kết quả mãi là null, useEffect bên dưới không bao
+     * giờ chạy, nút quay "Đang kết nối..." vô tận và không báo gì cả.
+     *
+     * Đã gặp thật. Tự làm thì bắt được lỗi và nói ra được nó là lỗi gì.
+     */
+    shouldAutoExchangeCode: false,
   });
 
   const [, facebookResult, facebookPrompt] = Facebook.useAuthRequest({
@@ -120,17 +150,39 @@ export default function SocialLogin() {
       return;
     }
 
-    const credential = googleResult.params.id_token;
-    if (!credential) {
+    /*
+     * Google trả về một cái PHIẾU (code), chưa phải giấy chứng nhận. Đổi phiếu
+     * lấy giấy ở một địa chỉ khác của Google, kèm code_verifier để chứng minh
+     * chính máy này là máy lúc nãy xin phiếu.
+     *
+     * redirectUri phải GIỐNG HỆT lúc xin phiếu, nếu không Google từ chối. Nên
+     * lấy lại từ chính yêu cầu đó thay vì tự dựng lại cho chắc.
+     */
+    const code = googleResult.params.code;
+    const maApp = Platform.OS === 'ios' ? GOOGLE_CLIENT_ID_IOS : GOOGLE_CLIENT_ID_ANDROID;
+    if (!code || !googleRequest) {
       setBusy(null);
       setError(t('social.failed'));
       return;
     }
 
-    api
-      .googleLogin({ credential })
+    new AuthSession.AccessTokenRequest({
+      clientId: maApp,
+      redirectUri: googleRequest.redirectUri,
+      code,
+      extraParams: { code_verifier: googleRequest.codeVerifier ?? '' },
+    })
+      .performAsync(Google.discovery)
+      .then((ketQua) => {
+        const credential = ketQua.idToken;
+        if (!credential) throw new Error('Google doi ma xong nhung khong tra ve id_token');
+        return api.googleLogin({ credential });
+      })
       .then(({ data }) => login(data.token, data.user))
-      .catch((err) => setError(t(errorStatus(err) === 503 ? 'social.notSetUp' : 'social.failed')))
+      .catch((err) => {
+        setError(t(errorStatus(err) === 503 ? 'social.notSetUp' : 'social.failed'));
+        setDetail(moTaLoi(err));
+      })
       .finally(() => setBusy(null));
     // t đổi khi người dùng đổi ngôn ngữ, nhưng không nên chạy lại cả lượt
     // đăng nhập vì chuyện đó. Chỉ canh đúng kết quả trả về.
@@ -161,7 +213,10 @@ export default function SocialLogin() {
     api
       .facebookLogin({ accessToken })
       .then(({ data }) => login(data.token, data.user))
-      .catch((err) => setError(t(errorStatus(err) === 503 ? 'social.notSetUp' : 'social.failed')))
+      .catch((err) => {
+        setError(t(errorStatus(err) === 503 ? 'social.notSetUp' : 'social.failed'));
+        setDetail(moTaLoi(err));
+      })
       .finally(() => setBusy(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facebookResult]);
@@ -177,6 +232,7 @@ export default function SocialLogin() {
     }
 
     setError('');
+    setDetail('');
     setBusy(nha);
     (nha === 'google' ? googlePrompt() : facebookPrompt()).catch(() => {
       setBusy(null);
@@ -278,6 +334,7 @@ export default function SocialLogin() {
       )}
 
       {!!error && <Text style={styles.error}>{error}</Text>}
+      {!!detail && <Text style={styles.detail}>{detail}</Text>}
     </View>
   );
 }
@@ -335,5 +392,9 @@ const themedStyles = createThemedStyles((colors) =>
     note: { fontSize: 12.5, lineHeight: 18, color: colors.textMuted },
 
     error: { fontSize: 12.5, color: colors.danger, marginTop: spacing.xs },
+
+    // Nguyên văn câu máy chủ chê. Chữ nhỏ và mờ vì nó dành cho người sửa
+    // lỗi, không phải cho người dùng thường.
+    detail: { fontSize: 11.5, lineHeight: 16, color: colors.textMuted, marginTop: 2 },
   }),
 );
