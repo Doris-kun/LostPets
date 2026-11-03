@@ -136,7 +136,10 @@ describe('POST /auth/google', () => {
     // Nhận email chưa xác minh thì kẻ gian chỉ cần tạo một tài khoản mang
     // email của người khác là chiếm được tài khoản ở đây, kèm mọi tin đã đăng.
     expect(res.status).toBe(403);
-    expect((await User.findOne().select('+google')).google).toBeNull();
+    // Trường VẮNG MẶT chứ không mang null — schema cố ý không đặt default,
+    // vì null vẫn bị chỉ mục unique + sparse đếm và chỉ một tài liệu được
+    // mang nó. Xem tests/user-providers.test.js.
+    expect((await User.findOne().select('+google')).google).toBeUndefined();
   });
 
   it('cấp quyền admin nếu email nằm trong ADMIN_EMAILS', async () => {
