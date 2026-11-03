@@ -29,12 +29,15 @@ const USE_PRODUCTION = false;
  *   - Vào dashboard.render.com, mở dịch vụ back-end, copy dòng địa chỉ ở đầu trang
  *
  * Lưu ý: https://lostpets-1.onrender.com KHÔNG phải địa chỉ này — đó là bản
- * web Vue đã deploy, không phải API. Mở /pets trên đó trả về HTML chứ không
- * phải JSON, nên điền vào đây là app hỏng.
+ * web Vue đã deploy, không phải API.
  *
- * Điền xong nhớ đổi USE_PRODUCTION thành true.
+ * Địa chỉ dưới đây lấy từ chính gói mã của web đang chạy, không phải đoán:
+ * đã gọi thử /pets và nó trả về dữ liệu thật.
+ *
+ * CẢNH BÁO: đây là database THẬT dùng cho demo, khác hẳn database ở máy.
+ * Bật USE_PRODUCTION lên rồi xoá tin là xoá trên dữ liệu thật.
  */
-const PRODUCTION_URL = '';
+const PRODUCTION_URL = 'https://lostpets-kz3s.onrender.com';
 
 /*
  * Địa chỉ web đã deploy — dùng cho nút Chia sẻ, để người nhận bấm vào link là
@@ -63,15 +66,17 @@ export const WEB_URL = 'https://lostpets-1.onrender.com';
  *
  * Để trống thì nút Google tự ẩn đi, phần còn lại của app vẫn chạy bình thường.
  */
-export const GOOGLE_CLIENT_ID_IOS = '';
-export const GOOGLE_CLIENT_ID_ANDROID = '';
+export const GOOGLE_CLIENT_ID_IOS =
+  '899815919054-kequr766oicgcvnkmnm42hc9ob395opm.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_ID_ANDROID =
+  '899815919054-kjk888jtkc2i9cglmba96p38c7qpattd.apps.googleusercontent.com';
 
 /*
  * Facebook chỉ cần MỘT mã cho mọi nền tảng, khác Google.
  * Lấy ở developers.facebook.com, và nhớ bật thêm nền tảng iOS/Android trong
  * phần cài đặt của chính app Facebook đó.
  */
-export const FACEBOOK_APP_ID = '';
+export const FACEBOOK_APP_ID = '1099308289611667';
 
 const PORT = 3000;
 
