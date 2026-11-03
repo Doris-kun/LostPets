@@ -16,6 +16,9 @@ const router = new Router({
     { path: '/admin',        component: () => import('./views/Admin.vue'), meta: { requiresAdmin: true } },
     { path: '/login',        component: () => import('./views/Login.vue') },
     { path: '/register',     component: () => import('./views/Register.vue') },
+    // Phải truy cập được mà không cần đăng nhập: Meta đòi một đường dẫn chính
+    // sách bảo mật công khai thì mới cho chuyển ứng dụng sang chế độ Live.
+    { path: '/privacy',      component: () => import('./views/Privacy.vue') },
     { path: '*',             component: () => import('./views/NotFound.vue') },
   ]
 });

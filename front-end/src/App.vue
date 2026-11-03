@@ -126,6 +126,14 @@
     <main>
       <router-view />
     </main>
+    <!-- Chân trang chỉ có đúng một đường dẫn. Chính sách bảo mật phải tìm
+         được từ mọi trang: Meta đòi vậy mới cho chuyển ứng dụng sang Live,
+         và một chính sách phải bới mới ra thì cũng chẳng để làm gì. -->
+    <footer class="mt-16 border-t border-gray-100 py-6 text-center">
+      <router-link to="/privacy" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+        {{ $t('nav.privacy') }}
+      </router-link>
+    </footer>
     <Toast />
     <ChatWidget />
   </div>
