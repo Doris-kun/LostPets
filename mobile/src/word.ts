@@ -75,6 +75,8 @@ const vi = {
   'social.failed': 'Đăng nhập không thành công. Thử lại hoặc dùng email.',
   'social.notSetUp': 'Cách đăng nhập này chưa được bật.',
   'social.noId': 'App chưa khai mã ứng dụng cho cách đăng nhập này.',
+  'social.expoGo':
+    'Đăng nhập Google và Facebook chỉ chạy được trên bản app đã cài. Trong Expo Go thì không, vì lúc đó app mang danh tính của chính Expo Go chứ không phải của LostPets.',
 
   'common.cancel': 'Huỷ',
   'common.confirm': 'Xác nhận',
@@ -381,6 +383,8 @@ const en: Record<WordKey, string> = {
   'social.failed': 'Sign-in failed. Try again or use your email.',
   'social.notSetUp': 'This sign-in method is not enabled.',
   'social.noId': 'The app has no client id for this sign-in method.',
+  'social.expoGo':
+    'Google and Facebook sign-in only work in the installed app. Not in Expo Go, where the app runs under Expo Go’s own identity instead of LostPets’.',
 
   'common.cancel': 'Cancel',
   'common.confirm': 'Confirm',

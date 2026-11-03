@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import * as Google from 'expo-auth-session/providers/google';
 import * as Facebook from 'expo-auth-session/providers/facebook';
 import * as WebBrowser from 'expo-web-browser';
@@ -197,6 +198,37 @@ export default function SocialLogin() {
     (Platform.OS === 'ios' ? providers.googleMobile.ios : providers.googleMobile.android);
   const dungDuocGoogle = providers.google && coMaNenTang;
 
+  /*
+   * TRONG EXPO GO THÌ KHÔNG BAO GIỜ ĐĂNG NHẬP ĐƯỢC — nói thẳng ra.
+   *
+   * Expo Go không chạy app của mình như một app riêng, nó nạp mã vào trong
+   * chính nó. Nên lúc hỏi "app nào đang xin đăng nhập", hệ điều hành trả lời
+   * là host.exp.exponent, tức Expo Go, chứ không phải com.lostpets.app.
+   * Google đối chiếu với mã Android đã khai thì thấy lệch và chặn ngay, với
+   * câu "Lỗi 400: redirect_uri_mismatch".
+   *
+   * Không có cách nào vá được từ phía app: danh tính đó do hệ điều hành cấp.
+   * Vẽ nút ra là chắc chắn đẩy người bấm tới một trang lỗi của Google, nên
+   * thay bằng một dòng giải thích.
+   *
+   * Dùng appOwnership dù nó bị đánh dấu "nên thay bằng executionEnvironment",
+   * vì executionEnvironment gộp Expo Go chung với bản development build —
+   * mà bản development build thì đăng nhập ĐƯỢC, nó có danh tính riêng. Lấy
+   * cái mới sẽ tắt nhầm nút ở chỗ vốn chạy tốt.
+   */
+  if (Constants.appOwnership === 'expo') {
+    return (
+      <View style={styles.wrap}>
+        <View style={styles.divider}>
+          <View style={styles.line} />
+          <Text style={styles.dividerText}>{t('social.or')}</Text>
+          <View style={styles.line} />
+        </View>
+        <Text style={styles.note}>{t('social.expoGo')}</Text>
+      </View>
+    );
+  }
+
   // Không cái nào dùng được thì không vẽ gì, kể cả dòng kẻ "hoặc".
   if (!dungDuocGoogle && !providers.facebook) return null;
 
@@ -297,6 +329,10 @@ const themedStyles = createThemedStyles((colors) =>
     buttonText: { fontSize: 15, fontWeight: '700' },
     googleText: { color: colors.onGoogle },
     facebookText: { color: colors.onFacebook },
+
+    // Dòng báo đang chạy trong Expo Go. Không phải lỗi của người dùng nên
+    // để màu chữ mờ, không dùng màu đỏ cảnh báo.
+    note: { fontSize: 12.5, lineHeight: 18, color: colors.textMuted },
 
     error: { fontSize: 12.5, color: colors.danger, marginTop: spacing.xs },
   }),
