@@ -212,6 +212,21 @@ const describePet = (pet) =>
     .filter(Boolean)
     .join(' | ');
 
+// AI KHÔNG được tự viết câu giải thích nữa — chỉ được chấm điểm và nói ảnh
+// trông giống hay khác.
+//
+// Vì sao bỏ trường `reason` dạng chữ tự do: đo trên dữ liệu thật thì nó bịa.
+// Với một tin mèo MÀU ĐEN ở Cần Thơ, nó viết "cùng loài mèo và có màu lông
+// xám" để biện minh cho việc khớp với một con mèo xám ở Quận 3. Chữ "xám"
+// không có ở bất kỳ đâu trong tin đó.
+//
+// Dặn dò kỹ hơn không giải quyết được, vì vấn đề nằm ở chỗ model được phép
+// sinh ra chữ mà không ai đối chiếu. Nên cắt luôn khả năng đó: phần so sánh
+// thuộc tính do mình tự tính từ dữ liệu trong database, bịa thành chuyện bất
+// khả thi về mặt cấu trúc.
+//
+// Riêng chuyện ảnh thì vẫn phải hỏi model, vì chỉ nó nhìn được ảnh. Nhưng
+// cho chọn trong ba đáp án cố định chứ không cho viết tự do.
 const MATCH_SCHEMA = {
   type: 'object',
   properties: {
@@ -222,14 +237,59 @@ const MATCH_SCHEMA = {
         properties: {
           index: { type: 'integer', description: 'Số thứ tự ứng viên đã nêu trong đề bài.' },
           score: { type: 'integer', description: 'Khả năng cùng một con vật, từ 0 đến 100.' },
-          reason: { type: 'string', description: 'Một câu tiếng Việt giải thích vì sao khớp hoặc không khớp.' },
+          photo: {
+            type: 'string',
+            enum: ['giong', 'khac', 'khong_ro'],
+            description: 'So sánh ảnh hai tin: giong, khac, hoac khong_ro khi thiếu ảnh.',
+          },
         },
-        required: ['index', 'score', 'reason'],
+        required: ['index', 'score', 'photo'],
       },
     },
   },
   required: ['matches'],
 };
+
+// Ghép câu giải thích TỪ DỮ LIỆU, không từ model.
+//
+// Mọi giá trị in ra đều đọc thẳng từ hai bản ghi, nên không thể sai. Người
+// đọc thấy luôn cả hai vế để tự phán đoán, thay vì phải tin một câu tóm tắt.
+const sameText = (a, b) =>
+  String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+
+const PHOTO_WORDS = {
+  giong: 'Ảnh trông giống nhau.',
+  khac: 'Ảnh trông khác nhau.',
+  khong_ro: '',
+};
+
+function buildReason(source, candidate, photo) {
+  const fields = [
+    ['loài', source.species, candidate.species],
+    ['giống', source.breed, candidate.breed],
+    ['màu', source.color, candidate.color],
+    ['khu vực', source.area, candidate.area],
+  ];
+
+  const same = fields.filter(([, a, b]) => sameText(a, b));
+  const diff = fields.filter(([, a, b]) => !sameText(a, b));
+
+  const parts = [];
+  if (same.length) parts.push(`Cùng ${same.map(([n, a]) => `${n} (${a})`).join(', ')}.`);
+  if (diff.length) parts.push(`Khác ${diff.map(([n, a, b]) => `${n} (${a} / ${b})`).join(', ')}.`);
+
+  const days = Math.round((new Date(candidate.date) - new Date(source.date)) / 86400000);
+  if (Number.isFinite(days)) {
+    if (days > 0) parts.push(`Nhặt được ${days} ngày sau khi mất.`);
+    else if (days < 0) parts.push(`Tin này đăng trước ${Math.abs(days)} ngày.`);
+    else parts.push('Cùng ngày.');
+  }
+
+  const photoWord = PHOTO_WORDS[photo] || '';
+  if (photoWord) parts.push(photoWord);
+
+  return parts.join(' ');
+}
 
 exports.match_posts = async (req, res) => {
   const ai = getClient();
@@ -261,7 +321,9 @@ exports.match_posts = async (req, res) => {
           'Dưới đây là một tin gốc và một số tin ứng viên ngược loại.',
           'Hãy chấm từng ứng viên theo khả năng đó là CÙNG MỘT con vật với tin gốc.',
           'Căn cứ vào ảnh (nếu có), giống, màu lông, khu vực và mốc thời gian hợp lý.',
-          'Khác giống hoặc khác màu rõ rệt thì cho điểm thấp. Giải thích ngắn gọn bằng tiếng Việt.',
+          'Khác giống hoặc khác màu rõ rệt thì cho điểm thấp.',
+          'Cách nhau quá xa về địa lý cũng cho điểm thấp.',
+          'Chỉ trả về điểm số và so sánh ảnh. KHÔNG viết lời giải thích.',
           '',
           `TIN GỐC — ${describePet(source)}`,
         ].join('\n'),
@@ -316,7 +378,8 @@ exports.match_posts = async (req, res) => {
       .map((m) => ({
         pet: candidates[m.index],
         score: Math.max(0, Math.min(100, m.score)),
-        reason: m.reason,
+        // Câu này ghép từ dữ liệu trong database, không phải chữ model sinh ra.
+        reason: buildReason(source, candidates[m.index], m.photo),
       }));
 
     res.json({ matches, candidatesChecked: candidates.length });
