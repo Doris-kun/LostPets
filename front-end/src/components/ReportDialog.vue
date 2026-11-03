@@ -24,11 +24,14 @@
         <label v-for="r in reasons" :key="r"
           class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all mb-1.5"
           :class="reason === r ? 'border-orange-300 bg-orange-50/50' : 'border-gray-100 hover:border-gray-200'">
-          <input type="radio" :value="r" v-model="reason" class="mt-0.5 accent-orange-500">
+          <!-- name dùng chung cho cả nhóm là đúng: đó là cách trình duyệt biết
+               sáu ô này loại trừ nhau. Nhưng id thì phải khác nhau, vì ô này
+               nằm trong v-for — sáu ô cùng một id là HTML không hợp lệ. -->
+          <input :id="'reason-' + r" name="reason" type="radio" :value="r" v-model="reason" class="mt-0.5 accent-orange-500">
           <span class="text-sm text-gray-700 leading-snug">{{ $t('report.reason.' + r) }}</span>
         </label>
 
-        <textarea v-model="note" :maxlength="maxNote" rows="3" :placeholder="$t('report.notePlaceholder')"
+        <textarea id="note" name="note" v-model="note" :maxlength="maxNote" rows="3" :placeholder="$t('report.notePlaceholder')"
           class="w-full mt-3 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-300 resize-none"></textarea>
 
         <p v-if="error" class="text-xs text-rose-500 mt-2">{{ error }}</p>

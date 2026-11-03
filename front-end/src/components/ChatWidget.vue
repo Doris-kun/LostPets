@@ -51,7 +51,7 @@
       </div>
 
       <form @submit.prevent="send()" class="flex items-end gap-2 p-2.5 border-t border-gray-100 bg-white">
-        <textarea v-model="draft" rows="1" :placeholder="$t('chat.placeholder')" :maxlength="maxChars"
+        <textarea id="draft" name="draft" v-model="draft" rows="1" :placeholder="$t('chat.placeholder')" :maxlength="maxChars"
           @keydown.enter.exact.prevent="send()"
           class="flex-1 resize-none border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"></textarea>
         <button type="submit" :disabled="loading || !draft.trim()"
