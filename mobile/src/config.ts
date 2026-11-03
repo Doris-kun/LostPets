@@ -19,7 +19,7 @@ import Constants from 'expo-constants';
  *            bạn bè mang về nhà.
  *   false -> back-end chạy ở laptop. Dùng khi đang sửa back-end và muốn thử ngay.
  */
-const USE_PRODUCTION = false;
+const USE_PRODUCTION = true;
 
 /*
  * Địa chỉ back-end đã deploy.

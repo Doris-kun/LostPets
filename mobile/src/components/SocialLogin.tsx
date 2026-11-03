@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
@@ -51,7 +51,11 @@ export default function SocialLogin() {
    * quyết định. Vẽ nút Google ra rồi bấm vào mới báo "chưa cấu hình" là bắt
    * người dùng chịu hậu quả của việc mình lười hỏi.
    */
-  const [providers, setProviders] = useState({ google: false, facebook: false });
+  const [providers, setProviders] = useState<{
+    google: boolean;
+    facebook: boolean;
+    googleMobile?: { ios: boolean; android: boolean };
+  }>({ google: false, facebook: false });
   const [busy, setBusy] = useState<'google' | 'facebook' | null>(null);
   const [error, setError] = useState('');
 
@@ -171,8 +175,22 @@ export default function SocialLogin() {
     });
   };
 
-  // Back-end tắt cả hai thì không vẽ gì, kể cả dòng kẻ "hoặc".
-  if (!providers.google && !providers.facebook) return null;
+  /*
+   * Google chỉ dùng được khi back-end có mã CHO ĐÚNG NỀN TẢNG NÀY.
+   *
+   * Thiếu mã iOS thì iPhone bấm vào sẽ bị Google từ chối, dù Android chạy
+   * ngon. Hỏi rồi mới vẽ nút, thay vì vẽ ra để người dùng bấm vào gặp lỗi.
+   *
+   * googleMobile là trường back-end thêm riêng cho mobile. Bản cũ chưa có
+   * thì coi như dùng được, để app không tự tắt mất tính năng.
+   */
+  const coMaNenTang =
+    !providers.googleMobile ||
+    (Platform.OS === 'ios' ? providers.googleMobile.ios : providers.googleMobile.android);
+  const dungDuocGoogle = providers.google && coMaNenTang;
+
+  // Không cái nào dùng được thì không vẽ gì, kể cả dòng kẻ "hoặc".
+  if (!dungDuocGoogle && !providers.facebook) return null;
 
   return (
     <View style={styles.wrap}>
@@ -183,7 +201,7 @@ export default function SocialLogin() {
         <View style={styles.line} />
       </View>
 
-      {providers.google && (
+      {dungDuocGoogle && (
         <TouchableOpacity
           style={styles.button}
           onPress={() => start('google')}

@@ -138,7 +138,22 @@ export default {
    * Phải làm vậy vì app nằm trong tay người dùng — ai cũng mở ra sửa được.
    * Tin lời app nói "tôi là user X" là ai cũng đăng nhập thành ai cũng được.
    */
-  authProviders: () => http.get<{ google: boolean; facebook: boolean }>('/auth/providers'),
+  /*
+   * google/facebook: bật hay tắt nói chung.
+   * googleMobile: back-end đã khai client ID riêng cho iOS và Android chưa.
+   *
+   * Phải tách ra vì Google bắt buộc mỗi nền tảng một mã riêng. Web bật rồi
+   * không có nghĩa mobile dùng được — thiếu mã của nền tảng nào thì máy nền
+   * tảng đó bấm vào sẽ bị Google từ chối.
+   *
+   * Trường này do back-end thêm riêng cho mobile, bản web không có.
+   */
+  authProviders: () =>
+    http.get<{
+      google: boolean;
+      facebook: boolean;
+      googleMobile?: { ios: boolean; android: boolean };
+    }>('/auth/providers'),
   // credential = ID token của Google. Tên trường phải khớp đúng back-end.
   googleLogin: (data: { credential: string }) => http.post<AuthResult>('/auth/google', data),
   facebookLogin: (data: { accessToken: string }) =>
