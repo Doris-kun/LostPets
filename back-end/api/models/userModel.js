@@ -22,9 +22,22 @@ const UserSchema = new Schema({
   // Mã định danh phía nhà cung cấp. Phải lưu mã này chứ không chỉ dựa vào
   // email: người ta đổi được email Google của mình, đổi xong mà hệ thống chỉ
   // nhận ra nhau qua email thì họ mất luôn tài khoản và mọi tin đã đăng.
-  // sparse để nhiều tài khoản cùng bỏ trống mà không đụng ràng buộc unique.
-  google:   { type: String, default: null, unique: true, sparse: true, select: false },
-  facebook: { type: String, default: null, unique: true, sparse: true, select: false },
+  //
+  // TUYỆT ĐỐI KHÔNG đặt `default: null` ở hai trường này.
+  //
+  // sparse chỉ bỏ qua tài liệu KHÔNG CÓ trường đó. Trường có mặt mà mang giá
+  // trị null thì vẫn bị đánh chỉ mục như mọi giá trị khác — nên unique chỉ
+  // cho phép đúng MỘT tài liệu mang null. Đặt default: null nghĩa là mọi user
+  // mới đều mang null, và người thứ hai không tạo được tài khoản.
+  //
+  // Đã xảy ra thật: một tài khoản chiếm mất chỗ null của facebook, sau đó
+  // mọi lượt đăng ký và mọi lượt đăng nhập Google tạo tài khoản mới đều nhận
+  // lỗi trùng khoá 11000, front-end hiện ra thành "Không thực hiện được".
+  //
+  // Không có default thì trường vắng mặt khi chưa gắn, sparse hoạt động đúng
+  // như tên gọi, và bao nhiêu tài khoản bỏ trống cũng được.
+  google:   { type: String, unique: true, sparse: true, select: false },
+  facebook: { type: String, unique: true, sparse: true, select: false },
   // Quản trị viên được xác định bằng biến môi trường ADMIN_EMAILS, không phải
   // bằng cách tự sửa trong database — đổi người quản trị chỉ cần sửa cấu hình.
   role:         { type: String, enum: ['user', 'admin'], default: 'user' },
