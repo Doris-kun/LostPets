@@ -3,6 +3,7 @@ const User = require('../models/userModel');
 const { signToken, isAdminEmail } = require('../middleware/auth');
 const {
   OAuthError, verifyGoogle, verifyFacebook, googleConfigured, facebookConfigured,
+  googleMobileConfigured,
 } = require('../lib/oauth');
 
 const SALT_ROUNDS = 10;
@@ -162,7 +163,13 @@ exports.facebook = async (req, res) => {
 // Cho front-end biết nên hiện nút nào. Chưa cấu hình mà vẫn vẽ nút ra thì
 // người dùng bấm vào chỉ nhận lỗi.
 exports.providers = (_req, res) => {
-  res.json({ google: googleConfigured(), facebook: facebookConfigured() });
+  res.json({
+    google: googleConfigured(),
+    facebook: facebookConfigured(),
+    // Front-end không dùng tới, đây là chỗ để kiểm từ ngoài rằng biến môi
+    // trường cho app mobile đã tới máy chủ. Chỉ true/false, không có giá trị.
+    googleMobile: googleMobileConfigured(),
+  });
 };
 
 // Dùng để front-end kiểm tra token còn hiệu lực sau khi tải lại trang.
