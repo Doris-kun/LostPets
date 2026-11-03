@@ -19,7 +19,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
         </svg>
-        <input v-model="filters.q" @input="debounceSearch" type="text" maxlength="200"
+        <input id="q" name="q" v-model="filters.q" @input="debounceSearch" type="text" maxlength="200"
           :placeholder="$t('search.placeholder')"
           class="w-full border border-gray-200 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent placeholder-gray-400"/>
         <button v-if="filters.q" @click="clearSearch" :aria-label="$t('search.clear')"
@@ -50,7 +50,7 @@
             {{ $t(s.labelKey) }}
           </button>
         </div>
-        <input v-model="filters.area" @input="debounceFetch" type="text"
+        <input id="area" name="area" v-model="filters.area" @input="debounceFetch" type="text"
           :placeholder="$t('filter.area')"
           class="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent placeholder-gray-400"/>
       </div>
@@ -66,7 +66,7 @@
         </div>
         <!-- Đang tìm kiếm thì kết quả sắp theo độ liên quan, chọn ngày ở đây
              không còn tác dụng — khoá lại còn hơn để người ta bấm rồi tưởng hỏng. -->
-        <select v-model="filters.sort" @change="fetchPets" :disabled="!!filters.q"
+        <select id="sort" name="sort" v-model="filters.sort" @change="fetchPets" :disabled="!!filters.q"
           :title="filters.q ? $t('search.sortLocked') : ''"
           class="border border-gray-200 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
           <option value="newest">{{ $t('sort.newest') }}</option>

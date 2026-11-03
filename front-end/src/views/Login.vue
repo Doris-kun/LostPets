@@ -7,13 +7,13 @@
 
     <form @submit.prevent="submit" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.email') }}</label>
-        <input v-model.trim="form.email" type="email" required autocomplete="email"
+        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.email') }}</label>
+        <input id="email" name="email" v-model.trim="form.email" type="email" required autocomplete="email"
           class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
       </div>
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.password') }}</label>
-        <input v-model="form.password" type="password" required autocomplete="current-password"
+        <label for="password" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.password') }}</label>
+        <input id="password" name="password" v-model="form.password" type="password" required autocomplete="current-password"
           class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
       </div>
 
