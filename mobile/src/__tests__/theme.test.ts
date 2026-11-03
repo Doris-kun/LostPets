@@ -67,6 +67,12 @@ const CAP: [string, keyof Colors, keyof Colors, number][] = [
   ['Nhãn LIÊN HỆ', 'tealText', 'contactBg', 4.5],
   ['Nhãn ADMIN', 'tealText', 'surfaceTint', 4.5],
 
+  // Màu mượn của Google và Facebook. Mượn thì vẫn phải đo: nút của người
+  // khác đặt trong app của mình, chữ không đọc được vẫn là lỗi của mình.
+  ['Chữ trên nút Google', 'onGoogle', 'googleBg', 4.5],
+  ['Viền nút Google', 'googleBorder', 'googleBg', 3],
+  ['Chữ trên nút Facebook', 'onFacebook', 'facebookBg', 4.5],
+
   // Viền của thứ bấm được hoặc gõ được. Nhiều khi nó là thứ DUY NHẤT cho
   // biết đây là chỗ bấm được, nên chuẩn đòi 3:1.
   ['Viền nút bấm so với nền', 'borderStrong', 'background', 3],

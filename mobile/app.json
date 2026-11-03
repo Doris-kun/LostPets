@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "scheme": ["lostpets", "com.lostpets.app", "fb1099308289611667"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lostpets.app"

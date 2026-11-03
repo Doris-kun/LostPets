@@ -136,6 +136,26 @@ export const lightColors = {
   aiBorder: '#DDD6FE',
   aiText: '#5B3FD0',
 
+
+  /*
+   * MÀU CỦA NÚT ĐĂNG NHẬP GOOGLE / FACEBOOK.
+   *
+   * Đây là màu của NGƯỜI KHÁC, không phải của LostPets. Google và Facebook
+   * đều có bản hướng dẫn riêng về nút "Tiếp tục với...", và người dùng nhận
+   * ra nút nhờ đúng cặp màu đó. Tô hai nút bằng cùng một màu viền của app
+   * thì mất hết dấu hiệu nhận biết, nhìn ra hai ô trống giống hệt nhau.
+   *
+   * Một chỗ cố ý lệch chuẩn của Facebook: xanh gốc của họ là #1877F2, chữ
+   * trắng trên nền đó chỉ được 4.23:1 — dưới ngưỡng 4.5:1 của chữ thường.
+   * Đậm xuống #0C62D7 thì lên 5.66:1, mắt vẫn đọc ra ngay là xanh Facebook.
+   */
+  googleBg: '#FFFFFF',
+  googleBorder: '#747775', // 4.53:1 trên nền trắng
+  onGoogle: '#1F1F1F', // 16.29:1
+  googleIcon: '#4285F4', // xanh chữ G của Google, giống nhau ở cả hai chế độ
+  facebookBg: '#0C62D7',
+  onFacebook: '#FFFFFF', // 5.66:1
+
   // Lớp tối sau bảng lọc
   scrim: 'rgba(22, 41, 58, 0.45)',
 };
@@ -217,6 +237,27 @@ export const darkColors: Colors = {
   aiBg: '#221E35',
   aiBorder: '#453A6B',
   aiText: '#C4B5FD',
+
+
+  /*
+   * MÀU CỦA NÚT ĐĂNG NHẬP GOOGLE / FACEBOOK.
+   *
+   * Đây là màu của NGƯỜI KHÁC, không phải của LostPets. Google và Facebook
+   * đều có bản hướng dẫn riêng về nút "Tiếp tục với...", và người dùng nhận
+   * ra nút nhờ đúng cặp màu đó. Tô hai nút bằng cùng một màu viền của app
+   * thì mất hết dấu hiệu nhận biết, nhìn ra hai ô trống giống hệt nhau.
+   *
+   * Một chỗ cố ý lệch chuẩn của Facebook: xanh gốc của họ là #1877F2, chữ
+   * trắng trên nền đó chỉ được 4.23:1 — dưới ngưỡng 4.5:1 của chữ thường.
+   * Đậm xuống #0C62D7 thì lên 5.66:1, mắt vẫn đọc ra ngay là xanh Facebook.
+   */
+  // Google có sẵn bản tối: nền gần đen, viền sáng lên để nút còn thấy được
+  googleBg: '#131314',
+  googleBorder: '#8E918F', // 5.88:1 trên nền nút
+  onGoogle: '#E3E3E3', // 14.59:1
+  googleIcon: '#4285F4',
+  facebookBg: '#0C62D7', // xanh Facebook đủ tương phản ở cả hai chế độ
+  onFacebook: '#FFFFFF', // 5.66:1
 
   // Tối hơn chế độ sáng: nền vốn đã tối, lớp phủ nhạt thì không tách lớp được
   scrim: 'rgba(0, 0, 0, 0.6)',

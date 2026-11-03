@@ -78,6 +78,22 @@ export const GOOGLE_CLIENT_ID_ANDROID =
  */
 export const FACEBOOK_APP_ID = '1099308289611667';
 
+/*
+ * CẢ HAI CÁCH ĐĂNG NHẬP TRÊN ĐỀU CẦN app.json KHAI "scheme".
+ *
+ * Ghi ở đây vì app.json là JSON, không chèn chú thích vào đó được, mà ai sửa
+ * hai mã trên thì cũng là người cần biết điều này.
+ *
+ * Đăng nhập xong, trình duyệt phải quay ngược về app. Nó quay về bằng một
+ * địa chỉ riêng mà app phải đăng ký trước với hệ điều hành:
+ *
+ *   com.lostpets.app:/oauthredirect      <- Google
+ *   fb1099308289611667://authorize       <- Facebook
+ *
+ * Thiếu khai thì người dùng đăng nhập xong sẽ kẹt lại ở trình duyệt, app
+ * không nhận được gì và cũng không báo lỗi gì — nên rất khó đoán ra.
+ */
+
 const PORT = 3000;
 
 /*

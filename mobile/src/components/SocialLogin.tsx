@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import * as Facebook from 'expo-auth-session/providers/facebook';
 import * as WebBrowser from 'expo-web-browser';
@@ -79,13 +78,22 @@ export default function SocialLogin() {
    * Google bắt buộc MỖI NỀN TẢNG một mã riêng, không dùng chung mã của web.
    * Hook này tự chọn đúng mã theo máy đang chạy.
    *
-   * responseType: 'id_token' là thứ back-end cần — nó là tờ giấy có chữ ký
-   * của Google, xác minh lại được. Access token thì không chứa danh tính.
+   * CỐ Ý KHÔNG KHAI responseType.
+   *
+   * Bản trước có khai 'id_token' cho gọn — xin thẳng tờ giấy chứng nhận, khỏi
+   * đổi chác. Trên máy thật Google chặn ngay ở trang đăng nhập với "Lỗi 400:
+   * invalid_request". Lý do: kiểu xin thẳng đó Google chỉ mở cho mã loại Web.
+   * Mã của iOS và Android bắt buộc đi đường hai bước — nhận phiếu trước, đổi
+   * phiếu lấy giấy sau — vì app nằm trong tay người dùng nên không được giữ
+   * bí mật nào cả.
+   *
+   * Để trống thì expo-auth-session tự chọn đường hai bước, tự đổi phiếu hộ,
+   * rồi đặt kết quả vào đúng chỗ cũ là params.id_token. Nên phần đọc kết quả
+   * bên dưới không phải sửa gì.
    */
   const [, googleResult, googlePrompt] = Google.useAuthRequest({
     iosClientId: GOOGLE_CLIENT_ID_IOS || undefined,
     androidClientId: GOOGLE_CLIENT_ID_ANDROID || undefined,
-    responseType: AuthSession.ResponseType.IdToken,
   });
 
   const [, facebookResult, facebookPrompt] = Facebook.useAuthRequest({
@@ -203,17 +211,17 @@ export default function SocialLogin() {
 
       {dungDuocGoogle && (
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, styles.googleButton]}
           onPress={() => start('google')}
           disabled={busy !== null}
           activeOpacity={0.8}
         >
           {busy === 'google' ? (
-            <ActivityIndicator size="small" color={colors.textSoft} />
+            <ActivityIndicator size="small" color={colors.onGoogle} />
           ) : (
-            <Ionicons name="logo-google" size={18} color={colors.textSoft} />
+            <Ionicons name="logo-google" size={19} color={colors.googleIcon} />
           )}
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, styles.googleText]}>
             {t(busy === 'google' ? 'social.working' : 'social.google')}
           </Text>
         </TouchableOpacity>
@@ -221,17 +229,17 @@ export default function SocialLogin() {
 
       {providers.facebook && (
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, styles.facebookButton]}
           onPress={() => start('facebook')}
           disabled={busy !== null}
           activeOpacity={0.8}
         >
           {busy === 'facebook' ? (
-            <ActivityIndicator size="small" color={colors.textSoft} />
+            <ActivityIndicator size="small" color={colors.onFacebook} />
           ) : (
-            <Ionicons name="logo-facebook" size={18} color={colors.textSoft} />
+            <Ionicons name="logo-facebook" size={19} color={colors.onFacebook} />
           )}
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, styles.facebookText]}>
             {t(busy === 'facebook' ? 'social.working' : 'social.facebook')}
           </Text>
         </TouchableOpacity>
@@ -255,19 +263,40 @@ const themedStyles = createThemedStyles((colors) =>
     line: { flex: 1, height: 1, backgroundColor: colors.border },
     dividerText: { fontSize: 12, color: colors.textMuted },
 
+    /*
+     * Phần dùng chung của hai nút: hình dáng, không màu mè.
+     *
+     * Trước đây hai nút dùng chung cả màu — cùng nền trong suốt, cùng viền
+     * xám, cùng chữ xám nhạt. Nhìn ra hai ô trống giống hệt nhau, phải đọc
+     * chữ mới biết cái nào là cái nào. Màu chính là thứ giúp nhận ra nút,
+     * nên giờ mỗi bên giữ đúng màu của mình.
+     */
     button: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: spacing.sm,
       // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 48,
+      minHeight: 50,
+      paddingHorizontal: spacing.lg,
       borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
       marginBottom: spacing.md,
     },
-    buttonText: { fontSize: 14, fontWeight: '700', color: colors.textSoft },
+
+    // Nền trắng, viền xám: đúng bản sáng trong hướng dẫn nút của Google
+    googleButton: {
+      backgroundColor: colors.googleBg,
+      borderWidth: 1.5,
+      borderColor: colors.googleBorder,
+    },
+
+    // Facebook thì ngược lại: nền đặc một màu, không viền. Nút của họ xưa
+    // nay vẫn vậy, và đặt cạnh nút trắng của Google thì tách bạch hẳn.
+    facebookButton: { backgroundColor: colors.facebookBg },
+
+    buttonText: { fontSize: 15, fontWeight: '700' },
+    googleText: { color: colors.onGoogle },
+    facebookText: { color: colors.onFacebook },
 
     error: { fontSize: 12.5, color: colors.danger, marginTop: spacing.xs },
   }),
