@@ -8,6 +8,7 @@ import type {
   AnalyzeResult,
   AuthResult,
   ChatMessage,
+  CleanupResult,
   MapPage,
   MatchResult,
   Pet,
@@ -205,6 +206,16 @@ export default {
    * đó là cách back-end khai, không phải nhầm.
    */
   adminReports: (page = 1) => http.get<AdminReportPage>('/admin/reports', { params: { page } }),
+
+  /*
+   * Dọn ngay những tin đã đoàn tụ quá hạn, kèm ảnh trên Cloudinary.
+   *
+   * Bình thường việc này do một lịch chạy tự động lo. Nút bấm tay ở trang
+   * quản trị là để khỏi phải chờ tới đêm khi cần dọn gấp.
+   *
+   * Có thể chạy lâu: mỗi tin là một lệnh xoá ảnh gửi sang Cloudinary.
+   */
+  adminCleanup: () => http.post<CleanupResult>('/admin/cleanup', {}, { timeout: 120000 }),
 
   // Bỏ qua một báo cáo: xoá hẳn bản ghi báo cáo, KHÔNG đụng tới tin đăng.
   adminDismissReport: (id: string) =>

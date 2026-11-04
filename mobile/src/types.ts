@@ -218,8 +218,38 @@ export interface AdminStats {
   users: number;
   /** Phần trăm tin đã đánh dấu đoàn tụ, 0-100. */
   resolvedRate: number;
+
+  /*
+   * Ba trường back-end vẫn trả về mà trước đây mobile bỏ quên.
+   *
+   * Tin đã đoàn tụ không giữ mãi: quá hạn thì bị xoá hẳn, kèm cả ảnh trên
+   * Cloudinary. Đó là chủ ý về quyền riêng tư — giữ mãi ảnh và số điện thoại
+   * của một chuyện đã xong từ lâu thì không có lý do gì.
+   */
+  /** Số tin đã quá hạn giữ lại, tức đợt dọn kế tiếp sẽ xoá đúng ngần này. */
+  pendingCleanup: number;
+  /** Quá bao nhiêu ngày kể từ lúc đánh dấu đoàn tụ thì tính là quá hạn. */
+  cleanupDays: number;
+  /** Số báo cáo chưa ai xử lý. */
+  openReports: number;
+
   topAreas: AdminRank[];
   topBreeds: AdminRank[];
+}
+
+/** Kết quả POST /admin/cleanup. */
+export interface CleanupResult {
+  /** Số tin vừa bị xoá hẳn. */
+  deleted: number;
+  /*
+   * Số tin được đóng dấu mốc thời gian lần đầu.
+   *
+   * Tin đoàn tụ từ trước khi back-end có trường resolvedAt thì không có mốc
+   * nào để tính hạn, nên lần dọn đầu chỉ đóng dấu "bây giờ" cho chúng chứ
+   * không xoá. Vì vậy deleted có thể bằng 0 mà stamped vẫn lớn.
+   */
+  stamped: number;
+  days: number;
 }
 
 // ---- Điều hướng ----

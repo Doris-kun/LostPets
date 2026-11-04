@@ -323,6 +323,14 @@ const vi = {
   'map.privacyNote': 'Vị trí sẽ được làm tròn thành một vùng rộng khoảng 500m trước khi lưu, nên không ai thấy chính xác nhà bạn. Dù vậy vẫn nên chọn một điểm gần đó thay vì đúng nhà.',
 
   // --- Báo cáo trong trang quản trị. Câu chữ lấy đúng bản web.
+  // --- Dọn tin đã đoàn tụ quá hạn. Câu chữ lấy đúng bản web.
+  'admin.cleanupDue':
+    '{count} tin đã đoàn tụ quá {days} ngày. Đợt dọn đêm nay sẽ xoá hẳn, kèm cả ảnh.',
+  'admin.cleanupNow': 'Dọn ngay',
+  'admin.cleanupRunning': 'Đang dọn...',
+  'admin.cleanupDone': 'Đã xoá {count} tin cũ.',
+  'admin.confirmCleanup':
+    'Xoá hẳn những tin đã đoàn tụ quá hạn, kèm ảnh? Không khôi phục lại được.',
   'admin.reports': 'Báo cáo chờ xử lý',
   'admin.reportDismiss': 'Bỏ qua',
   'admin.reportDeletePost': 'Xoá tin',
@@ -680,6 +688,13 @@ const en: Record<WordKey, string> = {
   'map.approxNote': 'This is an approximate area, about 500m across — not an exact address. Call to agree on a specific meeting point, ideally somewhere public.',
   'map.privacyNote': 'Your location is rounded to an area about 500m wide before it is saved, so nobody sees your exact address. Even so, prefer a nearby point over your own home.',
 
+  'admin.cleanupDue':
+    "{count} reunited posts are older than {days} days. Tonight's sweep deletes them for good, photos included.",
+  'admin.cleanupNow': 'Clean up now',
+  'admin.cleanupRunning': 'Cleaning...',
+  'admin.cleanupDone': 'Deleted {count} old posts.',
+  'admin.confirmCleanup':
+    'Permanently delete reunited posts past the retention period, photos included? This cannot be undone.',
   'admin.reports': 'Reports to review',
   'admin.reportDismiss': 'Dismiss',
   'admin.reportDeletePost': 'Delete post',

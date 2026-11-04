@@ -222,6 +222,7 @@ export default function AdminScreen({ navigation }: Props) {
           setResolved={setResolved}
           search={search}
           setSearch={setSearch}
+          onCleaned={load}
         />
 
         {/*
@@ -271,6 +272,7 @@ function Header({
   setResolved,
   search,
   setSearch,
+  onCleaned,
 }: {
   stats: AdminStats | null;
   total: number;
@@ -281,10 +283,45 @@ function Header({
   setResolved: (value: string) => void;
   search: string;
   setSearch: (value: string) => void;
+  onCleaned: () => void;
 }) {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
+
+  const [cleaning, setCleaning] = useState(false);
+
+  /*
+   * Dọn ngay những tin đã đoàn tụ quá hạn.
+   *
+   * Bình thường việc này do lịch chạy tự động lo mỗi đêm. Nút bấm tay chỉ để
+   * khỏi phải chờ tới đêm — và để người chấm bài thấy được việc đó có thật,
+   * chứ không phải một câu hứa trong báo cáo.
+   *
+   * Hỏi xác nhận vì KHÔNG LẤY LẠI ĐƯỢC: tin mất, ảnh trên Cloudinary cũng
+   * mất theo.
+   */
+  const cleanup = () => {
+    Alert.alert(t('admin.title'), t('admin.confirmCleanup'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('admin.cleanupNow'),
+        style: 'destructive',
+        onPress: async () => {
+          setCleaning(true);
+          try {
+            const { data } = await api.adminCleanup();
+            Alert.alert(t('admin.title'), t('admin.cleanupDone', { count: data.deleted }));
+            onCleaned();
+          } catch {
+            Alert.alert(t('admin.title'), t('admin.loadFailed'));
+          } finally {
+            setCleaning(false);
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <View>
@@ -312,6 +349,32 @@ function Header({
               <View style={[styles.rateFill, { width: `${stats.resolvedRate}%` }]} />
             </View>
           </View>
+
+          {/*
+            Chỉ hiện khi THẬT SỰ có tin quá hạn. Không có tin nào mà vẫn vẽ
+            một nút "Dọn ngay" thì bấm vào chẳng xảy ra gì, người dùng phải
+            thử mới biết nó vô dụng.
+          */}
+          {stats.pendingCleanup > 0 && (
+            <View style={styles.cleanupBox}>
+              <Text style={styles.cleanupText}>
+                {t('admin.cleanupDue', {
+                  count: stats.pendingCleanup,
+                  days: stats.cleanupDays,
+                })}
+              </Text>
+              <TouchableOpacity
+                style={[styles.cleanupButton, cleaning && styles.cleanupDisabled]}
+                onPress={cleanup}
+                disabled={cleaning}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.cleanupButtonText}>
+                  {t(cleaning ? 'admin.cleanupRunning' : 'admin.cleanupNow')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <Rank title={t('admin.topAreas')} rows={stats.topAreas} />
           <Rank title={t('admin.topBreeds')} rows={stats.topBreeds} />
@@ -506,6 +569,32 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     },
     tileValue: { fontSize: 20, fontWeight: '800', color: colors.text },
     tileLabel: { fontSize: 10, color: colors.textMuted, marginTop: 2, textAlign: 'center' },
+
+    /*
+     * Dải cảnh báo dọn tin. Dùng bộ màu warn (vàng cam) chứ không phải
+     * danger (đỏ): đây là việc đã lên lịch và bình thường, không phải sự
+     * cố. Đỏ để dành cho báo cáo tin xấu, thứ thật sự cần người can thiệp.
+     */
+    cleanupBox: {
+      marginTop: spacing.md,
+      padding: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.secretBorder,
+      backgroundColor: colors.secretBg,
+      gap: spacing.md,
+    },
+    cleanupText: { fontSize: 12.5, lineHeight: 18, color: colors.secretText },
+    cleanupButton: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+      minHeight: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.danger,
+    },
+    cleanupButtonText: { fontSize: 13.5, fontWeight: '700', color: '#FFFFFF' },
+    cleanupDisabled: { opacity: 0.45 },
 
     rateBox: {
       marginTop: spacing.md,
