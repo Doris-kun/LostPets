@@ -55,6 +55,28 @@ const googleAudience = () =>
 exports.facebookConfigured = () =>
   Boolean(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET);
 
+// Có chìa nút Facebook ra cho mọi người không. MẶC ĐỊNH LÀ KHÔNG.
+//
+// Khác hẳn facebookConfigured() ở trên, và sự khác nhau đó là cả mục đích:
+//   facebookConfigured  -> endpoint có chạy được không
+//   facebookPublic      -> có nên vẽ nút ra không
+//
+// Vì sao mặc định tắt: ứng dụng Meta đang ở chế độ Development, nên chỉ người
+// có vai trò trong ứng dụng mới đăng nhập được. Người lạ bấm vào nhận thẳng
+// màn hình "App not active" bằng tiếng Anh, không hiểu gì. Một nút chắc chắn
+// hỏng nằm giữa màn hình đăng nhập còn tệ hơn là không có nút.
+//
+// Điều này đặc biệt quan trọng khi chạy UAT: Objective 5 chấm bằng điểm SUS
+// do người lạ cho, mà họ sẽ trừ điểm vì một nút hỏng chẳng liên quan gì tới
+// chất lượng sản phẩm.
+//
+// Tính năng KHÔNG bị gỡ: code còn nguyên, test còn nguyên, POST /auth/facebook
+// vẫn chạy. Bật lại bằng FACEBOOK_PUBLIC=on bất cứ lúc nào — để demo cho người
+// chấm, hoặc khi ứng dụng Meta được duyệt sang Live.
+exports.facebookPublic = () =>
+  exports.facebookConfigured()
+  && String(process.env.FACEBOOK_PUBLIC || 'off').toLowerCase() === 'on';
+
 // Google gửi về một ID token đã ký. Thư viện tự tải khoá công khai của Google
 // và kiểm chữ ký, hạn dùng, và quan trọng nhất là `aud` — token phải được cấp
 // cho ĐÚNG ứng dụng này. Thiếu bước kiểm aud thì token lấy từ bất kỳ web nào
