@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -41,7 +41,26 @@ export default function AuthScreen({ navigation }: Props) {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
-  const { login } = useAuth();
+  const { login, isLoggedIn } = useAuth();
+
+  /*
+   * ĐĂNG NHẬP XONG THÌ TỰ QUAY LẠI MÀN TRƯỚC — mọi lối vào, không riêng một lối.
+   *
+   * Trước đây câu quay về nằm ngay trong hàm bấm nút đăng nhập bằng email.
+   * Nên đăng nhập bằng Google thì phiên đã lưu xong mà màn hình vẫn đứng im
+   * ở trang Đăng nhập — người dùng tưởng hỏng rồi bấm lại.
+   *
+   * Canh vào chính trạng thái phiên thì lối nào cũng ăn: email, Google,
+   * Facebook, hay bất cứ cách nào thêm về sau.
+   *
+   * Nhớ lại trạng thái lúc mới mở màn hình, chỉ quay về khi nó CHUYỂN từ
+   * chưa đăng nhập sang đã đăng nhập. Nếu không, lỡ ai mở màn này trong lúc
+   * đang đăng nhập sẵn thì nó đóng sập ngay, nhìn như app giật.
+   */
+  const daDangNhapTuDau = useRef(isLoggedIn);
+  useEffect(() => {
+    if (isLoggedIn && !daDangNhapTuDau.current) navigation.goBack();
+  }, [isLoggedIn, navigation]);
 
   // false = đang ở tab Đăng nhập, true = tab Đăng ký
   const [isRegister, setIsRegister] = useState(false);
@@ -101,9 +120,9 @@ export default function AuthScreen({ navigation }: Props) {
         ? await api.register({ name, email, password })
         : await api.login({ email, password });
 
-      // data = { token, user }. Cất vào phiên rồi quay lại màn trước.
+      // data = { token, user }. Cất vào phiên là xong — useEffect ở trên
+      // thấy phiên đổi sẽ lo phần quay lại màn trước.
       login(data.token, data.user);
-      navigation.goBack();
     } catch (err) {
       const status = errorStatus(err);
 

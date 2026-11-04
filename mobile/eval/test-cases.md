@@ -1,6 +1,6 @@
 # Bảng test case chức năng — app điện thoại LostPets
 
-Chạy ngày 2026-11-03 · sinh tự động bởi `npm run test:report`
+Chạy ngày 2026-11-04 · sinh tự động bởi `npm run test:report`
 
 ## Tổng hợp
 
