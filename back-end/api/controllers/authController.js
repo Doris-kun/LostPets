@@ -3,7 +3,7 @@ const User = require('../models/userModel');
 const { signToken, isAdminEmail } = require('../middleware/auth');
 const {
   OAuthError, verifyGoogle, verifyFacebook, googleConfigured, facebookConfigured,
-  googleMobileConfigured,
+  googleMobileConfigured, facebookPublic,
 } = require('../lib/oauth');
 
 const SALT_ROUNDS = 10;
@@ -165,7 +165,9 @@ exports.facebook = async (req, res) => {
 exports.providers = (_req, res) => {
   res.json({
     google: googleConfigured(),
-    facebook: facebookConfigured(),
+    // facebookPublic chứ không phải facebookConfigured: endpoint vẫn chạy,
+    // chỉ là không chìa nút ra khi ứng dụng Meta còn ở chế độ Development.
+    facebook: facebookPublic(),
     // Front-end không dùng tới, đây là chỗ để kiểm từ ngoài rằng biến môi
     // trường cho app mobile đã tới máy chủ. Chỉ true/false, không có giá trị.
     googleMobile: googleMobileConfigured(),

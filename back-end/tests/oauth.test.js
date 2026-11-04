@@ -250,11 +250,45 @@ describe('GET /auth/providers', () => {
   it('cho front-end biết nên vẽ nút nào', async () => {
     const res = await request(app).get('/auth/providers');
 
+    // facebook: false dù đã khai đủ APP_ID và APP_SECRET — vì FACEBOOK_PUBLIC
+    // mặc định tắt. Ứng dụng Meta còn ở chế độ Development nên người lạ bấm
+    // vào chỉ nhận "App not active".
     expect(res.body).toEqual({
       google: true,
-      facebook: true,
+      facebook: false,
       googleMobile: { ios: false, android: false },
     });
+  });
+
+  it('chìa nút Facebook ra khi FACEBOOK_PUBLIC=on', async () => {
+    process.env.FACEBOOK_PUBLIC = 'on';
+    expect((await request(app).get('/auth/providers')).body.facebook).toBe(true);
+    delete process.env.FACEBOOK_PUBLIC;
+  });
+
+  it('vẫn ẩn nút khi bật nhưng chưa khai đủ khoá', async () => {
+    process.env.FACEBOOK_PUBLIC = 'on';
+    const saved = process.env.FACEBOOK_APP_SECRET;
+    delete process.env.FACEBOOK_APP_SECRET;
+
+    expect((await request(app).get('/auth/providers')).body.facebook).toBe(false);
+
+    process.env.FACEBOOK_APP_SECRET = saved;
+    delete process.env.FACEBOOK_PUBLIC;
+  });
+
+  it('ẩn nút KHÔNG làm hỏng tính năng — endpoint vẫn chạy', async () => {
+    // Đây là chỗ quan trọng nhất của cả nhóm test này. Ẩn nút là quyết định
+    // về giao diện, không phải gỡ tính năng: người có vai trò trong ứng dụng
+    // Meta vẫn đăng nhập được, và app mobile vẫn gọi được.
+    expect((await request(app).get('/auth/providers')).body.facebook).toBe(false);
+
+    mockVerifyFacebook.mockResolvedValue(profile());
+    const res = await loginFacebook();
+
+    expect(res.status).not.toBe(503);
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBeTruthy();
   });
 
   it('báo biến cho app mobile đã khai hay chưa', async () => {
