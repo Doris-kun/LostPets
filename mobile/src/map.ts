@@ -102,6 +102,35 @@ export function hasPoint<T extends { lat?: unknown; lng?: unknown }>(
  * Dùng đường liên kết chung của Google Maps: không cần khoá API, và trên điện
  * thoại hệ điều hành tự bắt lấy link này rồi mở app Maps thay vì trình duyệt.
  */
+/*
+ * Khoảng cách giữa hai điểm trên mặt đất, tính bằng km.
+ *
+ * Công thức haversine — coi Trái Đất là hình cầu. Sai số dưới 0.5% so với
+ * hình thật, mà mình chỉ cần câu "3 tin trong bán kính 2km" nên thừa chính
+ * xác.
+ *
+ * KHÔNG dùng được phép trừ toạ độ rồi lấy căn: 1 độ kinh tuyến ở xích đạo
+ * dài 111km nhưng ở vĩ độ 60 chỉ còn 55km. Việt Nam nằm gần xích đạo nên
+ * sai số nhỏ, nhưng viết sai vẫn là viết sai.
+ */
+const RADIUS_EARTH_KM = 6371;
+const toRad = (deg: number): number => (deg * Math.PI) / 180;
+
+export function distanceKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * RADIUS_EARTH_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Bán kính coi là "gần tôi", tính bằng km. */
+export const NEAR_ME_KM = 2;
+
 export const directionsUrl = (lat: number, lng: number): string =>
   `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 
@@ -280,19 +309,26 @@ ${
    * Phía React Native phải chờ tin 'ready' mới gọi, vì Leaflet tải từ mạng,
    * không biết xong lúc nào.
    */
+  // Lớp riêng cho chấm "bạn đang ở đây", để xoá nó không đụng tới pin tin đăng.
+  var meLayer = L.layerGroup().addTo(map);
+
   window.lp = {
     /*
      * Vẽ lại toàn bộ pin. Nhận mảng { id, lat, lng, color } — cố ý KHÔNG nhận
      * tên hay mô tả con vật: chữ nghĩa để React Native lo, chỉ nó mới biết
      * người dùng đang xem tiếng gì và đang ở chế độ sáng hay tối.
      */
-    setPets: function (pets) {
+    setPets: function (pets, fit) {
       layer.clearLayers();
       if (!pets || pets.length === 0) return;
 
       pets.forEach(function (p) {
+        function open() {
+          send({ type: 'open', id: p.id });
+        }
+
         // Vùng tròn thể hiện độ chính xác thật (xem AREA_RADIUS_M trong src/map.js)
-        L.circle([p.lat, p.lng], {
+        var ring = L.circle([p.lat, p.lng], {
           radius: ${AREA_RADIUS_M},
           color: p.color,
           weight: 1,
@@ -301,12 +337,50 @@ ${
           fillOpacity: 0.12,
         }).addTo(layer);
 
-        L.marker([p.lat, p.lng], { icon: pin(p.color) }).addTo(layer);
+        var marker = L.marker([p.lat, p.lng], { icon: pin(p.color) }).addTo(layer);
+
+        /*
+         * Bắt chạm trên CẢ vòng tròn lẫn cái pin.
+         *
+         * Pin chỉ rộng chừng 14 điểm ảnh — dưới xa mức 44 điểm tối thiểu cho
+         * một vùng chạm trên điện thoại. Vòng tròn 550m thì lúc nào cũng to
+         * hơn pin, nên chạm hụt pin vẫn trúng vòng.
+         */
+        marker.on('click', open);
+        ring.on('click', open);
       });
 
-      // Khung nhìn tự ôm hết các điểm, khỏi phải kéo đi tìm.
+      /*
+       * Chỉ ôm khung nhìn khi được yêu cầu.
+       *
+       * Người dùng vừa kéo bản đồ tới chỗ mình muốn xem, mà danh sách tin
+       * đổi (do lọc, do tìm kiếm) rồi mình tự kéo về chỗ khác thì công kéo
+       * của họ mất sạch. Chỉ ôm lúc mới mở, hoặc khi bộ lọc đổi.
+       */
+      if (!fit) return;
       var bounds = L.latLngBounds(pets.map(function (p) { return [p.lat, p.lng]; }));
       map.fitBounds(bounds, { padding: [36, 36], maxZoom: 14 });
+    },
+
+    /*
+     * Chấm "bạn đang ở đây" và dời khung nhìn về đó.
+     *
+     * Vẽ bằng circleMarker chứ không dùng pin: pin nghĩa là một tin đăng,
+     * dùng lại cho vị trí người xem thì nhìn như có thêm một con vật nữa.
+     */
+    setMe: function (lat, lng, color) {
+      meLayer.clearLayers();
+      if (lat === null || lat === undefined) return;
+
+      L.circleMarker([lat, lng], {
+        radius: 7,
+        color: '#FFFFFF',
+        weight: 3,
+        fillColor: color,
+        fillOpacity: 1,
+      }).addTo(meLayer);
+
+      map.setView([lat, lng], ${FOCUS_ZOOM});
     },
 
     /*

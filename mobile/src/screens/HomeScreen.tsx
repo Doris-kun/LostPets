@@ -22,6 +22,7 @@ import { API_URL } from '../config';
 import PetCard, { timeAgo } from '../components/PetCard';
 import { THUMB_FEATURED, thumbnail } from '../image';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
+import PetMapView from '../components/PetMapView';
 import { useLanguage } from '../context/language';
 import { radius, spacing, statusStyle } from '../theme';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
@@ -153,6 +154,14 @@ export default function HomeScreen({ navigation }: Props) {
    */
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
+
+  /*
+   * Đang xem danh sách hay bản đồ. Giống nút chuyển bên web, nhưng ở đây
+   * bản đồ chiếm TRỌN vùng danh sách chứ không phải một ô nhỏ trong trang
+   * cuộn — bản đồ nhỏ nằm giữa trang cuộn thì kéo bản đồ hay kéo trang, máy
+   * không đoán được.
+   */
+  const [view, setView] = useState<'list' | 'map'>('list');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   // Đang nối thêm trang sau — khác loading là vòng xoay che cả màn hình
@@ -363,7 +372,47 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
+      {/*
+        Nút chuyển. Hai nửa bằng nhau, nửa đang chọn tô nền — kiểu điều khiển
+        quen thuộc trên điện thoại, rõ hơn hẳn hai dòng chữ cạnh nhau.
+      */}
+      <View style={styles.viewSwitch}>
+        {(['list', 'map'] as const).map((mode) => {
+          const on = view === mode;
+          return (
+            <TouchableOpacity
+              key={mode}
+              style={[styles.viewTab, on && styles.viewTabOn]}
+              onPress={() => setView(mode)}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={mode === 'list' ? 'list-outline' : 'map-outline'}
+                size={15}
+                color={on ? colors.onPrimary : colors.textSoft}
+              />
+              <Text style={[styles.viewTabText, on && styles.viewTabTextOn]}>
+                {t(mode === 'list' ? 'map.listView' : 'map.mapView')}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {view === 'map' ? (
+        /*
+         * Truyền thẳng bộ tham số của danh sách sang. Nhờ vậy lọc và tìm
+         * kiếm ăn vào cả hai chế độ — gõ chữ rồi bấm sang bản đồ không bị
+         * thấy lại những tin vừa bị loại.
+         *
+         * limit và skip trong đó thì /pets/map bỏ qua: bản đồ không phân
+         * trang được, không thể vẽ nửa bản đồ rồi bắt bấm "xem thêm".
+         */
+        <PetMapView
+          params={buildParams(type, filters, 0, query)}
+          onOpenPet={(id) => navigation.navigate('Detail', { id })}
+        />
+      ) : loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.teal} />
         </View>
@@ -434,13 +483,20 @@ export default function HomeScreen({ navigation }: Props) {
         trợ giúp" — đúng chỗ người ta đi tìm khi cần giúp đỡ.
       */}
       {/* Nút tròn nổi ở góc — kiểu nút quen thuộc trên điện thoại */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('Form', { mode: 'create' })}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.fabIcon}>+</Text>
-      </TouchableOpacity>
+      {/*
+        Giấu nút "+" khi đang xem bản đồ — nút "Gần tôi" của bản đồ nằm
+        đúng chỗ này. Mỗi chế độ một hành động chính ở cùng một góc, ngón
+        cái không phải học lại. Muốn đăng tin thì bấm "Danh sách" một cái.
+      */}
+      {view === 'list' && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('Form', { mode: 'create' })}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.fabIcon}>+</Text>
+        </TouchableOpacity>
+      )}
 
       <PetFilters
         searching={!!query.trim()}
@@ -852,6 +908,33 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     textAlign: 'center',
     lineHeight: 19,
   },
+
+  /*
+   * Nút chuyển Danh sách / Bản đồ. Hai nửa bằng nhau trong một khung bo
+   * tròn, nửa đang chọn tô nền đậm — kiểu điều khiển quen thuộc trên điện
+   * thoại, rõ hơn hẳn hai dòng chữ đặt cạnh nhau.
+   */
+  viewSwitch: {
+    flexDirection: 'row',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    padding: 3,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceTint,
+  },
+  viewTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+    minHeight: 44,
+    borderRadius: radius.full,
+  },
+  viewTabOn: { backgroundColor: colors.primary },
+  viewTabText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
+  viewTabTextOn: { color: colors.onPrimary },
 
   fab: {
     position: 'absolute',

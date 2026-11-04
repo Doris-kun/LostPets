@@ -7,6 +7,7 @@ import type {
   AnalyzeResult,
   AuthResult,
   ChatMessage,
+  MapPage,
   MatchResult,
   Pet,
   PetPage,
@@ -99,6 +100,16 @@ export const errorStatus = (err: unknown): number | undefined =>
 
 export default {
   getPets: (params?: PetQuery) => http.get<PetPage>('/pets', { params }),
+
+  /*
+   * Mọi tin có toạ độ, để vẽ lên bản đồ. Nhận đúng bộ tham số của getPets —
+   * cố ý, nếu không thì gõ chữ tìm kiếm rồi bấm sang bản đồ sẽ thấy cả những
+   * tin vừa bị loại.
+   *
+   * Không phân trang: không thể vẽ nửa bản đồ rồi bắt người dùng bấm "xem
+   * thêm". Back-end chặn ở 500 tin và báo lại bằng cờ capped.
+   */
+  petsForMap: (params?: PetQuery) => http.get<MapPage>('/pets/map', { params }),
   // Kèm mã xác nhận để server biết người xem có phải chủ bài không —
   // chủ bài thì nhận thêm trường đặc điểm bí mật. Mã lấy ở AsyncStorage nên
   // phải await, khác web đọc localStorage ra ngay.

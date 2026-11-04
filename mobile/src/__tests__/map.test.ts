@@ -1,4 +1,4 @@
-import { directionsUrl, hasPoint, mapHtml, AREA_RADIUS_M, DEFAULT_CENTER } from '../map';
+import { distanceKm, directionsUrl, hasPoint, mapHtml, AREA_RADIUS_M, DEFAULT_CENTER } from '../map';
 
 /*
  * Bộ test cho src/map.ts.
@@ -121,5 +121,51 @@ describe('mapHtml — trang Leaflet nhúng vào WebView', () => {
     // petModel.js). Vẽ nhỏ hơn là ngụ ý biết chính xác hơn sự thật.
     expect(AREA_RADIUS_M).toBe(550);
     expect(mapHtml()).toContain(`radius: ${AREA_RADIUS_M}`);
+  });
+});
+
+/*
+ * Khoảng cách giữa hai điểm, dùng để đếm "mấy tin trong bán kính 2km".
+ *
+ * Test bằng những con số tra được chứ không bằng kết quả hàm tự trả về —
+ * chép kết quả của chính nó vào test thì test chỉ xác nhận hàm không đổi,
+ * không xác nhận hàm đúng.
+ */
+describe('distanceKm — khoảng cách trên mặt đất', () => {
+  it('cùng một điểm thì bằng 0', () => {
+    expect(distanceKm({ lat: 10.776, lng: 106.7 }, { lat: 10.776, lng: 106.7 })).toBe(0);
+  });
+
+  // 1 độ vĩ tuyến dài khoảng 111.2km ở mọi nơi trên Trái Đất.
+  it('1 độ vĩ tuyến ra khoảng 111km', () => {
+    const d = distanceKm({ lat: 10, lng: 106 }, { lat: 11, lng: 106 });
+    expect(d).toBeGreaterThan(110);
+    expect(d).toBeLessThan(112);
+  });
+
+  /*
+   * Chỗ dễ sai nhất, và là lý do không được trừ toạ độ rồi lấy căn:
+   * 1 độ KINH tuyến ở xích đạo dài 111km, nhưng ở vĩ độ 60 chỉ còn một
+   * nửa. Cùng một hiệu số toạ độ mà khoảng cách thật khác hẳn nhau.
+   */
+  it('1 độ kinh tuyến ngắn dần khi lên vĩ độ cao', () => {
+    const xichDao = distanceKm({ lat: 0, lng: 0 }, { lat: 0, lng: 1 });
+    const viDo60 = distanceKm({ lat: 60, lng: 0 }, { lat: 60, lng: 1 });
+    expect(xichDao).toBeGreaterThan(111);
+    expect(viDo60).toBeCloseTo(xichDao / 2, 0);
+  });
+
+  it('đo chiều nào cũng ra một kết quả', () => {
+    const a = { lat: 10.776, lng: 106.7 };
+    const b = { lat: 10.82, lng: 106.63 };
+    expect(distanceKm(a, b)).toBeCloseTo(distanceKm(b, a), 10);
+  });
+
+  // Hai điểm trong nội thành, cách nhau chừng 1.1km — mức mà bán kính
+  // "gần tôi" 2km phải tính là gần.
+  it('hai điểm cách 0.01 độ vĩ ra khoảng 1.1km', () => {
+    const d = distanceKm({ lat: 10.776, lng: 106.7 }, { lat: 10.786, lng: 106.7 });
+    expect(d).toBeGreaterThan(1.0);
+    expect(d).toBeLessThan(1.2);
   });
 });

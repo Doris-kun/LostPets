@@ -84,6 +84,33 @@ export interface Pet {
 }
 
 /** Trang danh sách tin: GET /pets */
+/*
+ * Một tin trên bản đồ. ÍT TRƯỜNG HƠN Pet, cố ý.
+ *
+ * Back-end chỉ trả về đúng những trường bản đồ vẽ ra (MAP_FIELDS trong
+ * petController.js): không có contact, không có description, không có đặc
+ * điểm bí mật. Một tin có mô tả dài, mà bản đồ có thể kéo về tới 500 tin một
+ * lúc — trả đầy đủ là vài MB cho một màn hình chỉ hiện chấm tròn.
+ *
+ * Khai bằng Pick chứ không chép tay lại: đổi kiểu của Pet là chỗ này đổi
+ * theo, không có chuyện hai nơi lệch nhau.
+ */
+export type MapPet = Pick<
+  Pet,
+  '_id' | 'postId' | 'type' | 'name' | 'breed' | 'color' | 'area' | 'image' | 'lat' | 'lng' | 'resolved'
+>;
+
+/** Kết quả GET /pets/map. */
+export interface MapPage {
+  pets: MapPet[];
+  /** Số tin CÓ toạ độ và khớp bộ lọc. */
+  total: number;
+  /** Số tin khớp bộ lọc nhưng người đăng không chọn vị trí, nên không vẽ được. */
+  withoutCoords: number;
+  /** true = đã chạm trần 500 tin, bản đồ đang thiếu. */
+  capped: boolean;
+}
+
 export interface PetPage {
   pets: Pet[];
   total: number;

@@ -17,7 +17,7 @@ import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing, statusStyle } from '../theme';
 import { directionsUrl, hasPoint, mapHtml } from '../map';
-import type { Pet } from '../types';
+import type { MapPet, Pet } from '../types';
 
 /*
  * Bản đồ của app. Một component, hai việc — chọn bằng prop mode:
@@ -56,6 +56,8 @@ interface MapCanvasProps {
   /** Câu lệnh JavaScript tiêm sang trang, dạng chuỗi. */
   payload: string;
   onPick?: (point: { lat: number; lng: number }) => void;
+  /** Người dùng chạm vào một tin trên bản đồ. */
+  onOpen?: (id: string) => void;
   /** Cha gán vào đây một hàm để chốt điểm đang ngắm. Chiều gọi là cha -> con. */
   commitRef?: MutableRefObject<(() => void) | null>;
   style?: StyleProp<ViewStyle>;
@@ -66,6 +68,7 @@ function MapCanvas({
   interactive = true,
   payload,
   onPick,
+  onOpen,
   commitRef,
   style,
 }: MapCanvasProps) {
@@ -126,6 +129,7 @@ function MapCanvas({
 
     if (msg.type === 'ready') setReady(true);
     else if (msg.type === 'pick') onPick?.({ lat: msg.lat, lng: msg.lng });
+    else if (msg.type === 'open') onOpen?.(String(msg.id));
   };
 
   return (
@@ -166,12 +170,29 @@ function MapCanvas({
 export interface PetMapProps {
   /** 'view' = hiện vị trí của tin. 'pick' = chọn một điểm. */
   mode?: 'view' | 'pick';
-  /** mode="view": các tin cần vẽ. Tin không có toạ độ tự bị bỏ qua. */
-  pets?: Pet[];
+  /*
+   * mode="view": các tin cần vẽ. Tin không có toạ độ tự bị bỏ qua.
+   *
+   * Khai MapPet chứ không phải Pet, vì /pets/map chỉ trả về một phần trường.
+   * Pet vẫn truyền vào được — nó có đủ mọi trường MapPet đòi, nên màn chi
+   * tiết không phải đổi gì.
+   */
+  pets?: MapPet[];
   /** mode="pick": điểm đang chọn, null khi chưa chọn gì. */
   lat?: number | null;
   lng?: number | null;
   onChange?: (point: { lat: number | null; lng: number | null }) => void;
+  /** mode="view": người dùng chạm vào một tin trên bản đồ. */
+  onSelectPet?: (id: string) => void;
+  /*
+   * mode="view": chỗ người dùng đang đứng, để vẽ chấm "bạn ở đây" và dời
+   * khung nhìn về đó.
+   *
+   * Việc XIN QUYỀN và ĐỌC GPS không nằm ở đây mà ở nơi gọi. Lý do: nút bấm,
+   * câu báo lỗi và vòng xoay chờ đều là chuyện giao diện của màn hình ngoài;
+   * component này chỉ biết vẽ.
+   */
+  me?: { lat: number; lng: number } | null;
   /** false = bản đồ tĩnh, không bắt cử chỉ. Bắt buộc khi nằm trong màn cuộn. */
   interactive?: boolean;
   /** Cho phép chạm vào bản đồ tĩnh để mở ra toàn màn hình. */
@@ -186,6 +207,8 @@ export default function PetMap({
   lat = null,
   lng = null,
   onChange,
+  onSelectPet,
+  me = null,
   interactive = true,
   expandable = false,
   height,
@@ -227,12 +250,28 @@ export default function PetMap({
    */
   const petsPayload = useMemo(() => {
     const markers = pets.filter(hasPoint).map((p) => ({
+      id: p._id,
       lat: Number(p.lat),
       lng: Number(p.lng),
       color: statusStyle(p, colors).color,
     }));
-    return `window.lp.setPets(${JSON.stringify(markers)})`;
+    // true = ôm khung nhìn quanh các điểm. Đúng lúc này vì danh sách tin vừa
+    // đổi, nghĩa là người dùng vừa lọc hoặc vừa tìm kiếm.
+    return `window.lp.setPets(${JSON.stringify(markers)}, true)`;
   }, [pets, colors]);
+
+  /*
+   * Chấm "bạn đang ở đây". Tách khỏi petsPayload vì hai thứ đổi vào những
+   * lúc khác nhau: danh sách tin đổi khi lọc, còn chấm này đổi khi người
+   * dùng bấm "Gần tôi". Gộp chung thì mỗi lần bấm lại vẽ lại toàn bộ pin.
+   */
+  const mePayload = useMemo(
+    () =>
+      me
+        ? `window.lp.setMe(${me.lat}, ${me.lng}, '${colors.primary}')`
+        : `window.lp.setMe(null, null, '${colors.primary}')`,
+    [me, colors.primary],
+  );
 
   /*
    * Bản xem trước và bản toàn màn hình cần giá trị focus KHÁC NHAU, nên dựng
@@ -361,7 +400,14 @@ export default function PetMap({
 
     return (
       <View style={[styles.fill, style]}>
-        <MapCanvas interactive payload={petsPayload} style={styles.fill} />
+        {/* Hai câu lệnh nối nhau bằng dấu chấm phẩy — WebView nhận một chuỗi
+            JavaScript, chạy tuần tự y như viết hai dòng. */}
+        <MapCanvas
+          interactive
+          payload={`${petsPayload};${mePayload}`}
+          onOpen={onSelectPet}
+          style={styles.fill}
+        />
       </View>
     );
   }
