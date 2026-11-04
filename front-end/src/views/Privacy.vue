@@ -46,7 +46,7 @@
 //
 // PHẢI ĐIỀN TRƯỚC KHI NỘP MẪU CHO META: một chính sách không có chỗ liên hệ
 // thì người dùng không thực hiện được quyền xoá dữ liệu mà chính nó hứa.
-const CONTACT_EMAIL = '';
+const CONTACT_EMAIL = 'nampham2212004@gmail.com';
 
 const CONTENT = {
   vi: {
