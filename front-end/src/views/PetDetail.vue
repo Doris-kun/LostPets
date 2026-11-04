@@ -29,7 +29,7 @@
     <div v-else class="mt-5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <!-- Image -->
       <div class="relative aspect-video bg-gray-100">
-        <PetPhoto :src="pet.image" :alt="pet.breed" :type="pet.type" :resolved="pet.resolved"/>
+        <PetPhoto :src="pet.image" :alt="pet.breed" :type="pet.type" :resolved="pet.resolved" :width="1200"/>
         <span :class="pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
           class="absolute top-4 left-4 text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-md">
           {{ $t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found') }}
