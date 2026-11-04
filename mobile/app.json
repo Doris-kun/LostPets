@@ -9,7 +9,11 @@
     "scheme": ["lostpets", "com.lostpets.app", "fb1099308289611667"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lostpets.app"
+      "bundleIdentifier": "com.lostpets.app",
+      "infoPlist": {
+        "CFBundleLocalizations": ["vi", "en"],
+        "CFBundleAllowMixedLocalizations": true
+      }
     },
     "android": {
       "adaptiveIcon": {
