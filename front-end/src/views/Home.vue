@@ -147,7 +147,7 @@
                xám to bằng 3/5 thẻ chỉ để chứa biểu tượng thì nhìn như web hỏng. -->
           <div v-if="featured.image" class="relative sm:w-3/5 aspect-video overflow-hidden bg-gray-100">
             <PetPhoto :src="featured.image" :alt="featured.breed"
-              :type="featured.type" :resolved="featured.resolved"
+              :type="featured.type" :resolved="featured.resolved" :width="800"
               img-class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
             <span :class="featured.resolved ? 'bg-teal-500' : featured.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
               class="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
@@ -188,7 +188,7 @@
             class="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div class="relative aspect-[4/3] overflow-hidden bg-gray-100">
               <PetPhoto :src="pet.image" :alt="pet.breed"
-                :type="pet.type" :resolved="pet.resolved"
+                :type="pet.type" :resolved="pet.resolved" :width="600"
                 img-class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
               <span :class="pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
                 class="absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">

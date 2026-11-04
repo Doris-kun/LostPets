@@ -39,7 +39,7 @@
           <!-- Ô 96px, chữ "Chưa có ảnh" không vừa nên chỉ để dấu chân. -->
           <div class="w-24 h-24 rounded-xl overflow-hidden">
             <PetPhoto :src="pet.image" :alt="pet.breed" :type="pet.type"
-              :resolved="pet.resolved" :label="false"/>
+              :resolved="pet.resolved" :label="false" :width="192"/>
           </div>
         </router-link>
 
