@@ -208,8 +208,19 @@
                    cần tới nó, mà in ra thì vừa rối mắt vừa giống thứ gì đó
                    quan trọng. Chủ tin vẫn xem được mã của mình ở "Tin của tôi",
                    và gõ mã vào ô tìm kiếm vẫn ra đúng tin như cũ. -->
-              <div class="mt-3 pt-3 border-t border-gray-50">
+              <!-- Hàng dưới cùng của thẻ. Bên trái là thời gian, bên phải là
+                   khoảng cách nếu biết vị trí người xem.
+                   Không biết vị trí thì thay bằng lời mời bấm vào, chứ không
+                   để trống một nửa — thầy hướng dẫn nhận xét đúng chỗ đó. -->
+              <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-50">
                 <p class="text-xs text-gray-400">{{ relativeTime(pet.date) }}</p>
+                <p v-if="distanceOf(pet)" class="text-xs text-gray-400 shrink-0">
+                  {{ $t('card.away', { d: distanceOf(pet) }) }}
+                </p>
+                <span v-else
+                  class="text-xs text-gray-300 group-hover:text-orange-500 transition-colors shrink-0">
+                  {{ $t('card.detail') }} →
+                </span>
               </div>
             </div>
           </router-link>
@@ -236,12 +247,17 @@
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
 import PetPhoto from '../components/PetPhoto.vue';
+import { readSavedMe, distanceKm, formatDistanceKm } from '../map';
 
 export default {
   name: 'Home',
   components: { PetMap, PetPhoto },
   data() {
     return {
+      // Vị trí người xem, do bản đồ lưu lại sau khi họ bấm "vị trí của tôi".
+      // Không có thì thẻ tin không hiện khoảng cách — không tự xin quyền ở
+      // trang chủ, vì ném hộp thoại vào mặt người mới vào xem là thô lỗ.
+      me: readSavedMe(),
       pets: [],
       total: 0,
       view: 'list',
@@ -303,6 +319,15 @@ export default {
     clearTimeout(this.searchTimer);
   },
   methods: {
+    // Khoảng cách từ chỗ người xem tới nơi mất, dạng chữ đã làm tròn. Trả về
+    // chuỗi rỗng khi chưa biết vị trí người xem hoặc tin không có toạ độ.
+    //
+    // Con số cố ý kèm dấu ngã: toạ độ đã bị làm tròn về lưới 500m lúc lưu,
+    // nên in "2,34 km" là nói quá độ chính xác mình thực sự có.
+    distanceOf(pet) {
+      if (!this.me || !Number.isFinite(pet.lat) || !Number.isFinite(pet.lng)) return '';
+      return formatDistanceKm(distanceKm(this.me[0], this.me[1], pet.lat, pet.lng));
+    },
     setView(view) {
       this.view = view;
       if (view === 'map') this.fetchMapPets();

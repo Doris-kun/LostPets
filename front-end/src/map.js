@@ -140,4 +140,30 @@ export function meIcon() {
 }
 
 
+// Vị trí người dùng, do bản đồ lưu lại sau khi họ bấm "vị trí của tôi".
+//
+// Để ở đây chứ không để riêng trong PetMap vì thẻ tin ở trang chủ cũng cần
+// đọc. Hai nơi cùng gõ chuỗi 'map:me' thì sớm muộn cũng lệch nhau một chữ.
+export const ME_KEY = 'map:me';
+
+export function readSavedMe() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(ME_KEY) || 'null');
+    return Array.isArray(raw) && raw.length === 2 && raw.every(Number.isFinite) ? raw : null;
+  } catch {
+    // Chế độ ẩn danh hoặc trình duyệt chặn lưu trữ: coi như chưa biết vị trí.
+    return null;
+  }
+}
+
+// Toạ độ đã bị làm tròn về lưới 500m ngay lúc lưu vào database, nên in
+// "2,34 km" là nói quá độ chính xác mình thực sự có. Một chữ số thập phân,
+// và luôn kèm dấu ngã để người đọc hiểu đây là con số áng chừng.
+export function formatDistanceKm(km) {
+  if (!Number.isFinite(km)) return '';
+  if (km < 1) return `~${Math.max(100, Math.round(km * 1000 / 100) * 100)} m`;
+  if (km < 10) return `~${km.toFixed(1)} km`;
+  return `~${Math.round(km)} km`;
+}
+
 export default L;
