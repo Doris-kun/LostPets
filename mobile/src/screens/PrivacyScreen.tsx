@@ -27,14 +27,17 @@ import { radius, spacing } from '../theme';
  */
 
 /*
- * Email công khai để người dùng liên hệ về dữ liệu của họ. Bỏ trống thì mục
- * Liên hệ không hiện.
+ * Email công khai để người dùng liên hệ về dữ liệu của họ.
  *
- * PHẢI ĐIỀN TRƯỚC KHI NỘP MẪU CHO META: một chính sách không có chỗ liên hệ
- * thì người dùng không thực hiện được quyền xoá dữ liệu mà chính nó vừa hứa.
- * Bên web cũng đang để trống, hai bên phải điền cùng một địa chỉ.
+ * PHẢI TRÙNG với CONTACT_EMAIL trong front-end/src/views/Privacy.vue. Hai
+ * địa chỉ khác nhau nghĩa là cùng một dịch vụ mà hứa hai đường liên hệ khác
+ * nhau — người dùng gửi vào đường nào cũng có thể rơi vào chỗ không ai đọc.
+ *
+ * Mục 10 hứa "yêu cầu xoá tài khoản bằng cách liên hệ theo địa chỉ bên
+ * dưới", nên bỏ trống là chính sách hứa một thứ không thực hiện được. Meta
+ * cũng bắt buộc có chỗ liên hệ mới duyệt.
  */
-const CONTACT_EMAIL = '';
+const CONTACT_EMAIL = 'nampham2212004@gmail.com';
 
 interface Section {
   h: string;

@@ -62,16 +62,19 @@ const PAGE_SIZE = 10;
  *   NFC  M + è          (è là MỘT ký tự, mã e8)
  *   NFD  M + e + ̀      (chữ e rồi dấu huyền rời, hai ký tự)
  *
- * Nhìn giống hệt nhau, nhưng máy coi là hai chuỗi khác nhau. Back-end lọc
- * bằng biểu thức chính quy nên không tự quy về một mối — đã đo thật trên dữ
- * liệu đang chạy:
+ * Nhìn giống hệt nhau, nhưng máy coi là hai chuỗi khác nhau. Đo thật trên dữ
+ * liệu đang chạy, hồi back-end còn chưa vá:
  *
  *   species=Mèo kiểu NFC -> 9 kết quả
  *   species=Mèo kiểu NFD -> 0 kết quả
  *
- * Database lưu NFC. Chip Chó/Mèo trong app cũng NFC nên không sao, nhưng ô
- * "khu vực" và ô tìm kiếm thì người dùng TỰ GÕ, mà bàn phím tiếng Việt trên
- * iOS có thể cho ra NFD. Lúc đó lọc "Hà Nội" ra 0 tin mà không ai hiểu vì sao.
+ * BACK-END ĐÃ VÁ chỗ này rồi (PR #67): chuẩn hoá ở tầng schema cho đường
+ * ghi, và chuẩn hoá kèm thoát ký tự đặc biệt cho đường đọc. Nên dòng dưới
+ * không còn là thứ duy nhất chặn lỗi nữa.
+ *
+ * Vẫn giữ, vì một bản app đã cài không biết nó đang nói chuyện với back-end
+ * phiên bản nào. APK nằm trên máy người dùng hàng tháng trời, còn back-end
+ * thì có thể bị lùi lại một bản bất cứ lúc nào.
  *
  * Kiểm tra normalize có tồn tại không trước khi gọi: máy ảo JavaScript của
  * React Native không phải lúc nào cũng có đủ hàm xử lý Unicode.
