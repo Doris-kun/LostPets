@@ -135,9 +135,14 @@
     <footer class="mt-16 border-t border-gray-100">
       <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
         <p class="text-xs text-gray-400">© {{ year }} LostPets</p>
-        <router-link to="/privacy" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-          {{ $t('nav.privacy') }}
-        </router-link>
+        <div class="flex items-center gap-5">
+          <router-link to="/contact" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            {{ $t('nav.contact') }}
+          </router-link>
+          <router-link to="/privacy" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            {{ $t('nav.privacy') }}
+          </router-link>
+        </div>
       </div>
     </footer>
     <Toast />
