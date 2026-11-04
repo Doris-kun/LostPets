@@ -190,6 +190,27 @@ export default function SettingsScreen({ navigation }: Props) {
       {/* ---- Giới thiệu ---- */}
       <Text style={styles.sectionLabel}>{t('settings.about')}</Text>
 
+      {/*
+        Chính sách bảo mật đặt ngay trên khối giới thiệu.
+
+        Không phải để cho đủ mục: app xin máy ảnh, thư viện ảnh và vị trí —
+        ba quyền nhạy cảm — nên người dùng phải tra được ở đâu đó rằng mỗi
+        quyền dùng vào việc gì. Meta cũng bắt buộc có đường dẫn chính sách
+        công khai mới cho chuyển ứng dụng Facebook sang chế độ Live.
+      */}
+      <TouchableOpacity
+        style={[styles.card, styles.privacyRow]}
+        onPress={() => navigation.navigate('Privacy')}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="shield-checkmark-outline" size={20} color={colors.tealText} />
+        <View style={styles.privacyBody}>
+          <Text style={styles.privacyTitle}>{t('settings.privacy')}</Text>
+          <Text style={styles.privacySub}>{t('settings.privacySub')}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+      </TouchableOpacity>
+
       <View style={[styles.card, styles.aboutCard]}>
         <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.aboutLogo} />
         <Text style={styles.aboutName}>LostPets</Text>
@@ -361,7 +382,20 @@ const themedStyles = createThemedStyles((colors) =>
     choiceText: { fontSize: 12.5, fontWeight: '700', color: colors.textSoft },
     choiceTextActive: { color: colors.onPrimary },
 
-    aboutCard: { alignItems: 'center', paddingVertical: spacing.xl },
+    privacyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+    minHeight: 60,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  privacyBody: { flex: 1, gap: 2 },
+  privacyTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
+  privacySub: { fontSize: 11.5, lineHeight: 16, color: colors.textMuted },
+
+  aboutCard: { alignItems: 'center', paddingVertical: spacing.xl },
     aboutLogo: { width: 56, height: 56, resizeMode: 'contain' },
     aboutName: { fontSize: 17, fontWeight: '800', color: colors.text, marginTop: spacing.sm },
     aboutSlogan: { fontSize: 12.5, color: colors.textMuted, marginTop: 3 },

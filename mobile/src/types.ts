@@ -285,6 +285,7 @@ export type RootStackParamList = {
   Auth: undefined;
   Chat: undefined;
   Admin: undefined;
+  Privacy: undefined;
 };
 
 /** Ba tab dưới đáy. Không tab nào nhận tham số. */

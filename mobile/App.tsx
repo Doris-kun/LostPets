@@ -18,6 +18,7 @@ import ChatScreen from './src/screens/ChatScreen';
 import MyPetsScreen from './src/screens/MyPetsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AdminScreen from './src/screens/AdminScreen';
+import PrivacyScreen from './src/screens/PrivacyScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import type { MainTabParamList, RootStackParamList } from './src/types';
 
@@ -239,6 +240,13 @@ function RootStack() {
         là thừa. Lối vào ở màn Cài đặt, chỉ hiện với quản trị viên.
       */}
       <Stack.Screen name="Admin" component={AdminScreen} options={{ title: t('admin.title') }} />
+
+      {/*
+        Chính sách bảo mật. Nằm trong Stack chứ không phải một tab: người ta
+        đọc nó đúng một lần, không phải thứ cần có mặt thường trực ở thanh
+        dưới. Lối vào ở màn Cài đặt. Tiêu đề do chính màn đó tự đặt.
+      */}
+      <Stack.Screen name="Privacy" component={PrivacyScreen} />
     </Stack.Navigator>
   );
 }
