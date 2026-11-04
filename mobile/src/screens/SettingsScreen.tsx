@@ -204,10 +204,7 @@ export default function SettingsScreen({ navigation }: Props) {
         activeOpacity={0.7}
       >
         <Ionicons name="shield-checkmark-outline" size={20} color={colors.tealText} />
-        <View style={styles.privacyBody}>
-          <Text style={styles.privacyTitle}>{t('settings.privacy')}</Text>
-          <Text style={styles.privacySub}>{t('settings.privacySub')}</Text>
-        </View>
+        <Text style={styles.privacyTitle}>{t('settings.privacy')}</Text>
         <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
       </TouchableOpacity>
 
@@ -387,13 +384,13 @@ const themedStyles = createThemedStyles((colors) =>
     alignItems: 'center',
     gap: spacing.md,
     // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-    minHeight: 60,
+    minHeight: 52,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.md,
   },
-  privacyBody: { flex: 1, gap: 2 },
-  privacyTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
-  privacySub: { fontSize: 11.5, lineHeight: 16, color: colors.textMuted },
+  // flex: 1 chuyển sang chính dòng chữ, vì khung bọc đã bỏ đi. Thiếu nó thì
+  // mũi tên > nằm sát chữ thay vì dạt hẳn về mép phải.
+  privacyTitle: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.text },
 
   aboutCard: { alignItems: 'center', paddingVertical: spacing.xl },
     aboutLogo: { width: 56, height: 56, resizeMode: 'contain' },
