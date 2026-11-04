@@ -35,6 +35,7 @@
 import L, {
   addTiles, pinIcon, colorForPet, clusterByScreen, clusterIcon, meIcon,
   distanceKm, AREA_RADIUS_M, DEFAULT_CENTER, DEFAULT_ZOOM, NEAR_ZOOM, RADIUS_CHOICES_KM,
+  ME_KEY, readSavedMe,
 } from '../map';
 
 // Dưới mức này, vòng tròn 500m nhỏ hơn một pixel nên chỉ làm bẩn màn hình.
@@ -43,7 +44,6 @@ const CIRCLE_FROM_ZOOM = 13;
 // Mức thu nhỏ dùng để dò xem tin đang tụ ở đâu, khi chưa biết người dùng ở đâu.
 const DENSITY_ZOOM = 10;
 
-const ME_KEY = 'map:me';
 
 export default {
   name: 'PetMap',
@@ -116,7 +116,7 @@ export default {
     // mức cả nước và không nói được gì — càng nhiều tin càng vô dụng. Nên:
     // chỗ người dùng đang đứng trước, không có thì tới chỗ đang có nhiều tin.
     openWhereItMatters() {
-      const saved = this.readSavedMe();
+      const saved = readSavedMe();
       if (saved) {
         this.me = saved;
         this.map.setView(saved, NEAR_ZOOM);
@@ -130,14 +130,6 @@ export default {
       const groups = clusterByScreen(this.map, this.located, DENSITY_ZOOM);
       const biggest = groups.reduce((a, b) => (b.members.length > a.members.length ? b : a));
       return [biggest.lat, biggest.lng];
-    },
-    readSavedMe() {
-      try {
-        const raw = JSON.parse(localStorage.getItem(ME_KEY) || 'null');
-        return Array.isArray(raw) && raw.length === 2 && raw.every(Number.isFinite) ? raw : null;
-      } catch {
-        return null;
-      }
     },
     // Chỉ tự định vị khi trình duyệt đã được cho phép từ trước. Tự xin quyền
     // ngay lúc mở bản đồ là ném một hộp thoại vào mặt người mới vào xem.
