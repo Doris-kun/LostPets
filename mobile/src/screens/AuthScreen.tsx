@@ -44,22 +44,32 @@ export default function AuthScreen({ navigation }: Props) {
   const { login, isLoggedIn } = useAuth();
 
   /*
-   * ĐĂNG NHẬP XONG THÌ TỰ QUAY LẠI MÀN TRƯỚC — mọi lối vào, không riêng một lối.
+   * ĐĂNG NHẬP XONG THÌ VỀ TRANG CHỦ — mọi lối vào, không riêng một lối.
    *
-   * Trước đây câu quay về nằm ngay trong hàm bấm nút đăng nhập bằng email.
+   * Trước đây câu chuyển màn nằm ngay trong hàm bấm nút đăng nhập bằng email.
    * Nên đăng nhập bằng Google thì phiên đã lưu xong mà màn hình vẫn đứng im
-   * ở trang Đăng nhập — người dùng tưởng hỏng rồi bấm lại.
+   * ở trang Đăng nhập — người dùng tưởng hỏng rồi bấm lại. Canh vào chính
+   * trạng thái phiên thì lối nào cũng ăn: email, Google, Facebook, hay bất
+   * cứ cách nào thêm về sau.
    *
-   * Canh vào chính trạng thái phiên thì lối nào cũng ăn: email, Google,
-   * Facebook, hay bất cứ cách nào thêm về sau.
+   * Về Trang chủ chứ KHÔNG quay lại màn trước. Màn trước là Cài đặt — nơi
+   * người ta tình cờ đi qua để bấm nút Đăng nhập, không phải nơi họ muốn
+   * tới. Đăng nhập xong việc đầu tiên ai cũng làm là xem tin, nên thả thẳng
+   * vào đó.
    *
-   * Nhớ lại trạng thái lúc mới mở màn hình, chỉ quay về khi nó CHUYỂN từ
-   * chưa đăng nhập sang đã đăng nhập. Nếu không, lỡ ai mở màn này trong lúc
-   * đang đăng nhập sẵn thì nó đóng sập ngay, nhìn như app giật.
+   * navigate (không phải push) nên Trang chủ vốn đã nằm sẵn dưới đáy chồng
+   * màn hình sẽ được dùng lại, và màn Đăng nhập bị gỡ khỏi chồng — bấm nút
+   * Back sẽ không quay ngược vào trang đăng nhập nữa.
+   *
+   * Nhớ lại trạng thái lúc mới mở màn hình, chỉ chuyển khi nó CHUYỂN từ chưa
+   * đăng nhập sang đã đăng nhập. Nếu không, lỡ ai mở màn này trong lúc đang
+   * đăng nhập sẵn thì nó nhảy đi ngay, nhìn như app giật.
    */
   const daDangNhapTuDau = useRef(isLoggedIn);
   useEffect(() => {
-    if (isLoggedIn && !daDangNhapTuDau.current) navigation.goBack();
+    if (isLoggedIn && !daDangNhapTuDau.current) {
+      navigation.navigate('Tabs', { screen: 'Home' });
+    }
   }, [isLoggedIn, navigation]);
 
   // false = đang ở tab Đăng nhập, true = tab Đăng ký

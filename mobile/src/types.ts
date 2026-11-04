@@ -11,6 +11,8 @@
  *   back-end/api/controllers/authController.js publicUser()
  */
 
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 /** 'lost' = tin báo mất, 'found' = tin báo nhặt được. Back-end chỉ nhận hai giá trị này. */
 export type PetType = 'lost' | 'found';
 
@@ -178,7 +180,15 @@ export interface AdminStats {
  * hình trắng chứ không nói mình sai ở đâu.
  */
 export type RootStackParamList = {
-  Tabs: undefined;
+  /*
+   * NavigatorScreenParams chứ không phải undefined.
+   *
+   * Tabs là một bộ ba màn hình lồng bên trong, nên đôi khi cần chỉ đích danh
+   * màn nào — ví dụ đăng nhập xong thì về thẳng Trang chủ. Khai undefined thì
+   * navigate('Tabs', { screen: 'Home' }) bị TypeScript từ chối, mà tên màn gõ
+   * sai cũng không ai bắt được.
+   */
+  Tabs: NavigatorScreenParams<MainTabParamList>;
   Detail: { id: string };
   /*
    * Hai dạng tham số, không gộp làm một được: đăng mới thì CHƯA CÓ tin nào,
