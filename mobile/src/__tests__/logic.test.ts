@@ -2,6 +2,7 @@ import { AxiosError } from 'axios';
 import { errorStatus } from '../api';
 import { timeAgo } from '../components/PetCard';
 import { countActiveFilters, EMPTY_FILTERS } from '../components/PetFilters';
+import { buildParams } from '../screens/HomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import report from '../report';
 import { words, type WordKey } from '../word';
@@ -181,5 +182,45 @@ describe('report — nhớ tin đã báo cáo', () => {
     await report.mark('abc');
     const luu = await AsyncStorage.getItem('report:abc');
     expect(Number(luu)).toBeGreaterThan(0);
+  });
+});
+
+/*
+ * Dựng tham số gửi lên máy chủ.
+ *
+ * Chỗ này toàn những đường ranh giới dễ sai mà sai thì không ai thấy ngay:
+ * gửi thừa một tham số rỗng là back-end dựng biểu thức lọc rỗng và trả về
+ * sai, mà nhìn danh sách thì vẫn ra một đống tin trông bình thường.
+ */
+describe('buildParams — tham số gửi lên máy chủ', () => {
+  const loc = EMPTY_FILTERS;
+
+  it('không lọc gì thì chỉ gửi ba tham số bắt buộc', () => {
+    // Kiểm đúng ý định: không có tham số rỗng nào lọt qua. Không ghim số
+    // tin mỗi trang, vì đổi số đó là chuyện bình thường chứ không phải lỗi.
+    expect(Object.keys(buildParams('', loc, 0, '')).sort()).toEqual(['limit', 'skip', 'sort']);
+  });
+
+  it('câu tìm kiếm rỗng thì không gửi q', () => {
+    expect(buildParams('', loc, 0, '   ')).not.toHaveProperty('q');
+  });
+
+  it('cắt khoảng trắng thừa quanh câu tìm kiếm', () => {
+    expect(buildParams('', loc, 0, '  chó vàng  ').q).toBe('chó vàng');
+  });
+
+  it('giữ nguyên dấu tiếng Việt, không bỏ dấu', () => {
+    expect(buildParams('', loc, 0, 'mèo mướp').q).toBe('mèo mướp');
+  });
+
+  // skip là số tin bỏ qua, dùng để tải trang sau. Truyền nhầm số trang
+  // thay vì số tin thì trang 2 trả về gần hệt trang 1.
+  it('skip đi thẳng vào tham số, không nhân chia gì', () => {
+    expect(buildParams('', loc, 27, '').skip).toBe(27);
+  });
+
+  it('lọc và tìm kiếm dùng được cùng lúc', () => {
+    const p = buildParams('lost', { ...loc, species: 'Chó', area: ' Quận 7 ' }, 0, 'vàng');
+    expect(p).toMatchObject({ type: 'lost', species: 'Chó', area: 'Quận 7', q: 'vàng' });
   });
 });

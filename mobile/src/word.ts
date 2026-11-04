@@ -97,6 +97,11 @@ const vi = {
 
   'theme.toLight': 'Chuyển sang giao diện sáng',
   'theme.toDark': 'Chuyển sang giao diện tối',
+  'home.search': 'Tìm: chó vàng mất ở quận 7...',
+  'home.searchNote': 'Tin khớp nhất xếp lên đầu. Không tin nào bị ẩn đi.',
+  'home.noMatchTitle': 'Không tìm thấy tin nào',
+  'home.noMatchSub':
+    'Thử tả ngắn hơn, hoặc viết như nói thường: giống gì, màu gì, mất ở đâu.',
   'home.filter': 'Lọc',
   'home.results': '{n} bài đăng',
   'home.featured': 'TIN MỚI NHẤT',
@@ -426,6 +431,11 @@ const en: Record<WordKey, string> = {
 
   'theme.toLight': 'Switch to light mode',
   'theme.toDark': 'Switch to dark mode',
+  'home.search': 'Search: brown dog lost in District 7...',
+  'home.searchNote': 'Best matches first. Nothing is hidden.',
+  'home.noMatchTitle': 'No matching posts',
+  'home.noMatchSub':
+    'Try a shorter description, or write it plainly: breed, colour, where it went missing.',
   'home.filter': 'Filter',
   'home.results': '{n} posts shown',
   'home.featured': 'LATEST POST',

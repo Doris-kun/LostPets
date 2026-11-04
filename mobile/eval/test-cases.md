@@ -6,8 +6,8 @@ Chạy ngày 2026-11-04 · sinh tự động bởi `npm run test:report`
 
 | | |
 |---|---|
-| Tổng số test case | 181 |
-| Pass | 181 |
+| Tổng số test case | 187 |
+| Pass | 187 |
 | Fail | 0 |
 | Tỉ lệ pass | **100%** |
 | Tiêu chí Objective 5 | ≥ 90% |
@@ -23,7 +23,7 @@ Môi trường: Jest 6 bộ test, chạy trên Node với bản giả của ph�
 | Tương phản màu WCAG 2.1 AA, hai chế độ sáng/tối | Obj 5 / LSEPI | 68 | 68 | 0 |
 | Giao diện song ngữ Việt/Anh | Obj 4 | 7 | 7 | 0 |
 | Quy tắc giao diện: vùng chạm, icon, API đã bị bỏ | Obj 5 / LSEPI | 45 | 45 | 0 |
-| Các hàm thuần: thời gian, bộ lọc, đọc mã lỗi | Obj 4 | 19 | 19 | 0 |
+| Các hàm thuần: thời gian, bộ lọc, đọc mã lỗi | Obj 4 | 25 | 25 | 0 |
 | Thẻ tin đăng — vẽ thật và tương tác | Obj 4 | 11 | 11 | 0 |
 
 ## Chi tiết từng test case
@@ -222,20 +222,26 @@ Môi trường: Jest 6 bộ test, chạy trên Node với bản giả của ph�
 | TC-M168 | report — nhớ tin đã báo cáo › mỗi tin một chỗ nhớ riêng, không lẫn sang tin khác | Pass |
 | TC-M169 | report — nhớ tin đã báo cáo › id rỗng thì không ghi và không nhận nhầm | Pass |
 | TC-M170 | report — nhớ tin đã báo cáo › lưu kèm mốc thời gian chứ không chỉ lưu cờ có/không | Pass |
+| TC-M171 | buildParams — tham số gửi lên máy chủ › không lọc gì thì chỉ gửi ba tham số bắt buộc | Pass |
+| TC-M172 | buildParams — tham số gửi lên máy chủ › câu tìm kiếm rỗng thì không gửi q | Pass |
+| TC-M173 | buildParams — tham số gửi lên máy chủ › cắt khoảng trắng thừa quanh câu tìm kiếm | Pass |
+| TC-M174 | buildParams — tham số gửi lên máy chủ › giữ nguyên dấu tiếng Việt, không bỏ dấu | Pass |
+| TC-M175 | buildParams — tham số gửi lên máy chủ › skip đi thẳng vào tham số, không nhân chia gì | Pass |
+| TC-M176 | buildParams — tham số gửi lên máy chủ › lọc và tìm kiếm dùng được cùng lúc | Pass |
 
 ### Thẻ tin đăng — vẽ thật và tương tác
 
 | Mã | Test case | Kết quả |
 |---|---|---|
-| TC-M171 | PetCard vẽ ra được › không nổ, và hiện tên con vật | Pass |
-| TC-M172 | PetCard vẽ ra được › không có tên thì lấy giống thay thế | Pass |
-| TC-M173 | PetCard vẽ ra được › hiện khu vực và mã tin | Pass |
-| TC-M174 | PetCard vẽ ra được › bấm vào thì gọi onPress đúng một lần | Pass |
-| TC-M175 | nhãn trạng thái › tin báo mất | Pass |
-| TC-M176 | nhãn trạng thái › tin nhặt được | Pass |
-| TC-M177 | nhãn trạng thái › đã đoàn tụ thì thắng cả type | Pass |
-| TC-M178 | nhãn trạng thái › chữ trên nhãn dùng màu riêng của nhãn đó, không phải màu cố định | Pass |
-| TC-M179 | ảnh › có ảnh thì vẽ đúng ảnh đó | Pass |
-| TC-M180 | ảnh › không có ảnh thì vẽ logo thay thế, không để trống | Pass |
-| TC-M181 | ghim địa chỉ vẽ bằng icon › dùng icon location chứ không phải ký tự 📍 | Pass |
+| TC-M177 | PetCard vẽ ra được › không nổ, và hiện tên con vật | Pass |
+| TC-M178 | PetCard vẽ ra được › không có tên thì lấy giống thay thế | Pass |
+| TC-M179 | PetCard vẽ ra được › hiện khu vực và mã tin | Pass |
+| TC-M180 | PetCard vẽ ra được › bấm vào thì gọi onPress đúng một lần | Pass |
+| TC-M181 | nhãn trạng thái › tin báo mất | Pass |
+| TC-M182 | nhãn trạng thái › tin nhặt được | Pass |
+| TC-M183 | nhãn trạng thái › đã đoàn tụ thì thắng cả type | Pass |
+| TC-M184 | nhãn trạng thái › chữ trên nhãn dùng màu riêng của nhãn đó, không phải màu cố định | Pass |
+| TC-M185 | ảnh › có ảnh thì vẽ đúng ảnh đó | Pass |
+| TC-M186 | ảnh › không có ảnh thì vẽ logo thay thế, không để trống | Pass |
+| TC-M187 | ghim địa chỉ vẽ bằng icon › dùng icon location chứ không phải ký tự 📍 | Pass |
 

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -6,6 +6,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -58,7 +59,12 @@ const PAGE_SIZE = 10;
  *
  * skip = bỏ qua bao nhiêu tin đầu. Trang 1 là 0, trang 2 là 10...
  */
-function buildParams(filterType: string, activeFilters: Filters, skip: number): PetQuery {
+export function buildParams(
+  filterType: string,
+  activeFilters: Filters,
+  skip: number,
+  q: string,
+): PetQuery {
   // Chỉ gửi những tham số thật sự có giá trị. Gửi kèm chuỗi rỗng thì
   // back-end vẫn dựng biểu thức tìm kiếm rỗng và lọc sai.
   //
@@ -70,6 +76,28 @@ function buildParams(filterType: string, activeFilters: Filters, skip: number): 
   if (activeFilters.species) params.species = activeFilters.species;
   if (activeFilters.area.trim()) params.area = activeFilters.area.trim();
   if (activeFilters.days) params.days = activeFilters.days;
+
+  /*
+   * Câu tìm kiếm. Back-end hiểu cả lời nói thường ("chó vàng mất ở quận 7")
+   * chứ không chỉ so khớp từng chữ — nó so bằng NGHĨA, dùng embedding.
+   *
+   * QUAN TRỌNG: tìm kiếm chỉ SẮP LẠI THỨ TỰ, không loại tin nào đi. Gõ
+   * "chó vàng" thì mèo vẫn còn trong danh sách, chỉ bị đẩy xuống dưới.
+   *
+   * Đó là chủ ý của back-end (searchByMeaning trong petController.js): đo
+   * thật trên tiếng Việt thì không có ngưỡng điểm nào dùng được — câu rác
+   * "xe máy Honda Wave bị mất" đạt 0.646 còn câu tra số điện thoại thật chỉ
+   * 0.639. Với web tìm thú cưng thì bỏ sót nguy hiểm hơn thừa: thấy nhầm
+   * một con chó hơi giống chỉ mất hai giây, giấu mất con chó của người ta
+   * thì mất luôn.
+   *
+   * Vì vậy giao diện phải nói rõ ra, nếu không người dùng thấy mèo vẫn nằm
+   * đó sẽ tưởng ô tìm kiếm hỏng.
+   *
+   * Và phải chờ người dùng gõ xong mới gửi: mỗi lần gọi là một lượt chạy AI
+   * bên back-end, gửi theo từng ký tự thì vừa chậm vừa tốn.
+   */
+  if (q.trim()) params.q = q.trim();
   return params;
 }
 
@@ -111,6 +139,19 @@ export default function HomeScreen({ navigation }: Props) {
   // Các điều kiện lọc còn lại, do bảng trượt PetFilters quản lý
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  /*
+   * HAI biến cho một ô tìm kiếm, cố ý:
+   *
+   *   search — chữ đang hiện trong ô, đổi theo từng phím gõ
+   *   query  — chữ ĐÃ GỬI lên máy chủ, chỉ đổi khi người dùng ngừng gõ
+   *
+   * Gộp làm một thì mỗi ký tự là một lượt gọi máy chủ. Tìm bằng nghĩa bên
+   * back-end phải chạy AI, nên gõ "chó vàng" sẽ thành 8 lượt chạy — vừa chậm,
+   * vừa tốn, mà 7 lượt đầu kết quả vứt đi.
+   */
+  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   // Đang nối thêm trang sau — khác loading là vòng xoay che cả màn hình
@@ -119,10 +160,28 @@ export default function HomeScreen({ navigation }: Props) {
   // ngôn ngữ nó vẫn nằm nguyên trong state bằng tiếng cũ.
   const [hasError, setHasError] = useState(false);
 
+  /*
+   * Ngừng gõ 500ms rồi mới coi là "đã gõ xong".
+   *
+   * Mỗi phím gõ lại hẹn một cái đồng hồ mới và huỷ cái cũ, nên chỉ cái cuối
+   * cùng chạy tới nơi. 500ms là khoảng nghỉ tự nhiên giữa hai từ — ngắn hơn
+   * thì vẫn gọi thừa, dài hơn thì người dùng tưởng app đơ.
+   */
+  useEffect(() => {
+    const hen = setTimeout(() => {
+      setQuery((truoc) => {
+        if (truoc === search) return truoc; // không đổi thì đừng tải lại
+        setLoading(true);
+        return search;
+      });
+    }, 500);
+    return () => clearTimeout(hen);
+  }, [search]);
+
   // Tải TRANG ĐẦU: thay sạch danh sách cũ. Dùng khi mở màn, đổi lọc, kéo làm mới.
-  const loadPets = useCallback(async (filterType: string, activeFilters: Filters) => {
+  const loadPets = useCallback(async (filterType: string, activeFilters: Filters, q: string) => {
     try {
-      const { data } = await api.getPets(buildParams(filterType, activeFilters, 0));
+      const { data } = await api.getPets(buildParams(filterType, activeFilters, 0, q));
       setPets(data.pets);
       setTotal(data.total);
       setHasError(false);
@@ -143,8 +202,8 @@ export default function HomeScreen({ navigation }: Props) {
    */
   useFocusEffect(
     useCallback(() => {
-      loadPets(type, filters);
-    }, [loadPets, type, filters]),
+      loadPets(type, filters, query);
+    }, [loadPets, type, filters, query]),
   );
 
   /*
@@ -161,7 +220,7 @@ export default function HomeScreen({ navigation }: Props) {
 
     setLoadingMore(true);
     try {
-      const { data } = await api.getPets(buildParams(type, filters, pets.length));
+      const { data } = await api.getPets(buildParams(type, filters, pets.length, query));
 
       setPets((current) => {
         /*
@@ -211,6 +270,46 @@ export default function HomeScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <Header />
+
+      {/*
+        Ô tìm kiếm đặt TRÊN hàng chip, không nhét vào bảng lọc trượt.
+
+        Lọc là thu hẹp dần những gì đang thấy; tìm là nhảy thẳng tới thứ mình
+        nghĩ trong đầu. Người mất thú cưng mở app lên là đã có sẵn câu trong
+        đầu rồi, nên để họ gõ ngay thay vì bắt mở thêm một bảng nữa.
+      */}
+      <View style={styles.searchBox}>
+        <Ionicons name="search-outline" size={17} color={colors.textMuted} />
+        <TextInput
+          style={styles.searchInput}
+          value={search}
+          onChangeText={setSearch}
+          placeholder={t('home.search')}
+          placeholderTextColor={colors.textMuted}
+          returnKeyType="search"
+          autoCorrect={false}
+        />
+        {/*
+          Nút xoá chỉ hiện khi có chữ. Hiện sẵn lúc ô trống thì nó là một nút
+          bấm vào không xảy ra gì — người dùng phải thử mới biết nó vô dụng.
+        */}
+        {search.length > 0 && (
+          <TouchableOpacity
+            style={styles.searchClear}
+            onPress={() => setSearch('')}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/*
+        Chỉ hiện khi đang tìm. Lúc không tìm thì câu này vô nghĩa, mà vẫn
+        chiếm một dòng ngay chỗ dễ nhìn nhất màn hình.
+      */}
+      {!!query.trim() && <Text style={styles.searchNote}>{t('home.searchNote')}</Text>}
 
       <View style={styles.filterRow}>
         {FILTERS.map((item) => {
@@ -283,7 +382,7 @@ export default function HomeScreen({ navigation }: Props) {
               refreshing={refreshing}
               onRefresh={() => {
                 setRefreshing(true);
-                loadPets(type, filters);
+                loadPets(type, filters, query);
               }}
               tintColor={colors.teal}
             />
@@ -311,7 +410,9 @@ export default function HomeScreen({ navigation }: Props) {
           ListEmptyComponent={
             // undefined chu khong phai null: FlatList khai slot nay la
             // Element | ComponentType | undefined, khong nhan null.
-            pets.length === 0 ? <EmptyState hasError={hasError} /> : undefined
+            pets.length === 0 ? (
+              <EmptyState hasError={hasError} searching={!!query.trim()} />
+            ) : undefined
           }
           ListFooterComponent={
             <ListFooter loadingMore={loadingMore} shown={pets.length} total={total} />
@@ -510,7 +611,18 @@ function ListFooter({
   return null;
 }
 
-function EmptyState({ hasError }: { hasError: boolean }) {
+/*
+ * Ba câu khác nhau cho ba tình huống, không gộp được:
+ *
+ *   lỗi mạng        -> hướng dẫn kiểm tra back-end
+ *   đang tìm kiếm   -> gợi ý đổi cách gõ
+ *   chưa có tin nào -> mời đăng bài đầu tiên
+ *
+ * Gộp hai cái sau thì người tìm "chó vàng" không ra kết quả sẽ đọc được câu
+ * "Chưa có bài nào — bấm + để đăng bài đầu tiên", trong khi app có cả trăm
+ * tin. Câu đó vừa sai vừa làm người ta tưởng app hỏng.
+ */
+function EmptyState({ hasError, searching }: { hasError: boolean; searching: boolean }) {
   const { t } = useLanguage();
   const { colors, isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -520,8 +632,14 @@ function EmptyState({ hasError }: { hasError: boolean }) {
       <View style={styles.emptyIconWrap}>
         <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.emptyLogo} />
       </View>
-      <Text style={styles.emptyTitle}>{t(hasError ? 'home.errorTitle' : 'home.emptyTitle')}</Text>
-      <Text style={styles.emptyText}>{hasError ? t('home.errorText', { url: API_URL }) : t('home.emptySub')}</Text>
+      <Text style={styles.emptyTitle}>
+        {t(hasError ? 'home.errorTitle' : searching ? 'home.noMatchTitle' : 'home.emptyTitle')}
+      </Text>
+      <Text style={styles.emptyText}>
+        {hasError
+          ? t('home.errorText', { url: API_URL })
+          : t(searching ? 'home.noMatchSub' : 'home.emptySub')}
+      </Text>
     </View>
   );
 }
@@ -613,6 +731,44 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     fontSize: 15,
     fontWeight: '800',
     color: colors.text,
+    marginBottom: spacing.md,
+  },
+
+  /*
+   * Ô tìm kiếm. Viền 1.5 và dùng borderStrong chứ không phải border nhạt:
+   * đây là chỗ GÕ ĐƯỢC, mà viền chính là dấu hiệu duy nhất cho biết điều đó.
+   * Viền mờ quá thì nó trông như một dòng chữ gợi ý, không ai bấm vào.
+   */
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+    minHeight: 46,
+  },
+  /*
+   * paddingVertical: 0 — Android tự chèn đệm trên dưới vào TextInput, không
+   * gỡ đi thì chữ nằm lệch hẳn so với hai cái icon hai bên.
+   */
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    paddingVertical: 0,
+  },
+  searchClear: { padding: 2 },
+  searchNote: {
+    fontSize: 11.5,
+    color: colors.textMuted,
+    marginHorizontal: spacing.lg,
+    marginTop: -spacing.xs,
     marginBottom: spacing.md,
   },
 
