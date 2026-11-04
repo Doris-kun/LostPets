@@ -5,6 +5,7 @@ import { countActiveFilters, EMPTY_FILTERS } from '../components/PetFilters';
 import { buildParams } from '../screens/HomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import report from '../report';
+import { THUMB_CARD, thumbnail } from '../image';
 import { words, type WordKey } from '../word';
 import type { Filters } from '../types';
 
@@ -222,5 +223,54 @@ describe('buildParams — tham số gửi lên máy chủ', () => {
   it('lọc và tìm kiếm dùng được cùng lúc', () => {
     const p = buildParams('lost', { ...loc, species: 'Chó', area: ' Quận 7 ' }, 0, 'vàng');
     expect(p).toMatchObject({ type: 'lost', species: 'Chó', area: 'Quận 7', q: 'vàng' });
+  });
+});
+
+/*
+ * Thu nhỏ ảnh trước khi tải về.
+ *
+ * Test kỹ chỗ này vì nó sửa địa chỉ ảnh bằng cách cắt ghép chuỗi — sai một
+ * nhịp là ảnh không hiện, mà lỗi đó không làm app chết nên không ai thấy
+ * ngay, chỉ là tự nhiên vài thẻ tin trống trơn.
+ */
+describe('thumbnail — xin Cloudinary thu nhỏ ảnh', () => {
+  const goc = 'https://res.cloudinary.com/dvwhgytiw/image/upload/v1793377211/lost-pets/abc.webp';
+
+  it('chèn lệnh thu nhỏ vào ngay sau /upload/', () => {
+    expect(thumbnail(goc, 192)).toBe(
+      'https://res.cloudinary.com/dvwhgytiw/image/upload/w_192,q_auto,f_auto/v1793377211/lost-pets/abc.webp',
+    );
+  });
+
+  // Phần sau /upload/ chính là mã ảnh mà back-end dùng để xoá ảnh trên
+  // Cloudinary. Cắt sai một ký tự là tin xoá rồi mà ảnh nằm lại mãi.
+  it('giữ nguyên si phần đuôi chứa mã ảnh', () => {
+    expect(thumbnail(goc, 192)).toContain('/v1793377211/lost-pets/abc.webp');
+  });
+
+  it('bề ngang truyền vào bao nhiêu thì xin bấy nhiêu', () => {
+    expect(thumbnail(goc, 800)).toContain('w_800,');
+    expect(thumbnail(goc, THUMB_CARD)).toContain(`w_${THUMB_CARD},`);
+  });
+
+  // Ảnh demo nằm ở máy chủ người khác, mình không có quyền bảo họ thu nhỏ.
+  // Chèn bừa vào là địa chỉ hỏng và ảnh biến mất hẳn.
+  it('địa chỉ không phải Cloudinary thì trả nguyên si', () => {
+    expect(thumbnail('https://cataas.com/cat/0w0AIO9', 192)).toBe('https://cataas.com/cat/0w0AIO9');
+    expect(thumbnail('https://placedog.net/600/400?id=11', 192)).toBe(
+      'https://placedog.net/600/400?id=11',
+    );
+  });
+
+  it('đã có sẵn lệnh biến đổi thì không chèn chồng lên', () => {
+    const da = thumbnail(goc, 192);
+    expect(thumbnail(da, 192)).toBe(da);
+  });
+
+  // API trả image là CHUỖI RỖNG khi tin không có ảnh, không phải null.
+  it('không có ảnh thì trả chuỗi rỗng, không trả undefined', () => {
+    expect(thumbnail('', 192)).toBe('');
+    expect(thumbnail(undefined, 192)).toBe('');
+    expect(thumbnail(null, 192)).toBe('');
   });
 });

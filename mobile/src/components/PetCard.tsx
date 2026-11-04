@@ -2,6 +2,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage, type LanguageValue } from '../context/language';
 import type { Pet } from '../types';
+import { THUMB_CARD, thumbnail } from '../image';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing, statusStyle } from '../theme';
 
@@ -57,7 +58,7 @@ export default function PetCard({ pet, onPress }: PetCardProps) {
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       {/* API trả image là CHUỖI RỖNG khi không có ảnh, không phải null */}
       {pet.image ? (
-        <Image source={{ uri: pet.image }} style={styles.cardImage} />
+        <Image source={{ uri: thumbnail(pet.image, THUMB_CARD) }} style={styles.cardImage} />
       ) : (
         <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
           <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.placeholderLogo} />

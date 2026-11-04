@@ -20,6 +20,7 @@ import type { Filters, MainTabParamList, Pet, RootStackParamList } from '../type
 import type { WordKey } from '../word';
 import { API_URL } from '../config';
 import PetCard, { timeAgo } from '../components/PetCard';
+import { THUMB_FEATURED, thumbnail } from '../image';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
 import { useLanguage } from '../context/language';
 import { radius, spacing, statusStyle } from '../theme';
@@ -529,7 +530,10 @@ function Featured({
         <View style={styles.featuredImageBox}>
           {/* API trả image là CHUỖI RỖNG khi không có ảnh, không phải null */}
           {pet.image ? (
-            <Image source={{ uri: pet.image }} style={styles.featuredImage} />
+            <Image
+              source={{ uri: thumbnail(pet.image, THUMB_FEATURED) }}
+              style={styles.featuredImage}
+            />
           ) : (
             <View style={[styles.featuredImage, styles.featuredImageEmpty]}>
               <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.featuredLogo} />
