@@ -6,8 +6,8 @@ Chạy ngày 2026-11-04 · sinh tự động bởi `npm run test:report`
 
 | | |
 |---|---|
-| Tổng số test case | 173 |
-| Pass | 173 |
+| Tổng số test case | 181 |
+| Pass | 181 |
 | Fail | 0 |
 | Tỉ lệ pass | **100%** |
 | Tiêu chí Objective 5 | ≥ 90% |
@@ -22,8 +22,8 @@ Môi trường: Jest 6 bộ test, chạy trên Node với bản giả của ph�
 | Bản đồ: toạ độ và trang Leaflet nhúng | Obj 4 | 31 | 31 | 0 |
 | Tương phản màu WCAG 2.1 AA, hai chế độ sáng/tối | Obj 5 / LSEPI | 68 | 68 | 0 |
 | Giao diện song ngữ Việt/Anh | Obj 4 | 7 | 7 | 0 |
-| Quy tắc giao diện: vùng chạm, icon, API đã bị bỏ | Obj 5 / LSEPI | 42 | 42 | 0 |
-| Các hàm thuần: thời gian, bộ lọc, đọc mã lỗi | Obj 4 | 14 | 14 | 0 |
+| Quy tắc giao diện: vùng chạm, icon, API đã bị bỏ | Obj 5 / LSEPI | 45 | 45 | 0 |
+| Các hàm thuần: thời gian, bộ lọc, đọc mã lỗi | Obj 4 | 19 | 19 | 0 |
 | Thẻ tin đăng — vẽ thật và tương tác | Obj 4 | 11 | 11 | 0 |
 
 ## Chi tiết từng test case
@@ -166,68 +166,76 @@ Môi trường: Jest 6 bộ test, chạy trên Node với bản giả của ph�
 | TC-M117 | vùng chạm tối thiểu 44pt › PetCard.tsx | Pass |
 | TC-M118 | vùng chạm tối thiểu 44pt › PetFilters.tsx | Pass |
 | TC-M119 | vùng chạm tối thiểu 44pt › PetMap.tsx | Pass |
-| TC-M120 | vùng chạm tối thiểu 44pt › SocialLogin.tsx | Pass |
-| TC-M121 | không dùng ký tự làm icon › AdminScreen.tsx | Pass |
-| TC-M122 | không dùng ký tự làm icon › AuthScreen.tsx | Pass |
-| TC-M123 | không dùng ký tự làm icon › ChatScreen.tsx | Pass |
-| TC-M124 | không dùng ký tự làm icon › DetailScreen.tsx | Pass |
-| TC-M125 | không dùng ký tự làm icon › FormScreen.tsx | Pass |
-| TC-M126 | không dùng ký tự làm icon › HomeScreen.tsx | Pass |
-| TC-M127 | không dùng ký tự làm icon › MyPetsScreen.tsx | Pass |
-| TC-M128 | không dùng ký tự làm icon › SettingsScreen.tsx | Pass |
-| TC-M129 | không dùng ký tự làm icon › SplashScreen.tsx | Pass |
-| TC-M130 | không dùng ký tự làm icon › ClaimCodeModal.tsx | Pass |
-| TC-M131 | không dùng ký tự làm icon › PetCard.tsx | Pass |
-| TC-M132 | không dùng ký tự làm icon › PetFilters.tsx | Pass |
-| TC-M133 | không dùng ký tự làm icon › PetMap.tsx | Pass |
-| TC-M134 | không dùng ký tự làm icon › SocialLogin.tsx | Pass |
-| TC-M135 | không dùng StyleSheet.absoluteFillObject › AdminScreen.tsx | Pass |
-| TC-M136 | không dùng StyleSheet.absoluteFillObject › AuthScreen.tsx | Pass |
-| TC-M137 | không dùng StyleSheet.absoluteFillObject › ChatScreen.tsx | Pass |
-| TC-M138 | không dùng StyleSheet.absoluteFillObject › DetailScreen.tsx | Pass |
-| TC-M139 | không dùng StyleSheet.absoluteFillObject › FormScreen.tsx | Pass |
-| TC-M140 | không dùng StyleSheet.absoluteFillObject › HomeScreen.tsx | Pass |
-| TC-M141 | không dùng StyleSheet.absoluteFillObject › MyPetsScreen.tsx | Pass |
-| TC-M142 | không dùng StyleSheet.absoluteFillObject › SettingsScreen.tsx | Pass |
-| TC-M143 | không dùng StyleSheet.absoluteFillObject › SplashScreen.tsx | Pass |
-| TC-M144 | không dùng StyleSheet.absoluteFillObject › ClaimCodeModal.tsx | Pass |
-| TC-M145 | không dùng StyleSheet.absoluteFillObject › PetCard.tsx | Pass |
-| TC-M146 | không dùng StyleSheet.absoluteFillObject › PetFilters.tsx | Pass |
-| TC-M147 | không dùng StyleSheet.absoluteFillObject › PetMap.tsx | Pass |
-| TC-M148 | không dùng StyleSheet.absoluteFillObject › SocialLogin.tsx | Pass |
+| TC-M120 | vùng chạm tối thiểu 44pt › ReportModal.tsx | Pass |
+| TC-M121 | vùng chạm tối thiểu 44pt › SocialLogin.tsx | Pass |
+| TC-M122 | không dùng ký tự làm icon › AdminScreen.tsx | Pass |
+| TC-M123 | không dùng ký tự làm icon › AuthScreen.tsx | Pass |
+| TC-M124 | không dùng ký tự làm icon › ChatScreen.tsx | Pass |
+| TC-M125 | không dùng ký tự làm icon › DetailScreen.tsx | Pass |
+| TC-M126 | không dùng ký tự làm icon › FormScreen.tsx | Pass |
+| TC-M127 | không dùng ký tự làm icon › HomeScreen.tsx | Pass |
+| TC-M128 | không dùng ký tự làm icon › MyPetsScreen.tsx | Pass |
+| TC-M129 | không dùng ký tự làm icon › SettingsScreen.tsx | Pass |
+| TC-M130 | không dùng ký tự làm icon › SplashScreen.tsx | Pass |
+| TC-M131 | không dùng ký tự làm icon › ClaimCodeModal.tsx | Pass |
+| TC-M132 | không dùng ký tự làm icon › PetCard.tsx | Pass |
+| TC-M133 | không dùng ký tự làm icon › PetFilters.tsx | Pass |
+| TC-M134 | không dùng ký tự làm icon › PetMap.tsx | Pass |
+| TC-M135 | không dùng ký tự làm icon › ReportModal.tsx | Pass |
+| TC-M136 | không dùng ký tự làm icon › SocialLogin.tsx | Pass |
+| TC-M137 | không dùng StyleSheet.absoluteFillObject › AdminScreen.tsx | Pass |
+| TC-M138 | không dùng StyleSheet.absoluteFillObject › AuthScreen.tsx | Pass |
+| TC-M139 | không dùng StyleSheet.absoluteFillObject › ChatScreen.tsx | Pass |
+| TC-M140 | không dùng StyleSheet.absoluteFillObject › DetailScreen.tsx | Pass |
+| TC-M141 | không dùng StyleSheet.absoluteFillObject › FormScreen.tsx | Pass |
+| TC-M142 | không dùng StyleSheet.absoluteFillObject › HomeScreen.tsx | Pass |
+| TC-M143 | không dùng StyleSheet.absoluteFillObject › MyPetsScreen.tsx | Pass |
+| TC-M144 | không dùng StyleSheet.absoluteFillObject › SettingsScreen.tsx | Pass |
+| TC-M145 | không dùng StyleSheet.absoluteFillObject › SplashScreen.tsx | Pass |
+| TC-M146 | không dùng StyleSheet.absoluteFillObject › ClaimCodeModal.tsx | Pass |
+| TC-M147 | không dùng StyleSheet.absoluteFillObject › PetCard.tsx | Pass |
+| TC-M148 | không dùng StyleSheet.absoluteFillObject › PetFilters.tsx | Pass |
+| TC-M149 | không dùng StyleSheet.absoluteFillObject › PetMap.tsx | Pass |
+| TC-M150 | không dùng StyleSheet.absoluteFillObject › ReportModal.tsx | Pass |
+| TC-M151 | không dùng StyleSheet.absoluteFillObject › SocialLogin.tsx | Pass |
 
 ### Các hàm thuần: thời gian, bộ lọc, đọc mã lỗi
 
 | Mã | Test case | Kết quả |
 |---|---|---|
-| TC-M149 | timeAgo — các đường ranh giới › chưa tới một phút thì ghi "Vừa xong" | Pass |
-| TC-M150 | timeAgo — các đường ranh giới › đúng một phút thì chuyển sang đếm phút | Pass |
-| TC-M151 | timeAgo — các đường ranh giới › 59 phút vẫn là phút, 60 phút thành giờ | Pass |
-| TC-M152 | timeAgo — các đường ranh giới › 23 giờ vẫn là giờ, 24 giờ thành ngày | Pass |
-| TC-M153 | timeAgo — các đường ranh giới › 29 ngày vẫn đếm ngày, 30 ngày thì quay về ngày tháng | Pass |
-| TC-M154 | timeAgo — các đường ranh giới › tháng viết tắt đổi theo ngôn ngữ | Pass |
-| TC-M155 | timeAgo — các đường ranh giới › bản tiếng Anh dùng đúng kho chữ tiếng Anh | Pass |
-| TC-M156 | countActiveFilters — đếm số điều kiện lọc đang bật › mặc định thì không có điều kiện nào | Pass |
-| TC-M157 | countActiveFilters — đếm số điều kiện lọc đang bật › "newest" là mặc định nên KHÔNG tính là một điều kiện | Pass |
-| TC-M158 | countActiveFilters — đếm số điều kiện lọc đang bật › khu vực chỉ toàn khoảng trắng thì không tính | Pass |
-| TC-M159 | countActiveFilters — đếm số điều kiện lọc đang bật › cộng dồn được | Pass |
-| TC-M160 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lấy được mã từ lỗi của axios | Pass |
-| TC-M161 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lỗi mạng của axios thì không có mã, trả undefined | Pass |
-| TC-M162 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lỗi thường không phải của axios thì cũng không ném | Pass |
+| TC-M152 | timeAgo — các đường ranh giới › chưa tới một phút thì ghi "Vừa xong" | Pass |
+| TC-M153 | timeAgo — các đường ranh giới › đúng một phút thì chuyển sang đếm phút | Pass |
+| TC-M154 | timeAgo — các đường ranh giới › 59 phút vẫn là phút, 60 phút thành giờ | Pass |
+| TC-M155 | timeAgo — các đường ranh giới › 23 giờ vẫn là giờ, 24 giờ thành ngày | Pass |
+| TC-M156 | timeAgo — các đường ranh giới › 29 ngày vẫn đếm ngày, 30 ngày thì quay về ngày tháng | Pass |
+| TC-M157 | timeAgo — các đường ranh giới › tháng viết tắt đổi theo ngôn ngữ | Pass |
+| TC-M158 | timeAgo — các đường ranh giới › bản tiếng Anh dùng đúng kho chữ tiếng Anh | Pass |
+| TC-M159 | countActiveFilters — đếm số điều kiện lọc đang bật › mặc định thì không có điều kiện nào | Pass |
+| TC-M160 | countActiveFilters — đếm số điều kiện lọc đang bật › "newest" là mặc định nên KHÔNG tính là một điều kiện | Pass |
+| TC-M161 | countActiveFilters — đếm số điều kiện lọc đang bật › khu vực chỉ toàn khoảng trắng thì không tính | Pass |
+| TC-M162 | countActiveFilters — đếm số điều kiện lọc đang bật › cộng dồn được | Pass |
+| TC-M163 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lấy được mã từ lỗi của axios | Pass |
+| TC-M164 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lỗi mạng của axios thì không có mã, trả undefined | Pass |
+| TC-M165 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lỗi thường không phải của axios thì cũng không ném | Pass |
+| TC-M166 | report — nhớ tin đã báo cáo › chưa báo cáo thì trả về false | Pass |
+| TC-M167 | report — nhớ tin đã báo cáo › đánh dấu rồi thì nhớ | Pass |
+| TC-M168 | report — nhớ tin đã báo cáo › mỗi tin một chỗ nhớ riêng, không lẫn sang tin khác | Pass |
+| TC-M169 | report — nhớ tin đã báo cáo › id rỗng thì không ghi và không nhận nhầm | Pass |
+| TC-M170 | report — nhớ tin đã báo cáo › lưu kèm mốc thời gian chứ không chỉ lưu cờ có/không | Pass |
 
 ### Thẻ tin đăng — vẽ thật và tương tác
 
 | Mã | Test case | Kết quả |
 |---|---|---|
-| TC-M163 | PetCard vẽ ra được › không nổ, và hiện tên con vật | Pass |
-| TC-M164 | PetCard vẽ ra được › không có tên thì lấy giống thay thế | Pass |
-| TC-M165 | PetCard vẽ ra được › hiện khu vực và mã tin | Pass |
-| TC-M166 | PetCard vẽ ra được › bấm vào thì gọi onPress đúng một lần | Pass |
-| TC-M167 | nhãn trạng thái › tin báo mất | Pass |
-| TC-M168 | nhãn trạng thái › tin nhặt được | Pass |
-| TC-M169 | nhãn trạng thái › đã đoàn tụ thì thắng cả type | Pass |
-| TC-M170 | nhãn trạng thái › chữ trên nhãn dùng màu riêng của nhãn đó, không phải màu cố định | Pass |
-| TC-M171 | ảnh › có ảnh thì vẽ đúng ảnh đó | Pass |
-| TC-M172 | ảnh › không có ảnh thì vẽ logo thay thế, không để trống | Pass |
-| TC-M173 | ghim địa chỉ vẽ bằng icon › dùng icon location chứ không phải ký tự 📍 | Pass |
+| TC-M171 | PetCard vẽ ra được › không nổ, và hiện tên con vật | Pass |
+| TC-M172 | PetCard vẽ ra được › không có tên thì lấy giống thay thế | Pass |
+| TC-M173 | PetCard vẽ ra được › hiện khu vực và mã tin | Pass |
+| TC-M174 | PetCard vẽ ra được › bấm vào thì gọi onPress đúng một lần | Pass |
+| TC-M175 | nhãn trạng thái › tin báo mất | Pass |
+| TC-M176 | nhãn trạng thái › tin nhặt được | Pass |
+| TC-M177 | nhãn trạng thái › đã đoàn tụ thì thắng cả type | Pass |
+| TC-M178 | nhãn trạng thái › chữ trên nhãn dùng màu riêng của nhãn đó, không phải màu cố định | Pass |
+| TC-M179 | ảnh › có ảnh thì vẽ đúng ảnh đó | Pass |
+| TC-M180 | ảnh › không có ảnh thì vẽ logo thay thế, không để trống | Pass |
+| TC-M181 | ghim địa chỉ vẽ bằng icon › dùng icon location chứ không phải ký tự 📍 | Pass |
 

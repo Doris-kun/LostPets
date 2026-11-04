@@ -10,6 +10,7 @@ import type {
   MatchResult,
   Pet,
   PetPage,
+  ReportReason,
   User,
 } from './types';
 
@@ -107,6 +108,19 @@ export default {
     http.put<Pet>(`/pets/${id}`, data, withClaim(claimCode)),
   deletePet: (id: string, claimCode?: string) =>
     http.delete<{ message: string }>(`/pets/${id}`, withClaim(claimCode)),
+
+  /*
+   * Báo cáo một tin đăng. CỐ Ý không cần đăng nhập, không cần mã xác nhận.
+   *
+   * Người cần báo cáo nhất là người không có tài khoản: họ không đăng tin
+   * nào, chỉ bị kẻ khác lấy số điện thoại đem đi đăng tin giả. Bắt đăng nhập
+   * mới cho báo cáo là chặn đúng người cần báo cáo nhất.
+   *
+   * Server không trả về tổng số báo cáo của tin đó, cố tình: biết con số ấy
+   * thì kẻ xấu đoán được mình đã dồn đủ để tin bị gỡ hay chưa.
+   */
+  reportPet: (id: string, data: { reason: ReportReason; note?: string }) =>
+    http.post<{ message: string }>(`/pets/${id}/report`, data),
 
   // AI. Phân tích ảnh mất 10-20 giây, lâu hơn hẳn request thường, nên nới
   // riêng thời gian chờ cho nó thay vì nới cho cả app.

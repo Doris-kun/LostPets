@@ -2,6 +2,8 @@ import { AxiosError } from 'axios';
 import { errorStatus } from '../api';
 import { timeAgo } from '../components/PetCard';
 import { countActiveFilters, EMPTY_FILTERS } from '../components/PetFilters';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import report from '../report';
 import { words, type WordKey } from '../word';
 import type { Filters } from '../types';
 
@@ -139,5 +141,45 @@ describe('errorStatus — lấy mã HTTP ra từ một lỗi bắt được', ()
     expect(errorStatus('một chuỗi')).toBeUndefined();
     expect(errorStatus(null)).toBeUndefined();
     expect(errorStatus(undefined)).toBeUndefined();
+  });
+});
+
+/*
+ * Trí nhớ "tin này đã báo cáo rồi".
+ *
+ * Test ở đây chứ không ở source.test.ts vì nó có hành vi thật để chạy, chỉ
+ * là phải mượn bản giả của AsyncStorage trong jest.setup.ts — máy thật mới
+ * có ổ đĩa, Node thì không.
+ */
+describe('report — nhớ tin đã báo cáo', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+
+  it('chưa báo cáo thì trả về false', async () => {
+    await expect(report.has('abc')).resolves.toBe(false);
+  });
+
+  it('đánh dấu rồi thì nhớ', async () => {
+    await report.mark('abc');
+    await expect(report.has('abc')).resolves.toBe(true);
+  });
+
+  it('mỗi tin một chỗ nhớ riêng, không lẫn sang tin khác', async () => {
+    await report.mark('abc');
+    await expect(report.has('xyz')).resolves.toBe(false);
+  });
+
+  // Không id thì đừng ghi gì cả. Ghi vào khoá "report:" trống sẽ làm MỌI tin
+  // chưa có id đều thành "đã báo cáo".
+  it('id rỗng thì không ghi và không nhận nhầm', async () => {
+    await report.mark('');
+    await expect(report.has('')).resolves.toBe(false);
+  });
+
+  it('lưu kèm mốc thời gian chứ không chỉ lưu cờ có/không', async () => {
+    await report.mark('abc');
+    const luu = await AsyncStorage.getItem('report:abc');
+    expect(Number(luu)).toBeGreaterThan(0);
   });
 });

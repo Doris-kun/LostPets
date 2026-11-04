@@ -14,6 +14,22 @@
 /** 'lost' = tin báo mất, 'found' = tin báo nhặt được. Back-end chỉ nhận hai giá trị này. */
 export type PetType = 'lost' | 'found';
 
+/*
+ * Mã lý do báo cáo một tin đăng.
+ *
+ * Phải khớp từng chữ với REASONS trong back-end/api/models/reportModel.js —
+ * server từ chối thẳng mã lạ. Khai thành kiểu ở đây thay vì để string, nhờ
+ * vậy gõ sai một chữ là TypeScript báo ngay lúc viết, không phải đợi tới lúc
+ * bấm nút mới thấy lỗi 400.
+ */
+export type ReportReason =
+  | 'scam'
+  | 'fake_image'
+  | 'wrong_contact'
+  | 'offensive'
+  | 'duplicate'
+  | 'other';
+
 /**
  * Một tin đăng.
  *

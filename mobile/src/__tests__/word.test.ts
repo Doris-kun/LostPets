@@ -43,9 +43,18 @@ describe('hai thứ tiếng', () => {
 });
 
 describe('quy ước đặt tên', () => {
+  /*
+   * Cho phép cả dấu gạch dưới, chỉ vì một nhóm tên: report.reason.fake_image
+   * và report.reason.wrong_contact.
+   *
+   * Phần đuôi của hai tên đó là MÃ CỦA SERVER, lấy nguyên si từ REASONS trong
+   * back-end/api/models/reportModel.js. Giữ nguyên si thì giao diện ghép thẳng
+   * tên câu ra từ mã lý do, không cần một bảng đổi tên ở giữa — mà bảng đó
+   * chính là chỗ dễ quên cập nhật nhất mỗi khi back-end thêm lý do mới.
+   */
   it('mọi tên câu đều có dạng khu-vuc.ten-cu-the', () => {
     for (const key of viKeys) {
-      expect(key).toMatch(/^[a-z]+\.[a-zA-Z0-9.]+$/);
+      expect(key).toMatch(/^[a-z]+\.[a-zA-Z0-9._]+$/);
     }
   });
 

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,9 +14,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import api, { errorStatus } from '../api';
-import type { MatchResult, Pet, RootStackParamList } from '../types';
+import type { MatchResult, Pet, ReportReason, RootStackParamList } from '../types';
 import claim from '../claim';
 import ClaimCodeModal from '../components/ClaimCodeModal';
+import ReportModal from '../components/ReportModal';
+import report from '../report';
 import PetMap, { DirectionsButton } from '../components/PetMap';
 import { WEB_URL } from '../config';
 import { hasPoint } from '../map';
@@ -60,6 +62,47 @@ export default function DetailScreen({ route, navigation }: Props) {
   const [codeError, setCodeError] = useState('');
   // Đang kiểm tra quyền sửa, khoá nút để tránh bấm hai lần
   const [checkingEdit, setCheckingEdit] = useState(false);
+
+  /*
+   * Phần báo cáo tin.
+   *
+   * `reported` đọc từ bộ nhớ máy chứ không hỏi máy chủ: máy chủ CỐ Ý không
+   * cho biết tin nào đã bị ai báo cáo — xem ghi chú trong reportController.js.
+   * Nên đây chỉ là trí nhớ của riêng máy này, và cũng chỉ cần tới vậy: mục
+   * đích là đừng cho bấm đi bấm lại, không phải để thống kê.
+   */
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportStage, setReportStage] = useState<'form' | 'thanks'>('form');
+  const [reportSending, setReportSending] = useState(false);
+  const [reportError, setReportError] = useState('');
+  const [reported, setReported] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+    report.has(id).then((da) => {
+      if (!ignore) setReported(da);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
+
+  const guiBaoCao = async (reason: ReportReason, note: string) => {
+    setReportSending(true);
+    setReportError('');
+    try {
+      await api.reportPet(id, { reason, note });
+      await report.mark(id);
+      setReported(true);
+      setReportStage('thanks');
+    } catch (err) {
+      // 429 là bị chặn vì gửi quá nhiều, nói rõ ra thay vì gộp vào câu chung
+      // — người dùng cần biết là chờ được chứ không phải hỏng vĩnh viễn.
+      setReportError(t(errorStatus(err) === 429 ? 'report.tooMany' : 'report.failed'));
+    } finally {
+      setReportSending(false);
+    }
+  };
 
   // Tải lại mỗi khi quay về màn này -> sửa tin xong bấm Back là thấy ngay dữ liệu mới
   useFocusEffect(
@@ -522,6 +565,39 @@ export default function DetailScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       </View>
       {/*
+        Báo cáo tin — để cuối cùng và làm nhạt, vì tuyệt đại đa số tin là tin
+        thật, không nên gợi ý người đọc nghi ngờ ngay từ đầu. Nhưng vẫn phải
+        có mặt trên MỌI tin: người bị hại vì một tin giả thường không có tài
+        khoản và không đăng gì cả, nên đây là đường duy nhất của họ.
+      */}
+      <TouchableOpacity
+        style={styles.reportButton}
+        onPress={() => {
+          setReportError('');
+          setReportStage('form');
+          setReportOpen(true);
+        }}
+        disabled={reported}
+        activeOpacity={0.7}
+      >
+        <Ionicons
+          name={reported ? 'flag' : 'flag-outline'}
+          size={15}
+          color={colors.textMuted}
+        />
+        <Text style={styles.reportText}>{t(reported ? 'report.already' : 'report.action')}</Text>
+      </TouchableOpacity>
+
+      <ReportModal
+        visible={reportOpen}
+        stage={reportStage}
+        sending={reportSending}
+        error={reportError}
+        onSubmit={guiBaoCao}
+        onClose={() => setReportOpen(false)}
+      />
+
+      {/*
         Xin mã khi back-end trả 403. Gõ đúng thì việc đang làm dở chạy tiếp
         ngay, không phải bấm lại từ đầu.
       */}
@@ -705,6 +781,19 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   matchScoreText: { color: colors.onPrimary, fontSize: 10.5, fontWeight: "800" },
   matchItemTitle: { fontSize: 14, fontWeight: "800", color: colors.text, marginTop: 4 },
   matchReason: { fontSize: 12, color: colors.textSoft, lineHeight: 17, marginTop: 2 },
+
+  // Nút báo cáo: không viền, không nền, chữ mờ. Cố ý cho nó chìm hơn mọi
+  // nút khác trên màn hình — nó không phải việc người đọc thường cần làm.
+  reportButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+    minHeight: 48,
+    marginTop: spacing.md,
+  },
+  reportText: { fontSize: 12.5, fontWeight: '600', color: colors.textMuted },
 
   shareButton: {
     flexDirection: 'row',
