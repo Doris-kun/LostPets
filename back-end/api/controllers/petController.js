@@ -225,13 +225,32 @@ async function searchByMeaning(q, filter) {
 // Bộ lọc cứng, dùng chung cho danh sách và bản đồ. Hai chỗ phải lọc giống hệt
 // nhau, nếu không thì bấm qua lại giữa "Danh sách" và "Bản đồ" sẽ ra hai tập
 // tin khác nhau mà không ai hiểu vì sao.
+// Người dùng gõ CHỮ, không gõ biểu thức chính quy. Đưa thẳng chuỗi họ gõ vào
+// new RegExp() gây hai lỗi khác nhau, và cả hai đều đã đo được trên web thật:
+//
+// 1. Ký tự đặc biệt làm sập. /pets?area=( trả về 500, vì '(' là biểu thức
+//    chính quy thiếu vế đóng nên new RegExp ném lỗi. Gõ "Quận 1 (gần chợ)"
+//    vào ô tìm khu vực là đủ. Không cần ác ý, chỉ cần gõ bình thường.
+//
+// 2. Dấu tiếng Việt viết hai kiểu thì không khớp nhau. Unicode cho phép viết
+//    "è" bằng một ký tự có sẵn dấu (NFC) hoặc "e" rồi dấu huyền rời (NFD).
+//    Nhìn giống hệt nhau, khác nhau từng byte. Đo trên Render:
+//      species=Mèo kiểu NFC -> 9 kết quả
+//      species=Mèo kiểu NFD -> 0 kết quả
+//    Bàn phím iOS hay gửi NFD.
+//
+// Chuẩn hoá rồi thoát ký tự giải quyết cả hai. Dữ liệu lưu trong database đã
+// được quy về NFC ở tầng schema, nên hai bên gặp nhau ở cùng một dạng.
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const textFilter = (value) => new RegExp(escapeRegExp(String(value).normalize('NFC')), 'i');
+
 const buildFilter = (query = {}) => {
   const filter = {};
   if (query.type)    filter.type    = query.type;
-  if (query.species) filter.species = new RegExp(query.species, 'i');
-  if (query.breed)   filter.breed   = new RegExp(query.breed,   'i');
-  if (query.color)   filter.color   = new RegExp(query.color,   'i');
-  if (query.area)    filter.area    = new RegExp(query.area,    'i');
+  if (query.species) filter.species = textFilter(query.species);
+  if (query.breed)   filter.breed   = textFilter(query.breed);
+  if (query.color)   filter.color   = textFilter(query.color);
+  if (query.area)    filter.area    = textFilter(query.area);
   if (query.resolved !== undefined) filter.resolved = query.resolved === 'true';
   // parseInt('abc') ra NaN, setDate(NaN) ra Invalid Date và MongoDB ném lỗi.
   const days = Number.parseInt(query.days, 10);
@@ -251,7 +270,7 @@ exports.list_all_pets = async (req, res) => {
     const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 9, 1), 50);
     const skip  = Math.max(Number.parseInt(req.query.skip, 10) || 0, 0);
 
-    const q = String(req.query.q || '').trim().slice(0, MAX_QUERY_CHARS);
+    const q = String(req.query.q || '').normalize('NFC').trim().slice(0, MAX_QUERY_CHARS);
     if (q) {
       const ranked = await searchByMeaning(q, filter);
       return res.json({ pets: ranked.slice(skip, skip + limit), total: ranked.length });
@@ -286,7 +305,7 @@ exports.list_pets_for_map = async (req, res) => {
     // chứ không tải về rồi mới bỏ đi.
     const located = { ...filter, lat: { $ne: null }, lng: { $ne: null } };
 
-    const q = String(req.query.q || '').trim().slice(0, MAX_QUERY_CHARS);
+    const q = String(req.query.q || '').normalize('NFC').trim().slice(0, MAX_QUERY_CHARS);
     if (q) {
       // Dùng chung ô tìm kiếm với danh sách, nếu không thì gõ chữ rồi bấm sang
       // bản đồ sẽ thấy cả những tin vừa bị loại. Thứ hạng bỏ đi: trên bản đồ
