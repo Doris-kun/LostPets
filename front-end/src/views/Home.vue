@@ -73,6 +73,19 @@
           <option value="oldest">{{ $t('sort.oldest') }}</option>
         </select>
 
+        <!-- Bật khoảng cách ngay tại đây, chứ không bắt người ta sang tab bản
+             đồ mới bấm được. Nút chỉ hiện khi chưa biết vị trí; biết rồi thì
+             nó biến mất và mọi thẻ tin tự hiện khoảng cách. -->
+        <button v-if="!me && !locating" @click="locateMe"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          {{ $t('home.showDistance') }}
+        </button>
+
         <!-- Chuyển giữa danh sách và bản đồ -->
         <div class="flex items-center bg-gray-100 rounded-full p-0.5">
           <button @click="setView('list')"
@@ -247,7 +260,7 @@
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
 import PetPhoto from '../components/PetPhoto.vue';
-import { readSavedMe, distanceKm, formatDistanceKm } from '../map';
+import { readSavedMe, saveMe, distanceKm, formatDistanceKm } from '../map';
 
 export default {
   name: 'Home',
@@ -258,6 +271,7 @@ export default {
       // Không có thì thẻ tin không hiện khoảng cách — không tự xin quyền ở
       // trang chủ, vì ném hộp thoại vào mặt người mới vào xem là thô lỗ.
       me: readSavedMe(),
+      locating: false,
       pets: [],
       total: 0,
       view: 'list',
@@ -310,6 +324,7 @@ export default {
   created() {
     this.filters.type = this.$route.query.type || '';
     this.fetchPets();
+    this.autoLocate();
   },
   // Rời trang trong lúc hẹn giờ đang chạy thì nó vẫn nổ và gọi refresh() trên
   // component đã huỷ. Vô hại ở đây nhưng là một request thừa, mà request tìm
@@ -324,6 +339,33 @@ export default {
     //
     // Con số cố ý kèm dấu ngã: toạ độ đã bị làm tròn về lưới 500m lúc lưu,
     // nên in "2,34 km" là nói quá độ chính xác mình thực sự có.
+    // Đã từng cho phép định vị thì lấy luôn, không hỏi lại, không bắt bấm.
+    // Chỉ chạy khi trình duyệt báo quyền đã ở trạng thái granted — tự gọi
+    // getCurrentPosition mà chưa được phép sẽ bật hộp thoại xin quyền ngay
+    // lúc người ta vừa mở trang, đúng thứ trang chính sách cam kết không làm.
+    async autoLocate() {
+      if (this.me || !navigator.geolocation || !navigator.permissions) return;
+      try {
+        const status = await navigator.permissions.query({ name: 'geolocation' });
+        if (status.state === 'granted') this.locateMe();
+      } catch {
+        /* trình duyệt không hỗ trợ hỏi trạng thái quyền: bỏ qua, chờ người bấm */
+      }
+    },
+    locateMe() {
+      if (!navigator.geolocation) return;
+      this.locating = true;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const point = [pos.coords.latitude, pos.coords.longitude];
+          this.me = point;
+          saveMe(point);
+          this.locating = false;
+        },
+        () => { this.locating = false; },
+        { timeout: 10000 },
+      );
+    },
     distanceOf(pet) {
       if (!this.me || !Number.isFinite(pet.lat) || !Number.isFinite(pet.lng)) return '';
       return formatDistanceKm(distanceKm(this.me[0], this.me[1], pet.lat, pet.lng));
