@@ -46,22 +46,13 @@
       </ul>
     </section>
 
-    <section v-if="contactEmail" class="mt-12 rounded-2xl border border-gray-100 bg-gray-50/70 p-6 text-center">
+    <section class="mt-12 rounded-2xl border border-gray-100 bg-gray-50/70 p-6 text-center">
       <h2 class="text-lg font-bold text-gray-900">{{ c.contactH }}</h2>
       <p class="text-gray-600 leading-relaxed mt-2 max-w-md mx-auto">{{ c.contactP }}</p>
-      <div class="mt-4 flex flex-wrap items-center justify-center gap-2.5">
-        <a :href="mailtoLink"
-          class="bg-gray-900 text-white rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-gray-800 transition-colors">
-          {{ c.sendEmail }}
-        </a>
-        <!-- Nút chép địa chỉ cho người dùng webmail. Máy chưa đặt trình gửi
-             thư mặc định thì bấm mailto chỉ nhận một hộp thoại chọn ứng dụng
-             khó hiểu, chứ không soạn được thư. -->
-        <button type="button" @click="copyEmail"
-          class="border border-gray-200 text-gray-600 rounded-xl px-5 py-2.5 text-sm font-semibold hover:border-gray-300 hover:text-gray-900 transition-all">
-          {{ c.copyEmail }}
-        </button>
-      </div>
+      <router-link to="/contact"
+        class="inline-block mt-4 bg-gray-900 text-white rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-gray-800 transition-colors">
+        {{ c.contactBtn }}
+      </router-link>
     </section>
   </div>
 </template>
@@ -79,10 +70,6 @@
 // Để văn bản ngay trong file thay vì nhét từng đoạn vào i18n.js: đây là văn
 // xuôi dài, tách thành bốn chục khoá rời rạc thì không ai đọc lại nổi để
 // kiểm xem bản tiếng Việt và tiếng Anh còn khớp nhau không.
-
-// Email công khai để người dùng liên hệ về dữ liệu của họ. Bỏ trống thì mục
-// Liên hệ không hiện.
-const CONTACT_EMAIL = 'nampham2212004@gmail.com';
 
 const CONTENT = {
   vi: {
@@ -206,12 +193,9 @@ const CONTENT = {
     ],
     contactH: 'Còn câu hỏi nào khác?',
     contactP:
-      'Nếu bạn muốn hỏi về dữ liệu của mình, hoặc muốn xoá tài khoản, hãy gửi email. '
-      + 'Nhớ nói rõ email hoặc mã tin liên quan để tra cho nhanh.',
-    sendEmail: 'Gửi email',
-    copyEmail: 'Sao chép địa chỉ',
-    copied: 'Đã sao chép địa chỉ email.',
-    mailSubject: 'LostPets — yêu cầu về dữ liệu',
+      'Nếu bạn muốn hỏi về dữ liệu của mình, hoặc muốn xoá tài khoản, '
+      + 'có hai cách liên hệ ở trang bên.',
+    contactBtn: 'Liên hệ với chúng tôi',
   },
 
   en: {
@@ -335,41 +319,17 @@ const CONTENT = {
     ],
     contactH: 'Any other questions?',
     contactP:
-      'If you want to ask about your data, or have your account deleted, send an email. '
-      + 'Mention the email address or listing code involved so it can be found quickly.',
-    sendEmail: 'Send an email',
-    copyEmail: 'Copy address',
-    copied: 'Email address copied.',
-    mailSubject: 'LostPets — data request',
+      'If you want to ask about your data, or have your account deleted, '
+      + 'there are two ways to get in touch.',
+    contactBtn: 'Contact us',
   },
 };
 
 export default {
   name: 'Privacy',
-  data() {
-    return { contactEmail: CONTACT_EMAIL };
-  },
   computed: {
     c() {
       return CONTENT[this.$lang] || CONTENT.vi;
-    },
-    // Điền sẵn tiêu đề thư. Người gửi đỡ phải nghĩ, mà người nhận lọc hộp
-    // thư cũng dễ — yêu cầu về dữ liệu không lẫn vào thư rác.
-    mailtoLink() {
-      return `mailto:${this.contactEmail}?subject=${encodeURIComponent(this.c.mailSubject)}`;
-    },
-  },
-  methods: {
-    async copyEmail() {
-      try {
-        await navigator.clipboard.writeText(this.contactEmail);
-        this.$toast(this.c.copied);
-      } catch {
-        // Trình duyệt cũ hoặc trang không chạy trên HTTPS thì không có
-        // clipboard. Hiện thẳng địa chỉ ra để người ta tự bôi đen mà chép,
-        // còn hơn bấm xong không thấy gì xảy ra.
-        this.$toast(this.contactEmail);
-      }
     },
   },
 };

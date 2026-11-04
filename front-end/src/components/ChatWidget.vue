@@ -81,6 +81,7 @@
 
 <script>
 import api from '../api';
+import { chatStore } from '../chat';
 
 const MAX_CHARS = 1000;
 // Server chỉ nhận 20 lượt. Cắt bớt phần cũ nhất nhưng luôn giữ lời chào mở đầu.
@@ -90,7 +91,6 @@ export default {
   name: 'ChatWidget',
   data() {
     return {
-      open: false,
       draft: '',
       loading: false,
       error: '',
@@ -99,13 +99,29 @@ export default {
       suggestionKeys: ['chat.s1', 'chat.s2', 'chat.s3'],
     };
   },
+  computed: {
+    // Trạng thái nằm ở kho dùng chung chứ không ở đây, để trang Liên hệ mở
+    // được hộp chat. Dùng computed có setter nên mọi chỗ gán this.open = ...
+    // ở dưới vẫn chạy y như cũ.
+    open: {
+      get() { return chatStore.open; },
+      set(value) { chatStore.open = value; },
+    },
+  },
+  watch: {
+    // Lời chào và cuộn xuống đáy phải chạy cả khi hộp được mở TỪ NƠI KHÁC,
+    // không riêng khi người ta bấm nút tròn ở góc màn hình.
+    open(isOpen) {
+      if (!isOpen) return;
+      if (this.messages.length === 0) {
+        this.messages.push({ role: 'assistant', content: this.$t('chat.greeting') });
+      }
+      this.scrollDown();
+    },
+  },
   methods: {
     toggle() {
       this.open = !this.open;
-      if (this.open && this.messages.length === 0) {
-        this.messages.push({ role: 'assistant', content: this.$t('chat.greeting') });
-      }
-      if (this.open) this.scrollDown();
     },
     scrollDown() {
       this.$nextTick(() => {
