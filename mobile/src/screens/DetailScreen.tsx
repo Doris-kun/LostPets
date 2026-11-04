@@ -376,7 +376,15 @@ export default function DetailScreen({ route, navigation }: Props) {
         <View style={[styles.badge, { backgroundColor: status.color }]}>
           <Text style={[styles.badgeText, { color: status.onColor }]}>{t(status.labelKey)}</Text>
         </View>
-        {!!pet.postId && <Text style={styles.postId}>{pet.postId}</Text>}
+        {/*
+          Mã tin cố ý KHÔNG hiện ở đây. Trang này dành cho người đang đi tìm
+          con vật, không phải cho việc tra cứu nội bộ. Chủ tin xem mã ở "Bài
+          của tôi", quản trị viên xem ở trang quản trị.
+
+          Mã vẫn sinh ra và vẫn nằm trong dữ liệu, nên gõ mã vào ô tìm kiếm
+          vẫn ra đúng tin — nhánh khớp nguyên văn trong searchByMeaning luôn
+          đứng trên mọi kết quả ngữ nghĩa.
+        */}
       </View>
 
       {/* Tin đã đoàn tụ: báo rõ bằng một dải màu, không chỉ ẩn nút đi */}

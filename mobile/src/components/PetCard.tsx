@@ -46,9 +46,25 @@ export function timeAgo(date: string, t: LanguageValue['t'], lang: LanguageValue
 export interface PetCardProps {
   pet: Pet;
   onPress: () => void;
+  /*
+   * Có in mã tin (L-NF4T3P) ở góc thẻ hay không. MẶC ĐỊNH LÀ KHÔNG.
+   *
+   * Người lướt danh sách không cần tới nó, mà in ra thì vừa rối mắt vừa
+   * trông như một thứ gì đó quan trọng mà họ không hiểu. Chỉ chủ tin mới
+   * cần biết mã của mình, để tra hoặc đọc cho người khác nghe — nên chỉ màn
+   * "Bài của tôi" bật nó lên.
+   *
+   * Nói rõ để khỏi nhầm: mã tin KHÔNG phải bí mật, lộ ra cũng không làm
+   * được gì. Thứ phải giữ kín là MÃ XÁC NHẬN — thứ cho phép sửa và xoá tin,
+   * chỉ hiện đúng một lần lúc đăng, và trong database chỉ lưu bản băm.
+   * Giấu mã tin đi là vì gọn mắt, không phải vì an toàn.
+   *
+   * Web làm y vậy, xem front-end PR #61.
+   */
+  showCode?: boolean;
 }
 
-export default function PetCard({ pet, onPress }: PetCardProps) {
+export default function PetCard({ pet, onPress, showCode = false }: PetCardProps) {
   const { t, lang } = useLanguage();
   const { colors, isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);
@@ -87,7 +103,7 @@ export default function PetCard({ pet, onPress }: PetCardProps) {
               {pet.area}
             </Text>
           </View>
-          {!!pet.postId && <Text style={styles.cardCode}>{pet.postId}</Text>}
+          {showCode && !!pet.postId && <Text style={styles.cardCode}>{pet.postId}</Text>}
         </View>
       </View>
     </TouchableOpacity>

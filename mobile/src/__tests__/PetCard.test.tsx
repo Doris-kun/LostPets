@@ -50,10 +50,10 @@ const tin = (p: Partial<Pet> = {}): Pet =>
     ...p,
   }) as Pet;
 
-const ve = (pet: Pet, onPress: () => void = jest.fn()) =>
+const ve = (pet: Pet, onPress: () => void = jest.fn(), showCode = false) =>
   render(
     <Khung>
-      <PetCard pet={pet} onPress={onPress} />
+      <PetCard pet={pet} onPress={onPress} showCode={showCode} />
     </Khung>,
   );
 
@@ -69,9 +69,28 @@ describe('PetCard vẽ ra được', () => {
     expect(screen.getByText('Mèo ta')).toBeTruthy();
   });
 
-  it('hiện khu vực và mã tin', async () => {
+  it('hiện khu vực', async () => {
     await ve(tin());
     expect(screen.getByText('Quận 1, TP.HCM')).toBeTruthy();
+  });
+
+  /*
+   * Mã tin mặc định KHÔNG hiện.
+   *
+   * Thẻ này dùng ở ba nơi, mà chỉ "Bài của tôi" là nơi người xem sở hữu tin
+   * đó. Mặc định phải là giấu: quên bật thì chỉ thiếu một dòng chữ, còn quên
+   * tắt thì phơi mã ra cho mọi người lạ ở trang chủ.
+   *
+   * Mã tin không phải bí mật — lộ ra cũng không làm gì được. Giấu đi là vì
+   * gọn mắt. Thứ thật sự phải giữ kín là mã xác nhận, thứ cho phép sửa xoá.
+   */
+  it('mặc định KHÔNG hiện mã tin', async () => {
+    await ve(tin());
+    expect(screen.queryByText('LOST-0042')).toBeNull();
+  });
+
+  it('bật showCode thì mới hiện mã tin', async () => {
+    await ve(tin(), jest.fn(), true);
     expect(screen.getByText('LOST-0042')).toBeTruthy();
   });
 

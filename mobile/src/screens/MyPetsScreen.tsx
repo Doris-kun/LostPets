@@ -135,6 +135,9 @@ export default function MyPetsScreen({ navigation }: Props) {
         renderItem={({ item }) => (
           <PetCard
             pet={item}
+            // Chỉ ở đây mới in mã tin: đây là tin của chính người đang xem,
+            // họ cần mã để tra cứu hoặc đọc cho người khác.
+            showCode
             onPress={() => navigation.navigate('Detail', { id: item._id })}
           />
         )}
