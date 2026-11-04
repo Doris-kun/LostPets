@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ReportReason } from '../types';
 import { useLanguage } from '../context/language';
@@ -87,7 +97,21 @@ export default function ReportModal({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <View style={styles.root}>
+      {/*
+        Android tự thu nhỏ cửa sổ khi bàn phím bật nên hộp thoại vẫn nhìn đủ.
+        iOS KHÔNG làm vậy: bàn phím trượt đè lên trên, che mất danh sách lý do
+        lẫn nút Gửi — gõ xong không còn thấy nút đâu mà bấm.
+
+        behavior="padding" chèn một khoảng đệm dưới đáy đúng bằng chiều cao
+        bàn phím, khung này căn giữa nên hộp thoại tự co lại và lên theo.
+
+        Android để undefined, KHÔNG đặt behavior: hệ điều hành đã lo rồi, đặt
+        thêm là đẩy hai lần. Giống hệt cách PetFilters.tsx đang làm.
+      */}
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <View style={styles.sheet}>
           {xong ? (
             <>
@@ -181,7 +205,7 @@ export default function ReportModal({
             </>
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
