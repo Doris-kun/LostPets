@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import AdminReports from '../components/AdminReports';
 import api, { type PetQuery } from '../api';
 import type { AdminStats, Pet, RootStackParamList } from '../types';
 import type { Lang, WordKey } from '../word';
@@ -210,6 +211,7 @@ export default function AdminScreen({ navigation }: Props) {
       onEndReached={loadMore}
       onEndReachedThreshold={0.4}
       ListHeaderComponent={
+        <>
         <Header
           stats={stats}
           total={total}
@@ -221,6 +223,22 @@ export default function AdminScreen({ navigation }: Props) {
           search={search}
           setSearch={setSearch}
         />
+
+        {/*
+          Báo cáo nằm TRÊN danh sách tin, giống bản web.
+
+          Đây là việc cần người quyết định; danh sách tin bên dưới chỉ là để
+          tra cứu. Đặt dưới thì phải cuộn qua cả trăm tin mới thấy, mà một
+          tin lừa đảo để càng lâu càng hại.
+
+          Xoá tin xong thì gọi load() để số liệu và danh sách tin bên ngoài
+          cập nhật theo — nếu không, tin vừa xoá vẫn nằm trong danh sách.
+        */}
+        <AdminReports
+          onOpenPet={(id) => navigation.navigate('Detail', { id })}
+          onPetDeleted={load}
+        />
+        </>
       }
       ListEmptyComponent={
         <Text style={styles.emptyText}>{t(hasError ? 'admin.loadFailed' : 'admin.noPosts')}</Text>

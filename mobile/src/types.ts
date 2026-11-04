@@ -172,6 +172,35 @@ export interface Filters {
   sort: string;
 }
 
+/*
+ * Một báo cáo trong trang quản trị: GET /admin/reports
+ *
+ * pet có thể là NULL — và đây là chỗ dễ quên nhất.
+ *
+ * Báo cáo trỏ tới tin bằng khoá ngoại. Admin xoá tin xong thì báo cáo vẫn
+ * nằm lại, và populate trả về null chứ không bỏ dòng đó đi. Coi như lúc nào
+ * cũng có tin là app sẽ chết ngay ở dòng đầu tiên đọc pet.image.
+ */
+export interface AdminReport {
+  _id: string;
+  reason: ReportReason;
+  /** Mô tả người báo cáo tự ghi. Chuỗi rỗng khi họ không ghi gì. */
+  note: string;
+  date: string;
+  pet: Pick<
+    Pet,
+    'postId' | 'type' | 'species' | 'breed' | 'color' | 'area' | 'image' | 'resolved'
+  > & { _id: string } | null;
+}
+
+/** Kết quả GET /admin/reports. Mỗi trang 20 báo cáo. */
+export interface AdminReportPage {
+  reports: AdminReport[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
 // ---- Số liệu trang quản trị: GET /admin/stats ----
 
 export interface AdminRank {

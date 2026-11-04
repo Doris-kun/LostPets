@@ -322,6 +322,13 @@ const vi = {
   'map.approxNote': 'Đây là khu vực gần đúng, rộng khoảng 500m — không phải địa chỉ chính xác. Hãy gọi điện để hẹn điểm gặp cụ thể, nên chọn nơi công cộng.',
   'map.privacyNote': 'Vị trí sẽ được làm tròn thành một vùng rộng khoảng 500m trước khi lưu, nên không ai thấy chính xác nhà bạn. Dù vậy vẫn nên chọn một điểm gần đó thay vì đúng nhà.',
 
+  // --- Báo cáo trong trang quản trị. Câu chữ lấy đúng bản web.
+  'admin.reports': 'Báo cáo chờ xử lý',
+  'admin.reportDismiss': 'Bỏ qua',
+  'admin.reportDeletePost': 'Xoá tin',
+  'admin.reportPetGone': 'Tin đã bị xoá',
+  'admin.reportMore': 'Xem thêm báo cáo',
+  'admin.reportConfirmDismiss': 'Bỏ qua báo cáo này? Tin đăng vẫn giữ nguyên.',
   'admin.link': 'Trang quản trị',
   'admin.title': 'Quản trị',
   'admin.subtitle': 'Tổng quan số liệu và toàn bộ tin đăng.',
@@ -673,7 +680,13 @@ const en: Record<WordKey, string> = {
   'map.approxNote': 'This is an approximate area, about 500m across — not an exact address. Call to agree on a specific meeting point, ideally somewhere public.',
   'map.privacyNote': 'Your location is rounded to an area about 500m wide before it is saved, so nobody sees your exact address. Even so, prefer a nearby point over your own home.',
 
-  'admin.link': 'Admin dashboard',
+  'admin.reports': 'Reports to review',
+  'admin.reportDismiss': 'Dismiss',
+  'admin.reportDeletePost': 'Delete post',
+  'admin.reportPetGone': 'Post already deleted',
+  'admin.reportMore': 'Show more reports',
+  'admin.reportConfirmDismiss': 'Dismiss this report? The post stays as it is.',
+  'admin.link': 'Admin page',
   'admin.title': 'Admin',
   'admin.subtitle': 'Overview and every post on the site.',
   'admin.totalPosts': 'Total posts',

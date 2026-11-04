@@ -3,6 +3,7 @@ import { API_URL, REQUEST_TIMEOUT } from './config';
 import claim from './claim';
 import { getToken, reportUnauthorized } from './context/auth';
 import type {
+  AdminReportPage,
   AdminStats,
   AnalyzeResult,
   AuthResult,
@@ -196,4 +197,16 @@ export default {
   adminPets: (params?: PetQuery) => http.get<PetPage>('/admin/pets', { params }),
   // Quản trị viên xoá được bất kỳ tin nào, không cần mã xác nhận.
   adminDeletePet: (id: string) => http.delete<{ message: string }>(`/admin/pets/${id}`),
+
+  /*
+   * Báo cáo tin xấu, để quản trị viên xem lại.
+   *
+   * Trang bắt đầu từ 1 chứ không phải 0, khác mọi endpoint khác dùng skip —
+   * đó là cách back-end khai, không phải nhầm.
+   */
+  adminReports: (page = 1) => http.get<AdminReportPage>('/admin/reports', { params: { page } }),
+
+  // Bỏ qua một báo cáo: xoá hẳn bản ghi báo cáo, KHÔNG đụng tới tin đăng.
+  adminDismissReport: (id: string) =>
+    http.delete<{ message: string }>(`/admin/reports/${id}`),
 };
