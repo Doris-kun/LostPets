@@ -47,6 +47,13 @@
           }
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "LostPets xem thư viện ảnh để bạn chọn ảnh con vật cho bài đăng.",
+          "cameraPermission": "LostPets dùng camera để bạn chụp ảnh con vật ngay tại chỗ, khỏi phải thoát ra app Camera."
+        }
+      ],
       "expo-font",
       [
         "expo-location",

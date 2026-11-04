@@ -228,6 +228,56 @@ export default function FormScreen({ route, navigation }: Props) {
     navigation.setOptions({ title: t(isEdit ? 'screen.edit' : 'screen.new') });
   }, [navigation, isEdit, t]);
 
+  /*
+   * Việc phải làm sau khi có ảnh, dù ảnh đến từ máy ảnh hay từ thư viện.
+   * Tách ra để hai lối không trôi lệch nhau — trước đây chỉ có một lối nên
+   * phần này nằm luôn trong pickImage.
+   */
+  const usePickedAsset = async (asset: ImagePicker.ImagePickerAsset) => {
+    const picked = await shrink(asset);
+    setImage(picked);
+    setRemoveImage(false);
+
+    /*
+     * Chạy AI NGAY, không chờ người dùng bấm gì.
+     *
+     * Họ cứ gõ tiếp các ô khác, kết quả về lúc nào thì điền vào ô còn trống
+     * lúc đó. Bắt bấm nút rồi ngồi nhìn vòng xoay 20 giây là phí thời gian của
+     * người ta — trong 20 giây đó họ gõ xong nửa cái form rồi.
+     *
+     * Truyền thẳng ảnh vừa chọn vào, không đợi setImage có hiệu lực: state
+     * trong React chỉ đổi ở lần vẽ sau, đọc ngay sẽ ra giá trị cũ.
+     */
+    analyzePhoto(picked);
+  };
+
+  /*
+   * CHỤP THẲNG BẰNG MÁY ẢNH.
+   *
+   * Đây là lối tự nhiên nhất trên điện thoại và web không có: người nhặt được
+   * con vật đang đứng ngay cạnh nó. Bắt họ chụp bằng app Camera, thoát ra, mở
+   * lại LostPets rồi đi tìm trong thư viện là ba bước thừa — mà giữa chừng
+   * con vật có thể chạy mất.
+   *
+   * Quyền camera KHÁC quyền thư viện ảnh, phải xin riêng. Người dùng có thể
+   * đồng ý cái này mà từ chối cái kia.
+   */
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(t('form.permTitle'), t('form.permCamera'));
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 1, // lấy bản gốc, việc nén để shrink() lo cho chắc tay
+    });
+
+    if (result.canceled) return;
+    await usePickedAsset(result.assets[0]);
+  };
+
   const pickImage = async () => {
     /*
      * Phải XIN QUYỀN truy cập thư viện ảnh trước. Web không có bước này —
@@ -245,22 +295,7 @@ export default function FormScreen({ route, navigation }: Props) {
     });
 
     if (result.canceled) return;
-
-    const picked = await shrink(result.assets[0]);
-    setImage(picked);
-    setRemoveImage(false);
-
-    /*
-     * Chạy AI NGAY, không chờ người dùng bấm gì.
-     *
-     * Họ cứ gõ tiếp các ô khác, kết quả về lúc nào thì điền vào ô còn trống
-     * lúc đó. Bắt bấm nút rồi ngồi nhìn vòng xoay 20 giây là phí thời gian của
-     * người ta — trong 20 giây đó họ gõ xong nửa cái form rồi.
-     *
-     * Truyền thẳng ảnh vừa chọn vào, không đợi setImage có hiệu lực: state
-     * trong React chỉ đổi ở lần vẽ sau, đọc ngay sẽ ra giá trị cũ.
-     */
-    analyzePhoto(picked);
+    await usePickedAsset(result.assets[0]);
   };
 
   /*
@@ -372,14 +407,13 @@ export default function FormScreen({ route, navigation }: Props) {
    * chữ phẳng nằm ngang và bỏ qua màu đỏ. Hai bên trông lệch hẳn nhau, mà
    * bên Android thì rời rạc khó bấm.
    */
-  const handlePhotoPress = () => {
-    if (!image && !keptImage) {
-      pickImage();
-      return;
-    }
-
-    setPhotoMenu(true);
-  };
+  /*
+   * Chạm vào khung ảnh thì LÚC NÀO cũng mở bảng chọn.
+   *
+   * Trước đây chưa có ảnh thì mở thẳng thư viện, vì lúc đó chỉ có một việc
+   * làm được. Giờ có hai lối — chụp mới hoặc chọn từ máy — nên phải hỏi.
+   */
+  const handlePhotoPress = () => setPhotoMenu(true);
 
   /*
    * Gói dữ liệu thành FormData để gửi kèm file.
@@ -736,6 +770,23 @@ export default function FormScreen({ route, navigation }: Props) {
           <View style={[styles.sheet, { paddingBottom: spacing.lg + insets.bottom }]}>
             <Text style={styles.sheetTitle}>{t('form.photoOptions')}</Text>
 
+            {/*
+              Chụp ảnh đặt TRÊN chọn từ thư viện.
+              Người nhặt được con vật đang đứng ngay cạnh nó, nên chụp mới là
+              việc hay xảy ra hơn. Thứ tự trong bảng nói lên điều đó.
+            */}
+            <TouchableOpacity
+              style={styles.sheetRow}
+              onPress={() => {
+                setPhotoMenu(false);
+                takePhoto();
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="camera-outline" size={19} color={colors.text} />
+              <Text style={styles.sheetRowText}>{t('form.photoTake')}</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.sheetRow}
               onPress={() => {
@@ -744,21 +795,26 @@ export default function FormScreen({ route, navigation }: Props) {
               }}
               activeOpacity={0.7}
             >
-              <Text style={styles.sheetRowText}>{t('form.photoChange')}</Text>
+              <Ionicons name="images-outline" size={19} color={colors.text} />
+              <Text style={styles.sheetRowText}>{t('form.photoLibrary')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.sheetRow}
-              onPress={() => {
-                setPhotoMenu(false);
-                dropPhoto();
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.sheetRowText, styles.sheetRowDanger]}>
-                {t('form.photoRemove')}
-              </Text>
-            </TouchableOpacity>
+            {/* Chưa có ảnh thì không có gì để xoá — đừng vẽ một nút vô nghĩa */}
+            {(image || keptImage) && (
+              <TouchableOpacity
+                style={styles.sheetRow}
+                onPress={() => {
+                  setPhotoMenu(false);
+                  dropPhoto();
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="trash-outline" size={19} color={colors.danger} />
+                <Text style={[styles.sheetRowText, styles.sheetRowDanger]}>
+                  {t('form.photoRemove')}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={[styles.sheetRow, styles.sheetCancel]}
@@ -925,6 +981,10 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     marginBottom: spacing.md,
   },
   sheetRow: {
+    // Có icon rồi nên phải xếp ngang, không thì icon nằm chồng lên chữ
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: spacing.sm,
     paddingVertical: 15,
     borderRadius: radius.md,
     alignItems: "center",

@@ -33,6 +33,16 @@ import { radius, spacing, statusStyle } from '../theme';
  *      chừng 14 điểm ảnh, dưới xa mức 44 tối thiểu cho một vùng chạm.
  */
 
+/*
+ * Đang tìm kiếm thì tô đậm mấy tin đầu, phần còn lại làm mờ.
+ *
+ * Năm là con số của GIAO DIỆN, không phải ngưỡng lọc dữ liệu: không tin nào
+ * bị bỏ đi, chấm mờ vẫn bấm được và vẫn mở ra được. Chọn 5 vì nhiều hơn thì
+ * mấy cái pin to bắt đầu chồng lên nhau trên màn điện thoại, mà ít hơn thì
+ * người dùng dễ bỏ sót con vật của mình chỉ vì nó xếp thứ sáu.
+ */
+const HIGHLIGHT_TOP = 5;
+
 export interface PetMapViewProps {
   /** Bộ lọc và câu tìm kiếm đang áp dụng ở màn ngoài. */
   params: PetQuery;
@@ -91,6 +101,10 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
   }, [paramsKey]);
 
   const pets = useMemo(() => data?.pets ?? [], [data]);
+
+  // Back-end trả về đã xếp theo mức khớp khi có câu tìm kiếm, nên "mấy tin
+  // khớp nhất" chính là mấy phần tử đầu mảng.
+  const searching = !!params.q?.trim();
 
   /*
    * Đếm số tin quanh chỗ đang đứng.
@@ -155,6 +169,7 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
       <PetMap
         pets={pets}
         me={me}
+        highlightTop={searching ? HIGHLIGHT_TOP : 0}
         onSelectPet={(id) => setSelected(pets.find((p) => p._id === id) ?? null)}
         style={styles.fill}
       />
@@ -170,6 +185,16 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
         {/* Nói thẳng là bản đồ đang thiếu tin, thay vì âm thầm vẽ 500 cái
             rồi để người dùng tưởng đó là tất cả. */}
         {!!data?.capped && <Text style={styles.noteText}>{t('map.capped')}</Text>}
+        {/*
+          Câu giải thích riêng cho bản đồ. Câu của danh sách ("kết quả sắp
+          theo mức độ giống") đem sang đây thì vô nghĩa: trên bản đồ mọi chấm
+          hiện cùng lúc, không ai thấy cái nào "đứng trên" cái nào.
+        */}
+        {searching && (
+          <Text style={styles.noteText}>
+            {t('map.searchHint', { n: Math.min(HIGHLIGHT_TOP, pets.length) })}
+          </Text>
+        )}
         {!!locationError && <Text style={styles.errorText}>{locationError}</Text>}
       </View>
 

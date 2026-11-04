@@ -185,6 +185,16 @@ export interface PetMapProps {
   /** mode="view": người dùng chạm vào một tin trên bản đồ. */
   onSelectPet?: (id: string) => void;
   /*
+   * mode="view": tô đậm bao nhiêu tin đầu danh sách, phần còn lại làm mờ.
+   *
+   * 0 nghĩa là tô đậm hết — dùng khi không tìm kiếm, lúc đó mọi tin ngang
+   * hàng nhau nên không có cái nào đáng nổi hơn cái nào.
+   *
+   * Dựa vào THỨ TỰ mảng chứ không vào điểm số, vì back-end trả về đã xếp
+   * theo mức khớp rồi và cố ý không kèm điểm.
+   */
+  highlightTop?: number;
+  /*
    * mode="view": chỗ người dùng đang đứng, để vẽ chấm "bạn ở đây" và dời
    * khung nhìn về đó.
    *
@@ -208,6 +218,7 @@ export default function PetMap({
   lng = null,
   onChange,
   onSelectPet,
+  highlightTop = 0,
   me = null,
   interactive = true,
   expandable = false,
@@ -249,16 +260,17 @@ export default function PetMap({
    * dễ sinh lỗi nhất. Màu lấy từ statusStyle nên pin trùng màu nhãn trạng thái.
    */
   const petsPayload = useMemo(() => {
-    const markers = pets.filter(hasPoint).map((p) => ({
+    const markers = pets.filter(hasPoint).map((p, i) => ({
       id: p._id,
       lat: Number(p.lat),
       lng: Number(p.lng),
       color: statusStyle(p, colors).color,
+      dim: highlightTop > 0 && i >= highlightTop,
     }));
     // true = ôm khung nhìn quanh các điểm. Đúng lúc này vì danh sách tin vừa
     // đổi, nghĩa là người dùng vừa lọc hoặc vừa tìm kiếm.
     return `window.lp.setPets(${JSON.stringify(markers)}, true)`;
-  }, [pets, colors]);
+  }, [pets, colors, highlightTop]);
 
   /*
    * Chấm "bạn đang ở đây". Tách khỏi petsPayload vì hai thứ đổi vào những

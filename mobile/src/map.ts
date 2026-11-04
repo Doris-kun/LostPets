@@ -327,6 +327,30 @@ ${
           send({ type: 'open', id: p.id });
         }
 
+        /*
+         * Tin xếp hạng thấp khi đang tìm kiếm: vẽ một chấm nhỏ mờ, không có
+         * vòng tròn, không có pin.
+         *
+         * Vẫn VẼ RA chứ không giấu đi. Back-end cố ý không loại tin nào khi
+         * tìm kiếm — đo thật trên tiếng Việt thì không có ngưỡng điểm nào
+         * dùng được, mà với web tìm thú cưng thì giấu nhầm nguy hiểm hơn
+         * thừa. Nhưng trên bản đồ mọi chấm hiện cùng lúc nên thứ hạng trở
+         * thành vô hình; làm mờ là cách cho nó hiện ra mà không giấu gì.
+         */
+        if (p.dim) {
+          L.circleMarker([p.lat, p.lng], {
+            radius: 5,
+            color: p.color,
+            weight: 1.5,
+            opacity: 0.45,
+            fillColor: p.color,
+            fillOpacity: 0.3,
+          })
+            .addTo(layer)
+            .on('click', open);
+          return;
+        }
+
         // Vùng tròn thể hiện độ chính xác thật (xem AREA_RADIUS_M trong src/map.js)
         var ring = L.circle([p.lat, p.lng], {
           radius: ${AREA_RADIUS_M},
@@ -358,7 +382,17 @@ ${
        * của họ mất sạch. Chỉ ôm lúc mới mở, hoặc khi bộ lọc đổi.
        */
       if (!fit) return;
-      var bounds = L.latLngBounds(pets.map(function (p) { return [p.lat, p.lng]; }));
+
+      /*
+       * Khung nhìn ôm quanh những tin ĐANG TÔ ĐẬM thôi.
+       *
+       * Đang tìm kiếm mà ôm cả những chấm mờ thì bản đồ lùi ra xa tới mức
+       * thấy cả thành phố, đúng lúc người dùng muốn nhìn kỹ mấy tin khớp
+       * nhất. Không có chấm đậm nào thì ôm tất, cho khỏi trống.
+       */
+      var dam = pets.filter(function (p) { return !p.dim; });
+      var dung = dam.length > 0 ? dam : pets;
+      var bounds = L.latLngBounds(dung.map(function (p) { return [p.lat, p.lng]; }));
       map.fitBounds(bounds, { padding: [36, 36], maxZoom: 14 });
     },
 

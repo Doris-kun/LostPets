@@ -56,6 +56,30 @@ const LOGO_MARK_DARK = require('../../assets/logo-mark-dark.png');
 const PAGE_SIZE = 10;
 
 /*
+ * Chuẩn hoá dấu tiếng Việt về dạng NFC trước khi gửi lên máy chủ.
+ *
+ * Cùng một chữ "Mèo" có hai cách lưu trong máy tính:
+ *   NFC  M + è          (è là MỘT ký tự, mã e8)
+ *   NFD  M + e + ̀      (chữ e rồi dấu huyền rời, hai ký tự)
+ *
+ * Nhìn giống hệt nhau, nhưng máy coi là hai chuỗi khác nhau. Back-end lọc
+ * bằng biểu thức chính quy nên không tự quy về một mối — đã đo thật trên dữ
+ * liệu đang chạy:
+ *
+ *   species=Mèo kiểu NFC -> 9 kết quả
+ *   species=Mèo kiểu NFD -> 0 kết quả
+ *
+ * Database lưu NFC. Chip Chó/Mèo trong app cũng NFC nên không sao, nhưng ô
+ * "khu vực" và ô tìm kiếm thì người dùng TỰ GÕ, mà bàn phím tiếng Việt trên
+ * iOS có thể cho ra NFD. Lúc đó lọc "Hà Nội" ra 0 tin mà không ai hiểu vì sao.
+ *
+ * Kiểm tra normalize có tồn tại không trước khi gọi: máy ảo JavaScript của
+ * React Native không phải lúc nào cũng có đủ hàm xử lý Unicode.
+ */
+const toNFC = (text: string): string =>
+  typeof text.normalize === 'function' ? text.normalize('NFC') : text;
+
+/*
  * Dựng tham số gửi lên máy chủ. Để ngoài component vì nó là hàm thuần: cùng
  * đầu vào luôn ra cùng kết quả, không đụng tới state nào.
  *
@@ -76,7 +100,7 @@ export function buildParams(
   const params: PetQuery = { limit: PAGE_SIZE, skip, sort: activeFilters.sort };
   if (filterType) params.type = filterType;
   if (activeFilters.species) params.species = activeFilters.species;
-  if (activeFilters.area.trim()) params.area = activeFilters.area.trim();
+  if (activeFilters.area.trim()) params.area = toNFC(activeFilters.area.trim());
   if (activeFilters.days) params.days = activeFilters.days;
 
   /*
@@ -99,7 +123,7 @@ export function buildParams(
    * Và phải chờ người dùng gõ xong mới gửi: mỗi lần gọi là một lượt chạy AI
    * bên back-end, gửi theo từng ký tự thì vừa chậm vừa tốn.
    */
-  if (q.trim()) params.q = q.trim();
+  if (q.trim()) params.q = toNFC(q.trim());
   return params;
 }
 
@@ -320,7 +344,14 @@ export default function HomeScreen({ navigation }: Props) {
         Chỉ hiện khi đang tìm. Lúc không tìm thì câu này vô nghĩa, mà vẫn
         chiếm một dòng ngay chỗ dễ nhìn nhất màn hình.
       */}
-      {!!query.trim() && <Text style={styles.searchNote}>{t('search.hint')}</Text>}
+      {/*
+        Chỉ hiện ở chế độ danh sách. Bản đồ có câu giải thích riêng, vì trên
+        bản đồ không có khái niệm "kết quả sắp theo thứ tự" — mọi chấm hiện
+        cùng lúc.
+      */}
+      {view === 'list' && !!query.trim() && (
+        <Text style={styles.searchNote}>{t('search.hint')}</Text>
+      )}
 
       <View style={styles.filterRow}>
         {FILTERS.map((item) => {
