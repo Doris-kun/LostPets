@@ -97,10 +97,15 @@ const vi = {
 
   'theme.toLight': 'Chuyển sang giao diện sáng',
   'theme.toDark': 'Chuyển sang giao diện tối',
-  'home.search': 'Tìm: chó vàng mất ở quận 7...',
-  'home.searchNote': 'Tin khớp nhất xếp lên đầu. Không tin nào bị ẩn đi.',
-  'home.noMatchTitle': 'Không tìm thấy tin nào',
-  'home.noMatchSub':
+  // --- Tìm kiếm. Câu chữ lấy đúng bản web (front-end/src/i18n.js) để hai
+  // bên không lệch nhau, cùng một tính năng mà mỗi nơi giải thích một kiểu.
+  'search.placeholder':
+    'Mô tả con vật bạn đang tìm, ví dụ "chó nâu chân ngắn mất gần công viên"',
+  'search.hint': 'Kết quả sắp theo mức độ giống với mô tả của bạn.',
+  'search.clear': 'Xoá ô tìm kiếm',
+  'search.sortLocked': 'Đang tìm kiếm nên sắp theo độ liên quan',
+  'search.noMatchTitle': 'Không tìm thấy tin nào',
+  'search.noMatchSub':
     'Thử tả ngắn hơn, hoặc viết như nói thường: giống gì, màu gì, mất ở đâu.',
   'home.filter': 'Lọc',
   'home.results': '{n} bài đăng',
@@ -431,10 +436,13 @@ const en: Record<WordKey, string> = {
 
   'theme.toLight': 'Switch to light mode',
   'theme.toDark': 'Switch to dark mode',
-  'home.search': 'Search: brown dog lost in District 7...',
-  'home.searchNote': 'Best matches first. Nothing is hidden.',
-  'home.noMatchTitle': 'No matching posts',
-  'home.noMatchSub':
+  'search.placeholder':
+    'Describe the pet you are looking for, e.g. "brown short-legged dog lost near the park"',
+  'search.hint': 'Results are ranked by how closely they match your description.',
+  'search.clear': 'Clear search',
+  'search.sortLocked': 'Sorted by relevance while searching',
+  'search.noMatchTitle': 'No matching posts',
+  'search.noMatchSub':
     'Try a shorter description, or write it plainly: breed, colour, where it went missing.',
   'home.filter': 'Filter',
   'home.results': '{n} posts shown',

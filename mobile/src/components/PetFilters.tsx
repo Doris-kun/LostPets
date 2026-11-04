@@ -93,13 +93,28 @@ const FALLBACK_HEIGHT = 520;
 
 export interface PetFiltersProps {
   visible: boolean;
+  /*
+   * Màn ngoài đang có câu tìm kiếm hay không.
+   *
+   * Cần biết vì lúc đó back-end BỎ QUA tham số sort — nó trả về theo thứ
+   * hạng khớp, không theo ngày. Vẫn để người dùng bấm "Cũ nhất" thì bấm
+   * xong không có gì đổi và không ai giải thích vì sao, nhìn như app hỏng.
+   * Bản web khoá đúng chỗ này, mobile làm theo cho khớp.
+   */
+  searching: boolean;
   /** Bộ lọc đang áp dụng ở màn ngoài. Bảng này sửa trên một bản nháp riêng. */
   value: Filters;
   onClose: () => void;
   onApply: (filters: Filters) => void;
 }
 
-export default function PetFilters({ visible, value, onClose, onApply }: PetFiltersProps) {
+export default function PetFilters({
+  visible,
+  searching,
+  value,
+  onClose,
+  onApply,
+}: PetFiltersProps) {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors } = useTheme();
@@ -247,11 +262,15 @@ export default function PetFilters({ visible, value, onClose, onApply }: PetFilt
           </Field>
 
           <Field label={t('filter.sort')}>
-            <ChipGroup
-              options={SORT_OPTIONS}
-              selected={draft.sort}
-              onSelect={(next) => setField('sort', next)}
-            />
+            {searching ? (
+              <Text style={styles.locked}>{t('search.sortLocked')}</Text>
+            ) : (
+              <ChipGroup
+                options={SORT_OPTIONS}
+                selected={draft.sort}
+                onSelect={(next) => setField('sort', next)}
+              />
+            )}
           </Field>
 
           <View style={styles.actions}>
@@ -370,6 +389,10 @@ const themedStyles = createThemedStyles((colors, shadow) =>
   },
 
   field: { marginBottom: spacing.lg },
+
+  // Câu thay cho hàng nút sắp xếp khi đang tìm kiếm. Chữ mờ vì nó là lời
+  // giải thích, không phải thứ bấm được.
+  locked: { fontSize: 12.5, color: colors.textMuted, lineHeight: 18, paddingVertical: 6 },
   fieldLabel: {
     fontSize: 11,
     fontWeight: '700',

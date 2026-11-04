@@ -284,7 +284,7 @@ export default function HomeScreen({ navigation }: Props) {
           style={styles.searchInput}
           value={search}
           onChangeText={setSearch}
-          placeholder={t('home.search')}
+          placeholder={t('search.placeholder')}
           placeholderTextColor={colors.textMuted}
           returnKeyType="search"
           autoCorrect={false}
@@ -297,6 +297,7 @@ export default function HomeScreen({ navigation }: Props) {
           <TouchableOpacity
             style={styles.searchClear}
             onPress={() => setSearch('')}
+            accessibilityLabel={t('search.clear')}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             activeOpacity={0.7}
           >
@@ -309,7 +310,7 @@ export default function HomeScreen({ navigation }: Props) {
         Chỉ hiện khi đang tìm. Lúc không tìm thì câu này vô nghĩa, mà vẫn
         chiếm một dòng ngay chỗ dễ nhìn nhất màn hình.
       */}
-      {!!query.trim() && <Text style={styles.searchNote}>{t('home.searchNote')}</Text>}
+      {!!query.trim() && <Text style={styles.searchNote}>{t('search.hint')}</Text>}
 
       <View style={styles.filterRow}>
         {FILTERS.map((item) => {
@@ -441,6 +442,7 @@ export default function HomeScreen({ navigation }: Props) {
       </TouchableOpacity>
 
       <PetFilters
+        searching={!!query.trim()}
         visible={filtersOpen}
         value={filters}
         onClose={() => setFiltersOpen(false)}
@@ -633,12 +635,12 @@ function EmptyState({ hasError, searching }: { hasError: boolean; searching: boo
         <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.emptyLogo} />
       </View>
       <Text style={styles.emptyTitle}>
-        {t(hasError ? 'home.errorTitle' : searching ? 'home.noMatchTitle' : 'home.emptyTitle')}
+        {t(hasError ? 'home.errorTitle' : searching ? 'search.noMatchTitle' : 'home.emptyTitle')}
       </Text>
       <Text style={styles.emptyText}>
         {hasError
           ? t('home.errorText', { url: API_URL })
-          : t(searching ? 'home.noMatchSub' : 'home.emptySub')}
+          : t(searching ? 'search.noMatchSub' : 'home.emptySub')}
       </Text>
     </View>
   );
