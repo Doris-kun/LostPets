@@ -43,4 +43,23 @@ export default {
       // Không sao, mã thừa nằm lại cũng vô hại.
     }
   },
+
+  /*
+   * Danh sách id của mọi tin MÁY NÀY đã đăng.
+   *
+   * Dùng cho dải hỏi "tìm được chưa?": app phải biết tin nào là của người
+   * đang cầm máy mới hỏi đúng người. Không có tài khoản cũng hỏi được, vì
+   * quyền sở hữu ở đây là "giữ mã xác nhận", không phải "đã đăng nhập".
+   *
+   * Lọc theo tiền tố thay vì giữ thêm một danh sách riêng: hai nguồn sự thật
+   * thì sớm muộn cũng lệch nhau, mà lệch kiểu đó không ai nhận ra.
+   */
+  async list(): Promise<string[]> {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      return keys.filter((k) => k.startsWith('claim:')).map((k) => k.slice('claim:'.length));
+    } catch {
+      return [];
+    }
+  },
 };

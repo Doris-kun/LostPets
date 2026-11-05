@@ -24,6 +24,7 @@ import { THUMB_FEATURED, thumbnail } from '../image';
 import { readSavedMe, type Point } from '../map';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
 import PetMapView from '../components/PetMapView';
+import ResolveNudge from '../components/ResolveNudge';
 import { useLanguage } from '../context/language';
 import { radius, spacing, statusStyle } from '../theme';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
@@ -332,6 +333,15 @@ export default function HomeScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <Header />
+
+      {/*
+        Dải hỏi "tìm được chưa?" đặt trên cùng, ngay dưới phần đầu trang.
+
+        Nó tự ẩn khi không có tin nào đáng hỏi, mà phần lớn thời gian là vậy —
+        nên đặt ở chỗ dễ thấy nhất không tốn gì, còn lúc nó hiện ra thì đúng
+        là thứ cần thấy ngay.
+      */}
+      <ResolveNudge />
 
       {/*
         Ô tìm kiếm đặt TRÊN hàng chip, không nhét vào bảng lọc trượt.

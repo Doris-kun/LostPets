@@ -5,6 +5,8 @@ import { countActiveFilters, EMPTY_FILTERS } from '../components/PetFilters';
 import { buildParams } from '../screens/HomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import report from '../report';
+import nudge from '../nudge';
+import claim from '../claim';
 import { THUMB_CARD, thumbnail } from '../image';
 import { words, type WordKey } from '../word';
 import type { Filters } from '../types';
@@ -272,5 +274,96 @@ describe('thumbnail — xin Cloudinary thu nhỏ ảnh', () => {
     expect(thumbnail('', 192)).toBe('');
     expect(thumbnail(undefined, 192)).toBe('');
     expect(thumbnail(null, 192)).toBe('');
+  });
+});
+
+/*
+ * Nhịp hỏi "tìm được chưa?".
+ *
+ * Toàn những mốc thời gian, mà mốc thời gian sai thì không ai thấy ngay —
+ * chỉ là app hỏi quá dày thành phiền, hoặc im vĩnh viễn và mất luôn con số
+ * của Objective 4. Cả hai đều âm thầm.
+ */
+describe('nudge — giữ nhịp hỏi', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+
+  it('lần đầu thì được phép dò và được phép hỏi', async () => {
+    await expect(nudge.dueForScan()).resolves.toBe(true);
+    await expect(nudge.mayAsk('abc')).resolves.toBe(true);
+  });
+
+  // Không chặn thì mỗi lần bấm Back về Trang chủ lại bắn năm lượt gọi.
+  it('dò xong thì im trong 12 tiếng', async () => {
+    await nudge.markScanned();
+    await expect(nudge.dueForScan()).resolves.toBe(false);
+  });
+
+  it('hoãn rồi thì không hỏi lại tin đó nữa', async () => {
+    await nudge.snooze('abc', 7);
+    await expect(nudge.mayAsk('abc')).resolves.toBe(false);
+  });
+
+  it('hoãn tin này không làm im tin khác', async () => {
+    await nudge.snooze('abc', 7);
+    await expect(nudge.mayAsk('xyz')).resolves.toBe(true);
+  });
+
+  // Tin đã bị xoá thì quên hẳn đi, khỏi giữ một cái hẹn cho một tin không
+  // còn tồn tại.
+  it('quên rồi thì lại được phép hỏi', async () => {
+    await nudge.snooze('abc', 7);
+    await nudge.forget('abc');
+    await expect(nudge.mayAsk('abc')).resolves.toBe(true);
+  });
+
+  /*
+   * Giá trị rác trong ổ đĩa phải rơi về "được phép hỏi".
+   *
+   * Number("linh tinh") ra NaN, mà NaN so sánh kiểu gì cũng ra false — nếu
+   * viết nhầm chiều so sánh thì app im vĩnh viễn và không ai hiểu vì sao.
+   * Thà hỏi thừa một lần còn hơn.
+   */
+  it('dữ liệu hỏng thì vẫn cho hỏi, không im luôn', async () => {
+    await AsyncStorage.setItem('nudge:ask:abc', 'linh tinh');
+    await expect(nudge.mayAsk('abc')).resolves.toBe(true);
+  });
+
+  it('hoãn 0 ngày thì hỏi lại được ngay', async () => {
+    await nudge.snooze('abc', 0);
+    await expect(nudge.mayAsk('abc')).resolves.toBe(true);
+  });
+});
+
+/*
+ * Danh sách tin máy này đã đăng.
+ *
+ * Dải hỏi dựa vào đây để biết hỏi ai. Lọc sai tiền tố thì nó đi hỏi về
+ * những tin không phải của người đang cầm máy.
+ */
+describe('claim.list — tin của máy này', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+
+  it('chưa đăng tin nào thì trả mảng rỗng', async () => {
+    await expect(claim.list()).resolves.toEqual([]);
+  });
+
+  it('trả về đúng id, đã bỏ tiền tố', async () => {
+    await claim.save('abc', 'MA1');
+    await claim.save('xyz', 'MA2');
+    const ids = await claim.list();
+    expect(ids.sort()).toEqual(['abc', 'xyz']);
+  });
+
+  // AsyncStorage dùng chung cho mọi thứ: mã xác nhận, tin đã báo cáo, vị trí
+  // đã lưu, ngôn ngữ. Lọc hụt một chữ là lôi cả đống khoá lạ về.
+  it('không lẫn khoá của thứ khác', async () => {
+    await claim.save('abc', 'MA1');
+    await report.mark('xyz');
+    await AsyncStorage.setItem('map:me', '[10,106]');
+    await expect(claim.list()).resolves.toEqual(['abc']);
   });
 });
