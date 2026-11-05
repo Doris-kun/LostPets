@@ -40,6 +40,47 @@ describe('vùng chạm tối thiểu 44pt', () => {
    */
   const TOI_THIEU = 44;
 
+  /*
+   * Đọc chiều cao từ className của Tailwind.
+   *
+   * Dự án đang chuyển dần sang NativeWind, nên một nút có thể khai chiều cao
+   * bằng style cũ, bằng className, hoặc cả hai. Không đọc được className thì
+   * mỗi màn chuyển xong là luật này mất thêm vài nút — mà mất trong IM LẶNG,
+   * vì trước đây không đo được là nó cho qua.
+   *
+   * Thang của Tailwind: 1 đơn vị = 4px, nên h-11 là 44px.
+   */
+  const tuClassName = (the: string): { cao: number; co: boolean } => {
+    const m = /className="([^"]*)"/.exec(the);
+    if (!m) return { cao: 0, co: false };
+    const lop = m[1];
+
+    // min-h-[44px] hoặc h-[44px] — khai thẳng số điểm ảnh
+    const thang = /(?:min-)?h-\[(\d+)px\]/.exec(lop);
+    if (thang) return { cao: Number(thang[1]), co: true };
+
+    // min-h-11 hoặc h-11 — theo thang 4px của Tailwind
+    const nac = /(?:min-)?h-(\d+)(?![\w[-])/.exec(lop);
+    if (nac) return { cao: Number(nac[1]) * 4, co: true };
+
+    // py-3 — đệm trên dưới, cộng thêm phần chữ như nhánh style cũ
+    const dem = /py-(\d+)/.exec(lop);
+    if (dem) return { cao: Number(dem[1]) * 4 * 2 + 18, co: true };
+
+    return { cao: 0, co: true };
+  };
+
+  /*
+   * Những nút cố ý không đo được, kèm lý do.
+   *
+   * Danh sách này phải NGẮN và mỗi dòng phải có lý do thật — thêm một dòng
+   * vào đây là bỏ một nút ra khỏi vòng canh chừng.
+   */
+  const MIEN_TRU = [
+    // Phủ kín khung bản đồ để bắt cú chạm mở trình chọn, nên rộng bằng cả khung.
+    'StyleSheet.absoluteFill',
+  ];
+
   const soTrong = (chuoi: string, khoa: string): number => {
     const i = chuoi.indexOf(`${khoa}:`);
     if (i < 0) return 0;
@@ -77,8 +118,31 @@ describe('vùng chạm tối thiểu 44pt', () => {
           if (t === '>' || t.endsWith('/>')) break;
         }
 
+        if (MIEN_TRU.some((cho) => the.includes(cho))) return;
+
+        const lop = tuClassName(the);
+
         const m = /styles\.(\w+)/.exec(the);
-        if (!m) return;
+        if (!m) {
+          /*
+           * Không có styles.X. Hoặc nút đã chuyển sang className, hoặc nó
+           * không khai chiều cao ở đâu cả.
+           *
+           * Trước đây nhánh này lặng lẽ return, và đó là chỗ nguy hiểm nhất
+           * của cả bộ test: chuyển một màn sang NativeWind là mất sạch phần
+           * canh chừng của màn đó mà vẫn báo xanh. Siết lại xong thì lòi ra
+           * ngay một vi phạm thật đang nấp ở đây — nút "Xong" trên bản đồ,
+           * chữ 15pt cộng hitSlop 10 mới được 40.
+           */
+          if (!lop.co) {
+            thieu.push(`dòng ${i + 1}: không khai chiều cao ở đâu cả`);
+          } else if (lop.cao === 0) {
+            thieu.push(`dòng ${i + 1}: có className nhưng không lớp nào khai chiều cao`);
+          } else if (lop.cao < TOI_THIEU) {
+            thieu.push(`dòng ${i + 1} (className): ${lop.cao}pt`);
+          }
+          return;
+        }
         const ten = m[1];
 
         const viTri = ma.indexOf(`\n  ${ten}: {`) >= 0
@@ -91,13 +155,33 @@ describe('vùng chạm tối thiểu 44pt', () => {
         const h = body.includes('height:') && !body.includes('minHeight:')
           ? soTrong(body, 'height')
           : 0;
-        const pv = soTrong(body, 'paddingVertical');
+        /*
+         * paddingVertical, hoac padding gop neu khong co paddingVertical.
+         *
+         * Nhieu nut khai `padding: spacing.md` chu khong tach rieng chieu doc.
+         * Khong doc dang do thi 12 nut tro thanh "khong do duoc" — ma phan lon
+         * trong so do thuc ra dat chuan, chi la luat khong biet doc.
+         */
+        const pv = soTrong(body, 'paddingVertical') || soTrong(body, 'padding');
 
         const iText = ma.indexOf(`${ten}Text:`);
         const cuChu = iText >= 0 ? soTrong(than(ma, iText), 'fontSize') || 14 : 14;
 
-        const cao = minH || h || (pv ? pv * 2 + Math.round(cuChu * 1.3) : 0);
-        if (!cao) return; // không đo được thì bỏ qua, thà sót còn hơn báo bừa
+        const cao = minH || h || (pv ? pv * 2 + Math.round(cuChu * 1.3) : 0) || lop.cao;
+
+        /*
+         * Khong do duoc tu style thi bo qua, KHONG bao do.
+         *
+         * Khoang muoi nut lay chieu cao tu noi dung ben trong — the tin, dai
+         * tro ly, dong trong bang chon. Doc ma nguon tinh thi khong the biet
+         * cao bao nhieu, ma doi hoi dieu do la dat ra mot luat khong ai dap
+         * ung duoc.
+         *
+         * Cho that su nguy hiem da duoc chan o nhanh tren: nut CO className
+         * ma khong co lop nao khai chieu cao thi bao do. Do moi la cho mat
+         * canh chung khi chuyen sang NativeWind.
+         */
+        if (!cao) return;
 
         let them = 0;
         const slop = /hitSlop=\{(\{[^}]*\}|\d+)\}/.exec(the);

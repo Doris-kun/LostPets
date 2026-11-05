@@ -25,6 +25,19 @@ jest.mock('expo-location', () => ({
   })),
 }));
 
+/*
+ * NativeWind bị loại khỏi bản biên dịch test (xem babel.config.js), nhưng
+ * context/theme.tsx vẫn import { colorScheme } từ nó. Nạp gói thật trong môi
+ * trường test thì nó kéo theo react-native-css-interop, thứ cần Metro mới
+ * chạy được.
+ *
+ * Bản giả này chỉ cần nuốt lời gọi set() mà không làm gì: trong test không có
+ * lớp tiện ích nào để áp dụng cả.
+ */
+jest.mock('nativewind', () => ({
+  colorScheme: { set: jest.fn(), get: jest.fn(() => 'light') },
+}));
+
 jest.mock('expo-web-browser', () => ({
   maybeCompleteAuthSession: jest.fn(),
 }));

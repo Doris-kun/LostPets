@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colorScheme } from 'nativewind';
 import { darkColors, darkShadow, lightColors, lightShadow, type Colors } from '../theme';
 
 /** Hai chế độ hiển thị app hỗ trợ. */
@@ -85,6 +86,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const toggleScheme = useCallback(() => {
     setScheme(scheme === 'dark' ? 'light' : 'dark');
   }, [scheme, setScheme]);
+
+  /*
+   * Báo cho NativeWind biết app đang ở chế độ nào.
+   *
+   * tailwind.config.js khai darkMode: 'class', nghĩa là biến thể dark: chỉ ăn
+   * khi có ai đó bật cờ lên — chứ không tự đọc cài đặt hệ điều hành. Phải vậy,
+   * vì app có nút đổi sáng/tối riêng và nhớ lựa chọn đó trong máy; để
+   * NativeWind tự đọc hệ điều hành là gỡ mất tính năng đang chạy.
+   *
+   * Không nối dòng này thì mọi lớp dark:... im lặng không bao giờ ăn, mà
+   * Tailwind cũng chẳng báo gì — nhìn ra y như quên viết lớp đó.
+   */
+  useEffect(() => {
+    colorScheme.set(scheme);
+  }, [scheme]);
 
   const value = useMemo(
     () => ({

@@ -1,8 +1,122 @@
 /*
- * Điểm vào của Tailwind. NativeWind đọc file này qua Metro rồi dịch các lớp
- * tiện ích thành style của React Native — trên điện thoại không có CSS thật,
- * file này chỉ là nơi khai báo.
+ * FILE NÀY DO MÁY SINH RA — ĐỪNG SỬA TAY.
+ *
+ *   Nguồn:  src/theme.ts
+ *   Lệnh:   npm run make:css
+ *
+ * Sửa tay thì lần chạy sau ghi đè mất, mà màu sẽ lệch với src/theme.ts trong
+ * khoảng thời gian ở giữa. Muốn đổi màu thì sửa src/theme.ts rồi chạy lại
+ * lệnh trên.
+ *
+ * Vì sao màu phải nằm ở đây nữa: Tailwind cần biết giá trị màu ngay lúc biên
+ * dịch, mà src/theme.ts là object chạy lúc thực thi. Biến CSS là cầu nối.
+ *
+ * Phần .dark bên dưới ăn theo nút đổi sáng/tối trong Cài đặt, không phải
+ * theo cài đặt của hệ điều hành — xem darkMode: 'class' trong tailwind.config.js.
  */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --color-orange: 232 145 46;
+    --color-orange-dark: 201 116 26;
+    --color-teal: 47 163 168;
+    --color-teal-dark: 31 138 143;
+    --color-navy: 31 92 122;
+    --color-sky: 112 192 208;
+    --color-cream: 255 233 184;
+    --color-primary: 31 92 122;
+    --color-primary-dark: 22 71 96;
+    --color-on-primary: 255 255 255;
+    --color-on-lost: 22 41 58;
+    --color-on-found: 22 41 58;
+    --color-on-resolved: 255 255 255;
+    --color-danger: 217 47 47;
+    --color-lost: 232 145 46;
+    --color-found: 47 163 168;
+    --color-resolved: 31 92 122;
+    --color-brand-title: 31 92 122;
+    --color-accent-text: 168 98 18;
+    --color-teal-text: 35 122 126;
+    --color-text: 22 41 58;
+    --color-text-muted: 97 114 129;
+    --color-text-soft: 91 107 120;
+    --color-border-strong: 115 145 165;
+    --color-border: 227 233 237;
+    --color-border-light: 241 245 247;
+    --color-background: 255 255 255;
+    --color-surface: 247 250 251;
+    --color-surface-tint: 237 246 248;
+    --color-contact-bg: 255 247 237;
+    --color-contact-border: 254 215 170;
+    --color-warn-bg: 254 242 242;
+    --color-warn-border: 254 202 202;
+    --color-warn-text: 185 28 28;
+    --color-secret-bg: 255 251 235;
+    --color-secret-border: 253 230 138;
+    --color-secret-text: 146 64 14;
+    --color-ai-accent: 124 92 224;
+    --color-ai-bg: 245 243 255;
+    --color-ai-border: 221 214 254;
+    --color-ai-text: 91 63 208;
+    --color-google-bg: 255 255 255;
+    --color-google-border: 116 119 117;
+    --color-on-google: 31 31 31;
+    --color-google-icon: 66 133 244;
+    --color-facebook-bg: 12 98 215;
+    --color-on-facebook: 255 255 255;
+  }
+
+  .dark:root {
+    --color-orange: 232 145 46;
+    --color-orange-dark: 201 116 26;
+    --color-teal: 47 163 168;
+    --color-teal-dark: 31 138 143;
+    --color-navy: 31 92 122;
+    --color-sky: 112 192 208;
+    --color-cream: 255 233 184;
+    --color-primary: 61 147 194;
+    --color-primary-dark: 46 112 147;
+    --color-on-primary: 11 22 32;
+    --color-on-lost: 22 41 58;
+    --color-on-found: 22 41 58;
+    --color-on-resolved: 22 41 58;
+    --color-danger: 240 107 107;
+    --color-lost: 232 145 46;
+    --color-found: 47 163 168;
+    --color-resolved: 112 192 208;
+    --color-brand-title: 61 147 194;
+    --color-accent-text: 232 145 46;
+    --color-teal-text: 48 168 173;
+    --color-text: 232 239 243;
+    --color-text-muted: 134 151 162;
+    --color-text-soft: 182 197 206;
+    --color-border-strong: 80 124 152;
+    --color-border: 36 56 69;
+    --color-border-light: 27 43 54;
+    --color-background: 14 26 35;
+    --color-surface: 22 36 47;
+    --color-surface-tint: 28 48 61;
+    --color-contact-bg: 42 32 23;
+    --color-contact-border: 107 74 30;
+    --color-warn-bg: 42 22 24;
+    --color-warn-border: 107 42 46;
+    --color-warn-text: 248 165 165;
+    --color-secret-bg: 42 36 19;
+    --color-secret-border: 107 90 30;
+    --color-secret-text: 240 201 122;
+    --color-ai-accent: 139 111 232;
+    --color-ai-bg: 34 30 53;
+    --color-ai-border: 69 58 107;
+    --color-ai-text: 196 181 253;
+    --color-google-bg: 19 19 20;
+    --color-google-border: 142 145 143;
+    --color-on-google: 227 227 227;
+    --color-google-icon: 66 133 244;
+    --color-facebook-bg: 12 98 215;
+    --color-on-facebook: 255 255 255;
+  }
+}

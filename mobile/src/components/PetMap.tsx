@@ -459,6 +459,7 @@ export default function PetMap({
             {/* Chốt chỗ đang ngắm RỒI mới đóng. Cần vậy cho trường hợp mở ra,
                 không kéo gì cả, bấm Xong luôn — lúc đó moveend chưa hề nổ. */}
             <TouchableOpacity
+              style={styles.modalDoneButton}
               onPress={() => {
                 commitPoint.current?.();
                 setOpen(false);
@@ -617,6 +618,15 @@ const themedStyles = createThemedStyles((colors) =>
       paddingBottom: spacing.sm,
     },
     modalTitle: { color: colors.text, fontSize: 15, fontWeight: '700' },
+    /*
+     * Nút "Xong" trước đây chỉ có hitSlop={10}, không có style nào.
+     *
+     * Tính ra: chữ 15pt cao chừng 20, cộng hitSlop 10 hai đầu là 40 — dưới
+     * ngưỡng 44. Bộ test bỏ sót vì luật 44pt tìm styles.X mà nút này không
+     * gắn cái nào, nên nó lặng lẽ cho qua. Đó chính là lý do luật đó vừa
+     * được siết lại: không đo được thì phải BÁO ĐỎ, không được im.
+     */
+    modalDoneButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm },
     modalDone: { color: colors.primary, fontSize: 15, fontWeight: '700' },
     modalHint: {
       color: colors.textSoft,

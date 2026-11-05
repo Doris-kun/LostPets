@@ -39,7 +39,8 @@
     "web": "expo start --web",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:report": "node scripts/test-report.js"
+    "test:report": "node scripts/test-report.js",
+    "make:css": "node scripts/make-global-css.js"
   },
   "private": true,
   "devDependencies": {
