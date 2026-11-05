@@ -10,5 +10,10 @@ dist/
 # File tạm khi thử nghiệm
 *.tmp.js
 
+# Bo skill UI tai tu ngoai ve - chi de tham khao, khong phai code cua du an.
+# 85MB, 826 file. Khong chan thi mot lan "git add -A" la bay het len GitHub.
+ClaudeUI/
+tasteskill/
+
 # Bộ nhớ đệm vector của phép đo, sinh lại được
 back-end/eval/.embeddings-cache.json
