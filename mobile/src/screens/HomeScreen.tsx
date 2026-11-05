@@ -21,6 +21,7 @@ import type { WordKey } from '../word';
 import { API_URL } from '../config';
 import PetCard, { timeAgo } from '../components/PetCard';
 import { THUMB_FEATURED, thumbnail } from '../image';
+import { readSavedMe, type Point } from '../map';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
 import PetMapView from '../components/PetMapView';
 import { useLanguage } from '../context/language';
@@ -189,6 +190,18 @@ export default function HomeScreen({ navigation }: Props) {
    * không đoán được.
    */
   const [view, setView] = useState<'list' | 'map'>('list');
+
+  /*
+   * Vị trí người xem, để thẻ tin hiện khoảng cách tới nơi con vật mất.
+   *
+   * Trang chủ KHÔNG tự xin quyền vị trí. Nó chỉ đọc thứ bản đồ đã lưu sau
+   * khi người dùng tự bấm "Gần tôi". Ném hộp thoại xin quyền vào mặt người
+   * vừa mở app là thô lỗ, và trái với điều trang chính sách vừa cam kết.
+   *
+   * Đọc lại mỗi lần quay về màn này, không chỉ lần đầu: người dùng sang bản
+   * đồ bấm "Gần tôi" rồi quay lại là thấy khoảng cách hiện ra ngay.
+   */
+  const [me, setMe] = useState<Point | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   // Đang nối thêm trang sau — khác loading là vòng xoay che cả màn hình
@@ -241,6 +254,18 @@ export default function HomeScreen({ navigation }: Props) {
     useCallback(() => {
       loadPets(type, filters, query);
     }, [loadPets, type, filters, query]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let ignore = false;
+      readSavedMe().then((saved) => {
+        if (!ignore) setMe(saved);
+      });
+      return () => {
+        ignore = true;
+      };
+    }, []),
   );
 
   /*
@@ -503,7 +528,11 @@ export default function HomeScreen({ navigation }: Props) {
             <ListFooter loadingMore={loadingMore} shown={pets.length} total={total} />
           }
           renderItem={({ item }) => (
-            <PetCard pet={item} onPress={() => navigation.navigate('Detail', { id: item._id })} />
+            <PetCard
+              pet={item}
+              me={me}
+              onPress={() => navigation.navigate('Detail', { id: item._id })}
+            />
           )}
         />
       )}

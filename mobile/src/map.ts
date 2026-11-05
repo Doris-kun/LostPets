@@ -16,6 +16,8 @@
 
 // Leaflet tải từ CDN. Ghim số phiên bản — để trống thì bản mới ra là app đổi
 // theo mà mình không biết, hỏng lúc nào không hay.
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4';
 
 /*
@@ -130,6 +132,58 @@ export function distanceKm(
 
 /** Bán kính coi là "gần tôi", tính bằng km. */
 export const NEAR_ME_KM = 2;
+
+/*
+ * Vị trí người dùng, do bản đồ lưu lại sau khi họ bấm "Gần tôi".
+ *
+ * Để ở đây chứ không để riêng trong PetMapView, vì thẻ tin ở Trang chủ cũng
+ * cần đọc để hiện khoảng cách. Hai nơi cùng gõ chuỗi 'map:me' thì sớm muộn
+ * cũng lệch nhau một chữ, mà lệch kiểu đó không ai nhận ra — chỉ thấy khoảng
+ * cách im lặng biến mất. Bản web làm y vậy, xem front-end PR #71.
+ */
+export const ME_KEY = 'map:me';
+
+export interface Point {
+  lat: number;
+  lng: number;
+}
+
+export async function saveMe(point: Point): Promise<void> {
+  try {
+    await AsyncStorage.setItem(ME_KEY, JSON.stringify([point.lat, point.lng]));
+  } catch {
+    /* không lưu được thì thôi, lần sau bấm "Gần tôi" lại */
+  }
+}
+
+export async function readSavedMe(): Promise<Point | null> {
+  try {
+    const raw: unknown = JSON.parse((await AsyncStorage.getItem(ME_KEY)) || 'null');
+    if (!Array.isArray(raw) || raw.length !== 2) return null;
+    const [lat, lng] = raw;
+    // Kiểm từng số: file lưu có thể hỏng, hoặc do bản app cũ ghi kiểu khác.
+    // Tin bừa thì bản đồ bay ra giữa đại dương, lỗi này đã xảy ra một lần rồi.
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  } catch {
+    return null;
+  }
+}
+
+/*
+ * Khoảng cách thành chữ cho người đọc.
+ *
+ * LUÔN kèm dấu ngã. Toạ độ đã bị làm tròn về lưới 500m ngay lúc lưu vào
+ * database, nên in "2,34 km" là nói quá độ chính xác mình thực sự có.
+ *
+ * Dưới 1km thì làm tròn về trăm mét, và sàn ở 100m: con số nhỏ hơn thế là
+ * vô nghĩa khi dữ liệu gốc đã nhiễu 500m.
+ */
+export function formatDistanceKm(km: number): string {
+  if (!Number.isFinite(km)) return '';
+  if (km < 1) return `~${Math.max(100, Math.round((km * 1000) / 100) * 100)} m`;
+  if (km < 10) return `~${km.toFixed(1)} km`;
+  return `~${Math.round(km)} km`;
+}
 
 export const directionsUrl = (lat: number, lng: number): string =>
   `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;

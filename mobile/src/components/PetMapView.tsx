@@ -6,7 +6,7 @@ import api, { type PetQuery } from '../api';
 import type { MapPage, MapPet } from '../types';
 import PetMap from './PetMap';
 import { THUMB_CARD, thumbnail } from '../image';
-import { distanceKm, hasPoint, NEAR_ME_KM } from '../map';
+import { distanceKm, hasPoint, NEAR_ME_KM, readSavedMe, saveMe, type Point } from '../map';
 import { useLanguage } from '../context/language';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing, statusStyle } from '../theme';
@@ -61,7 +61,7 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
   /** Tin đang chọn, hiện ở thẻ dưới đáy. null = chưa chạm vào chấm nào. */
   const [selected, setSelected] = useState<MapPet | null>(null);
 
-  const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
+  const [me, setMe] = useState<Point | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState('');
 
@@ -71,6 +71,23 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
    * nội dung đã chuyển thành chuỗi mới đúng là "điều kiện lọc có đổi không".
    */
   const paramsKey = JSON.stringify(params);
+
+  /*
+   * Lấy lại vị trí đã lưu từ lần trước, không hỏi GPS.
+   *
+   * Nhờ vậy mở bản đồ lên là thấy ngay "n tin trong bán kính 2km" mà không
+   * phải bấm "Gần tôi" lại mỗi lần. Vị trí cũ vài phút trước vẫn đủ đúng để
+   * đếm theo bán kính 2km.
+   */
+  useEffect(() => {
+    let ignore = false;
+    readSavedMe().then((saved) => {
+      if (!ignore && saved) setMe(saved);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -130,7 +147,11 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
       const pos = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      setMe({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      const diem = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      setMe(diem);
+      // Lưu lại để thẻ tin ở Trang chủ hiện được khoảng cách. Trang chủ cố ý
+      // KHÔNG tự xin quyền vị trí, nó chỉ đọc thứ đã lưu ở đây.
+      saveMe(diem);
     } catch {
       setLocationError(t('map.denied'));
     } finally {

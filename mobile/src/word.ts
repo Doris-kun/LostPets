@@ -306,6 +306,9 @@ const vi = {
   'map.searchHint': 'Tô đậm {n} tin khớp nhất. Chấm mờ là tin ít khớp hơn, không tin nào bị ẩn.',
   'map.viewPost': 'Xem chi tiết',
   'map.failed': 'Không tải được bản đồ. Kéo xuống để thử lại.',
+  // --- Hàng dưới cùng của thẻ tin. Câu chữ lấy đúng bản web.
+  'card.away': 'cách bạn {d}',
+  'card.detail': 'Xem chi tiết',
   'map.label': 'VỊ TRÍ TRÊN BẢN ĐỒ',
   'map.hint': 'Kéo bản đồ cho tới khi nơi mất hoặc nơi nhặt được nằm dưới chấm tròn ở giữa, rồi bấm Xong.',
   'map.open': 'Chọn trên bản đồ',
@@ -673,6 +676,8 @@ const en: Record<WordKey, string> = {
   'map.searchHint': 'The {n} closest matches are solid. Faded dots match less, nothing is hidden.',
   'map.viewPost': 'View details',
   'map.failed': 'Could not load the map. Pull down to try again.',
+  'card.away': '{d} away',
+  'card.detail': 'View details',
   'map.label': 'LOCATION ON MAP',
   'map.hint': 'Drag the map until the spot where the pet was lost or found sits under the dot in the middle, then tap Done.',
   'map.open': 'Pick on map',

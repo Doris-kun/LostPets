@@ -50,10 +50,15 @@ const tin = (p: Partial<Pet> = {}): Pet =>
     ...p,
   }) as Pet;
 
-const ve = (pet: Pet, onPress: () => void = jest.fn(), showCode = false) =>
+const ve = (
+  pet: Pet,
+  onPress: () => void = jest.fn(),
+  showCode = false,
+  me: { lat: number; lng: number } | null = null,
+) =>
   render(
     <Khung>
-      <PetCard pet={pet} onPress={onPress} showCode={showCode} />
+      <PetCard pet={pet} onPress={onPress} showCode={showCode} me={me} />
     </Khung>,
   );
 
@@ -166,5 +171,42 @@ describe('ghim địa chỉ vẽ bằng icon', () => {
      */
     await ve(tin());
     expect(screen.getByTestId('icon-location')).toBeTruthy();
+  });
+});
+
+/*
+ * Hàng dưới cùng của thẻ không bao giờ được để trống một nửa.
+ *
+ * Đó đúng là chỗ thầy hướng dẫn nhận xét bên web, sau khi mã tin bị gỡ đi
+ * mà chưa bù lại gì. Ba trường hợp, ba thứ khác nhau, không có trường hợp
+ * nào trống.
+ */
+describe('PetCard — hàng dưới cùng luôn có nội dung', () => {
+  const coToaDo = { lat: 10.776, lng: 106.7 };
+
+  it('biết vị trí người xem thì hiện khoảng cách', async () => {
+    // Cách khoảng 1.1km, đủ xa để không rơi vào nhánh làm tròn trăm mét.
+    await ve(tin(coToaDo), jest.fn(), false, { lat: 10.786, lng: 106.7 });
+    expect(screen.getByText(/cách bạn/)).toBeTruthy();
+  });
+
+  it('chưa biết vị trí thì mời bấm vào, không để trống', async () => {
+    await ve(tin(coToaDo));
+    expect(screen.getByText('Xem chi tiết')).toBeTruthy();
+  });
+
+  // Tin không ghim toạ độ thì không tính được khoảng cách, dù có biết người
+  // xem đứng ở đâu. Phải rơi về lời mời bấm chứ không hiện "~NaN km".
+  it('tin không có toạ độ thì cũng mời bấm vào', async () => {
+    await ve(tin({ lat: null, lng: null }), jest.fn(), false, coToaDo);
+    expect(screen.getByText('Xem chi tiết')).toBeTruthy();
+  });
+
+  // "Bài của tôi" bật showCode. Ở đó mã tin quan trọng hơn khoảng cách tới
+  // chính tin của mình.
+  it('bật showCode thì mã tin thắng khoảng cách', async () => {
+    await ve(tin(coToaDo), jest.fn(), true, { lat: 10.786, lng: 106.7 });
+    expect(screen.getByText('LOST-0042')).toBeTruthy();
+    expect(screen.queryByText(/cách bạn/)).toBeNull();
   });
 });

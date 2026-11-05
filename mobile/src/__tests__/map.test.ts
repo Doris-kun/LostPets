@@ -1,4 +1,4 @@
-import { distanceKm, directionsUrl, hasPoint, mapHtml, AREA_RADIUS_M, DEFAULT_CENTER } from '../map';
+import { formatDistanceKm, distanceKm, directionsUrl, hasPoint, mapHtml, AREA_RADIUS_M, DEFAULT_CENTER } from '../map';
 
 /*
  * Bộ test cho src/map.ts.
@@ -167,5 +167,49 @@ describe('distanceKm — khoảng cách trên mặt đất', () => {
     const d = distanceKm({ lat: 10.776, lng: 106.7 }, { lat: 10.786, lng: 106.7 });
     expect(d).toBeGreaterThan(1.0);
     expect(d).toBeLessThan(1.2);
+  });
+});
+
+/*
+ * Khoảng cách đổi thành chữ cho người đọc.
+ *
+ * Mọi con số đều kèm dấu ngã, và đó không phải chuyện thẩm mỹ: toạ độ đã bị
+ * làm tròn về lưới 500m ngay lúc lưu, nên in "2.34 km" là nói quá độ chính
+ * xác mình thực sự có. Test canh đúng chỗ đó.
+ */
+describe('formatDistanceKm — khoảng cách thành chữ', () => {
+  it('dưới 1km thì làm tròn về trăm mét', () => {
+    expect(formatDistanceKm(0.34)).toBe('~300 m');
+    expect(formatDistanceKm(0.85)).toBe('~900 m');
+  });
+
+  // Dữ liệu gốc đã nhiễu 500m, nên "~20 m" là một lời nói dối.
+  it('không bao giờ in nhỏ hơn 100m', () => {
+    expect(formatDistanceKm(0.02)).toBe('~100 m');
+    expect(formatDistanceKm(0)).toBe('~100 m');
+  });
+
+  it('từ 1 đến dưới 10km lấy một chữ số thập phân', () => {
+    expect(formatDistanceKm(1)).toBe('~1.0 km');
+    expect(formatDistanceKm(2.34)).toBe('~2.3 km');
+    expect(formatDistanceKm(9.99)).toBe('~10.0 km');
+  });
+
+  it('từ 10km trở lên thì lấy số nguyên', () => {
+    expect(formatDistanceKm(10)).toBe('~10 km');
+    expect(formatDistanceKm(312.7)).toBe('~313 km');
+  });
+
+  it('luôn kèm dấu ngã, vì toạ độ vốn đã được làm nhiễu', () => {
+    for (const km of [0.1, 0.5, 1, 5, 50, 500]) {
+      expect(formatDistanceKm(km).startsWith('~')).toBe(true);
+    }
+  });
+
+  // Tin không ghim toạ độ thì phép tính ra NaN. Trả chuỗi rỗng để nơi gọi
+  // biết mà thay bằng "Xem chi tiết", chứ in ra "~NaN km" thì quá tệ.
+  it('số không hợp lệ thì trả chuỗi rỗng', () => {
+    expect(formatDistanceKm(Number.NaN)).toBe('');
+    expect(formatDistanceKm(Number.POSITIVE_INFINITY)).toBe('');
   });
 });

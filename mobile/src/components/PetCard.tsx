@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLanguage, type LanguageValue } from '../context/language';
 import type { Pet } from '../types';
 import { THUMB_CARD, thumbnail } from '../image';
+import { distanceKm, formatDistanceKm, hasPoint, type Point } from '../map';
 import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing, statusStyle } from '../theme';
 
@@ -62,13 +63,39 @@ export interface PetCardProps {
    * Web làm y vậy, xem front-end PR #61.
    */
   showCode?: boolean;
+  /*
+   * Chỗ người xem đang đứng, để tính khoảng cách tới nơi con vật mất.
+   *
+   * null = chưa biết, và lúc đó thẻ hiện "Xem chi tiết →" thay vào. KHÔNG tự
+   * xin quyền vị trí ở Trang chủ: ném hộp thoại xin quyền vào mặt người vừa
+   * mở app là thô lỗ, và trái với điều trang chính sách vừa cam kết. Toạ độ
+   * này chỉ đến từ lần người dùng tự bấm "Gần tôi" trên bản đồ.
+   */
+  me?: Point | null;
 }
 
-export default function PetCard({ pet, onPress, showCode = false }: PetCardProps) {
+export default function PetCard({
+  pet,
+  onPress,
+  showCode = false,
+  me = null,
+}: PetCardProps) {
   const { t, lang } = useLanguage();
   const { colors, isDark } = useTheme();
   const styles = useThemedStyles(themedStyles);
   const status = statusStyle(pet, colors);
+
+  /*
+   * Khoảng cách từ chỗ người xem tới nơi con vật mất.
+   *
+   * Chuỗi rỗng khi chưa biết vị trí người xem, hoặc khi tin không ghim toạ
+   * độ. Dùng hasPoint chứ không tự viết Number(pet.lat): Number(null) ra 0,
+   * là một toạ độ hợp lệ giữa Đại Tây Dương.
+   */
+  const away =
+    me && hasPoint(pet)
+      ? formatDistanceKm(distanceKm(me, { lat: pet.lat, lng: pet.lng }))
+      : '';
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
@@ -103,7 +130,29 @@ export default function PetCard({ pet, onPress, showCode = false }: PetCardProps
               {pet.area}
             </Text>
           </View>
-          {showCode && !!pet.postId && <Text style={styles.cardCode}>{pet.postId}</Text>}
+          {/*
+            Bên phải hàng dưới cùng. Ba trường hợp, không bao giờ để trống:
+
+              "Bài của tôi"     -> mã tin, thứ chủ tin cần
+              biết vị trí       -> khoảng cách tới nơi con vật mất
+              chưa biết vị trí  -> lời mời bấm vào
+
+            Để trống một nửa chính là chỗ thầy hướng dẫn nhận xét bên web. Mà
+            sửa nửa vời thì người không cho phép định vị vẫn thấy y như cũ.
+          */}
+          {showCode && pet.postId ? (
+            <Text style={styles.cardCode}>{pet.postId}</Text>
+          ) : away ? (
+            <Text style={styles.cardAway}>{t('card.away', { d: away })}</Text>
+          ) : (
+            <View style={styles.cardMore}>
+              <Text style={styles.cardMoreText}>{t('card.detail')}</Text>
+              {/* Mũi tên vẽ bằng icon, không dùng ký tự → — có máy Android
+                  không có sẵn ký tự đó trong phông và hiện ra ô vuông. Lỗi
+                  này đã gặp thật một lần rồi. */}
+              <Ionicons name="chevron-forward" size={11} color={colors.textMuted} />
+            </View>
+          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -155,5 +204,18 @@ const themedStyles = createThemedStyles((colors, shadow) =>
     cardAreaRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 3 },
     cardArea: { flex: 1, fontSize: 12.5, color: colors.textSoft },
     cardCode: { fontSize: 10.5, color: colors.textMuted, marginLeft: spacing.sm },
+
+    // Khoảng cách: đậm hơn mã tin một chút vì nó là thứ người đang tìm thú
+    // cưng thật sự dùng để quyết định có mở tin ra hay không.
+    cardAway: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: colors.tealText,
+      marginLeft: spacing.sm,
+      flexShrink: 0,
+    },
+
+    cardMore: { flexDirection: 'row', alignItems: 'center', marginLeft: spacing.sm, flexShrink: 0 },
+    cardMoreText: { fontSize: 10.5, color: colors.textMuted },
   }),
 );
