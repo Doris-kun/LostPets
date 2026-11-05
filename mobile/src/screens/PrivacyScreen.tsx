@@ -1,9 +1,12 @@
-import { useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useThemedStyles } from '../context/theme';
+import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
 import { radius, spacing } from '../theme';
 
 /*
@@ -49,6 +52,17 @@ interface Policy {
   title: string;
   updated: string;
   intro: string;
+  /*
+   * Bốn điều quan trọng nhất, đặt ngay đầu trang.
+   *
+   * Gần như không ai đọc hết một trang chính sách bảo mật. Ai chỉ đọc bốn
+   * dòng này rồi thoát ra vẫn nắm được phần quan trọng nhất. Lấy đúng bản
+   * web, xem front-end PR #70.
+   */
+  summaryH: string;
+  summary: string[];
+  /** Tiêu đề của mục lục bấm được. */
+  tocH: string;
   sections: Section[];
   contactH: string;
   contactP: string;
@@ -63,6 +77,14 @@ const CONTENT: Record<'vi' | 'en', Policy> = {
       'tốt nghiệp của sinh viên, không phải dịch vụ thương mại. Ứng dụng này và website ' +
       'lostpets-1.onrender.com dùng chung một máy chủ và một cơ sở dữ liệu, nên chính sách này ' +
       'áp dụng cho cả hai. Trang này nói rõ ứng dụng thu những gì, vì sao, và bạn kiểm soát được gì.',
+    summaryH: 'Bốn điều đáng biết nhất',
+    summary: [
+      'Cách liên hệ bạn điền trong tin đăng sẽ hiện công khai. Đó là mục đích của tin, không phải sơ suất.',
+      'Vị trí bạn ghim được làm nhiễu khoảng 500 mét trước khi lưu. Toạ độ chính xác không bao giờ tồn tại trong hệ thống.',
+      'Không quảng cáo, không bán dữ liệu, không mã theo dõi của bên thứ ba.',
+      'Bạn xoá tin là xoá thật: bản ghi, ảnh và cả vector dùng cho tìm kiếm đều biến mất cùng lúc.',
+    ],
+    tocH: 'Nội dung',
     sections: [
       {
         h: '1. Thông tin bạn tự cung cấp',
@@ -181,6 +203,14 @@ const CONTENT: Record<'vi' | 'en', Policy> = {
       'It is a student final-year project, not a commercial service. This app and the website at ' +
       'lostpets-1.onrender.com share one server and one database, so this policy covers both. ' +
       'This page explains what the app collects, why, and what you control.',
+    summaryH: 'The four things worth knowing',
+    summary: [
+      'The contact details you put in a listing are shown publicly. That is the point of a listing, not an oversight.',
+      'A location pin is blurred to roughly 500 metres before it is saved. Exact coordinates never exist in the system.',
+      'No advertising, no selling of data, no third-party trackers.',
+      'Deleting a listing deletes it for real: the record, the photo and the search vector all go at once.',
+    ],
+    tocH: 'Contents',
     sections: [
       {
         h: '1. Information you provide',
@@ -296,6 +326,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Privacy'>;
 
 export default function PrivacyScreen({ navigation }: Props) {
   const { t, lang } = useLanguage();
+  const { colors } = useTheme();
   const styles = useThemedStyles(themedStyles);
   const c = CONTENT[lang];
 
@@ -303,14 +334,99 @@ export default function PrivacyScreen({ navigation }: Props) {
     navigation.setOptions({ title: t('settings.privacy') });
   }, [navigation, t]);
 
+  /*
+   * Mục lục bấm được, nhảy thẳng tới mục.
+   *
+   * Mười hai mục trên màn điện thoại mà không có đường nhảy thì người muốn
+   * biết "giữ dữ liệu bao lâu" phải cuộn mò qua chín mục không liên quan.
+   *
+   * Web dùng id trong đường dẫn; trên điện thoại không có khái niệm đó, nên
+   * đo vị trí thật của từng mục lúc nó được vẽ ra rồi cuộn tới toạ độ đó.
+   */
+  /*
+   * ComponentRef<typeof ScrollView> chứ không phải ScrollView.
+   *
+   * React Native 0.88 đổi ScrollView thành component hàm, nên chính tên đó
+   * giờ là một HÀM chứ không phải lớp — dùng làm kiểu ref thì TypeScript bảo
+   * "không có scrollTo", mà đọc ra thì rất khó hiểu vì câu lệnh nhìn vẫn đúng.
+   */
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const tops = useRef<Record<number, number>>({});
+
+  const jump = (i: number) => {
+    const y = tops.current[i];
+    if (y === undefined) return;
+    // Trừ bớt một chút để tiêu đề không dính sát mép trên màn hình.
+    scrollRef.current?.scrollTo({ y: Math.max(0, y - spacing.md), animated: true });
+  };
+
+  /*
+   * Đã sao chép địa chỉ hay chưa, để đổi chữ trên nút trong vài giây.
+   *
+   * Phải dọn đồng hồ hẹn giờ lúc rời màn: bấm xong rồi thoát ra ngay thì hẹn
+   * giờ vẫn chạy và gọi setState trên một component đã biến mất.
+   */
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
+
+  const copyEmail = async () => {
+    await Clipboard.setStringAsync(CONTACT_EMAIL);
+    setCopied(true);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setCopied(false), 2500);
+  };
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView ref={scrollRef} style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{c.title}</Text>
       <Text style={styles.updated}>{c.updated}</Text>
       <Text style={styles.intro}>{c.intro}</Text>
 
-      {c.sections.map((s) => (
-        <View key={s.h} style={styles.section}>
+      {/*
+        Khung tóm tắt. Đặt ngay chỗ mắt rơi xuống đầu tiên, và cho nó nền
+        riêng để tách khỏi phần văn xuôi bên dưới — ai chỉ đọc bốn dòng này
+        rồi thoát ra vẫn nắm được phần quan trọng nhất.
+      */}
+      <View style={styles.summaryBox}>
+        <Text style={styles.summaryHead}>{c.summaryH}</Text>
+        {c.summary.map((text) => (
+          <View key={text} style={styles.bulletRow}>
+            <View style={[styles.bullet, styles.bulletStrong]} />
+            <Text style={styles.summaryText}>{text}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.tocBox}>
+        <Text style={styles.tocHead}>{c.tocH}</Text>
+        {c.sections.map((s, i) => (
+          <TouchableOpacity
+            key={s.h}
+            style={styles.tocRow}
+            onPress={() => jump(i)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.tocText}>{s.h}</Text>
+            <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {c.sections.map((s, i) => (
+        <View
+          key={s.h}
+          style={styles.section}
+          onLayout={(e) => {
+            tops.current[i] = e.nativeEvent.layout.y;
+          }}
+        >
           <Text style={styles.heading}>{s.h}</Text>
 
           {s.p?.map((text) => (
@@ -336,13 +452,43 @@ export default function PrivacyScreen({ navigation }: Props) {
         <View style={styles.section}>
           <Text style={styles.heading}>{c.contactH}</Text>
           <Text style={styles.para}>{c.contactP}</Text>
-          <TouchableOpacity
-            style={styles.mailButton}
-            onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.mail}>{CONTACT_EMAIL}</Text>
-          </TouchableOpacity>
+
+          {/*
+            Hai nút, không in địa chỉ ra làm chữ.
+
+            mailto không phải đường duy nhất nên có: máy chưa đặt trình gửi
+            thư mặc định thì bấm vào chỉ nhận một hộp thoại bắt chọn ứng
+            dụng. Nút sao chép cứu đúng trường hợp đó.
+
+            Không in địa chỉ thành chữ là theo bản web, nhưng nói thẳng giới
+            hạn: địa chỉ VẪN nằm trong đường dẫn mailto, nên con bot nào chịu
+            đọc vẫn lấy được. Đổi nhãn chỉ chặn loại quét hời hợt.
+          */}
+          <View style={styles.contactRow}>
+            <TouchableOpacity
+              style={[styles.contactButton, styles.contactPrimary]}
+              onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="mail-outline" size={16} color={colors.onPrimary} />
+              <Text style={styles.contactPrimaryText}>{t('privacy.sendMail')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.contactButton}
+              onPress={copyEmail}
+              activeOpacity={0.85}
+            >
+              <Ionicons
+                name={copied ? 'checkmark' : 'copy-outline'}
+                size={16}
+                color={colors.textSoft}
+              />
+              <Text style={styles.contactText}>
+                {t(copied ? 'privacy.copied' : 'privacy.copyMail')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </ScrollView>
@@ -358,6 +504,51 @@ const themedStyles = createThemedStyles((colors) =>
     updated: { fontSize: 12, color: colors.textMuted, marginTop: spacing.xs },
     intro: { fontSize: 13.5, lineHeight: 21, color: colors.textSoft, marginTop: spacing.lg },
 
+    /*
+     * Khung tóm tắt. Nền riêng để tách hẳn khỏi phần văn xuôi — dùng bộ màu
+     * secret (vàng nhạt) vì nó mang nghĩa "đọc kỹ chỗ này", đúng vai.
+     */
+    summaryBox: {
+      marginTop: spacing.lg,
+      padding: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.secretBorder,
+      backgroundColor: colors.secretBg,
+    },
+    summaryHead: {
+      fontSize: 13.5,
+      fontWeight: '800',
+      color: colors.secretText,
+      marginBottom: spacing.sm,
+    },
+    summaryText: { flex: 1, fontSize: 12.5, lineHeight: 19, color: colors.text },
+
+    tocBox: {
+      marginTop: spacing.lg,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.borderLight,
+      backgroundColor: colors.surface,
+      paddingHorizontal: spacing.md,
+    },
+    tocHead: {
+      fontSize: 11,
+      fontWeight: '800',
+      letterSpacing: 0.5,
+      color: colors.textMuted,
+      marginTop: spacing.md,
+    },
+    tocRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+      minHeight: 44,
+    },
+    tocText: { flex: 1, fontSize: 13, color: colors.textSoft },
+
     section: { marginTop: spacing.xl },
     heading: { fontSize: 15, fontWeight: '800', color: colors.text, marginBottom: spacing.sm },
     para: { fontSize: 13.5, lineHeight: 21, color: colors.textSoft, marginTop: spacing.sm },
@@ -372,13 +563,25 @@ const themedStyles = createThemedStyles((colors) =>
       marginTop: 8,
     },
     bulletText: { flex: 1, fontSize: 13.5, lineHeight: 21, color: colors.textSoft },
+    // Chấm của khung tóm tắt: đậm hơn, vì bốn dòng đó là phần đáng đọc nhất
+    bulletStrong: { backgroundColor: colors.secretText },
 
-    mailButton: {
-      alignSelf: 'flex-start',
+    contactRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+    contactButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'center',
+      gap: 6,
       // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 44,
+      minHeight: 46,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surface,
     },
-    mail: { fontSize: 13.5, fontWeight: '700', color: colors.primary },
+    contactPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
+    contactText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
+    contactPrimaryText: { fontSize: 13, fontWeight: '700', color: colors.onPrimary },
   }),
 );
