@@ -1,0 +1,8 @@
+/*
+ * Điểm vào của Tailwind. NativeWind đọc file này qua Metro rồi dịch các lớp
+ * tiện ích thành style của React Native — trên điện thoại không có CSS thật,
+ * file này chỉ là nơi khai báo.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

@@ -31,10 +31,7 @@ jest.mock('expo-web-browser', () => ({
 
 // WebView là một cửa sổ trình duyệt thật của hệ điều hành. Trong test nó chỉ
 // cần là một khối rỗng có đúng tên, để biết nó đã được vẽ ra hay chưa.
-jest.mock('react-native-webview', () => {
-  const { View } = require('react-native');
-  return { WebView: View };
-});
+jest.mock('react-native-webview', () => ({ WebView: 'WebView' }));
 
 /*
  * Bộ icon. Nạp thật thì nó kéo theo cả máy nạp phông của Expo, mà cái đó lại
@@ -46,9 +43,8 @@ jest.mock('react-native-webview', () => {
  * icon location chứ không phải icon gì khác.
  */
 jest.mock('@expo/vector-icons', () => {
-  const { View } = require('react-native');
   const React = require('react');
   const gia = (props: { name?: string }) =>
-    React.createElement(View, { testID: `icon-${props.name}`, ...props });
+    React.createElement('Icon', { testID: `icon-${props.name}`, ...props });
   return { Ionicons: gia, MaterialIcons: gia, FontAwesome: gia };
 });

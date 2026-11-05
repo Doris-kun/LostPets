@@ -1,3 +1,11 @@
+/*
+ * NativeWind: nap bang style do Tailwind sinh ra.
+ *
+ * Phai dung o day, truoc moi import khac cua app. Nap muon hon thi mot so
+ * component vẽ xong rồi lớp tiện ích mới tới nơi.
+ */
+import './global.css';
+
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
