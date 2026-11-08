@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -17,8 +16,8 @@ import SocialLogin from '../components/SocialLogin';
 import type { RootStackParamList } from '../types';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing } from '../theme';
+import { useTheme } from '../context/theme';
+import { spacing } from '../theme';
 
 /*
  * Màn đăng nhập và đăng ký — gộp làm một.
@@ -40,7 +39,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Auth'>;
 export default function AuthScreen({ navigation }: Props) {
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
   const { login, isLoggedIn } = useAuth();
 
   /*
@@ -157,11 +155,15 @@ export default function AuthScreen({ navigation }: Props) {
      * Thiếu nó thì ô Mật khẩu nằm khuất dưới bàn phím, gõ không thấy chữ.
      */
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-background"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.tabs}>
+      <ScrollView
+        // contentContainerStyle chưa nhận className
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xl * 2 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="mb-lg flex-row gap-sm rounded-md bg-surface p-1">
           <Tab label={t('auth.login')} active={!isRegister} onPress={() => switchTab(false)} />
           <Tab label={t('auth.register')} active={isRegister} onPress={() => switchTab(true)} />
         </View>
@@ -198,10 +200,14 @@ export default function AuthScreen({ navigation }: Props) {
           autoCapitalize="none"
         />
 
-        {!!error && <Text style={styles.error}>{error}</Text>}
+        {!!error && (
+          <Text className="mb-md text-[13px] leading-[19px] text-danger">{error}</Text>
+        )}
 
         <TouchableOpacity
-          style={[styles.submit, sending && styles.disabled]}
+          className={`min-h-[54px] items-center justify-center rounded-md bg-primary py-4 ${
+            sending ? 'opacity-60' : ''
+          }`}
           onPress={handleSubmit}
           disabled={sending}
           activeOpacity={0.85}
@@ -209,7 +215,7 @@ export default function AuthScreen({ navigation }: Props) {
           {sending ? (
             <ActivityIndicator color={colors.onPrimary} />
           ) : (
-            <Text style={styles.submitText}>
+            <Text className="text-[15px] font-bold text-on-primary">
               {t(isRegister ? 'auth.registerAction' : 'auth.loginAction')}
             </Text>
           )}
@@ -224,22 +230,29 @@ export default function AuthScreen({ navigation }: Props) {
         */}
         <SocialLogin />
 
-        <Text style={styles.note}>{t('auth.guestText')}</Text>
+        <Text className="mt-lg text-center text-[12.5px] leading-[19px] text-text-muted">
+          {t('auth.guestText')}
+        </Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 function Tab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const styles = useThemedStyles(themedStyles);
-
   return (
     <TouchableOpacity
-      style={[styles.tab, active && styles.tabActive]}
+      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+      className={`min-h-11 flex-1 items-center justify-center rounded-sm py-2.5 ${
+        active ? 'bg-primary' : ''
+      }`}
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text>
+      <Text
+        className={`text-[14px] font-bold ${active ? 'text-on-primary' : 'text-text-soft'}`}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -252,77 +265,15 @@ function Tab({ label, active, onPress }: { label: string; active: boolean; onPre
  */
 function Field({ label, ...props }: ComponentProps<typeof TextInput> & { label: string }) {
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput style={styles.input} placeholderTextColor={colors.textMuted} {...props} />
+    <View className="mb-lg">
+      <Text className="mb-1.5 text-[13px] font-semibold text-text">{label}</Text>
+      <TextInput
+        className="rounded-md border-[1.5px] border-border-strong px-md py-3 text-[15px] text-text"
+        placeholderTextColor={colors.textMuted}
+        {...props}
+      />
     </View>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-
-    tabs: {
-      flexDirection: 'row',
-      gap: spacing.sm,
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      padding: 4,
-      marginBottom: spacing.lg,
-    },
-    tab: {
-    minHeight: 44,
-    justifyContent: 'center',
-      flex: 1,
-      paddingVertical: 10,
-      borderRadius: radius.sm,
-      alignItems: 'center',
-    },
-    tabActive: { backgroundColor: colors.primary },
-    tabText: { fontSize: 14, fontWeight: '700', color: colors.textSoft },
-    tabTextActive: { color: colors.onPrimary },
-
-    field: { marginBottom: spacing.lg },
-    fieldLabel: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
-    input: {
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-      borderRadius: radius.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 12,
-      fontSize: 15,
-      color: colors.text,
-    },
-
-    error: {
-      fontSize: 13,
-      color: colors.danger,
-      marginBottom: spacing.md,
-      lineHeight: 19,
-    },
-
-    submit: {
-      backgroundColor: colors.primary,
-      paddingVertical: 16,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 54,
-    },
-    submitText: { color: colors.onPrimary, fontSize: 15, fontWeight: '700' },
-    disabled: { opacity: 0.6 },
-
-    note: {
-      fontSize: 12.5,
-      color: colors.textMuted,
-      lineHeight: 19,
-      textAlign: 'center',
-      marginTop: spacing.lg,
-    },
-  }),
-);

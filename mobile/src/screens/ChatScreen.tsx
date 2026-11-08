@@ -4,7 +4,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -14,8 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api, { errorStatus } from '../api';
 import { useLanguage } from '../context/language';
 import type { ChatMessage } from '../types';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing } from '../theme';
+import { useTheme } from '../context/theme';
+import { spacing } from '../theme';
 
 /*
  * Trợ lý hướng dẫn cách dùng app.
@@ -37,7 +36,6 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   /*
    * Lời chào KHÔNG nằm trong mảng này.
@@ -108,7 +106,7 @@ export default function ChatScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-surface"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       // Trừ đi chiều cao thanh đầu, không thì bàn phím đẩy quá tay
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
@@ -117,27 +115,28 @@ export default function ChatScreen() {
         ref={listRef}
         data={messages}
         keyExtractor={(_item, index) => String(index)}
-        contentContainerStyle={styles.list}
+        // contentContainerStyle của FlatList chưa nhận className
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.md }}
         // Tin mới nhất nằm dưới cùng -> tự cuộn xuống khi có tin mới
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         ListHeaderComponent={
-          <View style={styles.greetingWrap}>
-            <View style={styles.bubbleBot}>
-              <Text style={styles.bubbleBotText}>{t('chat.greeting')}</Text>
+          <View className="mb-sm">
+            <View className="max-w-[88%] rounded-lg rounded-tl-sm border border-ai-border bg-ai-bg px-md py-2.5">
+              <Text className="text-[14px] leading-5 text-text">{t('chat.greeting')}</Text>
             </View>
 
             {messages.length === 0 && (
-              <View style={styles.suggestions}>
+              <View className="mt-md gap-sm">
                 {suggestions.map((question) => (
                   <TouchableOpacity
                     key={question}
-                    style={styles.suggestion}
+                    className="self-start rounded-full border-[1.5px] border-border-strong bg-background px-md py-2"
                     onPress={() => send(question)}
                     activeOpacity={0.8}
                     // Chip cao 33, nới 6 trên 6 dưới cho đủ 44 (chỉ nới dọc)
                     hitSlop={{ top: 6, bottom: 6 }}
                   >
-                    <Text style={styles.suggestionText}>{question}</Text>
+                    <Text className="text-[13px] font-semibold text-text-soft">{question}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -147,9 +146,19 @@ export default function ChatScreen() {
         renderItem={({ item }) => {
           const mine = item.role === 'user';
           return (
-            <View style={[styles.bubbleRow, mine && styles.bubbleRowMine]}>
-              <View style={mine ? styles.bubbleMine : styles.bubbleBot}>
-                <Text style={mine ? styles.bubbleMineText : styles.bubbleBotText}>
+            <View className={`mt-sm flex-row ${mine ? 'justify-end' : ''}`}>
+              {/* Bong bóng của mình bo góc trên PHẢI nhọn, của máy thì góc
+                  trên TRÁI nhọn — nhìn là biết ai nói, khỏi cần nhãn tên. */}
+              <View
+                className={
+                  mine
+                    ? 'max-w-[88%] rounded-lg rounded-tr-sm bg-primary px-md py-2.5'
+                    : 'max-w-[88%] rounded-lg rounded-tl-sm border border-ai-border bg-ai-bg px-md py-2.5'
+                }
+              >
+                <Text
+                  className={`text-[14px] leading-5 ${mine ? 'text-on-primary' : 'text-text'}`}
+                >
                   {item.content}
                 </Text>
               </View>
@@ -159,28 +168,40 @@ export default function ChatScreen() {
         ListFooterComponent={
           <>
             {sending && (
-              <View style={styles.bubbleRow}>
-                <View style={[styles.bubbleBot, styles.thinking]}>
+              <View className="mt-sm flex-row">
+                <View className="max-w-[88%] flex-row items-center gap-sm rounded-lg rounded-tl-sm border border-ai-border bg-ai-bg px-md py-2.5">
                   <ActivityIndicator size="small" color={colors.aiText} />
-                  <Text style={styles.thinkingText}>{t('chat.thinking')}</Text>
+                  <Text className="text-[13px] text-text-muted">{t('chat.thinking')}</Text>
                 </View>
               </View>
             )}
 
-            {!!error && <Text style={styles.error}>{error}</Text>}
+            {!!error && (
+              <Text className="mt-md text-center text-[12.5px] leading-[18px] text-danger">
+                {error}
+              </Text>
+            )}
 
             {messages.length > 0 && !sending && (
-              <TouchableOpacity style={styles.reset} onPress={reset} activeOpacity={0.7}>
-                <Text style={styles.resetText}>{t('chat.reset')}</Text>
+              <TouchableOpacity
+                className="mt-lg min-h-11 items-center justify-center self-center px-sm"
+                onPress={reset}
+                activeOpacity={0.7}
+              >
+                <Text className="text-[13px] font-bold text-text-muted">{t('chat.reset')}</Text>
               </TouchableOpacity>
             )}
           </>
         }
       />
 
-      <View style={[styles.inputBar, { paddingBottom: spacing.sm + insets.bottom }]}>
+      <View
+        className="flex-row items-end gap-sm border-t border-border-light bg-background px-lg pt-sm"
+        // Cộng với vạch Home của máy, mỗi máy một số
+        style={{ paddingBottom: spacing.sm + insets.bottom }}
+      >
         <TextInput
-          style={styles.input}
+          className="max-h-[110px] flex-1 rounded-lg border-[1.5px] border-border-strong px-md py-2.5 text-[14px] text-text"
           value={draft}
           onChangeText={setDraft}
           placeholder={t('chat.placeholder')}
@@ -193,107 +214,17 @@ export default function ChatScreen() {
         />
 
         <TouchableOpacity
-          style={[styles.sendButton, (!draft.trim() || sending) && styles.sendDisabled]}
+          // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+          className={`min-h-11 justify-center rounded-lg bg-ai-accent px-lg py-3 ${
+            !draft.trim() || sending ? 'opacity-45' : ''
+          }`}
           onPress={() => send(draft)}
           disabled={!draft.trim() || sending}
           activeOpacity={0.85}
         >
-          <Text style={styles.sendText}>{t('chat.send')}</Text>
+          <Text className="text-[14px] font-bold text-on-primary">{t('chat.send')}</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.surface },
-    list: { padding: spacing.lg, paddingBottom: spacing.md },
-
-    greetingWrap: { marginBottom: spacing.sm },
-
-    bubbleRow: { flexDirection: 'row', marginTop: spacing.sm },
-    bubbleRowMine: { justifyContent: 'flex-end' },
-
-    bubbleBot: {
-      maxWidth: '88%',
-      backgroundColor: colors.aiBg,
-      borderWidth: 1,
-      borderColor: colors.aiBorder,
-      borderRadius: radius.lg,
-      borderTopLeftRadius: radius.sm,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 10,
-    },
-    bubbleBotText: { fontSize: 14, color: colors.text, lineHeight: 20 },
-
-    bubbleMine: {
-      maxWidth: '88%',
-      backgroundColor: colors.primary,
-      borderRadius: radius.lg,
-      borderTopRightRadius: radius.sm,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 10,
-    },
-    bubbleMineText: { fontSize: 14, color: colors.onPrimary, lineHeight: 20 },
-
-    thinking: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    thinkingText: { fontSize: 13, color: colors.textMuted },
-
-    suggestions: { marginTop: spacing.md, gap: spacing.sm },
-    suggestion: {
-      alignSelf: 'flex-start',
-      backgroundColor: colors.background,
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-      borderRadius: radius.full,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 8,
-    },
-    suggestionText: { fontSize: 13, fontWeight: '600', color: colors.textSoft },
-
-    error: {
-      fontSize: 12.5,
-      color: colors.danger,
-      textAlign: 'center',
-      marginTop: spacing.md,
-      lineHeight: 18,
-    },
-
-    reset: { alignSelf: 'center', marginTop: spacing.lg, padding: spacing.sm },
-    resetText: { fontSize: 13, fontWeight: '700', color: colors.textMuted },
-
-    inputBar: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      gap: spacing.sm,
-      paddingHorizontal: spacing.lg,
-      paddingTop: spacing.sm,
-      backgroundColor: colors.background,
-      borderTopWidth: 1,
-      borderTopColor: colors.borderLight,
-    },
-    input: {
-      flex: 1,
-      maxHeight: 110,
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-      borderRadius: radius.lg,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 10,
-      fontSize: 14,
-      color: colors.text,
-    },
-    sendButton: {
-      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 44,
-      justifyContent: 'center',
-      backgroundColor: colors.aiAccent,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: 12,
-      borderRadius: radius.lg,
-    },
-    sendDisabled: { opacity: 0.45 },
-    sendText: { color: colors.onPrimary, fontSize: 14, fontWeight: '700' },
-  }),
-);
