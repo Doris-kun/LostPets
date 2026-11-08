@@ -8,7 +8,7 @@ import { useAuth } from '../context/auth';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useLanguage } from '../context/language';
 import type { MainTabParamList, Pet, RootStackParamList } from '../types';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
+import { useTheme } from '../context/theme';
 import { spacing } from '../theme';
 
 /*
@@ -35,7 +35,6 @@ export default function MyPetsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
   const { isLoggedIn, loading: authLoading } = useAuth();
 
   const [pets, setPets] = useState<Pet[]>([]);
@@ -81,7 +80,10 @@ export default function MyPetsScreen({ navigation }: Props) {
 
   if (authLoading || loading) {
     return (
-      <View style={[styles.center, { paddingTop: insets.top }]}>
+      <View
+        className="flex-1 items-center justify-center bg-background"
+        style={{ paddingTop: insets.top }}
+      >
         <ActivityIndicator size="large" color={colors.teal} />
       </View>
     );
@@ -89,11 +91,21 @@ export default function MyPetsScreen({ navigation }: Props) {
 
   if (!isLoggedIn) {
     return (
-      <View style={[styles.center, { paddingTop: insets.top, paddingHorizontal: spacing.xl }]}>
-        <Text style={styles.emptyTitle}>{t('auth.guestTitle')}</Text>
-        <Text style={styles.emptyText}>{t('auth.guestText')}</Text>
+      <View
+        className="flex-1 items-center justify-center bg-background px-xl"
+        style={{ paddingTop: insets.top }}
+      >
+        <Text className="text-center text-base font-extrabold text-text">
+          {t('auth.guestTitle')}
+        </Text>
+        <Text className="mt-1.5 text-center text-[13px] leading-[19px] text-text-muted">
+          {t('auth.guestText')}
+        </Text>
 
-        <Text style={styles.linkButton} onPress={() => navigation.navigate('Auth')}>
+        <Text
+          className="mt-lg text-[14px] font-bold text-primary"
+          onPress={() => navigation.navigate('Auth')}
+        >
           {t('auth.login')}
         </Text>
       </View>
@@ -101,16 +113,25 @@ export default function MyPetsScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Text style={styles.title}>{t('mine.title')}</Text>
-        {!hasError && <Text style={styles.count}>{t('mine.count', { n: pets.length })}</Text>}
+    <View className="flex-1 bg-surface">
+      <View
+        className="flex-row items-center justify-between bg-background px-lg pb-md"
+        // Chừa chỗ cho tai thỏ: mỗi máy một số, phải đo lúc chạy
+        style={{ paddingTop: insets.top + spacing.sm }}
+      >
+        <Text className="text-[19px] font-extrabold tracking-[-0.3px] text-text">
+          {t('mine.title')}
+        </Text>
+        {!hasError && (
+          <Text className="text-[13px] text-text-muted">{t('mine.count', { n: pets.length })}</Text>
+        )}
       </View>
 
       <FlatList
         data={pets}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={[styles.list, { paddingBottom: spacing.xl }]}
+        // contentContainerStyle của FlatList chưa nhận className
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xl }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -123,11 +144,11 @@ export default function MyPetsScreen({ navigation }: Props) {
           />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>
+          <View className="items-center px-xl pt-[70px]">
+            <Text className="text-center text-base font-extrabold text-text">
               {t(hasError ? 'home.errorTitle' : 'mine.emptyTitle')}
             </Text>
-            <Text style={styles.emptyText}>
+            <Text className="mt-1.5 text-center text-[13px] leading-[19px] text-text-muted">
               {t(hasError ? 'home.errorText' : 'mine.emptyText')}
             </Text>
           </View>
@@ -145,45 +166,3 @@ export default function MyPetsScreen({ navigation }: Props) {
     </View>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.surface },
-    center: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: colors.background,
-    },
-
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.md,
-      backgroundColor: colors.background,
-    },
-    title: { fontSize: 19, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
-    count: { fontSize: 13, color: colors.textMuted },
-
-    list: { padding: spacing.lg },
-
-    empty: { alignItems: 'center', paddingTop: 70, paddingHorizontal: spacing.xl },
-    emptyTitle: { fontSize: 16, fontWeight: '800', color: colors.text, textAlign: 'center' },
-    emptyText: {
-      fontSize: 13,
-      color: colors.textMuted,
-      marginTop: 6,
-      textAlign: 'center',
-      lineHeight: 19,
-    },
-
-    linkButton: {
-      marginTop: spacing.lg,
-      fontSize: 14,
-      fontWeight: '700',
-      color: colors.primary,
-    },
-  }),
-);
