@@ -3,15 +3,13 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing } from '../theme';
+import { useTheme } from '../context/theme';
 
 /*
  * Hộp thoại mã xác nhận — lo hai việc trái ngược nhau nhưng cùng một thứ dữ liệu:
@@ -58,7 +56,6 @@ export default function ClaimCodeModal({
 }: ClaimCodeModalProps) {
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   const [typed, setTyped] = useState('');
 
@@ -93,11 +90,16 @@ export default function ClaimCodeModal({
         thêm là đẩy hai lần. Giống hệt cách PetFilters.tsx đang làm.
       */}
       <KeyboardAvoidingView
-        style={styles.root}
+        className="flex-1 justify-center px-xl"
+        // scrim là màu DUY NHẤT không class hoá được: nó lưu dạng rgba() đã
+        // kèm sẵn độ trong suốt nên không tách thành ba kênh cho Tailwind.
+        style={{ backgroundColor: colors.scrim }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.sheet}>
-          <Text style={styles.title}>{t(isShow ? 'claim.savedTitle' : 'claim.askTitle')}</Text>
+        <View className="rounded-lg bg-background p-xl">
+          <Text className="text-center text-[17px] font-extrabold text-text">
+            {t(isShow ? 'claim.savedTitle' : 'claim.askTitle')}
+          </Text>
 
           {isShow ? (
             <>
@@ -105,7 +107,13 @@ export default function ClaimCodeModal({
                 Mã viết CÁCH ĐỀU từng ký tự và cỡ lớn. Mã gồm cả chữ lẫn số nên
                 rất dễ nhìn nhầm 0 với O, 1 với I — giãn ra thì chép tay đỡ sai.
               */}
-              <Text style={styles.code} selectable>
+              <Text
+                className="my-lg text-center text-[26px] font-extrabold tracking-[3px] text-primary"
+                // fontVariant chưa có lớp tiện ích tương đương. Chữ số cùng bề
+                // ngang thì mã nhìn thẳng hàng, chép tay đỡ sai.
+                style={{ fontVariant: ['tabular-nums'] }}
+                selectable
+              >
                 {code}
               </Text>
 
@@ -119,14 +127,18 @@ export default function ClaimCodeModal({
                 Nên chỉ hiện mã thật to, giãn ký tự, cho bôi đen được, và nói
                 thẳng là hãy chép ra giấy.
               */}
-              <Text style={styles.note}>{t('claim.savedText')}</Text>
+              <Text className="mt-md text-center text-[12.5px] leading-[19px] text-text-muted">
+                {t('claim.savedText')}
+              </Text>
             </>
           ) : (
             <>
-              <Text style={styles.note}>{t('claim.askText')}</Text>
+              <Text className="mt-md text-center text-[12.5px] leading-[19px] text-text-muted">
+                {t('claim.askText')}
+              </Text>
 
               <TextInput
-                style={styles.input}
+                className="mt-lg rounded-md border-[1.5px] border-border-strong px-md py-3 text-center text-[18px] font-bold tracking-[2px] text-text"
                 value={typed}
                 onChangeText={(next) => setTyped(next.toUpperCase())}
                 placeholder={t('claim.placeholder')}
@@ -137,15 +149,19 @@ export default function ClaimCodeModal({
                 maxLength={20}
               />
 
-              {!!error && <Text style={styles.error}>{error}</Text>}
+              {!!error && (
+                <Text className="mt-sm text-center text-[12.5px] text-danger">{error}</Text>
+              )}
 
               <TouchableOpacity
-                style={[styles.primaryButton, !typed.trim() && styles.disabled]}
+                className={`mt-lg min-h-11 items-center justify-center rounded-md bg-primary ${
+                  !typed.trim() ? 'opacity-45' : ''
+                }`}
                 onPress={() => onSubmit?.(typed.trim())}
                 disabled={!typed.trim()}
                 activeOpacity={0.85}
               >
-                <Text style={styles.primaryButtonText}>{t('claim.submit')}</Text>
+                <Text className="text-[14px] font-bold text-on-primary">{t('claim.submit')}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -155,13 +171,27 @@ export default function ClaimCodeModal({
             là chữ xám nhạt, trên nền tối gần như không thấy.
             Ở chế độ nhập mã thì nó chỉ là nút huỷ, để nhạt mới đúng vai.
           */}
+          {/*
+            min-h-11 nằm ở phần CỐ ĐỊNH của chuỗi, không nằm trong nhánh điều
+            kiện. Nhờ vậy cả hai chế độ đều chắc chắn đủ 44pt, và luật 44pt
+            cũng đọc được — trước đây nút này viết dạng ba ngôi nên luật chỉ
+            đo nhánh đầu rồi bỏ qua nhánh sau.
+          */}
           <TouchableOpacity
-            style={isShow ? styles.primaryButton : styles.closeButton}
+            className={`mt-md min-h-11 items-center justify-center rounded-md ${
+              isShow ? 'bg-primary' : ''
+            }`}
             onPress={onClose}
             activeOpacity={0.85}
           >
-            <Text style={isShow ? styles.primaryButtonText : styles.closeText}>
-              {t(isShow ? "claim.done" : "common.cancel")}
+            <Text
+              className={
+                isShow
+                  ? 'text-[14px] font-bold text-on-primary'
+                  : 'text-[13px] font-bold text-text-muted'
+              }
+            >
+              {t(isShow ? 'claim.done' : 'common.cancel')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -169,77 +199,3 @@ export default function ClaimCodeModal({
     </Modal>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    root: {
-      flex: 1,
-      backgroundColor: colors.scrim,
-      justifyContent: 'center',
-      paddingHorizontal: spacing.xl,
-    },
-    sheet: {
-      backgroundColor: colors.background,
-      borderRadius: radius.lg,
-      padding: spacing.xl,
-    },
-    title: {
-      fontSize: 17,
-      fontWeight: '800',
-      color: colors.text,
-      textAlign: 'center',
-    },
-
-    code: {
-      fontSize: 26,
-      fontWeight: '800',
-      color: colors.primary,
-      textAlign: 'center',
-      letterSpacing: 3,
-      marginVertical: spacing.lg,
-      // Chữ số cùng bề ngang, nhìn thẳng hàng hơn
-      fontVariant: ['tabular-nums'],
-    },
-
-    note: {
-      fontSize: 12.5,
-      color: colors.textMuted,
-      lineHeight: 19,
-      textAlign: 'center',
-      marginTop: spacing.md,
-    },
-
-    input: {
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-      borderRadius: radius.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 12,
-      fontSize: 18,
-      fontWeight: '700',
-      letterSpacing: 2,
-      textAlign: 'center',
-      color: colors.text,
-      marginTop: spacing.lg,
-    },
-    error: {
-      fontSize: 12.5,
-      color: colors.danger,
-      textAlign: 'center',
-      marginTop: spacing.sm,
-    },
-
-    primaryButton: {
-      backgroundColor: colors.primary,
-      paddingVertical: 13,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      marginTop: spacing.lg,
-    },
-    primaryButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: '700' },
-    disabled: { opacity: 0.45 },
-
-    closeButton: { alignItems: 'center', marginTop: spacing.md, padding: spacing.sm },
-    closeText: { fontSize: 13, fontWeight: '700', color: colors.textMuted },
-  }),
-);

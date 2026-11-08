@@ -4,7 +4,6 @@ import {
   Modal,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -13,8 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { ReportReason } from '../types';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing } from '../theme';
+import { useTheme } from '../context/theme';
 
 /*
  * Hộp thoại báo cáo tin đăng. Tương đương ReportDialog.vue bên web.
@@ -73,7 +71,6 @@ export default function ReportModal({
 }: ReportModalProps) {
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [note, setNote] = useState('');
@@ -109,42 +106,72 @@ export default function ReportModal({
         thêm là đẩy hai lần. Giống hệt cách PetFilters.tsx đang làm.
       */}
       <KeyboardAvoidingView
-        style={styles.root}
+        className="flex-1 justify-center px-xl"
+        // scrim không class hoá được: nó lưu dạng rgba() đã kèm sẵn độ trong
+        // suốt nên không tách thành ba kênh cho Tailwind.
+        style={{ backgroundColor: colors.scrim }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.sheet}>
+        {/* max-h-[86%] chừa chỗ cho thanh trạng thái và bàn phím, không để
+            hộp cao bằng đúng màn hình rồi dính sát hai mép. */}
+        <View className="max-h-[86%] rounded-lg bg-background p-xl">
           {xong ? (
             <>
               <Ionicons
                 name="checkmark-circle"
                 size={44}
                 color={colors.found}
-                style={styles.doneIcon}
+                // style chứ không className: Ionicons là component của thư viện
+                // ngoài, không chắc nó chuyển className thành style. Dùng style thì
+                // chắc chắn ăn, và chỗ này chỉ có đúng một thẻ.
+                style={{ alignSelf: 'center', marginBottom: 8 }}
               />
-              <Text style={styles.title}>{t('report.thanks')}</Text>
-              <Text style={styles.note}>{t('report.thanksSub')}</Text>
+              <Text className="text-center text-[17px] font-extrabold text-text">
+                {t('report.thanks')}
+              </Text>
+              <Text className="mt-sm text-center text-[12.5px] leading-[19px] text-text-muted">
+                {t('report.thanksSub')}
+              </Text>
 
-              <TouchableOpacity style={styles.primaryButton} onPress={onClose} activeOpacity={0.85}>
-                <Text style={styles.primaryButtonText}>{t('report.done')}</Text>
+              <TouchableOpacity
+                className="mt-lg min-h-12 items-center justify-center rounded-md bg-primary"
+                onPress={onClose}
+                activeOpacity={0.85}
+              >
+                <Text className="text-[14px] font-bold text-on-primary">{t('report.done')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <Text style={styles.title}>{t('report.title')}</Text>
-              <Text style={styles.note}>{t('report.subtitle')}</Text>
+              <Text className="text-center text-[17px] font-extrabold text-text">
+                {t('report.title')}
+              </Text>
+              <Text className="mt-sm text-center text-[12.5px] leading-[19px] text-text-muted">
+                {t('report.subtitle')}
+              </Text>
 
               {/*
                 Danh sách lý do có thể dài hơn màn hình khi người dùng phóng
                 to cỡ chữ của điện thoại, nên cho cuộn được. Không cuộn thì
                 nút Gửi bị đẩy ra ngoài và không ai bấm tới.
               */}
-              <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
+              <ScrollView className="mt-lg" keyboardShouldPersistTaps="handled">
                 {LY_DO.map((ma) => {
                   const chon = reason === ma;
                   return (
                     <TouchableOpacity
                       key={ma}
-                      style={[styles.reasonRow, chon && styles.reasonRowOn]}
+                      /*
+                        Chọn rồi thì đổi CẢ viền lẫn nền, không chỉ đổi cái
+                        chấm tròn. Nhìn lướt qua là thấy ngay đang chọn dòng
+                        nào mà không phải soi từng chấm.
+
+                        min-h-12 = 48, nằm ở phần cố định của chuỗi nên luật
+                        44pt đọc được dù hai nhánh màu khác nhau.
+                      */
+                      className={`mb-sm min-h-12 flex-row items-center gap-md rounded-md border-[1.5px] px-md ${
+                        chon ? 'border-primary bg-surface-tint' : 'border-border'
+                      }`}
                       onPress={() => setReason(ma)}
                       activeOpacity={0.7}
                     >
@@ -158,7 +185,11 @@ export default function ReportModal({
                         size={19}
                         color={chon ? colors.primary : colors.textMuted}
                       />
-                      <Text style={[styles.reasonText, chon && styles.reasonTextOn]}>
+                      <Text
+                        className={`flex-1 text-[13.5px] leading-[19px] ${
+                          chon ? 'font-bold text-text' : 'text-text-soft'
+                        }`}
+                      >
                         {t(`report.reason.${ma}`)}
                       </Text>
                     </TouchableOpacity>
@@ -167,7 +198,7 @@ export default function ReportModal({
               </ScrollView>
 
               <TextInput
-                style={styles.input}
+                className="mt-md min-h-[72px] rounded-md border-[1.5px] border-border-strong px-md py-2.5 text-[13.5px] leading-[19px] text-text"
                 value={note}
                 onChangeText={setNote}
                 placeholder={t('report.notePlaceholder')}
@@ -177,30 +208,34 @@ export default function ReportModal({
                 textAlignVertical="top"
               />
 
-              {!!error && <Text style={styles.error}>{error}</Text>}
+              {!!error && (
+                <Text className="mt-sm text-[12.5px] text-danger">{error}</Text>
+              )}
 
               {/*
                 Chưa chọn lý do thì nút mờ đi và không bấm được, thay vì cho
                 bấm rồi để máy chủ trả về "Lý do báo cáo không hợp lệ".
               */}
               <TouchableOpacity
-                style={[styles.primaryButton, (!reason || sending) && styles.disabled]}
+                className={`mt-lg min-h-12 items-center justify-center rounded-md bg-primary ${
+                  !reason || sending ? 'opacity-45' : ''
+                }`}
                 onPress={() => reason && onSubmit(reason, note.trim())}
                 disabled={!reason || sending}
                 activeOpacity={0.85}
               >
-                <Text style={styles.primaryButtonText}>
+                <Text className="text-[14px] font-bold text-on-primary">
                   {t(sending ? 'report.sending' : 'report.send')}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.closeButton}
+                className="mt-xs min-h-11 items-center justify-center"
                 onPress={onClose}
                 disabled={sending}
                 activeOpacity={0.7}
               >
-                <Text style={styles.closeText}>{t('report.cancel')}</Text>
+                <Text className="text-[13px] font-bold text-text-muted">{t('report.cancel')}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -209,88 +244,3 @@ export default function ReportModal({
     </Modal>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    root: {
-      flex: 1,
-      backgroundColor: colors.scrim,
-      justifyContent: 'center',
-      paddingHorizontal: spacing.xl,
-    },
-    sheet: {
-      backgroundColor: colors.background,
-      borderRadius: radius.lg,
-      padding: spacing.xl,
-      // Chừa chỗ cho thanh trạng thái và bàn phím, không để hộp cao bằng
-      // đúng màn hình rồi dính sát hai mép.
-      maxHeight: '86%',
-    },
-
-    doneIcon: { alignSelf: 'center', marginBottom: spacing.sm },
-
-    title: { fontSize: 17, fontWeight: '800', color: colors.text, textAlign: 'center' },
-    note: {
-      fontSize: 12.5,
-      color: colors.textMuted,
-      lineHeight: 19,
-      textAlign: 'center',
-      marginTop: spacing.sm,
-    },
-
-    list: { marginTop: spacing.lg },
-
-    reasonRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 48,
-      paddingHorizontal: spacing.md,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      marginBottom: spacing.sm,
-    },
-    // Chọn rồi thì đổi CẢ viền lẫn nền, không chỉ đổi cái chấm tròn. Nhìn
-    // lướt qua là thấy ngay đang chọn dòng nào mà không phải soi từng chấm.
-    reasonRowOn: { borderColor: colors.primary, backgroundColor: colors.surfaceTint },
-
-    reasonText: { flex: 1, fontSize: 13.5, color: colors.textSoft, lineHeight: 19 },
-    reasonTextOn: { color: colors.text, fontWeight: '700' },
-
-    input: {
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-      borderRadius: radius.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 10,
-      fontSize: 13.5,
-      lineHeight: 19,
-      color: colors.text,
-      marginTop: spacing.md,
-      minHeight: 72,
-    },
-
-    error: { fontSize: 12.5, color: colors.danger, marginTop: spacing.sm },
-
-    primaryButton: {
-      backgroundColor: colors.primary,
-      minHeight: 48,
-      justifyContent: 'center',
-      borderRadius: radius.md,
-      alignItems: 'center',
-      marginTop: spacing.lg,
-    },
-    primaryButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: '700' },
-    disabled: { opacity: 0.45 },
-
-    closeButton: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 44,
-      marginTop: spacing.xs,
-    },
-    closeText: { fontSize: 13, fontWeight: '700', color: colors.textMuted },
-  }),
-);
