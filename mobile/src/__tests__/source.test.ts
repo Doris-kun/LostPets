@@ -154,12 +154,31 @@ describe('vùng chạm tối thiểu 44pt', () => {
       dong.forEach((l, i) => {
         if (!l.includes('<TouchableOpacity') && !l.includes('<Pressable')) return;
 
-        // Thân thẻ mở: tới dòng chỉ có ">" hoặc kết thúc bằng "/>"
+        /*
+         * Thân thẻ mở, tức là từ "<TouchableOpacity" tới dấu ">" đóng nó.
+         *
+         * Trước đây cửa sổ này dừng ở dòng chỉ có ">" hoặc kết thúc bằng
+         * "/>". Nhưng một thẻ viết gọn trên MỘT dòng — <TouchableOpacity
+         * onPress={…} hitSlop={10}> — thì không khớp cả hai, nên cửa sổ chạy
+         * tiếp và nuốt luôn className của <Text> nằm bên trong. Nút không
+         * khai chiều cao bỗng được tính là "có className", rồi bị báo sai lý
+         * do, mà vi phạm thật thì nấp sau một thông báo nghe như lỗi của
+         * chính bộ test.
+         *
+         * Đếm ngoặc để tìm đúng dấu ">" đóng thẻ: dấu ">" nằm trong {…} là
+         * của mũi tên () => hay của phép so sánh, không phải chỗ thẻ hết.
+         */
         let the = '';
         for (let j = i; j < Math.min(i + 30, dong.length); j++) {
           the += `${dong[j]}\n`;
-          const t = dong[j].trim();
-          if (t === '>' || t.endsWith('/>')) break;
+          let sau = 0;
+          let xong = false;
+          for (const c of the) {
+            if (c === '{') sau++;
+            else if (c === '}') sau--;
+            else if (c === '>' && sau === 0) xong = true;
+          }
+          if (xong) break;
         }
 
         if (MIEN_TRU.some((cho) => the.includes(cho))) return;

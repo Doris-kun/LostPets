@@ -14,8 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing, statusStyle } from '../theme';
+import { useTheme } from '../context/theme';
+import { spacing, statusStyle } from '../theme';
 import { directionsUrl, hasPoint, mapHtml } from '../map';
 import type { MapPet, Pet } from '../types';
 
@@ -74,7 +74,6 @@ function MapCanvas({
 }: MapCanvasProps) {
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
-  const styles = useThemedStyles(themedStyles);
   /*
    * <object> ở đây KHÔNG phải thừa.
    *
@@ -133,7 +132,9 @@ function MapCanvas({
   };
 
   return (
-    <View style={[styles.canvas, style]}>
+    <View className="flex-1 overflow-hidden bg-surface-tint" style={style}>
+      {/* Nền trùng với nền trang HTML, để lúc bản đồ chưa tải không loé ra
+          một khung trắng ở chế độ tối. */}
       <WebView<object>
         ref={ref}
         /*
@@ -154,13 +155,27 @@ function MapCanvas({
         // đã có nút phóng riêng rồi.
         setBuiltInZoomControls={false}
         setDisplayZoomControls={false}
-        style={styles.web}
+        // WebView mặc định nền TRẮNG, kể cả khi trang bên trong nền tối.
+        // Phải đặt lại, không thì chế độ tối nháy trắng mỗi lần mở bản đồ.
+        style={{ flex: 1, backgroundColor: 'transparent' }}
       />
 
       {!ready && (
-        <View style={styles.loading} pointerEvents="none">
+        /*
+         * absoluteFill chứ KHÔNG phải absoluteFillObject. RN 0.88 đã bỏ hẳn
+         * cái sau, mà trải một thứ undefined vào object thì JavaScript cho qua
+         * im lặng — lớp phủ thôi không phủ nữa mà nằm xuống như khối thường.
+         *
+         * Giữ ở style chứ không dùng lớp absolute inset-0: absoluteFill là một
+         * object có sẵn, dùng nó thì không phải dịch lại bốn cạnh.
+         */
+        <View
+          className="items-center justify-center gap-sm"
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        >
           <ActivityIndicator color={colors.primary} />
-          <Text style={styles.loadingText}>{t('map.loading')}</Text>
+          <Text className="text-[12px] text-text-muted">{t('map.loading')}</Text>
         </View>
       )}
     </View>
@@ -227,7 +242,6 @@ export default function PetMap({
 }: PetMapProps) {
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const styles = useThemedStyles(themedStyles);
   const insets = useSafeAreaInsets();
 
   const isPick = mode === 'pick';
@@ -364,8 +378,16 @@ export default function PetMap({
    * Phủ lên cũng làm dòng ghi nguồn mất tính bấm được — vẫn HIỆN ra, nên vẫn
    * đúng điều khoản. Bản toàn màn hình bấm được bình thường.
    */
+  /*
+   * Viền nhạt: đây chỉ là khung bao quanh bản đồ, chính tấm bản đồ bên trong
+   * mới là thứ cho biết chạm vào được. Không phải đường bao của một điều
+   * khiển nên không cần tương phản 3:1.
+   */
   const preview = (
-    <View style={[styles.previewBox, { height: canvasHeight }]}>
+    <View
+      className="overflow-hidden rounded-md border border-border bg-surface-tint"
+      style={{ height: canvasHeight }}
+    >
       {/*
        * Trong lúc hộp thoại toàn màn hình đang mở, tháo bản đồ xem trước đi.
        * Để cả hai thì có hai WebView cùng chạy một bản đồ — máy yếu rất ì, mà
@@ -394,16 +416,32 @@ export default function PetMap({
         <View style={style}>
           {preview}
           <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
-            <View style={styles.modal}>
-              <View style={[styles.modalHead, { paddingTop: insets.top + spacing.sm }]}>
-                <Text style={styles.modalTitle}>{t('map.where')}</Text>
-                <TouchableOpacity onPress={() => setOpen(false)} hitSlop={10}>
-                  <Text style={styles.modalDone}>{t('map.done')}</Text>
+            <View className="flex-1 bg-background">
+              <View
+                className="flex-row items-center justify-between px-lg pb-sm"
+                style={{ paddingTop: insets.top + spacing.sm }}
+              >
+                <Text className="text-[15px] font-bold text-text">{t('map.where')}</Text>
+                <TouchableOpacity
+                  /*
+                    Nút "Xong" thứ hai, của hộp thoại chỉ xem bản đồ. Giống
+                    hệt nút bên chế độ chọn chỗ: chỉ có hitSlop={10}, chữ
+                    15pt cao chừng 20, cộng 10 hai đầu mới được 40pt.
+
+                    Giữ cả hitSlop: min-h-11 lo phần thân nút, hitSlop nới
+                    thêm ra ngoài mép, hai thứ cộng vào nhau chứ không thay
+                    nhau — nút nằm sát góc trên nên nới thêm là có lợi.
+                  */
+                  className="min-h-11 justify-center px-sm"
+                  onPress={() => setOpen(false)}
+                  hitSlop={10}
+                >
+                  <Text className="text-[15px] font-bold text-primary">{t('map.done')}</Text>
                 </TouchableOpacity>
               </View>
               {/* Mở to ra thì BẮT BUỘC phải kéo và phóng được, không thì mở
                   ra để làm gì — nên ép interactive chứ không đọc prop. */}
-              <MapCanvas interactive payload={petsPayload} style={styles.fill} />
+              <MapCanvas interactive payload={petsPayload} style={{ flex: 1 }} />
             </View>
           </Modal>
         </View>
@@ -411,14 +449,14 @@ export default function PetMap({
     }
 
     return (
-      <View style={[styles.fill, style]}>
+      <View className="flex-1" style={style}>
         {/* Hai câu lệnh nối nhau bằng dấu chấm phẩy — WebView nhận một chuỗi
             JavaScript, chạy tuần tự y như viết hai dòng. */}
         <MapCanvas
           interactive
           payload={`${petsPayload};${mePayload}`}
           onOpen={onSelectPet}
-          style={styles.fill}
+          style={{ flex: 1 }}
         />
       </View>
     );
@@ -428,49 +466,65 @@ export default function PetMap({
 
   return (
     <View style={style}>
-      <Text style={styles.label}>{t('map.label')}</Text>
+      <Text className="mb-sm text-[11px] font-bold tracking-[0.6px] text-text-muted">
+        {t('map.label')}
+      </Text>
 
       {preview}
 
-      <View style={styles.row}>
-        <TouchableOpacity style={styles.btn} onPress={openPicker}>
-          <Text style={styles.btnText}>{t(point ? 'map.change' : 'map.open')}</Text>
+      <View className="mt-sm flex-row flex-wrap items-center gap-sm">
+        <TouchableOpacity className="min-h-11 justify-center rounded-sm border border-border-strong bg-surface px-md py-2" onPress={openPicker}>
+          <Text className="text-[12px] font-semibold text-text-soft">{t(point ? 'map.change' : 'map.open')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.btn} onPress={useMyLocation} disabled={locating}>
-          <Text style={styles.btnText}>{t(locating ? 'map.locating' : 'map.useMyLocation')}</Text>
+        <TouchableOpacity className="min-h-11 justify-center rounded-sm border border-border-strong bg-surface px-md py-2" onPress={useMyLocation} disabled={locating}>
+          <Text className="text-[12px] font-semibold text-text-soft">{t(locating ? 'map.locating' : 'map.useMyLocation')}</Text>
         </TouchableOpacity>
 
         {point && (
-          <TouchableOpacity style={styles.btnPlain} onPress={clear}>
-            <Text style={styles.btnPlainText}>{t('map.clear')}</Text>
+          <TouchableOpacity className="min-h-11 justify-center px-sm py-2" onPress={clear}>
+            <Text className="text-[12px] font-semibold text-danger">{t('map.clear')}</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      <Text style={styles.state}>{t(point ? 'map.picked' : 'map.noPoint')}</Text>
-      <Text style={styles.privacy}>{t('map.privacyNote')}</Text>
-      {!!error && <Text style={styles.error}>{error}</Text>}
+      <Text className="mt-sm text-[11px] text-text-muted">
+        {t(point ? 'map.picked' : 'map.noPoint')}
+      </Text>
+      <Text className="mt-xs text-[11px] leading-4 text-secret-text">
+        {t('map.privacyNote')}
+      </Text>
+      {!!error && <Text className="mt-xs text-[12px] text-danger">{error}</Text>}
 
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
-        <View style={styles.modal}>
-          <View style={[styles.modalHead, { paddingTop: insets.top + spacing.sm }]}>
-            <Text style={styles.modalTitle}>{t('map.label')}</Text>
+        <View className="flex-1 bg-background">
+          <View
+            className="flex-row items-center justify-between px-lg pb-sm"
+            style={{ paddingTop: insets.top + spacing.sm }}
+          >
+            <Text className="text-[15px] font-bold text-text">{t('map.label')}</Text>
             {/* Chốt chỗ đang ngắm RỒI mới đóng. Cần vậy cho trường hợp mở ra,
                 không kéo gì cả, bấm Xong luôn — lúc đó moveend chưa hề nổ. */}
             <TouchableOpacity
-              style={styles.modalDoneButton}
+              /*
+                Nút này trước đây chỉ có hitSlop={10}, không style nào: chữ
+                15pt cao chừng 20, cộng 10 hai đầu mới được 40 — dưới chuẩn.
+                Luật 44pt bỏ sót vì nó tìm styles.X mà nút không gắn cái nào.
+              */
+              className="min-h-11 justify-center px-sm"
               onPress={() => {
                 commitPoint.current?.();
                 setOpen(false);
               }}
               hitSlop={10}
             >
-              <Text style={styles.modalDone}>{t('map.done')}</Text>
+              <Text className="text-[15px] font-bold text-primary">{t('map.done')}</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.modalHint}>{t('map.hint')}</Text>
+          <Text className="px-lg pb-sm text-[12px] leading-[17px] text-text-soft">
+            {t('map.hint')}
+          </Text>
 
           <MapCanvas
             pick
@@ -478,7 +532,7 @@ export default function PetMap({
             payload={pointPayload(focus)}
             onPick={(p) => emit(p, true)}
             commitRef={commitPoint}
-            style={styles.fill}
+            style={{ flex: 1 }}
           />
 
           {/*
@@ -487,13 +541,18 @@ export default function PetMap({
             vẫn nằm đó và lập tức chọn lại chính chỗ cũ — bấm như không bấm.
             Muốn bỏ hẳn vị trí thì đóng lại rồi xoá ở ngoài form.
           */}
-          <View style={[styles.modalFoot, { paddingBottom: insets.bottom + spacing.sm }]}>
-            <TouchableOpacity style={styles.btn} onPress={useMyLocation} disabled={locating}>
-              <Text style={styles.btnText}>{t(locating ? 'map.locating' : 'map.useMyLocation')}</Text>
+          <View
+            className="flex-row items-center gap-sm px-lg pt-md"
+            style={{ paddingBottom: insets.bottom + spacing.sm }}
+          >
+            <TouchableOpacity className="min-h-11 justify-center rounded-sm border border-border-strong bg-surface px-md py-2" onPress={useMyLocation} disabled={locating}>
+              <Text className="text-[12px] font-semibold text-text-soft">{t(locating ? 'map.locating' : 'map.useMyLocation')}</Text>
             </TouchableOpacity>
           </View>
 
-          {!!error && <Text style={[styles.error, styles.modalError]}>{error}</Text>}
+          {!!error && (
+            <Text className="mt-xs px-lg text-[12px] text-danger">{error}</Text>
+          )}
         </View>
       </Modal>
     </View>
@@ -508,7 +567,6 @@ export default function PetMap({
  */
 export function DirectionsButton({ lat, lng }: { lat: number | null; lng: number | null }) {
   const { t } = useLanguage();
-  const styles = useThemedStyles(themedStyles);
 
   /*
    * Gán ra biến rồi mới kiểm tra, chứ không kiểm thẳng { lat, lng }.
@@ -522,140 +580,10 @@ export function DirectionsButton({ lat, lng }: { lat: number | null; lng: number
 
   return (
     <TouchableOpacity
-      style={styles.directions}
+      className="mt-sm min-h-11 justify-center self-start rounded-sm border border-border-strong bg-surface px-md py-2"
       onPress={() => Linking.openURL(directionsUrl(point.lat, point.lng))}
     >
-      <Text style={styles.directionsText}>{t('map.directions')}</Text>
+      <Text className="text-[13px] font-bold text-primary">{t('map.directions')}</Text>
     </TouchableOpacity>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    fill: { flex: 1 },
-
-    canvas: {
-      flex: 1,
-      overflow: 'hidden',
-      // Nền trùng với nền trang HTML, để lúc bản đồ chưa tải không loé ra một
-      // khung trắng ở chế độ tối.
-      backgroundColor: colors.surfaceTint,
-    },
-    // WebView mặc định nền TRẮNG, kể cả khi trang bên trong nền tối. Phải đặt
-    // lại, không thì chế độ tối nháy trắng mỗi lần mở bản đồ.
-    web: { flex: 1, backgroundColor: 'transparent' },
-
-    /*
-     * absoluteFill chứ KHÔNG phải absoluteFillObject.
-     *
-     * React Native 0.88 đã bỏ hẳn absoluteFillObject — nó chỉ còn trong một
-     * dòng chú thích của thư viện, không còn giá trị thật. Mà trải một thứ
-     * undefined vào object thì JavaScript cho qua im lặng: style ra thiếu mất
-     * phần định vị, lớp phủ thôi không phủ nữa mà nằm xuống như một khối
-     * thường. Không báo lỗi, không ai biết.
-     *
-     * TypeScript bắt được đúng chỗ này lúc chuyển file sang .tsx.
-     */
-    loading: {
-      ...StyleSheet.absoluteFill,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.sm,
-    },
-    loadingText: { color: colors.textMuted, fontSize: 12 },
-
-    previewBox: {
-      borderRadius: radius.md,
-      overflow: 'hidden',
-      borderWidth: 1,
-      // Viền nhạt: đây chỉ là khung bao quanh bản đồ, chính tấm bản đồ bên
-      // trong mới là thứ cho biết chạm vào được. Không phải đường bao của
-      // một điều khiển nên không cần 3:1.
-      borderColor: colors.border,
-      backgroundColor: colors.surfaceTint,
-    },
-
-    label: {
-      color: colors.textMuted,
-      fontSize: 11,
-      fontWeight: '700',
-      letterSpacing: 0.6,
-      marginBottom: spacing.sm,
-    },
-
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: spacing.sm,
-      marginTop: spacing.sm,
-    },
-    btn: {
-      minHeight: 44,
-      justifyContent: 'center',
-      borderWidth: 1,
-      borderColor: colors.borderStrong,
-      borderRadius: radius.sm,
-      paddingVertical: 8,
-      paddingHorizontal: spacing.md,
-      backgroundColor: colors.surface,
-    },
-    btnText: { color: colors.textSoft, fontSize: 12, fontWeight: '600' },
-    btnPlain: { paddingVertical: 8, paddingHorizontal: spacing.sm },
-    btnPlainText: { color: colors.danger, fontSize: 12, fontWeight: '600' },
-
-    state: { color: colors.textMuted, fontSize: 11, marginTop: spacing.sm },
-    privacy: { color: colors.secretText, fontSize: 11, lineHeight: 16, marginTop: spacing.xs },
-    error: { color: colors.danger, fontSize: 12, marginTop: spacing.xs },
-
-    // --- hộp thoại toàn màn hình ---
-    modal: { flex: 1, backgroundColor: colors.background },
-    modalHead: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.sm,
-    },
-    modalTitle: { color: colors.text, fontSize: 15, fontWeight: '700' },
-    /*
-     * Nút "Xong" trước đây chỉ có hitSlop={10}, không có style nào.
-     *
-     * Tính ra: chữ 15pt cao chừng 20, cộng hitSlop 10 hai đầu là 40 — dưới
-     * ngưỡng 44. Bộ test bỏ sót vì luật 44pt tìm styles.X mà nút này không
-     * gắn cái nào, nên nó lặng lẽ cho qua. Đó chính là lý do luật đó vừa
-     * được siết lại: không đo được thì phải BÁO ĐỎ, không được im.
-     */
-    modalDoneButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm },
-    modalDone: { color: colors.primary, fontSize: 15, fontWeight: '700' },
-    modalHint: {
-      color: colors.textSoft,
-      fontSize: 12,
-      lineHeight: 17,
-      paddingHorizontal: spacing.lg,
-      paddingBottom: spacing.sm,
-    },
-    modalFoot: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      paddingHorizontal: spacing.lg,
-      paddingTop: spacing.md,
-    },
-    modalError: { paddingHorizontal: spacing.lg },
-
-    directions: {
-      minHeight: 44,
-      justifyContent: 'center',
-      alignSelf: 'flex-start',
-      borderWidth: 1,
-      borderColor: colors.borderStrong,
-      borderRadius: radius.sm,
-      paddingVertical: 8,
-      paddingHorizontal: spacing.md,
-      backgroundColor: colors.surface,
-      marginTop: spacing.sm,
-    },
-    directionsText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
-  }),
-);
