@@ -3,9 +3,13 @@ import type { Pet } from './types';
 /*
  * Màu và khoảng cách dùng chung — lấy trực tiếp từ logo LostPets.
  *
- * React Native KHÔNG có Tailwind, không viết được className="bg-orange-500".
- * Mọi thứ khai báo bằng object JavaScript qua StyleSheet. Gom màu về một chỗ
- * để đổi một lần là cả app đổi theo, thay cho vai trò của tailwind.config.js.
+ * Đây là NGUỒN DUY NHẤT của màu trong app. scripts/make-global-css.js đọc file
+ * này sinh ra global.css, rồi tailwind.config.js đọc ngược tên màu từ đó — nên
+ * thêm một màu chỉ cần sửa ở đây rồi chạy `npm run make:css`.
+ *
+ * Trước khi có NativeWind, file này thay hẳn vai trò của tailwind.config.js vì
+ * React Native không viết được className. Nay viết được rồi, nhưng file này
+ * vẫn đứng đầu chuỗi: lớp tiện ích lấy màu TỪ ĐÂY chứ không khai riêng.
  *
  * File này chỉ chứa DỮ LIỆU màu, không biết người dùng đang chọn chế độ nào.
  * Việc đó do context/theme.js lo.

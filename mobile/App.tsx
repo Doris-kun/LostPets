@@ -142,15 +142,36 @@ function Root({
    * chưa dựng xong. Gọi navigate() lúc đó thì react-navigation bỏ qua trong im
    * lặng — thông báo coi như không có tác dụng, mà không có lỗi nào để lần.
    */
+  /*
+   * Màn đang chờ được mở, vì lúc nhận lệnh thì cây điều hướng chưa dựng xong.
+   *
+   * Đúng cái trường hợp quan trọng nhất lại rơi vào đây: app đang TẮT HẲN,
+   * người dùng chạm vào thông báo, app khởi động. Lệnh nhảy màn tới trong vài
+   * mili giây đầu, sớm hơn cả lúc NavigationContainer dựng xong — bỏ qua lúc
+   * đó là thông báo coi như không có tác dụng.
+   */
+  const dangCho = useRef<PushTarget | null>(null);
+
   const goToTarget = useCallback(
     (target: PushTarget) => {
-      if (!navRef.isReady()) return;
+      // Chưa sẵn sàng thì giữ lại, onReady ở dưới sẽ mở nốt.
+      if (!navRef.isReady()) {
+        dangCho.current = target;
+        return;
+      }
 
       if (target.screen === 'Detail') navRef.navigate('Detail', { id: target.id });
       else navRef.navigate('Chat');
     },
     [navRef],
   );
+
+  // Cây điều hướng dựng xong -> mở nốt màn đang chờ, nếu có.
+  const handleNavReady = useCallback(() => {
+    const target = dangCho.current;
+    dangCho.current = null;
+    if (target) goToTarget(target);
+  }, [goToTarget]);
 
   /*
    * Xin quyền và gửi mã lên back-end — CHỈ khi đã đăng nhập.
@@ -221,6 +242,7 @@ function Root({
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <NavigationContainer
             ref={navRef}
+            onReady={handleNavReady}
             /*
              * Báo cho react-navigation biết đang ở chế độ nào. Thiếu dòng này
              * thì nền MẶC ĐỊNH của nó vẫn trắng, nên lúc trượt từ màn này sang

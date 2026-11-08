@@ -152,9 +152,6 @@ type Props = {
 };
 
 export default function HomeScreen({ navigation }: Props) {
-  // insets.bottom = chiều cao vạch Home (iPhone) hoặc thanh điều hướng (Android).
-  // Máy có nút bấm vật lý thì trả về 0, nên không thừa khoảng trống.
-  const insets = useSafeAreaInsets();
   /*
    * Chiều cao thanh tab dưới đáy, đã gồm cả vạch Home của máy. Lấy số thật
    * từ react-navigation thay vì đoán, vì mỗi máy một khác.
@@ -822,7 +819,7 @@ function ListFooter({
  */
 function EmptyState({ hasError, searching }: { hasError: boolean; searching: boolean }) {
   const { t } = useLanguage();
-  const { colors, isDark } = useTheme();
+  const { isDark } = useTheme();
 
   return (
     <View className="items-center px-xl pt-[70px]">

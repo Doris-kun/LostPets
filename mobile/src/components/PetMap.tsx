@@ -17,7 +17,7 @@ import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
 import { spacing, statusStyle } from '../theme';
 import { directionsUrl, hasPoint, mapHtml } from '../map';
-import type { MapPet, Pet } from '../types';
+import type { MapPet } from '../types';
 
 /*
  * Bản đồ của app. Một component, hai việc — chọn bằng prop mode:
