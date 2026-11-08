@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import api, { type PetQuery } from '../api';
@@ -8,8 +8,8 @@ import PetMap from './PetMap';
 import { THUMB_CARD, thumbnail } from '../image';
 import { distanceKm, hasPoint, NEAR_ME_KM, readSavedMe, saveMe, type Point } from '../map';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing, statusStyle } from '../theme';
+import { useTheme } from '../context/theme';
+import { statusStyle } from '../theme';
 
 /*
  * Bản đồ tất cả tin, thay cho danh sách ở Trang chủ.
@@ -51,8 +51,7 @@ export interface PetMapViewProps {
 
 export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
   const { t } = useLanguage();
-  const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
+  const { colors, shadow } = useTheme();
 
   const [data, setData] = useState<MapPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -161,7 +160,7 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View className="flex-1 items-center justify-center gap-md px-xl">
         <ActivityIndicator size="large" color={colors.teal} />
       </View>
     );
@@ -169,8 +168,10 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
 
   if (failed) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.emptyText}>{t('map.failed')}</Text>
+      <View className="flex-1 items-center justify-center gap-md px-xl">
+        <Text className="text-center text-[13px] leading-[19px] text-text-muted">
+          {t('map.failed')}
+        </Text>
       </View>
     );
   }
@@ -178,45 +179,59 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
   // Không tin nào có toạ độ thì vẽ bản đồ ra cũng chỉ là một tấm bản đồ trống.
   if (pets.length === 0) {
     return (
-      <View style={styles.center}>
+      <View className="flex-1 items-center justify-center gap-md px-xl">
         <Ionicons name="location-outline" size={40} color={colors.textMuted} />
-        <Text style={styles.emptyText}>{t('map.noLocated')}</Text>
+        <Text className="text-center text-[13px] leading-[19px] text-text-muted">
+          {t('map.noLocated')}
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.wrap}>
+    <View className="flex-1">
       <PetMap
         pets={pets}
         me={me}
         highlightTop={searching ? HIGHLIGHT_TOP : 0}
         onSelectPet={(id) => setSelected(pets.find((p) => p._id === id) ?? null)}
-        style={styles.fill}
+        // PetMap nhận style chứ không nhận className: nó là component của
+        // mình nhưng prop đã khai kiểu StyleProp<ViewStyle> từ trước.
+        style={{ flex: 1 }}
       />
 
       {/* Dải số liệu nổi trên bản đồ, không chiếm chỗ của bản đồ */}
-      <View style={styles.counts} pointerEvents="none">
-        <Text style={styles.countText}>
+      <View
+        className="absolute left-md right-md top-md gap-0.5 rounded-md bg-surface px-md py-sm"
+        style={shadow.card}
+        pointerEvents="none"
+      >
+        <Text className="text-[12.5px] font-bold text-text">
           {me ? t('map.nearbyCount', { n: nearbyCount, km: NEAR_ME_KM }) : t('map.locatedCount', { n: data?.total ?? 0 })}
         </Text>
         {!!data?.withoutCoords && (
-          <Text style={styles.noteText}>{t('map.withoutCoords', { n: data.withoutCoords })}</Text>
+          <Text className="text-[11.5px] leading-4 text-text-muted">
+            {t('map.withoutCoords', { n: data.withoutCoords })}
+          </Text>
         )}
         {/* Nói thẳng là bản đồ đang thiếu tin, thay vì âm thầm vẽ 500 cái
             rồi để người dùng tưởng đó là tất cả. */}
-        {!!data?.capped && <Text style={styles.noteText}>{t('map.capped')}</Text>}
+        {!!data?.capped && (
+          <Text className="text-[11.5px] leading-4 text-text-muted">{t('map.capped')}</Text>
+        )}
         {/*
           Câu giải thích riêng cho bản đồ. Câu của danh sách ("kết quả sắp
           theo mức độ giống") đem sang đây thì vô nghĩa: trên bản đồ mọi chấm
           hiện cùng lúc, không ai thấy cái nào "đứng trên" cái nào.
         */}
         {searching && (
-          <Text style={styles.noteText}>
+          <Text className="text-[11.5px] leading-4 text-text-muted">
             {t('map.searchHint', { n: Math.min(HIGHLIGHT_TOP, pets.length) })}
           </Text>
         )}
-        {!!locationError && <Text style={styles.errorText}>{locationError}</Text>}
+        {!!locationError && (
+          <Text className="text-[11.5px] leading-4 text-danger">{locationError}</Text>
+        )}
       </View>
 
       {/*
@@ -230,7 +245,8 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
       */}
       {!selected && (
       <TouchableOpacity
-        style={styles.nearMe}
+        className="absolute bottom-md right-md min-h-12 flex-row items-center justify-center gap-sm rounded-full bg-primary px-lg"
+        style={shadow.card}
         onPress={goToMe}
         disabled={locating}
         activeOpacity={0.85}
@@ -240,7 +256,9 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
         ) : (
           <Ionicons name="navigate" size={16} color={colors.onPrimary} />
         )}
-        <Text style={styles.nearMeText}>{t(locating ? 'map.locating' : 'map.nearMe')}</Text>
+        <Text className="text-[13px] font-bold text-on-primary">
+          {t(locating ? 'map.locating' : 'map.nearMe')}
+        </Text>
       </TouchableOpacity>
       )}
 
@@ -266,14 +284,16 @@ function SelectedCard({
   onClose: () => void;
 }) {
   const { t } = useLanguage();
-  const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
+  const { colors, shadow } = useTheme();
   const status = statusStyle(pet, colors);
 
   return (
-    <View style={styles.card}>
+    <View
+      className="absolute bottom-md left-md right-md rounded-lg bg-surface p-md"
+      style={shadow.card}
+    >
       <TouchableOpacity
-        style={styles.cardClose}
+        className="absolute right-sm top-sm z-10 p-0.5"
         onPress={onClose}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         activeOpacity={0.7}
@@ -281,121 +301,47 @@ function SelectedCard({
         <Ionicons name="close" size={18} color={colors.textMuted} />
       </TouchableOpacity>
 
-      <View style={styles.cardRow}>
+      <View className="flex-row gap-md">
         {pet.image ? (
-          <Image source={{ uri: thumbnail(pet.image, THUMB_CARD) }} style={styles.cardImage} />
+          <Image
+            source={{ uri: thumbnail(pet.image, THUMB_CARD) }}
+            className="h-16 w-16 rounded-md bg-surface-tint"
+          />
         ) : (
-          <View style={[styles.cardImage, styles.cardImageEmpty]}>
+          <View className="h-16 w-16 items-center justify-center rounded-md bg-surface-tint">
             <Ionicons name="paw" size={22} color={colors.textMuted} />
           </View>
         )}
 
-        <View style={styles.cardBody}>
-          <View style={[styles.badge, { backgroundColor: status.color }]}>
-            <Text style={[styles.badgeText, { color: status.onColor }]}>{t(status.labelKey)}</Text>
+        <View className="flex-1 gap-1 pr-lg">
+          {/* Nền nhãn do statusStyle chọn lúc chạy -> phải style={{}} */}
+          <View
+            className="self-start rounded-full px-sm py-0.5"
+            style={{ backgroundColor: status.color }}
+          >
+            <Text
+              className="text-[10px] font-extrabold tracking-[0.3px]"
+              style={{ color: status.onColor }}
+            >
+              {t(status.labelKey)}
+            </Text>
           </View>
-          <Text style={styles.cardTitle} numberOfLines={1}>
+          <Text className="text-[14.5px] font-extrabold text-text" numberOfLines={1}>
             {pet.name || pet.breed}
           </Text>
-          <Text style={styles.cardArea} numberOfLines={1}>
+          <Text className="text-[12.5px] text-text-muted" numberOfLines={1}>
             {pet.area}
           </Text>
         </View>
       </View>
 
-      <TouchableOpacity style={styles.cardButton} onPress={() => onOpen(pet._id)} activeOpacity={0.85}>
-        <Text style={styles.cardButtonText}>{t('map.viewPost')}</Text>
+      <TouchableOpacity
+        className="mt-md min-h-11 items-center justify-center rounded-md bg-primary"
+        onPress={() => onOpen(pet._id)}
+        activeOpacity={0.85}
+      >
+        <Text className="text-[13.5px] font-bold text-on-primary">{t('map.viewPost')}</Text>
       </TouchableOpacity>
     </View>
   );
 }
-
-const themedStyles = createThemedStyles((colors, shadow) =>
-  StyleSheet.create({
-    wrap: { flex: 1 },
-    fill: { flex: 1 },
-    center: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.md,
-      paddingHorizontal: spacing.xl,
-    },
-    emptyText: {
-      fontSize: 13,
-      color: colors.textMuted,
-      textAlign: 'center',
-      lineHeight: 19,
-    },
-
-    counts: {
-      position: 'absolute',
-      top: spacing.md,
-      left: spacing.md,
-      right: spacing.md,
-      gap: 2,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      borderRadius: radius.md,
-      backgroundColor: colors.surface,
-      ...shadow.card,
-    },
-    countText: { fontSize: 12.5, fontWeight: '700', color: colors.text },
-    noteText: { fontSize: 11.5, color: colors.textMuted, lineHeight: 16 },
-    errorText: { fontSize: 11.5, color: colors.danger, lineHeight: 16 },
-
-    nearMe: {
-      position: 'absolute',
-      right: spacing.md,
-      bottom: spacing.md,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.sm,
-      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 46,
-      paddingHorizontal: spacing.lg,
-      borderRadius: radius.full,
-      backgroundColor: colors.primary,
-      ...shadow.card,
-    },
-    nearMeText: { fontSize: 13, fontWeight: '700', color: colors.onPrimary },
-
-    card: {
-      position: 'absolute',
-      left: spacing.md,
-      right: spacing.md,
-      bottom: spacing.md,
-      padding: spacing.md,
-      borderRadius: radius.lg,
-      backgroundColor: colors.surface,
-      ...shadow.card,
-    },
-    cardClose: { position: 'absolute', top: spacing.sm, right: spacing.sm, zIndex: 1, padding: 2 },
-    cardRow: { flexDirection: 'row', gap: spacing.md },
-    cardImage: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.surfaceTint },
-    cardImageEmpty: { alignItems: 'center', justifyContent: 'center' },
-    cardBody: { flex: 1, gap: 4, paddingRight: spacing.lg },
-
-    badge: {
-      alignSelf: 'flex-start',
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
-      borderRadius: radius.full,
-    },
-    badgeText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.3 },
-
-    cardTitle: { fontSize: 14.5, fontWeight: '800', color: colors.text },
-    cardArea: { fontSize: 12.5, color: colors.textMuted },
-
-    cardButton: {
-      marginTop: spacing.md,
-      minHeight: 44,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: radius.md,
-      backgroundColor: colors.primary,
-    },
-    cardButtonText: { fontSize: 13.5, fontWeight: '700', color: colors.onPrimary },
-  }),
-);

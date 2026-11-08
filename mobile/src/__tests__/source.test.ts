@@ -74,8 +74,17 @@ describe('vùng chạm tối thiểu 44pt', () => {
     const nac = /(?:min-)?h-(\d+)(?![\w[-])/.exec(lop);
     if (nac) return { cao: Number(nac[1]) * 4, co: true };
 
-    // py-3 — đệm trên dưới, cộng thêm phần chữ như nhánh style cũ
-    const dem = /py-(\d+)/.exec(lop);
+    /*
+     * py-3 hoặc p-2 — đệm trên dưới, cộng thêm phần chữ như nhánh style cũ.
+     *
+     * Đọc cả p- gộp để khớp với nhánh style: ở đó luật đã đọc `padding` khi
+     * không có `paddingVertical`. Hai bên đọc khác nhau thì cùng một nút viết
+     * hai kiểu lại cho ra hai kết luận khác nhau.
+     *
+     * Chấp nhận số lẻ (p-0.5): thang của Tailwind có nửa nấc, và nút đóng thẻ
+     * trên bản đồ dùng đúng nấc đó.
+     */
+    const dem = /p[yb]?-(\d+(?:\.\d+)?)/.exec(lop);
     if (dem) return { cao: Number(dem[1]) * 4 * 2 + 18, co: true };
 
     return { cao: 0, co: true };
@@ -133,6 +142,21 @@ describe('vùng chạm tối thiểu 44pt', () => {
 
         const lop = tuClassName(the);
 
+        /*
+         * Phần vùng chạm nới thêm bằng hitSlop.
+         *
+         * Tính ở đây chứ không tính sau, vì nút dùng className cũng được
+         * quyền nới bằng hitSlop y như nút dùng style. Trước đây phép tính
+         * này nằm dưới nhánh className nên nút nào chuyển sang className là
+         * mất sạch phần nới — báo oan một nút vốn đạt chuẩn.
+         */
+        let them = 0;
+        const slop = /hitSlop=\{(\{[^}]*\}|\d+)\}/.exec(the);
+        if (slop) {
+          const v = slop[1];
+          them = /^\d+$/.test(v) ? Number(v) * 2 : soTrong(v, 'top') + soTrong(v, 'bottom');
+        }
+
         const m = /styles\.(\w+)/.exec(the);
         if (!m) {
           /*
@@ -149,8 +173,12 @@ describe('vùng chạm tối thiểu 44pt', () => {
             thieu.push(`dòng ${i + 1}: không khai chiều cao ở đâu cả`);
           } else if (lop.cao === 0) {
             thieu.push(`dòng ${i + 1}: có className nhưng không lớp nào khai chiều cao`);
-          } else if (lop.cao < TOI_THIEU) {
-            thieu.push(`dòng ${i + 1} (className): ${lop.cao}pt`);
+          } else if (lop.cao + them < TOI_THIEU) {
+            thieu.push(
+              `dòng ${i + 1} (className): ${lop.cao}${them ? ` + ${them} hitSlop` : ''} = ${
+                lop.cao + them
+              }pt`,
+            );
           }
           return;
         }
@@ -193,15 +221,6 @@ describe('vùng chạm tối thiểu 44pt', () => {
          * canh chung khi chuyen sang NativeWind.
          */
         if (!cao) return;
-
-        let them = 0;
-        const slop = /hitSlop=\{(\{[^}]*\}|\d+)\}/.exec(the);
-        if (slop) {
-          const v = slop[1];
-          them = /^\d+$/.test(v)
-            ? Number(v) * 2
-            : soTrong(v, 'top') + soTrong(v, 'bottom');
-        }
 
         if (cao + them < TOI_THIEU) {
           thieu.push(`dòng ${i + 1} (${ten}): ${cao}${them ? ` + ${them} hitSlop` : ''} = ${cao + them}pt`);
