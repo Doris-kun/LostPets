@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -97,8 +98,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
    *
    * Không nối dòng này thì mọi lớp dark:... im lặng không bao giờ ăn, mà
    * Tailwind cũng chẳng báo gì — nhìn ra y như quên viết lớp đó.
+   *
+   * useLayoutEffect chứ không useEffect: nó chạy TRƯỚC khi màn hình được vẽ
+   * ra. Dùng useEffect thì khung hình đầu tiên vẽ bằng chế độ mặc định của
+   * ĐIỆN THOẠI rồi mới nhảy sang chế độ của app — máy để tối mà app để sáng
+   * thì thấy một nháy tối rồi mới sáng.
+   *
+   * Vẫn còn đúng một chỗ không cứu được: màn chào. Nó nằm trong Modal, mà
+   * hiệu ứng của component con chạy TRƯỚC của component cha, nên lúc nó gắn
+   * thì dòng này chưa chạy. Màn chào lấy màu thẳng từ useTheme() — xem ghi
+   * chú trong SplashScreen.tsx.
    */
-  useEffect(() => {
+  useLayoutEffect(() => {
     colorScheme.set(scheme);
   }, [scheme]);
 

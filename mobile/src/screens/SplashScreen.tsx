@@ -55,7 +55,7 @@ const DARK_HEIGHT = Math.round((DARK_WIDTH * 591) / 471);
 
 export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const { t } = useLanguage();
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
 
   /*
    * useRef chứ không useState: giá trị animation đổi 60 lần mỗi giây.
@@ -136,7 +136,25 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
         Mọi thứ xếp theo dòng chảy bình thường, không position: 'absolute' ở
         bất cứ đâu. Đơn giản thì không có chỗ cho lỗi vị trí chen vào.
       */}
-      <View className="flex-1 items-center justify-center bg-background">
+      {/*
+        MÀU Ở ĐÂY LẤY THẲNG TỪ useTheme(), KHÔNG QUA LỚP TIỆN ÍCH.
+
+        Màn chào vẽ ra ở khoảnh khắc đầu tiên của app, trước khi ThemeProvider
+        kịp báo cho NativeWind biết người dùng đang để chế độ nào — lựa chọn
+        đó nằm trong bộ nhớ máy nên phải đọc bất đồng bộ. Lúc đó NativeWind
+        còn lấy mặc định từ cài đặt của ĐIỆN THOẠI.
+
+        Máy để tối mà app để sáng thì màn chào ra nền tối, và vì nó nằm trong
+        Modal — một cây giao diện riêng ở tầng hệ điều hành — nên đã gắn rồi
+        thì không nhận lại giá trị mới nữa. Kẹt màu sai suốt thời gian hiện.
+
+        Các màn khác không dính vì chúng vẽ sau khi mọi thứ đã yên vị. Bảng
+        lọc cũng là Modal và vẫn đúng, vì nó chỉ mở khi người dùng bấm.
+      */}
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: colors.background }}
+      >
         {/* opacity do Animated giữ, đổi từng khung hình -> phải ở style */}
         <Animated.View className="items-center" style={{ opacity: contentOpacity }}>
           <Animated.Image
@@ -162,11 +180,15 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
           <Animated.View className="mt-lg items-center" style={{ opacity: tailOpacity }}>
             {/* Hai gạch nhỏ lấy đúng cặp màu hai nửa của logo */}
             <View className="flex-row gap-1.5">
-              <View className="h-1 w-[26px] rounded-sm bg-orange" />
-              <View className="h-1 w-[26px] rounded-sm bg-teal" />
+              {/* Hai màu này giống nhau ở cả hai chế độ nên class hoá cũng
+                  đúng, nhưng để cùng một lối với phần trên cho khỏi rối. */}
+              <View className="h-1 w-[26px] rounded-sm" style={{ backgroundColor: colors.orange }} />
+              <View className="h-1 w-[26px] rounded-sm" style={{ backgroundColor: colors.teal }} />
             </View>
 
-            <Text className="mt-md text-[14px] text-text-muted">{t('brand.slogan')}</Text>
+            <Text className="mt-md text-[14px]" style={{ color: colors.textMuted }}>
+              {t('brand.slogan')}
+            </Text>
           </Animated.View>
         </Animated.View>
       </View>
