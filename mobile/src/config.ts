@@ -24,15 +24,12 @@ const USE_PRODUCTION = true;
 /*
  * Địa chỉ back-end đã deploy.
  *
- * CHƯA ĐIỀN. Cách tìm:
- *   - Hỏi bạn cùng nhóm, hoặc
- *   - Vào dashboard.render.com, mở dịch vụ back-end, copy dòng địa chỉ ở đầu trang
- *
- * Lưu ý: https://lostpets-1.onrender.com KHÔNG phải địa chỉ này — đó là bản
- * web Vue đã deploy, không phải API.
- *
  * Địa chỉ dưới đây lấy từ chính gói mã của web đang chạy, không phải đoán:
  * đã gọi thử /pets và nó trả về dữ liệu thật.
+ *
+ * Lưu ý: https://lostpets-1.onrender.com KHÔNG phải địa chỉ này — đó là bản
+ * web Vue đã deploy, không phải API. Hai địa chỉ giống nhau tới mức dễ dán
+ * lẫn, mà dán lẫn thì mọi lời gọi trả về trang HTML chứ không phải JSON.
  *
  * CẢNH BÁO: đây là database THẬT dùng cho demo, khác hẳn database ở máy.
  * Bật USE_PRODUCTION lên rồi xoá tin là xoá trên dữ liệu thật.
@@ -52,7 +49,8 @@ export const WEB_URL = 'https://lostpets-1.onrender.com';
  * nguồn của mọi app dùng Google — phần bí mật (client secret) chỉ back-end
  * giữ. Nên để thẳng ở đây là đúng, không cần giấu.
  *
- * CHƯA ĐIỀN. Cách lấy, vào console.cloud.google.com > APIs & Services >
+ * Hai mã dưới đây đã điền và đã đăng nhập thật được trên máy Android. Nếu
+ * sau này phải tạo lại, vào console.cloud.google.com > APIs & Services >
  * Credentials > Create OAuth client ID, tạo HAI cái:
  *
  *   iOS      — nhập Bundle ID:  com.lostpets.app
