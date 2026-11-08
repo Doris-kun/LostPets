@@ -156,6 +156,27 @@ export default {
   me: () => http.get<User>('/auth/me'),
 
   /*
+   * Mã thiết bị để nhận thông báo đẩy.
+   *
+   * CHƯA CÓ ở back-end lúc viết hai hàm này, nên chúng trả 404. Phía gọi
+   * (src/notify.ts) đã nuốt lỗi sẵn, nên app chạy bình thường trong lúc chờ —
+   * và có đường rồi thì không phải sửa gì ở đây cả.
+   *
+   * Xem phần HỢP ĐỒNG VỚI BACK-END trong src/notify.ts để biết back-end cần
+   * lưu gì và gửi thông báo ra sao.
+   */
+  savePushToken: (data: { token: string; platform: string }) =>
+    http.post<{ ok: boolean }>('/auth/push-token', data),
+
+  /*
+   * Xoá mã khi đăng xuất. Dùng axios kiểu { data } vì DELETE mang thân yêu cầu
+   * không phải cách viết thường gặp — axios đòi khai riêng, không nhận tham số
+   * thứ hai như post.
+   */
+  removePushToken: (token: string) =>
+    http.delete<{ ok: boolean }>('/auth/push-token', { data: { token } }),
+
+  /*
    * Đăng nhập bằng Google / Facebook.
    *
    * App KHÔNG tự xác minh gì cả: nó chỉ lấy được một tờ giấy chứng nhận từ

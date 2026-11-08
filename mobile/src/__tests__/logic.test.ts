@@ -8,6 +8,7 @@ import report from '../report';
 import nudge from '../nudge';
 import claim from '../claim';
 import { THUMB_CARD, thumbnail } from '../image';
+import { getPushToken, readTarget } from '../notify';
 import { words, type WordKey } from '../word';
 import type { Filters } from '../types';
 
@@ -365,5 +366,109 @@ describe('claim.list — tin của máy này', () => {
     await report.mark('xyz');
     await AsyncStorage.setItem('map:me', '[10,106]');
     await expect(claim.list()).resolves.toEqual(['abc']);
+  });
+});
+
+/*
+ * Đọc phần data của một thông báo đẩy.
+ *
+ * Đây là chỗ DUY NHẤT trong app đọc dữ liệu do back-end gửi xuống và biến nó
+ * thành một lệnh điều hướng. Back-end gửi gì thì app nhận nấy, nên mọi dạng
+ * dữ liệu méo đều phải ra null — chứ không phải ra một lệnh navigate() với tên
+ * màn không tồn tại, thứ làm app sập ngay trên máy người dùng.
+ */
+describe('đọc màn hình cần mở từ thông báo đẩy', () => {
+  it('tin cụ thể: nhận đúng mã tin', () => {
+    expect(readTarget({ screen: 'Detail', id: 'abc123' })).toEqual({
+      screen: 'Detail',
+      id: 'abc123',
+    });
+  });
+
+  it('tin nhắn trợ lý: không cần mã', () => {
+    expect(readTarget({ screen: 'Chat' })).toEqual({ screen: 'Chat' });
+  });
+
+  /*
+   * Thông báo không kèm data là chuyện bình thường, không phải lỗi: một câu
+   * nhắc chung chung thì chạm vào chỉ cần mở app lên là đủ.
+   */
+  it('không có data: mở app, không nhảy màn nào', () => {
+    expect(readTarget(undefined)).toBeNull();
+    expect(readTarget(null)).toBeNull();
+    expect(readTarget({})).toBeNull();
+  });
+
+  // Mấy dạng méo dưới đây đều có thật khi hai bên hiểu khác nhau về hợp đồng.
+  it('data méo: ra null chứ không ra lệnh nhảy màn', () => {
+    expect(readTarget('Detail')).toBeNull();
+    expect(readTarget(42)).toBeNull();
+    expect(readTarget([{ screen: 'Detail', id: 'abc' }])).toBeNull();
+  });
+
+  /*
+   * Thiếu mã tin là trường hợp nguy hiểm nhất, vì tên màn thì ĐÚNG.
+   * navigate("Detail") mà không có id thì màn chi tiết gọi API với id rỗng,
+   * nhận 404, rồi hiện ra "Không tìm thấy tin" — người dùng tưởng tin đã bị
+   * xoá, trong khi lỗi nằm ở phần data của thông báo.
+   */
+  it('tên màn đúng nhưng thiếu hoặc sai mã tin: ra null', () => {
+    expect(readTarget({ screen: 'Detail' })).toBeNull();
+    expect(readTarget({ screen: 'Detail', id: '' })).toBeNull();
+    expect(readTarget({ screen: 'Detail', id: 123 })).toBeNull();
+    expect(readTarget({ screen: 'Detail', id: null })).toBeNull();
+  });
+
+  // Back-end thêm một loại thông báo mới mà app chưa biết: thà không nhảy đâu
+  // cả còn hơn gọi navigate() với một tên màn không có trong app.
+  it('tên màn app chưa biết: ra null', () => {
+    expect(readTarget({ screen: 'Admin' })).toBeNull();
+    expect(readTarget({ screen: 'Profile', id: 'abc' })).toBeNull();
+  });
+});
+
+/*
+ * Lấy mã thiết bị.
+ *
+ * Ba đường chặn ở đầu hàm đáng kiểm vì cả ba đều là chuyện xảy ra hằng ngày
+ * lúc làm việc, và cả ba PHẢI im lặng bỏ qua chứ không được ném lỗi: máy ảo
+ * không có dịch vụ đẩy, Expo Go không mang khoá đẩy, người dùng bấm Không
+ * cho phép.
+ */
+describe('lấy mã thiết bị để nhận thông báo', () => {
+  it('máy ảo: trả lý do "simulator", không ném lỗi', async () => {
+    const Device = require('expo-device');
+    Device.isDevice = false;
+
+    await expect(getPushToken()).resolves.toEqual({ ok: false, reason: 'simulator' });
+
+    Device.isDevice = true;
+  });
+
+  it('người dùng từ chối: trả lý do "denied"', async () => {
+    const Notifications = require('expo-notifications');
+    Notifications.getPermissionsAsync.mockResolvedValueOnce({ status: 'undetermined' });
+    Notifications.requestPermissionsAsync.mockResolvedValueOnce({ status: 'denied' });
+
+    await expect(getPushToken()).resolves.toEqual({ ok: false, reason: 'denied' });
+  });
+
+  /*
+   * Bước lấy mã GỌI MẠNG tới máy chủ Expo. Mất mạng hay Wi-Fi trường chặn thì
+   * nó ném — và nếu hàm để lỗi đó nổi lên thì useEffect bên App.tsx nhận một
+   * promise bị từ chối, hiện ra thành cảnh báo đỏ lúc đăng nhập.
+   */
+  it('máy chủ Expo không trả lời: trả lý do "failed", không ném lỗi', async () => {
+    const Notifications = require('expo-notifications');
+    Notifications.getExpoPushTokenAsync.mockRejectedValueOnce(new Error('mat mang'));
+
+    await expect(getPushToken()).resolves.toEqual({ ok: false, reason: 'failed' });
+  });
+
+  it('bình thường: trả về mã', async () => {
+    await expect(getPushToken()).resolves.toEqual({
+      ok: true,
+      token: 'ExponentPushToken[test]',
+    });
   });
 });

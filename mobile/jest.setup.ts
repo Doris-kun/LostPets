@@ -42,6 +42,63 @@ jest.mock('expo-web-browser', () => ({
   maybeCompleteAuthSession: jest.fn(),
 }));
 
+/*
+ * Thông báo đẩy.
+ *
+ * Nạp gói thật thì nó đòi phần native của Android/iOS ngay dòng import, và
+ * src/notify.ts gọi setNotificationHandler ở ngoài hàm — tức là ngay lúc nạp
+ * file. Nên thiếu bản giả này là MỌI bài test nào chạm tới notify.ts đều nổ
+ * trước khi kịp chạy câu lệnh đầu tiên.
+ *
+ * Mặc định đặt ở trạng thái "máy thật, đã cho phép, lấy mã thành công" vì đó
+ * là đường đi bình thường. Bài test nào cần thử đường hỏng thì tự ghi đè —
+ * object trả về ở đây là object thường nên gán lại được.
+ */
+jest.mock('expo-notifications', () => ({
+  /*
+   * __esModule: true là BẮT BUỘC, không phải để cho đẹp.
+   *
+   * src/notify.ts viết `import * as Notifications`. Thiếu cờ này thì Babel coi
+   * bản giả là module kiểu cũ và SAO RA MỘT OBJECT MỚI cho notify.ts dùng —
+   * nên bài test ghi đè object gốc là ghi đè vào chỗ không ai đọc. Có cờ thì
+   * hai bên cùng trỏ vào một object.
+   */
+  __esModule: true,
+  AndroidImportance: { HIGH: 4 },
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn(async () => null),
+  getPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  requestPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  getExpoPushTokenAsync: jest.fn(async () => ({ data: 'ExponentPushToken[test]' })),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  getLastNotificationResponseAsync: jest.fn(async () => null),
+}));
+
+// isDevice: máy thật hay máy ảo. Máy ảo không có dịch vụ đẩy của Google/Apple.
+jest.mock('expo-device', () => ({ __esModule: true, isDevice: true }));
+
+/*
+ * Cấu hình app lúc chạy.
+ *
+ * Bản giả của jest-expo không mang theo phần "extra" của app.json, nên
+ * Constants.expoConfig.extra.eas.projectId là undefined — và src/notify.ts coi
+ * đó là "chưa khai mã dự án" rồi dừng ngay, khiến mọi bài test về thông báo đo
+ * phải nhánh sai.
+ *
+ * Đọc THẲNG app.json chứ không viết lại mã dự án vào đây: viết lại là có hai
+ * nơi cùng giữ một giá trị, mà bài test lại là nơi ít ai nghĩ tới lúc đổi.
+ *
+ * appOwnership để null = app thật, không phải Expo Go. Đó là trạng thái cần
+ * cho phần lớn bài test; bài nào muốn thử Expo Go thì tự ghi đè.
+ */
+jest.mock('expo-constants', () => {
+  const app = require('./app.json');
+  return {
+    __esModule: true,
+    default: { expoConfig: app.expo, appOwnership: null },
+  };
+});
+
 // WebView là một cửa sổ trình duyệt thật của hệ điều hành. Trong test nó chỉ
 // cần là một khối rỗng có đúng tên, để biết nó đã được vẽ ra hay chưa.
 jest.mock('react-native-webview', () => ({ WebView: 'WebView' }));

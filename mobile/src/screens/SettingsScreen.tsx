@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/auth';
+import { forgetPushToken } from '../notify';
 import type { MainTabParamList, RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
@@ -39,7 +40,26 @@ export default function SettingsScreen({ navigation }: Props) {
   const handleLogout = () => {
     Alert.alert(t('auth.welcome', { name: user?.name || '' }), t('auth.logoutConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('auth.logout'), style: 'destructive', onPress: logout },
+      {
+        text: t('auth.logout'),
+        style: 'destructive',
+        onPress: () => {
+          /*
+           * Gỡ máy này khỏi danh sách nhận thông báo TRƯỚC khi đăng xuất.
+           *
+           * Thứ tự quan trọng: đường /auth/push-token đòi đăng nhập, mà
+           * logout() xoá thẻ đăng nhập ngay lập tức. Gọi sau thì lệnh xoá nhận
+           * 401 và mã vẫn nằm lại trên server — người dùng tiếp theo đăng nhập
+           * trên cùng máy này sẽ nhận thông báo của người trước.
+           *
+           * KHÔNG chờ nó xong mới đăng xuất: bấm Đăng xuất mà màn hình đứng
+           * im chờ mạng là cảm giác app treo. Đăng xuất ngay, lệnh xoá chạy
+           * tiếp phía sau — forgetPushToken đã nuốt sẵn mọi lỗi mạng.
+           */
+          forgetPushToken();
+          logout();
+        },
+      },
     ]);
   };
 

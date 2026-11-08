@@ -29,6 +29,13 @@
     "plugins": [
       "expo-status-bar",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#1F5C7A"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/logo-full.png",

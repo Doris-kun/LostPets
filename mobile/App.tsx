@@ -6,16 +6,21 @@
  */
 import './global.css';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+  useNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ExpoSplashScreen from 'expo-splash-screen';
-import { AuthProvider } from './src/context/auth';
+import { AuthProvider, useAuth } from './src/context/auth';
 import { LanguageProvider, useLanguage } from './src/context/language';
 import { ThemeProvider, useTheme } from './src/context/theme';
 import HomeScreen from './src/screens/HomeScreen';
@@ -28,6 +33,12 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import PrivacyScreen from './src/screens/PrivacyScreen';
 import SplashScreen from './src/screens/SplashScreen';
+import {
+  onNotificationTap,
+  readTapThatOpenedApp,
+  registerPushToken,
+  type PushTarget,
+} from './src/notify';
 import type { MainTabParamList, RootStackParamList } from './src/types';
 
 /*
@@ -113,6 +124,87 @@ function Root({
   onSplashFinish: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { isLoggedIn } = useAuth();
+
+  /*
+   * Tay nam điều hướng, dùng được từ NGOÀI cây màn hình.
+   *
+   * navigation.navigate() chỉ gọi được bên trong một màn hình. Nhưng cú chạm
+   * vào thông báo tới từ hệ điều hành, không từ màn nào cả — nên phải có tay
+   * nắm này mới nhảy màn được.
+   */
+  const navRef = useNavigationContainerRef<RootStackParamList>();
+
+  /*
+   * Đi tới màn mà thông báo trỏ đến.
+   *
+   * isReady() là bắt buộc: lúc app vừa mở từ một cú chạm, cây màn hình có thể
+   * chưa dựng xong. Gọi navigate() lúc đó thì react-navigation bỏ qua trong im
+   * lặng — thông báo coi như không có tác dụng, mà không có lỗi nào để lần.
+   */
+  const goToTarget = useCallback(
+    (target: PushTarget) => {
+      if (!navRef.isReady()) return;
+
+      if (target.screen === 'Detail') navRef.navigate('Detail', { id: target.id });
+      else navRef.navigate('Chat');
+    },
+    [navRef],
+  );
+
+  /*
+   * Xin quyền và gửi mã lên back-end — CHỈ khi đã đăng nhập.
+   *
+   * Hỏi quyền lúc app vừa mở là cách nhanh nhất để bị bấm Không cho phép: lúc
+   * đó người ta chưa biết mình sẽ gửi gì. Mà trên iOS, từ chối một lần là hộp
+   * thoại không bao giờ hiện lại.
+   *
+   * Khách vãng lai không đăng ký: back-end lưu mã theo user, không có user thì
+   * không có chỗ lưu.
+   */
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    /*
+     * .catch là cần, không phải cho chắc.
+     *
+     * registerPushToken đã nuốt lỗi ở hai chỗ gọi mạng, nhưng ba lời gọi xin
+     * quyền và dựng kênh Android thì vẫn ném được — máy bị chính sách doanh
+     * nghiệp chặn thông báo chẳng hạn. Để promise bị từ chối mà không ai bắt
+     * thì React Native hiện ra một cảnh báo đỏ ngay sau khi đăng nhập, đúng
+     * lúc người dùng vừa làm xong một việc và tưởng mình làm sai.
+     *
+     * Không có gì để dọn nên cũng không cần cờ huỷ: hàm này không đặt state,
+     * nên nó chạy xong sau khi component tháo cũng không ảnh hưởng gì.
+     */
+    registerPushToken().catch(() => {});
+  }, [isLoggedIn]);
+
+  /*
+   * Hai đường một thông báo tới được tay người dùng, phải đón cả hai:
+   *
+   *   1. App đang chạy (mở hoặc nằm nền) -> onNotificationTap
+   *   2. App đang TẮT HẲN, chạm vào thông báo làm app mở lên -> cú chạm xảy ra
+   *      trước khi người lắng nghe kịp đăng ký, nên phải hỏi lại bằng
+   *      readTapThatOpenedApp
+   *
+   * Thiếu đường 2 là lỗi hay gặp nhất: app mở ra ở trang chủ, người dùng không
+   * hiểu vì sao chạm vào tin mà không ra tin.
+   */
+  const daXuLyLuotMo = useRef(false);
+
+  useEffect(() => {
+    const thoi = onNotificationTap(goToTarget);
+
+    if (!daXuLyLuotMo.current) {
+      daXuLyLuotMo.current = true;
+      readTapThatOpenedApp().then((target) => {
+        if (target) goToTarget(target);
+      });
+    }
+
+    return thoi;
+  }, [goToTarget]);
 
   return (
     /*
@@ -128,6 +220,7 @@ function Root({
     */
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <NavigationContainer
+            ref={navRef}
             /*
              * Báo cho react-navigation biết đang ở chế độ nào. Thiếu dòng này
              * thì nền MẶC ĐỊNH của nó vẫn trắng, nên lúc trượt từ màn này sang
