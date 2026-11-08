@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -14,8 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage, type LanguageValue } from '../context/language';
 import type { Filters } from '../types';
-import { radius, spacing } from '../theme';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
+import { spacing } from '../theme';
+import { useTheme } from '../context/theme';
 
 /*
  * Bảng lọc trượt lên từ đáy màn hình.
@@ -118,7 +117,6 @@ export default function PetFilters({
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   /*
    * Bản nháp riêng, tách khỏi bộ lọc đang chạy.
@@ -205,24 +203,29 @@ export default function PetFilters({
         đặt thêm là đẩy hai lần, bảng lọc bay lên lưng chừng màn hình.
       */}
       <KeyboardAvoidingView
-        style={styles.root}
+        className="flex-1 justify-end"
+        // scrim không class hoá được: lưu dạng rgba() đã kèm sẵn độ trong suốt
+        style={{ backgroundColor: colors.scrim }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <Animated.View
-          style={[
-            styles.sheet,
-            { paddingBottom: spacing.lg + insets.bottom, transform: [{ translateY }] },
-          ]}
+          className="rounded-t-[24px] bg-background px-lg pt-lg"
+          /*
+            Hai thứ này buộc phải ở style, không class hoá được:
+              paddingBottom — cộng với vạch Home của máy, mỗi máy một số
+              transform    — giá trị hoạt ảnh do Animated giữ, đổi từng khung hình
+          */
+          style={{ paddingBottom: spacing.lg + insets.bottom, transform: [{ translateY }] }}
           // Đo chiều cao thật để biết phải đẩy xuống bao xa thì khuất hẳn.
           onLayout={(event) => {
             sheetHeight.current = event.nativeEvent.layout.height;
           }}
         >
-          <View style={styles.titleRow}>
-            <Text style={styles.sheetTitle}>{t('filter.title')}</Text>
+          <View className="mb-lg flex-row items-center justify-between">
+            <Text className="text-[18px] font-extrabold text-text">{t('filter.title')}</Text>
 
             <TouchableOpacity
-              style={styles.closeButton}
+              className="h-8 w-8 items-center justify-center rounded-full bg-surface"
               onPress={() => slideDownThen(onClose)}
               activeOpacity={0.7}
               accessibilityLabel={t('filter.close')}
@@ -244,7 +247,7 @@ export default function PetFilters({
 
           <Field label={t('filter.areaLabel')}>
             <TextInput
-              style={styles.input}
+              className="rounded-md border-[1.5px] border-border-strong bg-background px-md py-[11px] text-[14px] text-text"
               value={draft.area}
               onChangeText={(next) => setField('area', next)}
               placeholder={t('filter.areaPh')}
@@ -263,7 +266,9 @@ export default function PetFilters({
 
           <Field label={t('filter.sort')}>
             {searching ? (
-              <Text style={styles.locked}>{t('search.sortLocked')}</Text>
+              <Text className="py-1.5 text-[12.5px] leading-[18px] text-text-muted">
+                {t('search.sortLocked')}
+              </Text>
             ) : (
               <ChipGroup
                 options={SORT_OPTIONS}
@@ -273,7 +278,7 @@ export default function PetFilters({
             )}
           </Field>
 
-          <View style={styles.actions}>
+          <View className="mt-xs flex-row gap-md">
             {/*
               Nhãn là "Đóng" / "Exit" nhưng việc nó làm là XOÁ SẠCH BỘ LỌC rồi
               mới đóng — đưa mọi mục về Tất cả / Mọi lúc / Mới nhất và xoá ô
@@ -283,19 +288,19 @@ export default function PetFilters({
               Muốn đóng mà GIỮ nguyên bộ lọc thì dùng nút ✕ ở góc trên.
             */}
             <TouchableOpacity
-              style={[styles.button, styles.buttonGhost]}
+              className="min-h-11 flex-1 items-center justify-center rounded-md border-2 border-border-strong"
               onPress={() => slideDownThen(() => onApply(EMPTY_FILTERS))}
               activeOpacity={0.8}
             >
-              <Text style={styles.buttonGhostText}>{t('filter.clear')}</Text>
+              <Text className="text-[14px] font-bold text-text-soft">{t('filter.clear')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, styles.buttonPrimary]}
+              className="min-h-11 flex-1 items-center justify-center rounded-md bg-primary"
               onPress={() => slideDownThen(() => onApply(draft))}
               activeOpacity={0.85}
             >
-              <Text style={styles.buttonPrimaryText}>{t('filter.apply')}</Text>
+              <Text className="text-[14px] font-bold text-on-primary">{t('filter.apply')}</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -306,11 +311,9 @@ export default function PetFilters({
 
 // Một nhóm: nhãn chữ nhỏ in hoa, bên dưới là nội dung.
 function Field({ label, children }: { label: string; children: ReactNode }) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
   return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+    <View className="mb-lg">
+      <Text className="mb-sm text-[11px] font-bold tracking-[0.5px] text-text-muted">{label}</Text>
       {children}
     </View>
   );
@@ -328,11 +331,9 @@ function ChipGroup({
   onSelect: (value: string) => void;
 }) {
   const { t } = useLanguage();
-  const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   return (
-    <View style={styles.chipRow}>
+    <View className="flex-row flex-wrap gap-sm">
       {options.map((option) => {
         const active = selected === option.value;
         return (
@@ -344,9 +345,13 @@ function ChipGroup({
             // nằm sát nhau theo hàng ngang, nới ngang là vùng chạm chồng lên
             // nhau, bấm chip này ra chip kia.
             hitSlop={{ top: 5, bottom: 5 }}
-            style={[styles.chip, active && styles.chipActive]}
+            className={`rounded-full border-[1.5px] px-lg py-2 ${
+              active ? 'border-primary bg-primary' : 'border-border-strong'
+            }`}
           >
-            <Text style={[styles.chipText, active && styles.chipTextActive]}>
+            <Text
+              className={`text-[13px] font-bold ${active ? 'text-on-primary' : 'text-text-soft'}`}
+            >
               {t(option.labelKey)}
             </Text>
           </TouchableOpacity>
@@ -355,86 +360,3 @@ function ChipGroup({
     </View>
   );
 }
-
-const themedStyles = createThemedStyles((colors, shadow) =>
-  StyleSheet.create({
-  root: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: colors.scrim,
-  },
-
-  sheet: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-  },
-
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
-  },
-  sheetTitle: { fontSize: 18, fontWeight: '800', color: colors.text },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.full,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  field: { marginBottom: spacing.lg },
-
-  // Câu thay cho hàng nút sắp xếp khi đang tìm kiếm. Chữ mờ vì nó là lời
-  // giải thích, không phải thứ bấm được.
-  locked: { fontSize: 12.5, color: colors.textMuted, lineHeight: 18, paddingVertical: 6 },
-  fieldLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 0.5,
-    marginBottom: spacing.sm,
-  },
-
-  chipRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
-  chip: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 9,
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-  },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
-  chipTextActive: { color: colors.onPrimary },
-
-  input: {
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 11,
-    fontSize: 14,
-    color: colors.text,
-    backgroundColor: colors.background,
-  },
-
-  actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xs },
-  button: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonGhost: { borderWidth: 2, borderColor: colors.borderStrong },
-  buttonGhostText: { color: colors.textSoft, fontWeight: '700', fontSize: 14 },
-  buttonPrimary: { backgroundColor: colors.primary },
-  buttonPrimaryText: { color: colors.onPrimary, fontWeight: '700', fontSize: 14 },
-  }),
-);
