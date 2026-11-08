@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api';
 import type { AdminReport } from '../types';
 import { THUMB_CARD, thumbnail } from '../image';
 import { timeAgo } from './PetCard';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing, statusStyle } from '../theme';
+import { useTheme } from '../context/theme';
+import { statusStyle } from '../theme';
 
 /*
  * Danh sách báo cáo tin xấu, nằm trên đầu trang quản trị.
@@ -34,7 +34,6 @@ export interface AdminReportsProps {
 export default function AdminReports({ onOpenPet, onPetDeleted }: AdminReportsProps) {
   const { t, lang } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   const [reports, setReports] = useState<AdminReport[]>([]);
   const [total, setTotal] = useState(0);
@@ -139,16 +138,18 @@ export default function AdminReports({ onOpenPet, onPetDeleted }: AdminReportsPr
     ]);
   };
 
-  if (loading) return <ActivityIndicator style={styles.loading} color={colors.teal} />;
+  if (loading) return <ActivityIndicator className="my-lg" color={colors.teal} />;
   if (reports.length === 0) return null;
 
   return (
-    <View style={styles.wrap}>
-      <View style={styles.head}>
+    <View className="mb-xl">
+      <View className="mb-md flex-row items-center gap-sm">
         <Ionicons name="flag" size={15} color={colors.danger} />
-        <Text style={styles.title}>{t('admin.reports')}</Text>
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>{total}</Text>
+        <Text className="text-[13px] font-extrabold tracking-[0.3px] text-text">
+          {t('admin.reports')}
+        </Text>
+        <View className="min-w-[22px] items-center rounded-full bg-danger px-1.5 py-px">
+          <Text className="text-[11px] font-extrabold text-white">{total}</Text>
         </View>
       </View>
 
@@ -165,8 +166,12 @@ export default function AdminReports({ onOpenPet, onPetDeleted }: AdminReportsPr
       ))}
 
       {page < pages && (
-        <TouchableOpacity style={styles.more} onPress={loadMore} activeOpacity={0.8}>
-          <Text style={styles.moreText}>{t('admin.reportMore')}</Text>
+        <TouchableOpacity
+          className="min-h-11 items-center justify-center"
+          onPress={loadMore}
+          activeOpacity={0.8}
+        >
+          <Text className="text-[13px] font-bold text-primary">{t('admin.reportMore')}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -190,20 +195,24 @@ function ReportCard({
 }) {
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   const { pet } = report;
   const status = pet ? statusStyle(pet, colors) : null;
 
   return (
-    <View style={styles.card}>
-      <View style={styles.cardHead}>
-        <Text style={styles.reason}>{t(`report.reason.${report.reason}`)}</Text>
-        <Text style={styles.time}>{timeAgo(report.date, t, lang)}</Text>
+    /* Viền đỏ nhạt: nhìn lướt là tách hẳn khỏi danh sách tin bên dưới */
+    <View className="mb-md rounded-md border-[1.5px] border-warn-border bg-warn-bg p-md">
+      <View className="flex-row items-center justify-between">
+        <Text className="flex-1 text-[13.5px] font-extrabold text-warn-text">
+          {t(`report.reason.${report.reason}`)}
+        </Text>
+        <Text className="text-[11px] text-text-muted">{timeAgo(report.date, t, lang)}</Text>
       </View>
 
       {/* Người báo cáo không bắt buộc ghi gì, nên phần lớn báo cáo không có */}
-      {!!report.note && <Text style={styles.note}>{report.note}</Text>}
+      {!!report.note && (
+        <Text className="mt-sm text-[12.5px] leading-[18px] text-text">{report.note}</Text>
+      )}
 
       {/*
         pet === null nghĩa là tin đã bị xoá mà báo cáo còn nằm lại. Nói thẳng
@@ -211,30 +220,40 @@ function ReportCard({
       */}
       {pet ? (
         <TouchableOpacity
-          style={styles.petRow}
+          className="mt-md min-h-[60px] flex-row items-center gap-md rounded-md bg-surface p-sm"
           onPress={() => onOpen(pet._id)}
           activeOpacity={0.7}
         >
           {pet.image ? (
-            <Image source={{ uri: thumbnail(pet.image, THUMB_CARD) }} style={styles.petImage} />
+            <Image
+              source={{ uri: thumbnail(pet.image, THUMB_CARD) }}
+              className="h-11 w-11 rounded-sm bg-surface-tint"
+            />
           ) : (
-            <View style={[styles.petImage, styles.petImageEmpty]}>
+            <View className="h-11 w-11 items-center justify-center rounded-sm bg-surface-tint">
               <Ionicons name="paw" size={18} color={colors.textMuted} />
             </View>
           )}
 
-          <View style={styles.petBody}>
+          <View className="flex-1 gap-0.5">
             {status && (
-              <View style={[styles.badge, { backgroundColor: status.color }]}>
-                <Text style={[styles.badgeText, { color: status.onColor }]}>
+              /* Nền nhãn do statusStyle chọn lúc chạy -> phải style={{}} */
+              <View
+                className="self-start rounded-full px-1.5 py-px"
+                style={{ backgroundColor: status.color }}
+              >
+                <Text
+                  className="text-[9px] font-extrabold tracking-[0.3px]"
+                  style={{ color: status.onColor }}
+                >
                   {t(status.labelKey)}
                 </Text>
               </View>
             )}
-            <Text style={styles.petTitle} numberOfLines={1}>
+            <Text className="text-[13px] font-bold text-text" numberOfLines={1}>
               {pet.breed} · {pet.color}
             </Text>
-            <Text style={styles.petArea} numberOfLines={1}>
+            <Text className="text-[11.5px] text-text-muted" numberOfLines={1}>
               {pet.area}
               {pet.postId ? ` · ${pet.postId}` : ''}
             </Text>
@@ -243,30 +262,36 @@ function ReportCard({
           <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
         </TouchableOpacity>
       ) : (
-        <View style={styles.goneRow}>
+        <View className="mt-md flex-row items-center gap-sm">
           <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
-          <Text style={styles.goneText}>{t('admin.reportPetGone')}</Text>
+          <Text className="text-[12.5px] italic text-text-muted">{t('admin.reportPetGone')}</Text>
         </View>
       )}
 
-      <View style={styles.actions}>
+      <View className="mt-md flex-row gap-sm">
         <TouchableOpacity
-          style={[styles.action, busy && styles.disabled]}
+          className={`min-h-11 flex-1 items-center justify-center rounded-md border-[1.5px] border-border-strong bg-surface ${
+            busy ? 'opacity-45' : ''
+          }`}
           onPress={onDismiss}
           disabled={busy}
           activeOpacity={0.8}
         >
-          <Text style={styles.actionText}>{t('admin.reportDismiss')}</Text>
+          <Text className="text-[13px] font-bold text-text-soft">
+            {t('admin.reportDismiss')}
+          </Text>
         </TouchableOpacity>
 
         {pet && (
           <TouchableOpacity
-            style={[styles.action, styles.actionDanger, busy && styles.disabled]}
+            className={`min-h-11 flex-1 items-center justify-center rounded-md border-[1.5px] border-danger bg-surface ${
+              busy ? 'opacity-45' : ''
+            }`}
             onPress={onDeletePost}
             disabled={busy}
             activeOpacity={0.8}
           >
-            <Text style={[styles.actionText, styles.actionDangerText]}>
+            <Text className="text-[13px] font-bold text-danger">
               {t('admin.reportDeletePost')}
             </Text>
           </TouchableOpacity>
@@ -275,90 +300,3 @@ function ReportCard({
     </View>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    loading: { marginVertical: spacing.lg },
-    wrap: { marginBottom: spacing.xl },
-
-    head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
-    title: { fontSize: 13, fontWeight: '800', color: colors.text, letterSpacing: 0.3 },
-    countBadge: {
-      minWidth: 22,
-      paddingHorizontal: 6,
-      paddingVertical: 1,
-      borderRadius: radius.full,
-      backgroundColor: colors.danger,
-      alignItems: 'center',
-    },
-    countText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
-
-    card: {
-      padding: spacing.md,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      // Viền đỏ nhạt: nhìn lướt là tách hẳn khỏi danh sách tin bên dưới
-      borderColor: colors.warnBorder,
-      backgroundColor: colors.warnBg,
-      marginBottom: spacing.md,
-    },
-    cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    reason: { flex: 1, fontSize: 13.5, fontWeight: '800', color: colors.warnText },
-    time: { fontSize: 11, color: colors.textMuted },
-
-    note: { fontSize: 12.5, color: colors.text, lineHeight: 18, marginTop: spacing.sm },
-
-    petRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 60,
-      padding: spacing.sm,
-      borderRadius: radius.md,
-      backgroundColor: colors.surface,
-      marginTop: spacing.md,
-    },
-    petImage: { width: 44, height: 44, borderRadius: radius.sm, backgroundColor: colors.surfaceTint },
-    petImageEmpty: { alignItems: 'center', justifyContent: 'center' },
-    petBody: { flex: 1, gap: 2 },
-
-    badge: {
-      alignSelf: 'flex-start',
-      paddingHorizontal: 6,
-      paddingVertical: 1,
-      borderRadius: radius.full,
-    },
-    badgeText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.3 },
-
-    petTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
-    petArea: { fontSize: 11.5, color: colors.textMuted },
-
-    goneRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      marginTop: spacing.md,
-    },
-    goneText: { fontSize: 12.5, color: colors.textMuted, fontStyle: 'italic' },
-
-    actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-    action: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 44,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-      backgroundColor: colors.surface,
-    },
-    actionDanger: { borderColor: colors.danger },
-    actionText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
-    actionDangerText: { color: colors.danger },
-    disabled: { opacity: 0.45 },
-
-    more: { alignItems: 'center', justifyContent: 'center', minHeight: 44 },
-    moreText: { fontSize: 13, fontWeight: '700', color: colors.primary },
-  }),
-);

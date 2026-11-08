@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import * as AuthSession from 'expo-auth-session';
@@ -14,8 +14,7 @@ import {
 } from '../config';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing } from '../theme';
+import { useTheme } from '../context/theme';
 
 /*
  * Đăng nhập bằng Google hoặc Facebook. Tương đương SocialLogin.vue bên web.
@@ -53,7 +52,6 @@ export default function SocialLogin() {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const { login } = useAuth();
-  const styles = useThemedStyles(themedStyles);
 
   /*
    * Nhà cung cấp nào đang bật ở back-end.
@@ -274,13 +272,13 @@ export default function SocialLogin() {
    */
   if (Constants.appOwnership === 'expo') {
     return (
-      <View style={styles.wrap}>
-        <View style={styles.divider}>
-          <View style={styles.line} />
-          <Text style={styles.dividerText}>{t('social.or')}</Text>
-          <View style={styles.line} />
+      <View className="mt-xl">
+        <View className="mb-lg flex-row items-center gap-md">
+          <View className="h-px flex-1 bg-border" />
+          <Text className="text-[12px] text-text-muted">{t('social.or')}</Text>
+          <View className="h-px flex-1 bg-border" />
         </View>
-        <Text style={styles.note}>{t('social.expoGo')}</Text>
+        <Text className="text-[12.5px] leading-[18px] text-text-muted">{t('social.expoGo')}</Text>
       </View>
     );
   }
@@ -289,17 +287,18 @@ export default function SocialLogin() {
   if (!dungDuocGoogle && !providers.facebook) return null;
 
   return (
-    <View style={styles.wrap}>
+    <View className="mt-xl">
       {/* Dòng kẻ có chữ "hoặc" ở giữa, ngăn cách với phần đăng nhập bằng email */}
-      <View style={styles.divider}>
-        <View style={styles.line} />
-        <Text style={styles.dividerText}>{t('social.or')}</Text>
-        <View style={styles.line} />
+      <View className="mb-lg flex-row items-center gap-md">
+        <View className="h-px flex-1 bg-border" />
+        <Text className="text-[12px] text-text-muted">{t('social.or')}</Text>
+        <View className="h-px flex-1 bg-border" />
       </View>
 
       {dungDuocGoogle && (
+        /* Nền trắng, viền xám: đúng bản sáng trong hướng dẫn nút của Google */
         <TouchableOpacity
-          style={[styles.button, styles.googleButton]}
+          className="mb-md min-h-12 flex-row items-center justify-center gap-sm rounded-md border-[1.5px] border-google-border bg-google-bg px-lg"
           onPress={() => start('google')}
           disabled={busy !== null}
           activeOpacity={0.8}
@@ -309,15 +308,17 @@ export default function SocialLogin() {
           ) : (
             <Ionicons name="logo-google" size={19} color={colors.googleIcon} />
           )}
-          <Text style={[styles.buttonText, styles.googleText]}>
+          <Text className="text-[15px] font-bold text-on-google">
             {t(busy === 'google' ? 'social.working' : 'social.google')}
           </Text>
         </TouchableOpacity>
       )}
 
       {providers.facebook && (
+        /* Facebook thì ngược lại: nền đặc một màu, không viền. Nút của họ
+           xưa nay vẫn vậy, và đặt cạnh nút trắng của Google thì tách bạch hẳn. */
         <TouchableOpacity
-          style={[styles.button, styles.facebookButton]}
+          className="mb-md min-h-12 flex-row items-center justify-center gap-sm rounded-md bg-facebook-bg px-lg"
           onPress={() => start('facebook')}
           disabled={busy !== null}
           activeOpacity={0.8}
@@ -327,74 +328,18 @@ export default function SocialLogin() {
           ) : (
             <Ionicons name="logo-facebook" size={19} color={colors.onFacebook} />
           )}
-          <Text style={[styles.buttonText, styles.facebookText]}>
+          <Text className="text-[15px] font-bold text-on-facebook">
             {t(busy === 'facebook' ? 'social.working' : 'social.facebook')}
           </Text>
         </TouchableOpacity>
       )}
 
-      {!!error && <Text style={styles.error}>{error}</Text>}
-      {!!detail && <Text style={styles.detail}>{detail}</Text>}
+      {!!error && <Text className="mt-xs text-[12.5px] text-danger">{error}</Text>}
+      {/* Nguyên văn câu máy chủ chê. Chữ nhỏ và mờ vì nó dành cho người sửa
+          lỗi, không phải cho người dùng thường. */}
+      {!!detail && (
+        <Text className="mt-0.5 text-[11.5px] leading-4 text-text-muted">{detail}</Text>
+      )}
     </View>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    wrap: { marginTop: spacing.xl },
-
-    divider: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      marginBottom: spacing.lg,
-    },
-    line: { flex: 1, height: 1, backgroundColor: colors.border },
-    dividerText: { fontSize: 12, color: colors.textMuted },
-
-    /*
-     * Phần dùng chung của hai nút: hình dáng, không màu mè.
-     *
-     * Trước đây hai nút dùng chung cả màu — cùng nền trong suốt, cùng viền
-     * xám, cùng chữ xám nhạt. Nhìn ra hai ô trống giống hệt nhau, phải đọc
-     * chữ mới biết cái nào là cái nào. Màu chính là thứ giúp nhận ra nút,
-     * nên giờ mỗi bên giữ đúng màu của mình.
-     */
-    button: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.sm,
-      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 50,
-      paddingHorizontal: spacing.lg,
-      borderRadius: radius.md,
-      marginBottom: spacing.md,
-    },
-
-    // Nền trắng, viền xám: đúng bản sáng trong hướng dẫn nút của Google
-    googleButton: {
-      backgroundColor: colors.googleBg,
-      borderWidth: 1.5,
-      borderColor: colors.googleBorder,
-    },
-
-    // Facebook thì ngược lại: nền đặc một màu, không viền. Nút của họ xưa
-    // nay vẫn vậy, và đặt cạnh nút trắng của Google thì tách bạch hẳn.
-    facebookButton: { backgroundColor: colors.facebookBg },
-
-    buttonText: { fontSize: 15, fontWeight: '700' },
-    googleText: { color: colors.onGoogle },
-    facebookText: { color: colors.onFacebook },
-
-    // Dòng báo đang chạy trong Expo Go. Không phải lỗi của người dùng nên
-    // để màu chữ mờ, không dùng màu đỏ cảnh báo.
-    note: { fontSize: 12.5, lineHeight: 18, color: colors.textMuted },
-
-    error: { fontSize: 12.5, color: colors.danger, marginTop: spacing.xs },
-
-    // Nguyên văn câu máy chủ chê. Chữ nhỏ và mờ vì nó dành cho người sửa
-    // lỗi, không phải cho người dùng thường.
-    detail: { fontSize: 11.5, lineHeight: 16, color: colors.textMuted, marginTop: 2 },
-  }),
-);
