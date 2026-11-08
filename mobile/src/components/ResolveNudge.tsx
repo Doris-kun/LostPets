@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import api, { errorStatus } from '../api';
@@ -7,8 +7,7 @@ import type { Pet } from '../types';
 import claim from '../claim';
 import nudge from '../nudge';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing } from '../theme';
+import { useTheme } from '../context/theme';
 
 /*
  * Dải hỏi "tìm được chưa?", nằm trên đầu Trang chủ.
@@ -40,7 +39,6 @@ const DAY_MS = 86400000;
 export default function ResolveNudge() {
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   const [pet, setPet] = useState<Pet | null>(null);
   const [saving, setSaving] = useState(false);
@@ -130,14 +128,21 @@ export default function ResolveNudge() {
   };
 
   return (
-    <View style={styles.bar}>
-      <Text style={styles.question}>
+    /*
+     * Nền xanh ngọc nhạt: đây là một câu hỏi thân thiện, không phải cảnh báo.
+     * Đỏ để dành cho báo cáo tin xấu, vàng cho việc dọn dữ liệu.
+     */
+    <View className="mx-lg mb-md gap-md rounded-md border-[1.5px] border-teal-text bg-contact-bg p-md">
+      <Text className="text-[13px] leading-[19px] text-text">
         {t(pet.type === 'found' ? 'nudge.askFound' : 'nudge.askLost', { name, days })}
       </Text>
 
-      <View style={styles.actions}>
+      <View className="flex-row items-center gap-sm">
         <TouchableOpacity
-          style={[styles.yes, saving && styles.disabled]}
+          // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+          className={`min-h-11 flex-1 items-center justify-center rounded-full bg-found ${
+            saving ? 'opacity-45' : ''
+          }`}
           onPress={markFound}
           disabled={saving}
           activeOpacity={0.85}
@@ -145,23 +150,25 @@ export default function ResolveNudge() {
           {saving ? (
             <ActivityIndicator size="small" color={colors.onPrimary} />
           ) : (
-            <Text style={styles.yesText}>{t('nudge.yes')}</Text>
+            <Text className="text-[13.5px] font-extrabold text-on-found">{t('nudge.yes')}</Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.no, saving && styles.disabled]}
+          className={`min-h-11 flex-1 items-center justify-center rounded-full border-[1.5px] border-teal-text ${
+            saving ? 'opacity-45' : ''
+          }`}
           onPress={() => snooze(SNOOZE_NO_DAYS)}
           disabled={saving}
           activeOpacity={0.7}
         >
-          <Text style={styles.noText}>{t('nudge.no')}</Text>
+          <Text className="text-[13.5px] font-bold text-teal-text">{t('nudge.no')}</Text>
         </TouchableOpacity>
 
         {/* Dấu X = "để sau", chỉ im một ngày. Nhãn trợ năng nói rõ vì một cái
             X trơ trọi thì trình đọc màn hình chỉ đọc ra "nút". */}
         <TouchableOpacity
-          style={[styles.later, saving && styles.disabled]}
+          className={`min-h-11 w-9 items-center justify-center ${saving ? 'opacity-45' : ''}`}
           onPress={() => snooze(SNOOZE_LATER_DAYS)}
           disabled={saving}
           accessibilityLabel={t('nudge.later')}
@@ -174,51 +181,3 @@ export default function ResolveNudge() {
     </View>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    /*
-     * Nền xanh ngọc nhạt: đây là một câu hỏi thân thiện, không phải cảnh báo.
-     * Đỏ để dành cho báo cáo tin xấu, vàng cho việc dọn dữ liệu.
-     */
-    bar: {
-      marginHorizontal: spacing.lg,
-      marginBottom: spacing.md,
-      padding: spacing.md,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.tealText,
-      backgroundColor: colors.contactBg,
-      gap: spacing.md,
-    },
-    question: { fontSize: 13, lineHeight: 19, color: colors.text },
-
-    actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-
-    yes: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 44,
-      borderRadius: radius.full,
-      backgroundColor: colors.found,
-    },
-    yesText: { fontSize: 13.5, fontWeight: '800', color: colors.onFound },
-
-    no: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 44,
-      borderRadius: radius.full,
-      borderWidth: 1.5,
-      borderColor: colors.tealText,
-    },
-    noText: { fontSize: 13.5, fontWeight: '700', color: colors.tealText },
-
-    later: { alignItems: 'center', justifyContent: 'center', minHeight: 44, width: 36 },
-
-    disabled: { opacity: 0.45 },
-  }),
-);

@@ -51,9 +51,20 @@ describe('vùng chạm tối thiểu 44pt', () => {
    * Thang của Tailwind: 1 đơn vị = 4px, nên h-11 là 44px.
    */
   const tuClassName = (the: string): { cao: number; co: boolean } => {
-    const m = /className="([^"]*)"/.exec(the);
+    /*
+     * Hai cách viết className, phải đọc được cả hai:
+     *
+     *   className="..."        cố định
+     *   className={`...`}      ghép chuỗi, để bật tắt lớp theo trạng thái
+     *
+     * Dạng thứ hai là cách viết bình thường của NativeWind khi nút có trạng
+     * thái mờ đi lúc đang gửi. Chỉ đọc dạng đầu thì mọi nút như vậy đều bị
+     * báo "không khai chiều cao ở đâu cả" — báo oan, và báo oan nhiều lần
+     * thì người ta bắt đầu bỏ qua cả những lần báo đúng.
+     */
+    const m = /className=(?:"([^"]*)"|\{`([\s\S]*?)`\})/.exec(the);
     if (!m) return { cao: 0, co: false };
-    const lop = m[1];
+    const lop = m[1] ?? m[2];
 
     // min-h-[44px] hoặc h-[44px] — khai thẳng số điểm ảnh
     const thang = /(?:min-)?h-\[(\d+)px\]/.exec(lop);
