@@ -17,6 +17,7 @@
 // Leaflet tải từ CDN. Ghim số phiên bản — để trống thì bản mới ra là app đổi
 // theo mà mình không biết, hỏng lúc nào không hay.
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { darkColors, lightColors } from './theme';
 
 const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4';
 
@@ -217,8 +218,19 @@ export function mapHtml({ pick = false, interactive = false, isDark = false }: M
 <style>
   html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
 
-  /* Nền lúc ô bản đồ chưa tải xong, để không loé một khung trắng ở chế độ tối */
-  body { background: ${isDark ? '#16242F' : '#EDF6F8'}; }
+  /*
+   * Nền lúc ô bản đồ chưa tải xong, để không loé một khung trắng ở chế độ tối.
+   *
+   * Lấy từ src/theme.ts chứ KHÔNG chép mã màu vào đây. Trước đó hai mã này
+   * viết cứng — đúng bằng darkColors.surface và lightColors.surfaceTint — nên
+   * đổi bảng màu là nền bản đồ lệch khỏi phần còn lại của app mà không ai
+   * thấy, vì nó chỉ loé lên đúng lúc ô bản đồ đang tải.
+   *
+   * Trang này là HTML chạy trong WebView nên lớp tiện ích của NativeWind
+   * không với tới được. Nhưng MÀU thì vẫn chung một nguồn được, và đó mới là
+   * thứ đáng giữ cho khớp.
+   */
+  body { background: ${isDark ? darkColors.surface : lightColors.surfaceTint}; }
 
   /*
    * Chấm chỉ điểm ĐỨNG YÊN GIỮA MÀN HÌNH, không nằm trong bản đồ.

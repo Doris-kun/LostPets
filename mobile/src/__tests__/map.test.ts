@@ -1,4 +1,5 @@
 import { formatDistanceKm, distanceKm, directionsUrl, hasPoint, mapHtml, AREA_RADIUS_M, DEFAULT_CENTER } from '../map';
+import { darkColors, lightColors } from '../theme';
 
 /*
  * Bộ test cho src/map.ts.
@@ -211,5 +212,32 @@ describe('formatDistanceKm — khoảng cách thành chữ', () => {
   it('số không hợp lệ thì trả chuỗi rỗng', () => {
     expect(formatDistanceKm(Number.NaN)).toBe('');
     expect(formatDistanceKm(Number.POSITIVE_INFINITY)).toBe('');
+  });
+});
+
+/*
+ * Trang Leaflet nằm trong WebView nên lớp tiện ích của NativeWind không với
+ * tới được — nó là HTML thật chạy trong trình duyệt, không phải React Native.
+ *
+ * Nhưng MÀU thì vẫn phải chung một nguồn. Trước đây hai mã màu nền viết cứng
+ * ngay trong chuỗi HTML, đúng bằng giá trị bên theme.ts. Đổi bảng màu là nền
+ * bản đồ lệch khỏi phần còn lại của app mà không ai thấy, vì nó chỉ loé lên
+ * đúng lúc ô bản đồ đang tải.
+ */
+describe('màu nền bản đồ lấy từ bảng màu, không chép tay', () => {
+  const nen = (html: string) => /body \{ background: ([^;]+);/.exec(html)?.[1];
+
+  it('chế độ sáng dùng đúng surfaceTint', () => {
+    expect(nen(mapHtml({ isDark: false }))).toBe(lightColors.surfaceTint);
+  });
+
+  it('chế độ tối dùng đúng surface', () => {
+    expect(nen(mapHtml({ isDark: true }))).toBe(darkColors.surface);
+  });
+
+  // Hai chế độ phải ra hai màu khác nhau. Nếu ai đó lỡ trỏ cả hai về cùng
+  // một token thì nền bản đồ ngừng đổi theo chế độ, mà test trên vẫn xanh.
+  it('hai chế độ ra hai màu khác nhau', () => {
+    expect(nen(mapHtml({ isDark: false }))).not.toBe(nen(mapHtml({ isDark: true })));
   });
 });
