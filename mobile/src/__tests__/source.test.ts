@@ -50,6 +50,24 @@ describe('vùng chạm tối thiểu 44pt', () => {
    *
    * Thang của Tailwind: 1 đơn vị = 4px, nên h-11 là 44px.
    */
+  /*
+   * Thang khoảng cách riêng của dự án, phải khớp với tailwind.config.js.
+   *
+   * Có một bài test khác canh cho tailwind.config.js khỏi lệch với
+   * src/theme.ts, nhưng bảng này là bản thứ ba — nên cũng kiểm luôn ở dưới.
+   */
+  const SPACING: Record<string, number> = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 };
+
+  /** Đổi phần sau dấu gạch của một lớp đệm thành số điểm ảnh. */
+  const doDem = (v: string): number => {
+    // py-[7px] -> 7
+    if (v.startsWith('[')) return Number(v.replace(/[[\]px]/g, '')) || 0;
+    // p-md -> 12
+    if (SPACING[v] !== undefined) return SPACING[v];
+    // py-3 -> 12, theo thang 4px của Tailwind
+    return Number(v) * 4;
+  };
+
   const tuClassName = (the: string): { cao: number; co: boolean } => {
     /*
      * Hai cách viết className, phải đọc được cả hai:
@@ -75,17 +93,23 @@ describe('vùng chạm tối thiểu 44pt', () => {
     if (nac) return { cao: Number(nac[1]) * 4, co: true };
 
     /*
-     * py-3 hoặc p-2 — đệm trên dưới, cộng thêm phần chữ như nhánh style cũ.
+     * Đệm trên dưới, cộng thêm phần chữ như nhánh style cũ.
+     *
+     * Phải đọc được BA cách viết, vì cả ba đều có thật trong dự án:
+     *
+     *   py-3        thang 4px của Tailwind      -> 12
+     *   p-md        từ vựng riêng của dự án     -> 12
+     *   py-[7px]    giá trị tự do               -> 7
+     *
+     * Chỉ đọc cách đầu thì mọi nút viết bằng hai cách sau đều bị báo "không
+     * lớp nào khai chiều cao" — báo oan, mà p-md lại là cách viết thường gặp
+     * nhất vì nó khớp với tên token bên src/theme.ts.
      *
      * Đọc cả p- gộp để khớp với nhánh style: ở đó luật đã đọc `padding` khi
-     * không có `paddingVertical`. Hai bên đọc khác nhau thì cùng một nút viết
-     * hai kiểu lại cho ra hai kết luận khác nhau.
-     *
-     * Chấp nhận số lẻ (p-0.5): thang của Tailwind có nửa nấc, và nút đóng thẻ
-     * trên bản đồ dùng đúng nấc đó.
+     * không có `paddingVertical`.
      */
-    const dem = /p[yb]?-(\d+(?:\.\d+)?)/.exec(lop);
-    if (dem) return { cao: Number(dem[1]) * 4 * 2 + 18, co: true };
+    const dem = /p[yb]?-(\[[^\]]+\]|[a-z]+|\d+(?:\.\d+)?)/.exec(lop);
+    if (dem) return { cao: doDem(dem[1]) * 2 + 18, co: true };
 
     return { cao: 0, co: true };
   };

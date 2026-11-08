@@ -1,4 +1,4 @@
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
@@ -6,8 +6,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/auth';
 import type { MainTabParamList, RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing } from '../theme';
+import { useTheme } from '../context/theme';
+import { spacing } from '../theme';
 
 /*
  * Cài đặt — nơi gom mọi thứ "chỉnh một lần rồi thôi".
@@ -34,7 +34,6 @@ export default function SettingsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { t, lang, setLang } = useLanguage();
   const { colors, isDark, scheme, setScheme } = useTheme();
-  const styles = useThemedStyles(themedStyles);
   const { user, isLoggedIn, isAdmin, logout } = useAuth();
 
   const handleLogout = () => {
@@ -46,37 +45,44 @@ export default function SettingsScreen({ navigation }: Props) {
 
   return (
     <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + spacing.lg, paddingBottom: spacing.xl },
-      ]}
+      className="flex-1 bg-surface"
+      // contentContainerStyle chưa nhận className. insets.top là số đo của
+      // máy nên dù sao cũng phải tính lúc chạy.
+      contentContainerStyle={{
+        paddingHorizontal: spacing.lg,
+        paddingTop: insets.top + spacing.lg,
+        paddingBottom: spacing.xl,
+      }}
     >
-      <Text style={styles.screenTitle}>{t('tab.settings')}</Text>
+      <Text className="mb-lg text-2xl font-extrabold tracking-[-0.4px] text-text">
+        {t('tab.settings')}
+      </Text>
 
       {/* ---- Tài khoản ---- */}
-      <Text style={styles.sectionLabel}>{t('settings.account')}</Text>
+      <Text className="mt-lg mb-sm text-[11px] font-bold tracking-[0.6px] text-text-muted">{t('settings.account')}</Text>
 
       {isLoggedIn ? (
-        <View style={styles.card}>
-          <View style={styles.accountRow}>
+        <View className="rounded-lg bg-background p-lg">
+          <View className="flex-row items-center">
             {/* Vòng tròn chữ cái đầu, thay cho ảnh đại diện mà app chưa có */}
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
+            <View className="h-[46px] w-[46px] items-center justify-center rounded-full bg-primary">
+              <Text className="text-[19px] font-extrabold text-on-primary">
                 {(user?.name || '?').trim().charAt(0).toUpperCase()}
               </Text>
             </View>
 
-            <View style={styles.accountText}>
-              <Text style={styles.accountName}>{user?.name}</Text>
-              <Text style={styles.accountEmail} numberOfLines={1}>
+            <View className="ml-md flex-1">
+              <Text className="text-base font-extrabold text-text">{user?.name}</Text>
+              <Text className="mt-0.5 text-[12.5px] text-text-muted" numberOfLines={1}>
                 {user?.email}
               </Text>
             </View>
 
             {isAdmin && (
-              <View style={styles.adminTag}>
-                <Text style={styles.adminTagText}>ADMIN</Text>
+              <View className="rounded-full bg-surface-tint px-2 py-[3px]">
+                <Text className="text-[10px] font-extrabold tracking-[0.5px] text-teal-text">
+                  ADMIN
+                </Text>
               </View>
             )}
           </View>
@@ -87,44 +93,51 @@ export default function SettingsScreen({ navigation }: Props) {
             vào được.
           */}
           {isAdmin && (
+            /* Cùng khuôn với nút Đăng xuất để hai nút xếp thẳng hàng */
             <TouchableOpacity
-              style={styles.adminButton}
+              className="mt-lg min-h-11 items-center justify-center rounded-md border-[1.5px] border-primary py-3"
               onPress={() => navigation.navigate('Admin')}
               activeOpacity={0.8}
             >
-              <Text style={styles.adminButtonText}>{t('admin.link')}</Text>
+              <Text className="text-[14px] font-bold text-primary">{t('admin.link')}</Text>
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
-            <Text style={styles.logoutText}>{t('auth.logout')}</Text>
+          <TouchableOpacity
+            className="mt-lg min-h-11 items-center justify-center rounded-md border-[1.5px] border-border-strong py-3"
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <Text className="text-[14px] font-bold text-danger">{t('auth.logout')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={styles.card}>
-          <Text style={styles.guestTitle}>{t('auth.guestTitle')}</Text>
-          <Text style={styles.guestText}>{t('auth.guestText')}</Text>
+        <View className="rounded-lg bg-background p-lg">
+          <Text className="text-[15px] font-extrabold text-text">{t('auth.guestTitle')}</Text>
+          <Text className="mt-1.5 text-[13px] leading-[19px] text-text-muted">
+            {t('auth.guestText')}
+          </Text>
 
           <TouchableOpacity
-            style={styles.primaryButton}
+            className="mt-lg min-h-11 items-center justify-center rounded-md bg-primary"
             onPress={() => navigation.navigate('Auth')}
             activeOpacity={0.85}
           >
-            <Text style={styles.primaryButtonText}>{t('auth.login')}</Text>
+            <Text className="text-[14px] font-bold text-on-primary">{t('auth.login')}</Text>
           </TouchableOpacity>
         </View>
       )}
 
       {/* ---- Hiển thị ---- */}
-      <Text style={styles.sectionLabel}>{t('settings.display')}</Text>
+      <Text className="mt-lg mb-sm text-[11px] font-bold tracking-[0.6px] text-text-muted">{t('settings.display')}</Text>
 
-      <View style={styles.card}>
+      <View className="rounded-lg bg-background p-lg">
         <Row label={t('settings.language')}>
           <Choice label="Tiếng Việt" active={lang === 'vi'} onPress={() => setLang('vi')} />
           <Choice label="English" active={lang === 'en'} onPress={() => setLang('en')} />
         </Row>
 
-        <View style={styles.divider} />
+        <View className="my-md h-px bg-border-light" />
 
         <Row label={t('settings.theme')}>
           <Choice
@@ -148,29 +161,32 @@ export default function SettingsScreen({ navigation }: Props) {
         Đặt vào Cài đặt thành hẳn một mục có tên và có mô tả thì người cần giúp
         đỡ sẽ tìm thấy — vì Cài đặt chính là chỗ người ta mở ra khi bí.
       */}
-      <Text style={styles.sectionLabel}>{t('settings.help')}</Text>
+      <Text className="mt-lg mb-sm text-[11px] font-bold tracking-[0.6px] text-text-muted">{t('settings.help')}</Text>
 
-      <View style={styles.card}>
-        <View style={styles.helpHead}>
+      <View className="rounded-lg bg-background p-lg">
+        <View className="flex-row items-center gap-md">
           <Ionicons name="headset-outline" size={22} color={colors.primary} />
-          <View style={styles.helpHeadText}>
-            <Text style={styles.helpTitle}>{t('settings.helpTitle')}</Text>
-            <Text style={styles.helpSub}>{t('settings.helpSub')}</Text>
+          <View className="flex-1">
+            <Text className="text-[15px] font-extrabold text-text">{t('settings.helpTitle')}</Text>
+            <Text className="mt-px text-[12px] text-text-muted">{t('settings.helpSub')}</Text>
           </View>
         </View>
 
+        {/* Khung con lồng trong thẻ — nền nhạt hơn để tách khỏi phần tiêu đề */}
         <TouchableOpacity
-          style={styles.helpBox}
+          /* min-h-[60px] = ảnh tròn 36 + đệm 24. Khai ra vì luật 44pt ước
+             lượng chiều cao theo cỡ CHỮ, mà thứ cao nhất ở đây là cái ảnh. */
+          className="mt-md min-h-[60px] flex-row items-center gap-md rounded-md bg-surface-tint p-md"
           onPress={() => navigation.navigate('Chat')}
           activeOpacity={0.8}
         >
-          <View style={styles.helpAvatar}>
+          <View className="h-9 w-9 items-center justify-center rounded-full bg-ai-accent">
             <Ionicons name="chatbubble-ellipses" size={18} color={colors.onPrimary} />
           </View>
 
-          <View style={styles.helpBoxText}>
-            <Text style={styles.helpOnline}>{t('settings.helpOnline')}</Text>
-            <Text style={styles.helpHours}>{t('settings.helpHours')}</Text>
+          <View className="flex-1">
+            <Text className="text-[14px] font-bold text-text">{t('settings.helpOnline')}</Text>
+            <Text className="mt-px text-[11px] text-text-muted">{t('settings.helpHours')}</Text>
           </View>
 
           {/*
@@ -180,15 +196,15 @@ export default function SettingsScreen({ navigation }: Props) {
             Android, máy sẽ lấy phông thay thế và vẽ ra ký tự lạ. Phông icon
             thì đóng gói sẵn bên trong app nên máy nào cũng vẽ giống nhau.
           */}
-          <View style={styles.helpActionRow}>
-            <Text style={styles.helpAction}>{t('settings.helpAction')}</Text>
+          <View className="flex-row items-center gap-0.5">
+            <Text className="text-[13px] font-bold text-primary">{t('settings.helpAction')}</Text>
             <Ionicons name="chevron-forward" size={14} color={colors.primary} />
           </View>
         </TouchableOpacity>
       </View>
 
       {/* ---- Giới thiệu ---- */}
-      <Text style={styles.sectionLabel}>{t('settings.about')}</Text>
+      <Text className="mt-lg mb-sm text-[11px] font-bold tracking-[0.6px] text-text-muted">{t('settings.about')}</Text>
 
       {/*
         Chính sách bảo mật đặt ngay trên khối giới thiệu.
@@ -199,20 +215,27 @@ export default function SettingsScreen({ navigation }: Props) {
         công khai mới cho chuyển ứng dụng Facebook sang chế độ Live.
       */}
       <TouchableOpacity
-        style={[styles.card, styles.privacyRow]}
+        // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+        className="mb-md min-h-[52px] flex-row items-center gap-md rounded-lg bg-background px-md"
         onPress={() => navigation.navigate('Privacy')}
         activeOpacity={0.7}
       >
         <Ionicons name="shield-checkmark-outline" size={20} color={colors.tealText} />
-        <Text style={styles.privacyTitle}>{t('settings.privacy')}</Text>
+        {/* flex-1 ở chính dòng chữ, không thì mũi tên nằm sát chữ */}
+        <Text className="flex-1 text-[14px] font-bold text-text">{t('settings.privacy')}</Text>
         <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
       </TouchableOpacity>
 
-      <View style={[styles.card, styles.aboutCard]}>
-        <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.aboutLogo} />
-        <Text style={styles.aboutName}>LostPets</Text>
-        <Text style={styles.aboutSlogan}>{t('brand.slogan')}</Text>
-        <Text style={styles.aboutVersion}>
+      <View className="items-center rounded-lg bg-background px-lg py-xl">
+        {/* resizeMode không có lớp tiện ích tương đương */}
+        <Image
+          source={isDark ? LOGO_MARK_DARK : LOGO_MARK}
+          className="h-14 w-14"
+          style={{ resizeMode: 'contain' }}
+        />
+        <Text className="mt-sm text-[17px] font-extrabold text-text">LostPets</Text>
+        <Text className="mt-[3px] text-[12.5px] text-text-muted">{t('brand.slogan')}</Text>
+        <Text className="mt-md text-[11.5px] text-text-muted">
           {t('settings.version')} {APP_VERSION}
         </Text>
       </View>
@@ -222,180 +245,30 @@ export default function SettingsScreen({ navigation }: Props) {
 
 // Một dòng cài đặt: nhãn bên trái, các lựa chọn bên phải.
 function Row({ label, children }: { label: string; children: ReactNode }) {
-  const styles = useThemedStyles(themedStyles);
-
   return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <View style={styles.rowChoices}>{children}</View>
+    <View className="flex-row items-center justify-between">
+      <Text className="text-[14px] font-semibold text-text">{label}</Text>
+      <View className="flex-row gap-sm">{children}</View>
     </View>
   );
 }
 
 function Choice({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const styles = useThemedStyles(themedStyles);
-
   return (
     <TouchableOpacity
-      style={[styles.choice, active && styles.choiceActive]}
+      className={`rounded-full border-[1.5px] px-md py-[7px] ${
+        active ? 'border-primary bg-primary' : 'border-border-strong'
+      }`}
       onPress={onPress}
       // Nút cao 30, nới 7 trên 7 dưới cho đủ 44 (chỉ nới dọc)
       hitSlop={{ top: 7, bottom: 7 }}
       activeOpacity={0.8}
     >
-      <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{label}</Text>
+      <Text
+        className={`text-[12.5px] font-bold ${active ? 'text-on-primary' : 'text-text-soft'}`}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.surface },
-    content: { paddingHorizontal: spacing.lg },
-
-    screenTitle: {
-      fontSize: 24,
-      fontWeight: '800',
-      color: colors.text,
-      letterSpacing: -0.4,
-      marginBottom: spacing.lg,
-    },
-
-    /* ---- Trung tâm trợ giúp ---- */
-    helpHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-    helpHeadText: { flex: 1 },
-    helpTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
-    helpSub: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
-
-    // Khung con lồng bên trong thẻ — nền nhạt hơn để tách khỏi phần tiêu đề
-    helpBox: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      marginTop: spacing.md,
-      padding: spacing.md,
-      borderRadius: radius.md,
-      backgroundColor: colors.surfaceTint,
-    },
-    helpAvatar: {
-      width: 36,
-      height: 36,
-      borderRadius: radius.full,
-      backgroundColor: colors.aiAccent,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    helpBoxText: { flex: 1 },
-    helpOnline: { fontSize: 14, fontWeight: '700', color: colors.text },
-    helpHours: { fontSize: 11, color: colors.textMuted, marginTop: 1 },
-    helpActionRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-    helpAction: { fontSize: 13, fontWeight: '700', color: colors.primary },
-
-    sectionLabel: {
-      fontSize: 11,
-      fontWeight: '700',
-      color: colors.textMuted,
-      letterSpacing: 0.6,
-      marginTop: spacing.lg,
-      marginBottom: spacing.sm,
-    },
-
-    card: {
-      backgroundColor: colors.background,
-      borderRadius: radius.lg,
-      padding: spacing.lg,
-    },
-
-    accountRow: { flexDirection: 'row', alignItems: 'center' },
-    avatar: {
-      width: 46,
-      height: 46,
-      borderRadius: radius.full,
-      backgroundColor: colors.primary,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    avatarText: { color: colors.onPrimary, fontSize: 19, fontWeight: '800' },
-    accountText: { flex: 1, marginLeft: spacing.md },
-    accountName: { fontSize: 16, fontWeight: '800', color: colors.text },
-    accountEmail: { fontSize: 12.5, color: colors.textMuted, marginTop: 2 },
-    adminTag: {
-      backgroundColor: colors.surfaceTint,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-      borderRadius: radius.full,
-    },
-    adminTagText: { fontSize: 10, fontWeight: '800', color: colors.tealText, letterSpacing: 0.5 },
-
-    logoutButton: {
-      minHeight: 44,
-      justifyContent: 'center',
-      marginTop: spacing.lg,
-      paddingVertical: 12,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-      alignItems: 'center',
-    },
-    logoutText: { fontSize: 14, fontWeight: '700', color: colors.danger },
-
-    // Cùng khuôn với nút Đăng xuất để hai nút xếp thẳng hàng, chỉ khác màu chữ
-    adminButton: {
-      minHeight: 44,
-      justifyContent: 'center',
-      marginTop: spacing.lg,
-      paddingVertical: 12,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.primary,
-      alignItems: 'center',
-    },
-    adminButtonText: { fontSize: 14, fontWeight: '700', color: colors.primary },
-
-    guestTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
-    guestText: { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginTop: 6 },
-    primaryButton: {
-      marginTop: spacing.lg,
-      backgroundColor: colors.primary,
-      paddingVertical: 13,
-      borderRadius: radius.md,
-      alignItems: 'center',
-    },
-    primaryButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: '700' },
-
-    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    rowLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
-    rowChoices: { flexDirection: 'row', gap: spacing.sm },
-    divider: { height: 1, backgroundColor: colors.borderLight, marginVertical: spacing.md },
-
-    choice: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: 7,
-      borderRadius: radius.full,
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-    },
-    choiceActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    choiceText: { fontSize: 12.5, fontWeight: '700', color: colors.textSoft },
-    choiceTextActive: { color: colors.onPrimary },
-
-    privacyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
-  },
-  // flex: 1 chuyển sang chính dòng chữ, vì khung bọc đã bỏ đi. Thiếu nó thì
-  // mũi tên > nằm sát chữ thay vì dạt hẳn về mép phải.
-  privacyTitle: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.text },
-
-  aboutCard: { alignItems: 'center', paddingVertical: spacing.xl },
-    aboutLogo: { width: 56, height: 56, resizeMode: 'contain' },
-    aboutName: { fontSize: 17, fontWeight: '800', color: colors.text, marginTop: spacing.sm },
-    aboutSlogan: { fontSize: 12.5, color: colors.textMuted, marginTop: 3 },
-    aboutVersion: { fontSize: 11.5, color: colors.textMuted, marginTop: spacing.md },
-  }),
-);
