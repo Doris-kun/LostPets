@@ -1,13 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing } from '../theme';
+import { useTheme } from '../context/theme';
+import { spacing } from '../theme';
 
 /*
  * Chính sách bảo mật.
@@ -327,7 +327,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Privacy'>;
 export default function PrivacyScreen({ navigation }: Props) {
   const { t, lang } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
   const c = CONTENT[lang];
 
   useLayoutEffect(() => {
@@ -384,36 +383,56 @@ export default function PrivacyScreen({ navigation }: Props) {
   };
 
   return (
-    <ScrollView ref={scrollRef} style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{c.title}</Text>
-      <Text style={styles.updated}>{c.updated}</Text>
-      <Text style={styles.intro}>{c.intro}</Text>
+    /*
+      contentContainerClassName chứ không phải className cho phần đệm.
+
+      ScrollView có hai lớp: khung ngoài (className) và dải nội dung chạy
+      bên trong (contentContainerClassName). Đệm đặt ở khung ngoài thì nó
+      bóp khung lại, phần chữ bị cắt khi cuộn tới cuối; đặt ở dải nội dung
+      mới là đệm thật. NativeWind có sẵn tên thuộc tính thứ hai này.
+
+      pb-12 = 48px = spacing.xl * 2, chừa chỗ cho thanh điều hướng dưới.
+    */
+    <ScrollView
+      ref={scrollRef}
+      className="flex-1 bg-background"
+      contentContainerClassName="p-lg pb-12"
+    >
+      <Text className="text-[22px] font-extrabold text-text">{c.title}</Text>
+      <Text className="mt-xs text-[12px] text-text-muted">{c.updated}</Text>
+      <Text className="mt-lg text-[13.5px] leading-[21px] text-text-soft">{c.intro}</Text>
 
       {/*
         Khung tóm tắt. Đặt ngay chỗ mắt rơi xuống đầu tiên, và cho nó nền
         riêng để tách khỏi phần văn xuôi bên dưới — ai chỉ đọc bốn dòng này
         rồi thoát ra vẫn nắm được phần quan trọng nhất.
       */}
-      <View style={styles.summaryBox}>
-        <Text style={styles.summaryHead}>{c.summaryH}</Text>
+      <View className="mt-lg rounded-md border-[1.5px] border-secret-border bg-secret-bg p-md">
+        <Text className="mb-sm text-[13.5px] font-extrabold text-secret-text">
+          {c.summaryH}
+        </Text>
         {c.summary.map((text) => (
-          <View key={text} style={styles.bulletRow}>
-            <View style={[styles.bullet, styles.bulletStrong]} />
-            <Text style={styles.summaryText}>{text}</Text>
+          <View key={text} className="mt-sm flex-row gap-sm">
+            {/* Chấm đậm hơn chấm thường: bốn dòng này là phần đáng đọc nhất */}
+            <View className="mt-2 h-[5px] w-[5px] rounded-full bg-secret-text" />
+            <Text className="flex-1 text-[12.5px] leading-[19px] text-text">{text}</Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.tocBox}>
-        <Text style={styles.tocHead}>{c.tocH}</Text>
+      <View className="mt-lg rounded-md border border-border-light bg-surface px-md">
+        <Text className="mt-md text-[11px] font-extrabold tracking-[0.5px] text-text-muted">
+          {c.tocH}
+        </Text>
         {c.sections.map((s, i) => (
           <TouchableOpacity
             key={s.h}
-            style={styles.tocRow}
+            // min-h-11 = 44pt, mức tối thiểu cho một vùng chạm trên iOS
+            className="min-h-11 flex-row items-center justify-between gap-sm"
             onPress={() => jump(i)}
             activeOpacity={0.7}
           >
-            <Text style={styles.tocText}>{s.h}</Text>
+            <Text className="flex-1 text-[13px] text-text-soft">{s.h}</Text>
             <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
           </TouchableOpacity>
         ))}
@@ -422,25 +441,27 @@ export default function PrivacyScreen({ navigation }: Props) {
       {c.sections.map((s, i) => (
         <View
           key={s.h}
-          style={styles.section}
+          className="mt-xl"
           onLayout={(e) => {
             tops.current[i] = e.nativeEvent.layout.y;
           }}
         >
-          <Text style={styles.heading}>{s.h}</Text>
+          <Text className="mb-sm text-[15px] font-extrabold text-text">{s.h}</Text>
 
           {s.p?.map((text) => (
-            <Text key={text} style={styles.para}>
+            <Text key={text} className="mt-sm text-[13.5px] leading-[21px] text-text-soft">
               {text}
             </Text>
           ))}
 
           {s.ul?.map((text) => (
-            <View key={text} style={styles.bulletRow}>
+            <View key={text} className="mt-sm flex-row gap-sm">
               {/* Chấm tròn vẽ bằng View, không dùng ký tự • — có máy Android
                   không có sẵn ký tự đó trong phông và sẽ hiện ra ô vuông. */}
-              <View style={styles.bullet} />
-              <Text style={styles.bulletText}>{text}</Text>
+              <View className="mt-2 h-[5px] w-[5px] rounded-full bg-accent-text" />
+              <Text className="flex-1 text-[13.5px] leading-[21px] text-text-soft">
+                {text}
+              </Text>
             </View>
           ))}
         </View>
@@ -449,9 +470,9 @@ export default function PrivacyScreen({ navigation }: Props) {
       {/* Không có email thì KHÔNG vẽ mục Liên hệ: một tiêu đề "Liên hệ" mà bên
           dưới trống rỗng còn tệ hơn là không có mục nào. */}
       {!!CONTACT_EMAIL && (
-        <View style={styles.section}>
-          <Text style={styles.heading}>{c.contactH}</Text>
-          <Text style={styles.para}>{c.contactP}</Text>
+        <View className="mt-xl">
+          <Text className="mb-sm text-[15px] font-extrabold text-text">{c.contactH}</Text>
+          <Text className="mt-sm text-[13.5px] leading-[21px] text-text-soft">{c.contactP}</Text>
 
           {/*
             Hai nút, không in địa chỉ ra làm chữ.
@@ -464,18 +485,20 @@ export default function PrivacyScreen({ navigation }: Props) {
             hạn: địa chỉ VẪN nằm trong đường dẫn mailto, nên con bot nào chịu
             đọc vẫn lấy được. Đổi nhãn chỉ chặn loại quét hời hợt.
           */}
-          <View style={styles.contactRow}>
+          <View className="mt-md flex-row gap-sm">
             <TouchableOpacity
-              style={[styles.contactButton, styles.contactPrimary]}
+              className="min-h-[46px] flex-1 flex-row items-center justify-center gap-1.5 rounded-md border-[1.5px] border-primary bg-primary"
               onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}
               activeOpacity={0.85}
             >
               <Ionicons name="mail-outline" size={16} color={colors.onPrimary} />
-              <Text style={styles.contactPrimaryText}>{t('privacy.sendMail')}</Text>
+              <Text className="text-[13px] font-bold text-on-primary">
+                {t('privacy.sendMail')}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.contactButton}
+              className="min-h-[46px] flex-1 flex-row items-center justify-center gap-1.5 rounded-md border-[1.5px] border-border-strong bg-surface"
               onPress={copyEmail}
               activeOpacity={0.85}
             >
@@ -484,7 +507,7 @@ export default function PrivacyScreen({ navigation }: Props) {
                 size={16}
                 color={colors.textSoft}
               />
-              <Text style={styles.contactText}>
+              <Text className="text-[13px] font-bold text-text-soft">
                 {t(copied ? 'privacy.copied' : 'privacy.copyMail')}
               </Text>
             </TouchableOpacity>
@@ -494,94 +517,3 @@ export default function PrivacyScreen({ navigation }: Props) {
     </ScrollView>
   );
 }
-
-const themedStyles = createThemedStyles((colors) =>
-  StyleSheet.create({
-    screen: { flex: 1, backgroundColor: colors.background },
-    content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-
-    title: { fontSize: 22, fontWeight: '800', color: colors.text },
-    updated: { fontSize: 12, color: colors.textMuted, marginTop: spacing.xs },
-    intro: { fontSize: 13.5, lineHeight: 21, color: colors.textSoft, marginTop: spacing.lg },
-
-    /*
-     * Khung tóm tắt. Nền riêng để tách hẳn khỏi phần văn xuôi — dùng bộ màu
-     * secret (vàng nhạt) vì nó mang nghĩa "đọc kỹ chỗ này", đúng vai.
-     */
-    summaryBox: {
-      marginTop: spacing.lg,
-      padding: spacing.md,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.secretBorder,
-      backgroundColor: colors.secretBg,
-    },
-    summaryHead: {
-      fontSize: 13.5,
-      fontWeight: '800',
-      color: colors.secretText,
-      marginBottom: spacing.sm,
-    },
-    summaryText: { flex: 1, fontSize: 12.5, lineHeight: 19, color: colors.text },
-
-    tocBox: {
-      marginTop: spacing.lg,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-      backgroundColor: colors.surface,
-      paddingHorizontal: spacing.md,
-    },
-    tocHead: {
-      fontSize: 11,
-      fontWeight: '800',
-      letterSpacing: 0.5,
-      color: colors.textMuted,
-      marginTop: spacing.md,
-    },
-    tocRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: spacing.sm,
-      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 44,
-    },
-    tocText: { flex: 1, fontSize: 13, color: colors.textSoft },
-
-    section: { marginTop: spacing.xl },
-    heading: { fontSize: 15, fontWeight: '800', color: colors.text, marginBottom: spacing.sm },
-    para: { fontSize: 13.5, lineHeight: 21, color: colors.textSoft, marginTop: spacing.sm },
-
-    bulletRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-    bullet: {
-      width: 5,
-      height: 5,
-      borderRadius: radius.full,
-      backgroundColor: colors.accentText,
-      // Đẩy xuống cho chấm ngang với dòng chữ đầu tiên, không dính lên mép trên
-      marginTop: 8,
-    },
-    bulletText: { flex: 1, fontSize: 13.5, lineHeight: 21, color: colors.textSoft },
-    // Chấm của khung tóm tắt: đậm hơn, vì bốn dòng đó là phần đáng đọc nhất
-    bulletStrong: { backgroundColor: colors.secretText },
-
-    contactRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-    contactButton: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 6,
-      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 46,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-      backgroundColor: colors.surface,
-    },
-    contactPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
-    contactText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
-    contactPrimaryText: { fontSize: 13, fontWeight: '700', color: colors.onPrimary },
-  }),
-);
