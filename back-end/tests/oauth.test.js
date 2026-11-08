@@ -136,7 +136,10 @@ describe('POST /auth/google', () => {
     // Nhận email chưa xác minh thì kẻ gian chỉ cần tạo một tài khoản mang
     // email của người khác là chiếm được tài khoản ở đây, kèm mọi tin đã đăng.
     expect(res.status).toBe(403);
-    expect((await User.findOne().select('+google')).google).toBeNull();
+    // Trường VẮNG MẶT chứ không mang null — schema cố ý không đặt default,
+    // vì null vẫn bị chỉ mục unique + sparse đếm và chỉ một tài liệu được
+    // mang nó. Xem tests/user-providers.test.js.
+    expect((await User.findOne().select('+google')).google).toBeUndefined();
   });
 
   it('cấp quyền admin nếu email nằm trong ADMIN_EMAILS', async () => {
@@ -247,7 +250,66 @@ describe('GET /auth/providers', () => {
   it('cho front-end biết nên vẽ nút nào', async () => {
     const res = await request(app).get('/auth/providers');
 
-    expect(res.body).toEqual({ google: true, facebook: true });
+    // facebook: false dù đã khai đủ APP_ID và APP_SECRET — vì FACEBOOK_PUBLIC
+    // mặc định tắt. Ứng dụng Meta còn ở chế độ Development nên người lạ bấm
+    // vào chỉ nhận "App not active".
+    expect(res.body).toEqual({
+      google: true,
+      facebook: false,
+      googleMobile: { ios: false, android: false },
+    });
+  });
+
+  it('chìa nút Facebook ra khi FACEBOOK_PUBLIC=on', async () => {
+    process.env.FACEBOOK_PUBLIC = 'on';
+    expect((await request(app).get('/auth/providers')).body.facebook).toBe(true);
+    delete process.env.FACEBOOK_PUBLIC;
+  });
+
+  it('vẫn ẩn nút khi bật nhưng chưa khai đủ khoá', async () => {
+    process.env.FACEBOOK_PUBLIC = 'on';
+    const saved = process.env.FACEBOOK_APP_SECRET;
+    delete process.env.FACEBOOK_APP_SECRET;
+
+    expect((await request(app).get('/auth/providers')).body.facebook).toBe(false);
+
+    process.env.FACEBOOK_APP_SECRET = saved;
+    delete process.env.FACEBOOK_PUBLIC;
+  });
+
+  it('ẩn nút KHÔNG làm hỏng tính năng — endpoint vẫn chạy', async () => {
+    // Đây là chỗ quan trọng nhất của cả nhóm test này. Ẩn nút là quyết định
+    // về giao diện, không phải gỡ tính năng: người có vai trò trong ứng dụng
+    // Meta vẫn đăng nhập được, và app mobile vẫn gọi được.
+    expect((await request(app).get('/auth/providers')).body.facebook).toBe(false);
+
+    mockVerifyFacebook.mockResolvedValue(profile());
+    const res = await loginFacebook();
+
+    expect(res.status).not.toBe(503);
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBeTruthy();
+  });
+
+  it('báo biến cho app mobile đã khai hay chưa', async () => {
+    process.env.GOOGLE_CLIENT_ID_IOS = 'ios-test.apps.googleusercontent.com';
+
+    const res = await request(app).get('/auth/providers');
+    expect(res.body.googleMobile).toEqual({ ios: true, android: false });
+
+    delete process.env.GOOGLE_CLIENT_ID_IOS;
+  });
+
+  it('không bao giờ trả về giá trị của mã, chỉ true/false', async () => {
+    const secretish = 'khong-duoc-lo-ra-ngoai.apps.googleusercontent.com';
+    process.env.GOOGLE_CLIENT_ID_ANDROID = secretish;
+
+    const res = await request(app).get('/auth/providers');
+    // Mã client vốn công khai, nhưng endpoint này không có lý do gì để phát
+    // tán chúng. Trả đúng thứ cần trả.
+    expect(JSON.stringify(res.body)).not.toContain(secretish);
+
+    delete process.env.GOOGLE_CLIENT_ID_ANDROID;
   });
 
   it('báo false cho nhà cung cấp chưa cấu hình', async () => {

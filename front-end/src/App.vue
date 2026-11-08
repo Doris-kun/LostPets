@@ -126,6 +126,20 @@
     <main>
       <router-view />
     </main>
+    <!-- Chân trang chỉ có đúng một đường dẫn. Chính sách bảo mật phải tìm
+         được từ mọi trang: Meta đòi vậy mới cho chuyển ứng dụng sang Live,
+         và một chính sách phải bới mới ra thì cũng chẳng để làm gì. -->
+    <!-- Chân trang cố ý tối giản, nhưng phải có đủ hai vế thì mới ra chân
+         trang. Mỗi một đường dẫn lẻ loi giữa khoảng trắng trông như lập trình
+         viên quên xoá, chứ không ra chủ ý. -->
+    <footer class="mt-16 border-t border-gray-100">
+      <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+        <p class="text-xs text-gray-400">© {{ year }} LostPets</p>
+        <router-link to="/privacy" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          {{ $t('nav.privacy') }}
+        </router-link>
+      </div>
+    </footer>
     <Toast />
     <ChatWidget />
   </div>
@@ -140,7 +154,9 @@ export default {
   name: 'App',
   components: { Toast, ChatWidget, ResolveNudge },
   data() {
-    return { auth, menuOpen: false };
+    // Lấy năm lúc chạy chứ không viết cứng: sang năm mà chân trang vẫn ghi
+    // 2026 thì trông như web bỏ hoang.
+    return { auth, menuOpen: false, year: new Date().getFullYear() };
   },
   computed: {
     // Chữ cái đầu của tên, tối đa hai chữ: "Phạm Thái Nam" -> "PN".

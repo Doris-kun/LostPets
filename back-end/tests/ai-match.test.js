@@ -163,3 +163,101 @@ describe('GET /ai/match/:petId — các tình huống hỏng', () => {
     expect(res.body.message).toMatch(/quá tải/);
   });
 });
+
+// Câu giải thích phải ghép TỪ DỮ LIỆU, không từ chữ model sinh ra.
+//
+// Lý do có khối test này: trên web thật, với một tin mèo MÀU ĐEN ở Cần Thơ,
+// model viết ra "cùng loài mèo và có màu lông xám" để biện minh cho việc khớp
+// với một con mèo xám ở Quận 3. Chữ "xám" không tồn tại ở bất kỳ đâu trong tin
+// đó. Mục 6.3 của đề cương ghi rõ phần sinh văn bản không được bịa chi tiết
+// vắng mặt trong dữ liệu, nên đây là lỗi vi phạm đúng cam kết của dự án.
+describe('GET /ai/match/:petId — câu giải thích', () => {
+  async function seedMismatch() {
+    const lost = await Pet.create({
+      postId: 'L-X1', type: 'lost', species: 'Mèo', breed: 'Mèo Anh lông ngắn',
+      color: 'Xám', area: 'Quận 3, TP.HCM', contact: '0900 000 001',
+      date: new Date('2026-10-01'),
+    });
+    await Pet.create({
+      postId: 'F-X1', type: 'found', species: 'Mèo', breed: 'Mèo mun',
+      color: 'Đen', area: 'Ninh Kiều, Cần Thơ', contact: '0900 000 002',
+      date: new Date('2026-10-04'),
+    });
+    return lost;
+  }
+
+  const stub = (matches) => {
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('offline'));
+    jest.spyOn(GoogleGenAI.prototype.interactions, 'create').mockResolvedValue(reply(matches));
+  };
+
+  it('nêu đủ cả hai vế của trường khác nhau', async () => {
+    const lost = await seedMismatch();
+    stub([{ index: 0, score: 60, photo: 'khong_ro' }]);
+
+    const { body } = await request(app).get(`/ai/match/${lost._id}`);
+    const reason = body.matches[0].reason;
+
+    expect(reason).toContain('Xám');
+    expect(reason).toContain('Đen');
+    expect(reason).toContain('Quận 3, TP.HCM');
+    expect(reason).toContain('Ninh Kiều, Cần Thơ');
+  });
+
+  it('KHÔNG nói hai màu khác nhau là giống nhau', async () => {
+    const lost = await seedMismatch();
+    stub([{ index: 0, score: 60, photo: 'khong_ro' }]);
+
+    const { body } = await request(app).get(`/ai/match/${lost._id}`);
+    const reason = body.matches[0].reason;
+
+    expect(reason).toMatch(/Khác[^.]*màu/);
+    expect(reason).not.toMatch(/Cùng[^.]*màu/);
+  });
+
+  it('bỏ qua hoàn toàn chữ model cố tình nhét vào', async () => {
+    const lost = await seedMismatch();
+    // Đúng câu model đã bịa trên web thật.
+    stub([{ index: 0, score: 60, photo: 'khong_ro', reason: 'Cùng loài mèo và có màu lông xám.' }]);
+
+    const { body } = await request(app).get(`/ai/match/${lost._id}`);
+    expect(body.matches[0].reason).not.toContain('có màu lông xám');
+  });
+
+  it('gộp các trường thật sự giống nhau', async () => {
+    const lost = await seedPair(); // hai tin cùng loài, cùng giống, cùng màu
+    stub([{ index: 0, score: 88, photo: 'giong' }]);
+
+    const { body } = await request(app).get(`/ai/match/${lost._id}`);
+    const reason = body.matches[0].reason;
+
+    expect(reason).toMatch(/Cùng[^.]*loài \(Chó\)/);
+    expect(reason).toMatch(/Cùng[^.]*giống \(Corgi\)/);
+    expect(reason).toContain('Ảnh trông giống nhau.');
+  });
+
+  it('nói rõ khoảng cách ngày giữa hai tin', async () => {
+    const lost = await seedMismatch(); // mất 1/10, nhặt được 4/10
+    stub([{ index: 0, score: 60, photo: 'khong_ro' }]);
+
+    const { body } = await request(app).get(`/ai/match/${lost._id}`);
+    expect(body.matches[0].reason).toContain('3 ngày sau khi mất');
+  });
+
+  it('không nhắc tới ảnh khi model trả khong_ro', async () => {
+    const lost = await seedMismatch();
+    stub([{ index: 0, score: 60, photo: 'khong_ro' }]);
+
+    const { body } = await request(app).get(`/ai/match/${lost._id}`);
+    expect(body.matches[0].reason).not.toMatch(/Ảnh/);
+  });
+
+  it('không sập khi model trả giá trị ảnh lạ', async () => {
+    const lost = await seedMismatch();
+    stub([{ index: 0, score: 60, photo: 'mot-gia-tri-la' }]);
+
+    const { body } = await request(app).get(`/ai/match/${lost._id}`);
+    expect(body.matches[0].reason).toBeTruthy();
+    expect(body.matches[0].reason).not.toContain('mot-gia-tri-la');
+  });
+});

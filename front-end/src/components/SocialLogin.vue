@@ -128,10 +128,16 @@ export default {
       auth.login(data.token, data.user);
       this.$emit('done', data.user);
     },
+    // Mỗi mã lỗi một câu riêng. Gộp hết vào "Không thực hiện được, thử lại
+    // sau" thì người dùng không biết phải làm gì, mà người sửa lỗi cũng mù:
+    // đã có lần cả một lỗi chặn mọi người đăng ký tài khoản mới ẩn sau đúng
+    // câu đó, phải lần từ console xuống tận chỉ mục cơ sở dữ liệu mới ra.
     fail(err) {
       const status = err && err.response && err.response.status;
       if (status === 403) this.error = this.$t('auth.linkRefused');
       else if (status === 401) this.error = this.$t('auth.providerRejected');
+      else if (status === 409) this.error = this.$t('auth.emailTaken');
+      else if (status === 429) this.error = this.$t('auth.tooMany');
       else if (status === 503) this.error = this.$t('auth.disabled');
       else this.error = this.$t('auth.failed');
     },

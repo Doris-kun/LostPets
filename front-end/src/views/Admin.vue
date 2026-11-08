@@ -113,19 +113,19 @@
 
     <!-- Bộ lọc nằm trên bảng, gom một hàng -->
     <div class="flex flex-wrap items-center gap-2 mb-3">
-      <select v-model="filters.type" @change="reload"
+      <select id="type" name="type" v-model="filters.type" @change="reload"
         class="border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300">
         <option value="">{{ $t('admin.allTypes') }}</option>
         <option value="lost">{{ $t('filter.lost') }}</option>
         <option value="found">{{ $t('filter.found') }}</option>
       </select>
-      <select v-model="filters.resolved" @change="reload"
+      <select id="resolved" name="resolved" v-model="filters.resolved" @change="reload"
         class="border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300">
         <option value="">{{ $t('admin.allStatus') }}</option>
         <option value="false">{{ $t('mine.open') }}</option>
         <option value="true">{{ $t('mine.resolved') }}</option>
       </select>
-      <input v-model="filters.q" @input="debounceReload" type="text" :placeholder="$t('admin.search')"
+      <input id="q" name="q" v-model="filters.q" @input="debounceReload" type="text" :placeholder="$t('admin.search')"
         class="flex-1 min-w-[10rem] border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"/>
       <span class="text-xs text-gray-400">{{ total }} {{ $t('admin.posts') }}</span>
     </div>

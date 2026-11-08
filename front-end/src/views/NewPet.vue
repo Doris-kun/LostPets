@@ -17,7 +17,7 @@
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $t('form.general') }}</p>
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">{{ $t('form.status') }}</label>
+          <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">{{ $t('form.status') }}</label>
           <div class="flex gap-3">
             <button type="button" @click="form.type = 'lost'"
               :class="form.type === 'lost' ? 'bg-rose-500 text-white border-rose-500 shadow-sm' : 'bg-white text-gray-500 border-gray-200 hover:border-rose-300'"
@@ -56,17 +56,17 @@
           <label class="block text-sm font-semibold text-gray-700 mb-1.5">
             {{ $t('form.name') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
           </label>
-          <input v-model="form.name" type="text" :placeholder="$t('form.namePh')"
+          <input id="name" name="name" v-model="form.name" type="text" :placeholder="$t('form.namePh')"
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
         </div>
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.breed') }}</label>
-          <input v-model="form.breed" type="text" :placeholder="$t('form.breedPh')" required
+          <label for="breed" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.breed') }}</label>
+          <input id="breed" name="breed" v-model="form.breed" type="text" :placeholder="$t('form.breedPh')" required
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
         </div>
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.color') }}</label>
-          <input v-model="form.color" type="text" :placeholder="$t('form.colorPh')" required
+          <label for="color" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.color') }}</label>
+          <input id="color" name="color" v-model="form.color" type="text" :placeholder="$t('form.colorPh')" required
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
         </div>
       </div>
@@ -75,12 +75,12 @@
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $t('form.locationContact') }}</p>
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.area') }}</label>
-          <input v-model="form.area" type="text" :placeholder="$t('form.areaPh')" required
+          <label for="area" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.area') }}</label>
+          <input id="area" name="area" v-model="form.area" type="text" :placeholder="$t('form.areaPh')" required
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
         </div>
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
+          <label for="contact" class="block text-sm font-semibold text-gray-700 mb-2">
             {{ $t('map.label') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
           </label>
           <MapPicker :lat="form.lat" :lng="form.lng" @change="setPoint"/>
@@ -88,7 +88,7 @@
         </div>
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.contact') }}</label>
-          <input v-model="form.contact" type="text" :placeholder="$t('form.contactPh')" required
+          <input id="contact" name="contact" v-model="form.contact" type="text" :placeholder="$t('form.contactPh')" required
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
         </div>
       </div>
@@ -97,15 +97,15 @@
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $t('form.details') }}</p>
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.desc') }}</label>
-          <textarea v-model="form.description" rows="3" :placeholder="$t('form.descPh')"
+          <label for="description" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.desc') }}</label>
+          <textarea id="description" name="description" v-model="form.description" rows="3" :placeholder="$t('form.descPh')"
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent resize-none transition"></textarea>
         </div>
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label for="secretdetail" class="block text-sm font-semibold text-gray-700 mb-1.5">
             {{ $t('secret.label') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
           </label>
-          <input v-model="form.secretDetail" type="text" :placeholder="$t('secret.placeholder')" maxlength="200"
+          <input id="secretdetail" name="secretdetail" v-model="form.secretDetail" type="text" :placeholder="$t('secret.placeholder')" maxlength="200"
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition"/>
           <p class="text-xs text-amber-600 mt-1.5 leading-relaxed">{{ $t('secret.hint') }}</p>
         </div>
@@ -122,7 +122,7 @@
               </svg>
               <p class="text-sm text-gray-400">{{ $t('form.photoUpload') }}</p>
             </div>
-            <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleImage"/>
+            <input id="fileinput" name="fileinput" ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleImage"/>
           </div>
 
           <!-- AI chạy ngầm ngay khi chọn ảnh, không chặn người dùng gõ tiếp -->

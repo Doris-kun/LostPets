@@ -7,18 +7,18 @@
 
     <form @submit.prevent="submit" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.name') }}</label>
-        <input v-model.trim="form.name" type="text" required autocomplete="name"
+        <label for="name" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.name') }}</label>
+        <input id="name" name="name" v-model.trim="form.name" type="text" required autocomplete="name"
           class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
       </div>
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.email') }}</label>
-        <input v-model.trim="form.email" type="email" required autocomplete="email"
+        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.email') }}</label>
+        <input id="email" name="email" v-model.trim="form.email" type="email" required autocomplete="email"
           class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
       </div>
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.password') }}</label>
-        <input v-model="form.password" type="password" required minlength="6" autocomplete="new-password"
+        <label for="password" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('auth.password') }}</label>
+        <input id="password" name="password" v-model="form.password" type="password" required minlength="6" autocomplete="new-password"
           class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
         <p class="text-xs text-gray-400 mt-1.5">{{ $t('auth.passwordHint') }}</p>
       </div>
@@ -71,6 +71,7 @@ export default {
         const message = err.response && err.response.data && err.response.data.message;
         if (status === 409) this.error = this.$t('auth.emailTaken');
         else if (status === 400) this.error = message || this.$t('auth.invalidInput');
+        else if (status === 429) this.error = this.$t('auth.tooMany');
         else if (status === 503) this.error = this.$t('auth.disabled');
         else this.error = this.$t('auth.failed');
       } finally {

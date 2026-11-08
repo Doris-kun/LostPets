@@ -19,7 +19,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
         </svg>
-        <input v-model="filters.q" @input="debounceSearch" type="text" maxlength="200"
+        <input id="q" name="q" v-model="filters.q" @input="debounceSearch" type="text" maxlength="200"
           :placeholder="$t('search.placeholder')"
           class="w-full border border-gray-200 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent placeholder-gray-400"/>
         <button v-if="filters.q" @click="clearSearch" :aria-label="$t('search.clear')"
@@ -50,7 +50,7 @@
             {{ $t(s.labelKey) }}
           </button>
         </div>
-        <input v-model="filters.area" @input="debounceFetch" type="text"
+        <input id="area" name="area" v-model="filters.area" @input="debounceFetch" type="text"
           :placeholder="$t('filter.area')"
           class="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent placeholder-gray-400"/>
       </div>
@@ -66,7 +66,7 @@
         </div>
         <!-- Đang tìm kiếm thì kết quả sắp theo độ liên quan, chọn ngày ở đây
              không còn tác dụng — khoá lại còn hơn để người ta bấm rồi tưởng hỏng. -->
-        <select v-model="filters.sort" @change="fetchPets" :disabled="!!filters.q"
+        <select id="sort" name="sort" v-model="filters.sort" @change="fetchPets" :disabled="!!filters.q"
           :title="filters.q ? $t('search.sortLocked') : ''"
           class="border border-gray-200 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
           <option value="newest">{{ $t('sort.newest') }}</option>
@@ -147,7 +147,7 @@
                xám to bằng 3/5 thẻ chỉ để chứa biểu tượng thì nhìn như web hỏng. -->
           <div v-if="featured.image" class="relative sm:w-3/5 aspect-video overflow-hidden bg-gray-100">
             <PetPhoto :src="featured.image" :alt="featured.breed"
-              :type="featured.type" :resolved="featured.resolved"
+              :type="featured.type" :resolved="featured.resolved" :width="800"
               img-class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
             <span :class="featured.resolved ? 'bg-teal-500' : featured.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
               class="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
@@ -188,7 +188,7 @@
             class="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div class="relative aspect-[4/3] overflow-hidden bg-gray-100">
               <PetPhoto :src="pet.image" :alt="pet.breed"
-                :type="pet.type" :resolved="pet.resolved"
+                :type="pet.type" :resolved="pet.resolved" :width="600"
                 img-class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
               <span :class="pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
                 class="absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
@@ -204,9 +204,23 @@
                 </svg>
                 <p class="text-sm text-gray-400 truncate">{{ pet.area }}</p>
               </div>
-              <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+              <!-- Mã tin cố ý KHÔNG hiện ở đây. Người lạ lướt danh sách không
+                   cần tới nó, mà in ra thì vừa rối mắt vừa giống thứ gì đó
+                   quan trọng. Chủ tin vẫn xem được mã của mình ở "Tin của tôi",
+                   và gõ mã vào ô tìm kiếm vẫn ra đúng tin như cũ. -->
+              <!-- Hàng dưới cùng của thẻ. Bên trái là thời gian, bên phải là
+                   khoảng cách nếu biết vị trí người xem.
+                   Không biết vị trí thì thay bằng lời mời bấm vào, chứ không
+                   để trống một nửa — thầy hướng dẫn nhận xét đúng chỗ đó. -->
+              <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-50">
                 <p class="text-xs text-gray-400">{{ relativeTime(pet.date) }}</p>
-                <p v-if="pet.postId" class="text-xs text-gray-300 font-mono">{{ pet.postId }}</p>
+                <p v-if="distanceOf(pet)" class="text-xs text-gray-400 shrink-0">
+                  {{ $t('card.away', { d: distanceOf(pet) }) }}
+                </p>
+                <span v-else
+                  class="text-xs text-gray-300 group-hover:text-orange-500 transition-colors shrink-0">
+                  {{ $t('card.detail') }} →
+                </span>
               </div>
             </div>
           </router-link>
@@ -233,12 +247,17 @@
 import api from '../api';
 import PetMap from '../components/PetMap.vue';
 import PetPhoto from '../components/PetPhoto.vue';
+import { readSavedMe, distanceKm, formatDistanceKm } from '../map';
 
 export default {
   name: 'Home',
   components: { PetMap, PetPhoto },
   data() {
     return {
+      // Vị trí người xem, do bản đồ lưu lại sau khi họ bấm "vị trí của tôi".
+      // Không có thì thẻ tin không hiện khoảng cách — không tự xin quyền ở
+      // trang chủ, vì ném hộp thoại vào mặt người mới vào xem là thô lỗ.
+      me: readSavedMe(),
       pets: [],
       total: 0,
       view: 'list',
@@ -300,6 +319,15 @@ export default {
     clearTimeout(this.searchTimer);
   },
   methods: {
+    // Khoảng cách từ chỗ người xem tới nơi mất, dạng chữ đã làm tròn. Trả về
+    // chuỗi rỗng khi chưa biết vị trí người xem hoặc tin không có toạ độ.
+    //
+    // Con số cố ý kèm dấu ngã: toạ độ đã bị làm tròn về lưới 500m lúc lưu,
+    // nên in "2,34 km" là nói quá độ chính xác mình thực sự có.
+    distanceOf(pet) {
+      if (!this.me || !Number.isFinite(pet.lat) || !Number.isFinite(pet.lng)) return '';
+      return formatDistanceKm(distanceKm(this.me[0], this.me[1], pet.lat, pet.lng));
+    },
     setView(view) {
       this.view = view;
       if (view === 'map') this.fetchMapPets();

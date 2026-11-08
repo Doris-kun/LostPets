@@ -9,7 +9,9 @@
     "seed": "node scripts/seed.js",
     "embed": "node scripts/backfill-embeddings.js",
     "fix-images": "node scripts/fix-dead-images.js",
-    "eval:matching": "node scripts/eval-matching.js"
+    "fix-providers": "node scripts/fix-null-providers.js",
+    "eval:matching": "node scripts/eval-matching.js",
+    "test:report": "node scripts/test-report.js"
   },
   "jest": {
     "testEnvironment": "node",
