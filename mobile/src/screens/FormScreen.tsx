@@ -27,8 +27,8 @@ import ClaimCodeModal from '../components/ClaimCodeModal';
 import PetMap from '../components/PetMap';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
-import { radius, spacing } from '../theme';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
+import { spacing } from '../theme';
+import { useTheme } from '../context/theme';
 
 /*
  * Màn hình form — dùng chung cho cả ĐĂNG MỚI (C) và SỬA (U).
@@ -149,7 +149,6 @@ export default function FormScreen({ route, navigation }: Props) {
   const { t } = useLanguage();
   const { isLoggedIn } = useAuth();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   const [form, setForm] = useState<FormState>(() => {
     if (!isEdit) return EMPTY_FORM;
@@ -545,12 +544,16 @@ export default function FormScreen({ route, navigation }: Props) {
      * thấy chữ. Web không có vấn đề này.
      */
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-background"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.sectionLabel}>{t('form.status')}</Text>
-        <View style={styles.row}>
+      <ScrollView
+        /* pb-12 = 48px = spacing.xl * 2, chừa chỗ cho thanh điều hướng dưới */
+        contentContainerClassName="p-lg pb-12"
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text className="mb-sm mt-lg text-[11px] font-bold tracking-[0.5px] text-text-muted">{t('form.status')}</Text>
+        <View className="flex-row gap-md">
           <Choice
             label={t('form.lostBtn')}
             active={form.type === 'lost'}
@@ -565,8 +568,8 @@ export default function FormScreen({ route, navigation }: Props) {
           />
         </View>
 
-        <Text style={styles.sectionLabel}>{t('form.speciesLabel')}</Text>
-        <View style={styles.row}>
+        <Text className="mb-sm mt-lg text-[11px] font-bold tracking-[0.5px] text-text-muted">{t('form.speciesLabel')}</Text>
+        <View className="flex-row gap-md">
           <Choice
             label={t('form.dog')}
             active={form.species === 'Chó'}
@@ -611,7 +614,7 @@ export default function FormScreen({ route, navigation }: Props) {
          * trên là tên khu vực bằng chữ, bản đồ là chỗ đó trên bản đồ. Không
          * bắt buộc — tin không có toạ độ vẫn đăng được bình thường.
          */}
-        <View style={styles.mapBlock}>
+        <View className="mt-lg">
           <PetMap
             mode="pick"
             lat={form.lat}
@@ -653,32 +656,44 @@ export default function FormScreen({ route, navigation }: Props) {
               placeholder={t('secret.placeholder')}
               multiline
             />
-            <Text style={styles.hint}>{t('secret.hint')}</Text>
+            {/* -mt-sm: kéo câu gợi ý sát lên ô nhập ở trên, cho thấy nó nói
+                về ô đó chứ không phải mở một mục mới. */}
+            <Text className="-mt-sm text-[12px] leading-[18px] text-text-muted">
+              {t('secret.hint')}
+            </Text>
           </>
         )}
 
         {/* Chọn ảnh chỉ có khi đăng mới — PUT /pets/:id không nhận upload file */}
         {(
           <>
-            <Text style={styles.sectionLabel}>{t('form.photo')}</Text>
+            <Text className="mb-sm mt-lg text-[11px] font-bold tracking-[0.5px] text-text-muted">{t('form.photo')}</Text>
             {/*
               Ba trạng thái của khung ảnh:
                 1. Vừa chọn ảnh mới      -> hiện ảnh đó
                 2. Đang sửa, còn ảnh cũ  -> hiện ảnh cũ từ máy chủ
                 3. Chưa có gì            -> khung gạch đứt mời chọn
             */}
-            <TouchableOpacity style={styles.imagePicker} onPress={handlePhotoPress} activeOpacity={0.8}>
+            <TouchableOpacity
+              className="min-h-[110px] items-center justify-center rounded-md border-2 border-dashed border-border-strong p-lg"
+              onPress={handlePhotoPress}
+              activeOpacity={0.8}
+            >
               {image ? (
-                <Image source={{ uri: image.uri }} style={styles.preview} />
+                <Image source={{ uri: image.uri }} className="h-[180px] w-full rounded-md" />
               ) : keptImage ? (
-                <Image source={{ uri: keptImage }} style={styles.preview} />
+                <Image source={{ uri: keptImage }} className="h-[180px] w-full rounded-md" />
               ) : (
-                <Text style={styles.imagePickerText}>{t('form.photoPick')}</Text>
+                <Text className="text-[14px] text-text-muted">{t('form.photoPick')}</Text>
               )}
             </TouchableOpacity>
 
             {/* Có ảnh thì nhắc nhẹ là chạm vào ảnh sẽ có lựa chọn */}
-            {(image || keptImage) && <Text style={styles.photoHint}>{t('form.photoTapHint')}</Text>}
+            {(image || keptImage) && (
+              <Text className="mt-1.5 text-center text-[11.5px] text-text-muted">
+                {t('form.photoTapHint')}
+              </Text>
+            )}
 
             {/*
               Nút AI chỉ hiện khi đã có ảnh — không có ảnh thì chẳng có gì để
@@ -692,27 +707,35 @@ export default function FormScreen({ route, navigation }: Props) {
               xong (kèm % chắc chắn) → hoặc hỏng (kèm link Thử lại).
             */}
             {!!image && (
-              <View style={styles.aiBlock}>
+              /*
+               * min-h-[22px]: giữ sẵn chỗ cho một dòng, để lúc trạng thái đổi
+               * thì phần bên dưới không nhảy lên nhảy xuống.
+               */
+              <View className="mt-sm min-h-[22px]">
                 {aiLoading && (
-                  <View style={styles.aiRow}>
+                  <View className="flex-row flex-wrap items-center gap-sm">
                     <ActivityIndicator size="small" color={colors.aiText} />
-                    <Text style={styles.aiWorking}>{t('ai.working')}</Text>
+                    <Text className="flex-1 text-[12px] leading-[17px] text-ai-text">{t('ai.working')}</Text>
                   </View>
                 )}
 
                 {!aiLoading && !!aiResult && (
-                  <View style={styles.aiRow}>
+                  <View className="flex-row flex-wrap items-center gap-sm">
                     <Ionicons name="checkmark-circle" size={14} color={colors.aiText} />
-                    <Text style={styles.aiDone}>
-                      {t('ai.filled')} <Text style={styles.aiConfidence}>{aiResult.confidence}%</Text>
+                    <Text className="flex-1 text-[12px] leading-[17px] text-ai-text">
+                      {t('ai.filled')}{' '}
+                      <Text className="font-extrabold">{aiResult.confidence}%</Text>
                     </Text>
                   </View>
                 )}
 
                 {!aiLoading && !!aiError && (
-                  <View style={styles.aiRow}>
-                    <Text style={styles.aiErrorText}>{aiError}</Text>
-                    <Text style={styles.aiRetry} onPress={() => analyzePhoto()}>
+                  <View className="flex-row flex-wrap items-center gap-sm">
+                    <Text className="text-[12px] leading-[17px] text-text-muted">{aiError}</Text>
+                    <Text
+                      className="text-[12px] font-extrabold text-ai-accent"
+                      onPress={() => analyzePhoto()}
+                    >
                       {t('ai.retry')}
                     </Text>
                   </View>
@@ -724,12 +747,14 @@ export default function FormScreen({ route, navigation }: Props) {
 
 
         <TouchableOpacity
-          style={[styles.submit, saving && styles.disabled]}
+          className={`mt-xl items-center rounded-md bg-primary py-4 ${
+            saving ? 'opacity-50' : ''
+          }`}
           onPress={handleSubmit}
           disabled={saving}
           activeOpacity={0.85}
         >
-          <Text style={styles.submitText}>
+          <Text className="text-[15px] font-bold text-on-primary">
             {t(saving ? 'form.saving' : isEdit ? 'form.save' : 'form.submit')}
           </Text>
         </TouchableOpacity>
@@ -763,12 +788,19 @@ export default function FormScreen({ route, navigation }: Props) {
         statusBarTranslucent
         onRequestClose={() => setPhotoMenu(false)}
       >
-        <View style={styles.sheetRoot}>
+        {/* scrim lưu dạng rgba vì đã kèm sẵn độ trong suốt, nên không tách
+            thành ba kênh để làm lớp tiện ích được — phải lấy qua useTheme. */}
+        <View className="flex-1 justify-end" style={{ backgroundColor: colors.scrim }}>
           {/* Chạm ra ngoài là đóng — thói quen quen thuộc với bảng trượt */}
-          <Pressable style={styles.sheetBackdrop} onPress={() => setPhotoMenu(false)} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setPhotoMenu(false)} />
 
-          <View style={[styles.sheet, { paddingBottom: spacing.lg + insets.bottom }]}>
-            <Text style={styles.sheetTitle}>{t('form.photoOptions')}</Text>
+          <View
+            className="rounded-t-[24px] bg-background px-lg pt-lg"
+            style={{ paddingBottom: spacing.lg + insets.bottom }}
+          >
+            <Text className="mb-md text-center text-[13px] font-bold text-text-muted">
+              {t('form.photoOptions')}
+            </Text>
 
             {/*
               Chụp ảnh đặt TRÊN chọn từ thư viện.
@@ -776,7 +808,7 @@ export default function FormScreen({ route, navigation }: Props) {
               việc hay xảy ra hơn. Thứ tự trong bảng nói lên điều đó.
             */}
             <TouchableOpacity
-              style={styles.sheetRow}
+              className="mb-sm bg-surface flex-row items-center justify-center gap-sm rounded-md py-[15px]"
               onPress={() => {
                 setPhotoMenu(false);
                 takePhoto();
@@ -784,11 +816,11 @@ export default function FormScreen({ route, navigation }: Props) {
               activeOpacity={0.7}
             >
               <Ionicons name="camera-outline" size={19} color={colors.text} />
-              <Text style={styles.sheetRowText}>{t('form.photoTake')}</Text>
+              <Text className="text-[15px] font-bold text-text">{t('form.photoTake')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.sheetRow}
+              className="mb-sm bg-surface flex-row items-center justify-center gap-sm rounded-md py-[15px]"
               onPress={() => {
                 setPhotoMenu(false);
                 pickImage();
@@ -796,13 +828,13 @@ export default function FormScreen({ route, navigation }: Props) {
               activeOpacity={0.7}
             >
               <Ionicons name="images-outline" size={19} color={colors.text} />
-              <Text style={styles.sheetRowText}>{t('form.photoLibrary')}</Text>
+              <Text className="text-[15px] font-bold text-text">{t('form.photoLibrary')}</Text>
             </TouchableOpacity>
 
             {/* Chưa có ảnh thì không có gì để xoá — đừng vẽ một nút vô nghĩa */}
             {(image || keptImage) && (
               <TouchableOpacity
-                style={styles.sheetRow}
+                className="mb-sm bg-surface flex-row items-center justify-center gap-sm rounded-md py-[15px]"
                 onPress={() => {
                   setPhotoMenu(false);
                   dropPhoto();
@@ -810,18 +842,26 @@ export default function FormScreen({ route, navigation }: Props) {
                 activeOpacity={0.7}
               >
                 <Ionicons name="trash-outline" size={19} color={colors.danger} />
-                <Text style={[styles.sheetRowText, styles.sheetRowDanger]}>
+                <Text className="text-[15px] font-bold text-danger">
                   {t('form.photoRemove')}
                 </Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity
-              style={[styles.sheetRow, styles.sheetCancel]}
+              /*
+                Nút Huỷ viết riêng cả chuỗi, không ghép "mb-sm ... mb-0".
+                Hai lớp cùng khai một thuộc tính thì cái nào thắng là theo
+                thứ tự trong file CSS sinh ra, không theo thứ tự trong chuỗi
+                — nên viết thẳng là chắc chắn.
+              */
+              className="bg-transparent flex-row items-center justify-center gap-sm rounded-md py-[15px]"
               onPress={() => setPhotoMenu(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.sheetCancelText}>{t('common.cancel')}</Text>
+              <Text className="text-[15px] font-bold text-text-muted">
+                {t('common.cancel')}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -841,15 +881,19 @@ function Choice({
   activeColor: string;
   onPress: () => void;
 }) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
   return (
     <TouchableOpacity
-      style={[styles.choice, active && { backgroundColor: activeColor, borderColor: activeColor }]}
+      // Màu lúc đang chọn do bên gọi truyền vào (mất/thấy, chó/mèo) nên ở style
+      className="min-h-11 flex-1 items-center justify-center rounded-md border-2 border-border-strong py-3"
+      style={active && { backgroundColor: activeColor, borderColor: activeColor }}
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{label}</Text>
+      <Text
+        className={`text-[14px] font-bold ${active ? 'text-on-primary' : 'text-text-soft'}`}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -861,21 +905,25 @@ function Field({
   ...props
 }: ComponentProps<typeof TextInput> & { label: string; icon?: ReactNode }) {
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
   return (
-    <View style={styles.field}>
+    <View className="mt-lg">
       {/*
         Icon lồng THẲNG trong Text, không bọc View riêng. React Native cho
         phép vậy vì icon thực chất cũng là chữ, nên nó tự nằm đúng đường chân
         chữ — bọc View thì phải tự canh lại cho khớp.
       */}
-      <Text style={styles.fieldLabel}>
+      <Text className="mb-1.5 text-[13px] font-semibold text-text">
         {icon}
         {icon ? '  ' : null}
         {label}
       </Text>
       <TextInput
-        style={[styles.input, multiline && styles.inputMultiline]}
+        className={`rounded-md border border-border-strong px-md py-[11px] text-[14px] text-text ${
+          multiline ? 'h-[90px]' : ''
+        }`}
+        // textAlignVertical là thuộc tính chỉ có ở React Native, không có
+        // lớp tiện ích tương ứng — để style.
+        style={multiline && { textAlignVertical: 'top' }}
         placeholderTextColor={colors.textMuted}
         multiline={multiline}
         {...props}
@@ -883,129 +931,3 @@ function Field({
     </View>
   );
 }
-
-const themedStyles = createThemedStyles((colors, shadow) =>
-  StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 0.5,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  row: { flexDirection: 'row', gap: spacing.md },
-
-  choice: {
-    minHeight: 44,
-    justifyContent: 'center',
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    borderWidth: 2,
-    borderColor: colors.borderStrong,
-    alignItems: 'center',
-  },
-  choiceText: { fontSize: 14, fontWeight: '700', color: colors.textSoft },
-  choiceTextActive: { color: colors.onPrimary },
-
-  field: { marginTop: spacing.lg },
-  // Cùng khoảng cách với các ô nhập, để bản đồ nằm thẳng hàng trong mạch form
-  mapBlock: { marginTop: spacing.lg },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 11,
-    fontSize: 14,
-    color: colors.text,
-  },
-  inputMultiline: { height: 90, textAlignVertical: 'top' },
-
-  imagePicker: {
-    borderWidth: 2,
-    borderColor: colors.borderStrong,
-    borderStyle: 'dashed',
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 110,
-  },
-  imagePickerText: { color: colors.textMuted, fontSize: 14 },
-  preview: { width: '100%', height: 180, borderRadius: radius.md },
-
-  hint: {
-    fontSize: 12,
-    color: colors.textMuted,
-    lineHeight: 18,
-    marginTop: -spacing.sm,
-  },
-  aiBlock: { marginTop: spacing.sm, minHeight: 22 },
-  aiRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
-  aiWorking: { flex: 1, fontSize: 12, color: colors.aiText, lineHeight: 17 },
-  aiDone: { flex: 1, fontSize: 12, color: colors.aiText, lineHeight: 17 },
-  aiConfidence: { fontWeight: '800' },
-  aiErrorText: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
-  aiRetry: { fontSize: 12, fontWeight: '800', color: colors.aiAccent },
-
-  photoHint: {
-    fontSize: 11.5,
-    color: colors.textMuted,
-    textAlign: "center",
-    marginTop: 6,
-  },
-
-  sheetRoot: { flex: 1, justifyContent: "flex-end", backgroundColor: colors.scrim },
-  // absoluteFill, không phải absoluteFillObject — xem giải thích trong
-  // components/PetMap.tsx. Dùng sai thì nền mờ này rộng 0 điểm ảnh, và
-  // "chạm ra ngoài để đóng" lặng lẽ không hoạt động.
-  sheetBackdrop: { ...StyleSheet.absoluteFill },
-  sheet: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-  },
-  sheetTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.textMuted,
-    textAlign: "center",
-    marginBottom: spacing.md,
-  },
-  sheetRow: {
-    // Có icon rồi nên phải xếp ngang, không thì icon nằm chồng lên chữ
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: spacing.sm,
-    paddingVertical: 15,
-    borderRadius: radius.md,
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    marginBottom: spacing.sm,
-  },
-  sheetRowText: { fontSize: 15, fontWeight: "700", color: colors.text },
-  sheetRowDanger: { color: colors.danger },
-  sheetCancel: { backgroundColor: "transparent", marginBottom: 0 },
-  sheetCancelText: { fontSize: 15, fontWeight: "700", color: colors.textMuted },
-
-  note: { fontSize: 12, color: colors.textMuted, marginTop: spacing.lg, fontStyle: 'italic' },
-
-  submit: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    marginTop: spacing.xl,
-  },
-  submitText: { color: colors.onPrimary, fontSize: 15, fontWeight: '700' },
-  disabled: { opacity: 0.5 },
-  }),
-);
