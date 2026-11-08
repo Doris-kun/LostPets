@@ -108,7 +108,15 @@ describe('vùng chạm tối thiểu 44pt', () => {
      * Đọc cả p- gộp để khớp với nhánh style: ở đó luật đã đọc `padding` khi
      * không có `paddingVertical`.
      */
-    const dem = /p[yb]?-(\[[^\]]+\]|[a-z]+|\d+(?:\.\d+)?)/.exec(lop);
+    /*
+     * (?:^|\s) ở đầu: lớp phải BẮT ĐẦU bằng p-, py- hay pb-.
+     *
+     * Thiếu phần này thì "gap-1.5" cũng khớp — chữ p của gap, rồi dấu gạch,
+     * rồi 1.5 — nên khoảng cách giữa icon và chữ bị đọc thành đệm dọc. Nút
+     * "Chia sẻ" có gap-1.5 và py-3.5: luật gặp gap trước, tính ra 30pt và
+     * báo động, trong khi đệm thật là 14 trên 14 dưới, tức 46pt.
+     */
+    const dem = /(?:^|\s)p[yb]?-(\[[^\]]+\]|[a-z]+|\d+(?:\.\d+)?)/.exec(lop);
     if (dem) return { cao: doDem(dem[1]) * 2 + 18, co: true };
 
     return { cao: 0, co: true };

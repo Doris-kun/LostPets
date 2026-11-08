@@ -5,7 +5,6 @@ import {
   Image,
   ScrollView,
   Share,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -23,8 +22,8 @@ import PetMap, { DirectionsButton } from '../components/PetMap';
 import { WEB_URL } from '../config';
 import { hasPoint } from '../map';
 import { useLanguage } from '../context/language';
-import { radius, spacing, statusStyle } from '../theme';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
+import { statusStyle } from '../theme';
+import { useTheme } from '../context/theme';
 
 /*
  * Màn hình chi tiết một tin.
@@ -44,7 +43,6 @@ export default function DetailScreen({ route, navigation }: Props) {
   const { id } = route.params;
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
@@ -346,7 +344,7 @@ export default function DetailScreen({ route, navigation }: Props) {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color={colors.teal} />
       </View>
     );
@@ -354,8 +352,8 @@ export default function DetailScreen({ route, navigation }: Props) {
 
   if (!pet) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.notFound}>{t('detail.notFound')}</Text>
+      <View className="flex-1 items-center justify-center bg-background">
+        <Text className="text-[15px] text-text-muted">{t('detail.notFound')}</Text>
       </View>
     );
   }
@@ -363,18 +361,27 @@ export default function DetailScreen({ route, navigation }: Props) {
   const status = statusStyle(pet, colors);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      className="flex-1 bg-background"
+      /* pb-12 = 48px = spacing.xl * 2, chừa chỗ cho thanh điều hướng dưới */
+      contentContainerClassName="p-lg pb-12"
+    >
       {pet.image ? (
-        <Image source={{ uri: pet.image }} style={styles.image} />
+        <Image source={{ uri: pet.image }} className="h-[220px] w-full rounded-lg bg-surface" />
       ) : (
-        <View style={[styles.image, styles.imagePlaceholder]}>
-          <Ionicons name="paw" size={56} color={colors.textMuted} style={styles.placeholderIcon} />
+        <View className="h-[220px] w-full rounded-lg bg-surface items-center justify-center">
+          {/* Ionicons không phải thẻ của React Native nên NativeWind không
+              gắn className vào được — phải để style như cũ. */}
+          <Ionicons name="paw" size={56} color={colors.textMuted} style={{ opacity: 0.4 }} />
         </View>
       )}
 
-      <View style={styles.header}>
-        <View style={[styles.badge, { backgroundColor: status.color }]}>
-          <Text style={[styles.badgeText, { color: status.onColor }]}>{t(status.labelKey)}</Text>
+      <View className="mt-lg flex-row items-center justify-between">
+        {/* Màu nhãn chạy theo trạng thái tin nên phải ở style */}
+        <View className="rounded-full px-3 py-[5px]" style={{ backgroundColor: status.color }}>
+          <Text className="text-[12px] font-bold" style={{ color: status.onColor }}>
+            {t(status.labelKey)}
+          </Text>
         </View>
         {/*
           Mã tin cố ý KHÔNG hiện ở đây. Trang này dành cho người đang đi tìm
@@ -389,18 +396,20 @@ export default function DetailScreen({ route, navigation }: Props) {
 
       {/* Tin đã đoàn tụ: báo rõ bằng một dải màu, không chỉ ẩn nút đi */}
       {pet.resolved && (
-        <View style={styles.resolvedBanner}>
+        <View className="mt-md flex-row items-center gap-sm rounded-md border border-sky bg-surface-tint px-md py-[11px]">
           <Ionicons name="checkmark-circle" size={17} color={colors.resolved} />
-          <Text style={styles.resolvedBannerText}>{t('detail.resolvedBanner')}</Text>
+          <Text className="flex-1 text-[13px] font-bold text-resolved">
+            {t('detail.resolvedBanner')}
+          </Text>
         </View>
       )}
 
-      <Text style={styles.title}>{pet.name || pet.breed}</Text>
-      <Text style={styles.subtitle}>
+      <Text className="mt-md text-[24px] font-bold text-text">{pet.name || pet.breed}</Text>
+      <Text className="mt-0.5 text-[14px] text-text-muted">
         {pet.species} · {pet.breed}
       </Text>
 
-      <View style={styles.infoRow}>
+      <View className="mt-lg flex-row gap-md">
         <InfoBox label={t('detail.color')} value={pet.color} />
         <InfoBox label={t('detail.area')} value={pet.area} />
       </View>
@@ -410,8 +419,8 @@ export default function DetailScreen({ route, navigation }: Props) {
        * ta bỏ qua bước chọn điểm thì không có — lúc đó không chừa chỗ trống.
        */}
       {hasPoint(pet) && (
-        <View style={styles.block}>
-          <Text style={styles.blockLabel}>{t('map.where')}</Text>
+        <View className="mt-lg">
+          <Text className="text-[11px] font-bold tracking-[0.5px] text-text-muted">{t('map.where')}</Text>
 
           {/*
            * Bản đồ tĩnh, chạm vào mở ra toàn màn hình (expandable).
@@ -419,35 +428,51 @@ export default function DetailScreen({ route, navigation }: Props) {
            * Màn này cuộn được, nên không để bản đồ bắt cử chỉ kéo — xem phần
            * giải thích CHUYỆN CỬ CHỈ trong components/PetMap.js.
            */}
-          <PetMap pets={[pet]} interactive={false} expandable height={170} style={styles.mapBox} />
+          {/* PetMap nhận prop style chứ không nhận className — nó là thẻ của
+              dự án, không phải thẻ của React Native. */}
+          <PetMap
+            pets={[pet]}
+            interactive={false}
+            expandable
+            height={170}
+            style={{ marginTop: 6 }}
+          />
 
           {/*
            * Nói rõ đây là vùng gần đúng, không phải địa chỉ. Quan trọng: người
            * đọc thấy một pin trên bản đồ rất dễ tưởng là đúng nhà, rồi tự đi
            * tới — trong khi toạ độ đã bị làm mờ ~500m và chủ tin cố ý vậy.
            */}
-          <Text style={styles.mapNote}>{t('map.approxNote')}</Text>
+          <Text className="mt-sm text-[11px] leading-4 text-text-muted">
+            {t('map.approxNote')}
+          </Text>
 
           <DirectionsButton lat={pet.lat} lng={pet.lng} />
         </View>
       )}
 
       {!!pet.description && (
-        <View style={styles.block}>
-          <Text style={styles.blockLabel}>{t('detail.desc')}</Text>
-          <Text style={styles.blockText}>{pet.description}</Text>
+        <View className="mt-lg">
+          <Text className="text-[11px] font-bold tracking-[0.5px] text-text-muted">{t('detail.desc')}</Text>
+          <Text className="mt-1.5 text-[14px] leading-[21px] text-text-soft">
+            {pet.description}
+          </Text>
         </View>
       )}
 
-      <View style={styles.contactBox}>
-        <Text style={styles.contactLabel}>{t('detail.contact')}</Text>
-        <Text style={styles.contactValue}>{pet.contact}</Text>
+      <View className="mt-lg rounded-md border border-contact-border bg-contact-bg p-md">
+        <Text className="text-[11px] font-bold tracking-[0.5px] text-teal-text">
+          {t('detail.contact')}
+        </Text>
+        <Text className="mt-1 text-[16px] font-bold text-text">{pet.contact}</Text>
       </View>
 
       {/* Cảnh báo đặt ngay dưới số liên hệ — đúng lúc người ta sắp bấm gọi */}
-      <View style={styles.scamBox}>
-        <Ionicons name="warning" size={15} color={colors.warnText} style={styles.scamIcon} />
-        <Text style={styles.scamText}>{t('scam.warning')}</Text>
+      <View className="mt-md flex-row gap-sm rounded-md border border-warn-border bg-warn-bg px-md py-[11px]">
+        <Ionicons name="warning" size={15} color={colors.warnText} style={{ marginTop: 1 }} />
+        <Text className="flex-1 text-[12.5px] leading-[18px] text-warn-text">
+          {t('scam.warning')}
+        </Text>
       </View>
 
       {/*
@@ -457,13 +482,17 @@ export default function DetailScreen({ route, navigation }: Props) {
         thì ô tự không hiện.
       */}
       {!!pet.secretDetail && (
-        <View style={styles.secretBox}>
-          <View style={styles.secretLabelRow}>
+        <View className="mt-md rounded-md border border-secret-border bg-secret-bg px-md py-3">
+          <View className="flex-row items-center gap-[5px]">
             <Ionicons name="lock-closed" size={12} color={colors.secretText} />
-            <Text style={styles.secretLabel}>{t('secret.yours')}</Text>
+            <Text className="text-[11px] font-bold tracking-[0.4px] text-secret-text">
+              {t('secret.yours')}
+            </Text>
           </View>
-          <Text style={styles.secretValue}>{pet.secretDetail}</Text>
-          <Text style={styles.secretHint}>{t('secret.howToUse')}</Text>
+          <Text className="mt-1.5 text-[14px] font-semibold text-text">{pet.secretDetail}</Text>
+          <Text className="mt-1.5 text-[11.5px] leading-[17px] text-secret-text">
+            {t('secret.howToUse')}
+          </Text>
         </View>
       )}
 
@@ -472,12 +501,16 @@ export default function DetailScreen({ route, navigation }: Props) {
         về nhà rồi thì vô nghĩa, bày nút ra chỉ tốn lượt gọi AI.
       */}
       {!pet.resolved && (
-        <View style={styles.matchBox}>
-          <Text style={styles.matchTitle}>{t('match.title')}</Text>
-          <Text style={styles.matchSubtitle}>{t('match.subtitle')}</Text>
+        <View className="mt-xl rounded-lg border border-ai-border bg-ai-bg p-lg">
+          <Text className="text-[15px] font-extrabold text-ai-text">{t('match.title')}</Text>
+          <Text className="mt-1 text-[12px] leading-[18px] text-text-muted">
+            {t('match.subtitle')}
+          </Text>
 
           <TouchableOpacity
-            style={[styles.matchButton, matchLoading && styles.buttonDisabled]}
+            className={`mt-md min-h-11 items-center justify-center rounded-md bg-ai-accent py-3 ${
+              matchLoading ? 'opacity-50' : ''
+            }`}
             onPress={findMatches}
             disabled={matchLoading}
             activeOpacity={0.85}
@@ -485,91 +518,112 @@ export default function DetailScreen({ route, navigation }: Props) {
             {matchLoading ? (
               <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <View style={styles.buttonRow}>
+              <View className="flex-row items-center gap-1.5">
                 <Ionicons name="sparkles" size={15} color={colors.onPrimary} />
-                <Text style={styles.matchButtonText}>{t('match.action')}</Text>
+                <Text className="text-[14px] font-bold text-on-primary">
+                  {t('match.action')}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
 
-          {matchLoading && <Text style={styles.matchNote}>{t('match.wait')}</Text>}
-          {!!matchError && <Text style={styles.matchErrorText}>{matchError}</Text>}
+          {matchLoading && <Text className="mt-sm text-center text-[12px] leading-[18px] text-text-muted">{t('match.wait')}</Text>}
+          {!!matchError && (
+            <Text className="mt-sm text-center text-[12px] text-danger">{matchError}</Text>
+          )}
 
           {/* Có kết quả rồi: hoặc danh sách bài khớp, hoặc câu "chưa tìm thấy" */}
           {!!matchResult &&
             !matchLoading &&
             (matchResult.matches.length > 0 ? (
-              <View style={styles.matchList}>
+              <View className="mt-md gap-sm">
                 {matchResult.matches.map((item) => (
                   <TouchableOpacity
                     key={item.pet._id}
-                    style={styles.matchItem}
+                    /*
+                      min-h-20 = 80 = ảnh 64 cộng đệm 8 trên 8 dưới, đúng bằng
+                      chiều cao hàng vốn tự có. Khai ra để luật 44pt đo được.
+                    */
+                    className="min-h-20 flex-row rounded-md bg-background p-sm"
                     onPress={() => navigation.push('Detail', { id: item.pet._id })}
                     activeOpacity={0.85}
                   >
                     {!!item.pet.image && (
-                      <Image source={{ uri: item.pet.image }} style={styles.matchImage} />
+                      <Image
+                        source={{ uri: item.pet.image }}
+                        className="h-16 w-16 rounded-sm bg-surface"
+                      />
                     )}
 
-                    <View style={styles.matchItemBody}>
-                      <View style={styles.matchScorePill}>
-                        <Text style={styles.matchScoreText}>
+                    <View className="ml-md flex-1 justify-center">
+                      <View className="self-start rounded-full bg-ai-accent px-2 py-0.5">
+                        <Text className="text-[10.5px] font-extrabold text-on-primary">
                           {t('match.score', { n: item.score })}
                         </Text>
                       </View>
 
-                      <Text style={styles.matchItemTitle} numberOfLines={1}>
+                      <Text className="mt-1 text-[14px] font-extrabold text-text" numberOfLines={1}>
                         {item.pet.name || item.pet.breed}
                       </Text>
-                      <Text style={styles.matchReason}>{item.reason}</Text>
+                      <Text className="mt-0.5 text-[12px] leading-[17px] text-text-soft">
+                        {item.reason}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 ))}
               </View>
             ) : (
-              <Text style={styles.matchNote}>
+              <Text className="mt-sm text-center text-[12px] leading-[18px] text-text-muted">
                 {t('match.none')} {t('match.checked', { n: matchResult.candidatesChecked })}
               </Text>
             ))}
         </View>
       )}
 
-      <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.85}>
+      <TouchableOpacity
+        className="mt-xl flex-row items-center justify-center gap-1.5 rounded-md border-[1.5px] border-border-strong bg-surface py-3.5"
+        onPress={handleShare}
+        activeOpacity={0.85}
+      >
         <Ionicons name="share-social-outline" size={16} color={colors.textSoft} />
-        <Text style={styles.shareText}>{t('detail.share')}</Text>
+        <Text className="text-[14px] font-bold text-text-soft">{t('detail.share')}</Text>
       </TouchableOpacity>
 
       {/* Chỉ hiện khi tin chưa được đánh dấu — đã đoàn tụ rồi thì không lùi lại */}
       {!pet.resolved && (
         <TouchableOpacity
-          style={[styles.resolveButton, resolving && styles.buttonDisabled]}
+          className={`mt-md flex-row items-center justify-center gap-1.5 rounded-md border-2 border-resolved py-3.5 ${
+            resolving ? 'opacity-50' : ''
+          }`}
           onPress={handleResolve}
           disabled={resolving}
           activeOpacity={0.85}
         >
           {/* Lúc đang lưu thì bỏ icon đi, chỉ còn chữ "Đang lưu..." */}
           {!resolving && <Ionicons name="checkmark-circle-outline" size={17} color={colors.resolved} />}
-          <Text style={styles.resolveText}>
+          <Text className="text-[14px] font-bold text-resolved">
             {t(resolving ? 'detail.resolving' : 'detail.resolve')}
           </Text>
         </TouchableOpacity>
       )}
 
-      <View style={styles.actions}>
+      <View className="mt-md flex-row gap-md">
         <TouchableOpacity
-          style={[styles.button, styles.buttonOutline]}
+          className="flex-1 items-center justify-center rounded-md py-3.5 border-2 border-border-strong"
           onPress={handleEdit}
           disabled={checkingEdit}
         >
-          <Text style={styles.buttonOutlineText}>{t('detail.edit')}</Text>
+          <Text className="text-[14px] font-bold text-text-soft">{t('detail.edit')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.buttonDanger, deleting && styles.buttonDisabled]}
+          className={`flex-1 items-center justify-center rounded-md py-3.5 bg-danger ${deleting ? 'opacity-50' : ''}`}
           onPress={handleDelete}
           disabled={deleting}
         >
-          <Text style={styles.buttonDangerText}>{t(deleting ? 'detail.deleting' : 'detail.delete')}</Text>
+          <Text className="text-[14px] font-bold text-on-primary">
+            {t(deleting ? 'detail.deleting' : 'detail.delete')}
+          </Text>
         </TouchableOpacity>
       </View>
       {/*
@@ -579,7 +633,8 @@ export default function DetailScreen({ route, navigation }: Props) {
         khoản và không đăng gì cả, nên đây là đường duy nhất của họ.
       */}
       <TouchableOpacity
-        style={styles.reportButton}
+        // Không viền, không nền, chữ mờ, nhưng vẫn cao 48 cho đủ vùng chạm
+        className="mt-md min-h-12 flex-row items-center justify-center gap-1.5"
         onPress={() => {
           setReportError('');
           setReportStage('form');
@@ -593,7 +648,9 @@ export default function DetailScreen({ route, navigation }: Props) {
           size={15}
           color={colors.textMuted}
         />
-        <Text style={styles.reportText}>{t(reported ? 'report.already' : 'report.action')}</Text>
+        <Text className="text-[12.5px] font-semibold text-text-muted">
+          {t(reported ? 'report.already' : 'report.action')}
+        </Text>
       </TouchableOpacity>
 
       <ReportModal
@@ -634,214 +691,10 @@ export default function DetailScreen({ route, navigation }: Props) {
 }
 
 function InfoBox({ label, value }: { label: string; value: string }) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
   return (
-    <View style={styles.infoBox}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+    <View className="flex-1 rounded-md bg-surface p-md">
+      <Text className="text-[11px] font-bold tracking-[0.5px] text-text-muted">{label}</Text>
+      <Text className="mt-1 text-[14px] font-semibold text-text">{value}</Text>
     </View>
   );
 }
-
-const themedStyles = createThemedStyles((colors, shadow) =>
-  StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-  notFound: { color: colors.textMuted, fontSize: 15 },
-
-  image: { width: '100%', height: 220, borderRadius: radius.lg, backgroundColor: colors.surface },
-  imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
-  placeholderIcon: { opacity: 0.4 },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.lg,
-  },
-  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.full },
-  // Màu chữ do statusStyle quyết định lúc vẽ
-  badgeText: { fontSize: 12, fontWeight: '700' },
-  postId: { fontSize: 12, color: colors.textMuted, fontVariant: ['tabular-nums'] },
-
-  title: { fontSize: 24, fontWeight: '700', color: colors.text, marginTop: spacing.md },
-  subtitle: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
-
-  infoRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
-  infoBox: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md },
-  infoLabel: { fontSize: 11, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5 },
-  infoValue: { fontSize: 14, fontWeight: '600', color: colors.text, marginTop: 4 },
-
-  block: { marginTop: spacing.lg },
-  blockLabel: { fontSize: 11, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5 },
-  blockText: { fontSize: 14, color: colors.textSoft, lineHeight: 21, marginTop: 6 },
-  mapBox: { marginTop: 6 },
-  mapNote: { fontSize: 11, color: colors.textMuted, lineHeight: 16, marginTop: spacing.sm },
-
-  contactBox: {
-    marginTop: spacing.lg,
-    backgroundColor: colors.contactBg,
-    borderWidth: 1,
-    borderColor: colors.contactBorder,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  contactLabel: { fontSize: 11, fontWeight: '700', color: colors.tealText, letterSpacing: 0.5 },
-  contactValue: { fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 4 },
-
-  scamBox: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    marginTop: spacing.md,
-    backgroundColor: colors.warnBg,
-    borderWidth: 1,
-    borderColor: colors.warnBorder,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 11,
-  },
-  scamIcon: { marginTop: 1 },
-  scamText: { flex: 1, fontSize: 12.5, color: colors.warnText, lineHeight: 18 },
-
-  secretBox: {
-    marginTop: spacing.md,
-    backgroundColor: colors.secretBg,
-    borderWidth: 1,
-    borderColor: colors.secretBorder,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-  },
-  secretLabelRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  secretLabel: { fontSize: 11, fontWeight: "700", color: colors.secretText, letterSpacing: 0.4 },
-  secretValue: { fontSize: 14, fontWeight: "600", color: colors.text, marginTop: 6 },
-  secretHint: { fontSize: 11.5, color: colors.secretText, lineHeight: 17, marginTop: 6 },
-
-  resolvedBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-    backgroundColor: colors.surfaceTint,
-    borderWidth: 1,
-    borderColor: colors.sky,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 11,
-  },
-  resolvedIcon: { fontSize: 15, fontWeight: '800', color: colors.resolved },
-  resolvedBannerText: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.resolved },
-
-  matchBox: {
-    marginTop: spacing.xl,
-    backgroundColor: colors.aiBg,
-    borderWidth: 1,
-    borderColor: colors.aiBorder,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-  },
-  matchTitle: { fontSize: 15, fontWeight: "800", color: colors.aiText },
-  matchSubtitle: { fontSize: 12, color: colors.textMuted, lineHeight: 18, marginTop: 4 },
-  matchButton: {
-    marginTop: spacing.md,
-    backgroundColor: colors.aiAccent,
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 44,
-  },
-  // Icon và chữ nằm cùng hàng, canh giữa — dùng chung cho các nút có icon
-  buttonRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  matchButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: "700" },
-  matchNote: {
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: "center",
-    marginTop: spacing.sm,
-    lineHeight: 18,
-  },
-  matchErrorText: { fontSize: 12, color: colors.danger, textAlign: "center", marginTop: spacing.sm },
-
-  matchList: { marginTop: spacing.md, gap: spacing.sm },
-  matchItem: {
-    flexDirection: "row",
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    padding: spacing.sm,
-  },
-  matchImage: { width: 64, height: 64, borderRadius: radius.sm, backgroundColor: colors.surface },
-  matchItemBody: { flex: 1, marginLeft: spacing.md, justifyContent: "center" },
-  matchScorePill: {
-    alignSelf: "flex-start",
-    backgroundColor: colors.aiAccent,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radius.full,
-  },
-  matchScoreText: { color: colors.onPrimary, fontSize: 10.5, fontWeight: "800" },
-  matchItemTitle: { fontSize: 14, fontWeight: "800", color: colors.text, marginTop: 4 },
-  matchReason: { fontSize: 12, color: colors.textSoft, lineHeight: 17, marginTop: 2 },
-
-  // Nút báo cáo: không viền, không nền, chữ mờ. Cố ý cho nó chìm hơn mọi
-  // nút khác trên màn hình — nó không phải việc người đọc thường cần làm.
-  reportButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-    minHeight: 48,
-    marginTop: spacing.md,
-  },
-  reportText: { fontSize: 12.5, fontWeight: '600', color: colors.textMuted },
-
-  shareButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: spacing.xl,
-    paddingVertical: 14,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-    alignItems: 'center',
-  },
-  shareText: { color: colors.textSoft, fontWeight: '700', fontSize: 14 },
-
-  resolveButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: spacing.md,
-    paddingVertical: 14,
-    borderRadius: radius.md,
-    borderWidth: 2,
-    borderColor: colors.resolved,
-    alignItems: 'center',
-  },
-  resolveText: { color: colors.resolved, fontWeight: '700', fontSize: 14 },
-
-  actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
-  button: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonOutline: { borderWidth: 2, borderColor: colors.borderStrong },
-  buttonOutlineText: { color: colors.textSoft, fontWeight: '700', fontSize: 14 },
-  buttonDanger: { backgroundColor: colors.danger },
-  buttonDangerText: { color: colors.onPrimary, fontWeight: '700', fontSize: 14 },
-  buttonDisabled: { opacity: 0.5 },
-  }),
-);
