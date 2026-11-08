@@ -7,7 +7,7 @@
 import './global.css';
 
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -115,7 +115,18 @@ function Root({
   const { colors, isDark } = useTheme();
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    /*
+      Màu nền CỐ Ý không đổi thành lớp bg-background.
+
+      Thẻ này là gốc của cả cây, nó vẽ ngay trong cùng một lượt với lúc
+      ThemeProvider gọi colorScheme.set(). Lượt đầu tiên đó NativeWind còn
+      chưa biết app đang ở chế độ nào, nên lớp bg-background ra màu của chế
+      độ sáng — rồi mới đổi lại. Trên nền tối thì đó là một vệt trắng loé
+      lên đúng lúc mở app, giống lỗi màn chào đã gặp.
+
+      Lấy qua useTheme thì màu có sẵn ngay từ lượt đầu, không loé.
+    */
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <NavigationContainer
             /*
              * Báo cho react-navigation biết đang ở chế độ nào. Thiếu dòng này
@@ -258,7 +269,3 @@ function RootStack() {
     </Stack.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-});

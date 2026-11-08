@@ -131,6 +131,19 @@ describe('vùng chạm tối thiểu 44pt', () => {
   const MIEN_TRU = [
     // Phủ kín khung bản đồ để bắt cú chạm mở trình chọn, nên rộng bằng cả khung.
     'StyleSheet.absoluteFill',
+
+    /*
+     * Thẻ tin nổi bật ở trang chủ. Chiều cao của nó đến từ aspect-[16/9] của
+     * tấm ảnh BÊN TRONG, tức là từ bề ngang màn hình — đọc mã nguồn thì
+     * không biết bề ngang đó là bao nhiêu. Hẹp nhất trong các máy đang bán
+     * là 320dp, nên riêng tấm ảnh đã cao 180, chưa tính phần chữ bên dưới.
+     *
+     * Không khai min-h cho nó: một con số sàn vừa không bao giờ có tác dụng,
+     * vừa làm người đọc sau tưởng chiều cao thẻ do con số đó quyết định.
+     * Đánh dấu bằng chú thích ngay trong thẻ thì chỗ miễn trừ nhìn thấy được
+     * tại chính nơi nó áp dụng.
+     */
+    'Luật 44pt: cao theo tỉ lệ ảnh',
   ];
 
   const soTrong = (chuoi: string, khoa: string): number => {

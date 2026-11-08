@@ -4,7 +4,6 @@ import {
   FlatList,
   Image,
   RefreshControl,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -26,8 +25,8 @@ import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/Pet
 import PetMapView from '../components/PetMapView';
 import ResolveNudge from '../components/ResolveNudge';
 import { useLanguage } from '../context/language';
-import { radius, spacing, statusStyle } from '../theme';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
+import { spacing, statusStyle } from '../theme';
+import { useTheme } from '../context/theme';
 
 /*
  * Màn hình danh sách tin — chữ R (Read) trong CRUD.
@@ -161,8 +160,7 @@ export default function HomeScreen({ navigation }: Props) {
    * từ react-navigation thay vì đoán, vì mỗi máy một khác.
    */
   const { t } = useLanguage();
-  const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
+  const { colors, shadow } = useTheme();
 
   const [pets, setPets] = useState<Pet[]>([]);
   const [total, setTotal] = useState(0);
@@ -331,7 +329,7 @@ export default function HomeScreen({ navigation }: Props) {
   const activeCount = countActiveFilters(filters);
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-surface">
       <Header />
 
       {/*
@@ -350,10 +348,19 @@ export default function HomeScreen({ navigation }: Props) {
         nghĩ trong đầu. Người mất thú cưng mở app lên là đã có sẵn câu trong
         đầu rồi, nên để họ gõ ngay thay vì bắt mở thêm một bảng nữa.
       */}
-      <View style={styles.searchBox}>
+      {/*
+        Viền 1.5 và dùng border-strong chứ không phải viền nhạt: đây là chỗ
+        GÕ ĐƯỢC, mà viền chính là dấu hiệu duy nhất cho biết điều đó.
+        min-h-[46px] cho đủ vùng chạm 44pt.
+      */}
+      <View className="mx-lg mb-md min-h-[46px] flex-row items-center gap-sm rounded-full border-[1.5px] border-border-strong bg-surface px-md">
         <Ionicons name="search-outline" size={17} color={colors.textMuted} />
         <TextInput
-          style={styles.searchInput}
+          /*
+           * py-0 — Android tự chèn đệm trên dưới vào TextInput, không gỡ đi
+           * thì chữ nằm lệch hẳn so với hai cái icon hai bên.
+           */
+          className="flex-1 py-0 text-[14px] text-text"
           value={search}
           onChangeText={setSearch}
           placeholder={t('search.placeholder')}
@@ -367,7 +374,7 @@ export default function HomeScreen({ navigation }: Props) {
         */}
         {search.length > 0 && (
           <TouchableOpacity
-            style={styles.searchClear}
+            className="p-0.5"
             onPress={() => setSearch('')}
             accessibilityLabel={t('search.clear')}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -388,10 +395,12 @@ export default function HomeScreen({ navigation }: Props) {
         cùng lúc.
       */}
       {view === 'list' && !!query.trim() && (
-        <Text style={styles.searchNote}>{t('search.hint')}</Text>
+        <Text className="-mt-xs mx-lg mb-md text-[11.5px] text-text-muted">
+          {t('search.hint')}
+        </Text>
       )}
 
-      <View style={styles.filterRow}>
+      <View className="flex-row gap-sm bg-background px-lg pb-md">
         {FILTERS.map((item) => {
           const active = type === item.value;
           return (
@@ -401,21 +410,29 @@ export default function HomeScreen({ navigation }: Props) {
               activeOpacity={0.8}
               // Chip cao 32, nới thêm 6 trên 6 dưới cho đủ 44
               hitSlop={{ top: 6, bottom: 6 }}
-              style={[
-                styles.chip,
-                active && { backgroundColor: colors[item.colorKey], borderColor: colors[item.colorKey] },
-              ]}
+              className="rounded-full border-[1.5px] border-border-strong bg-background px-lg py-2"
+              // Màu lúc đang chọn tra từ bảng màu theo loại tin nên ở style
+              style={
+                active && {
+                  backgroundColor: colors[item.colorKey],
+                  borderColor: colors[item.colorKey],
+                }
+              }
             >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>
+              <Text
+                className={`text-[13px] font-bold ${active ? 'text-on-primary' : 'text-text-soft'}`}
+              >
                 {t(item.labelKey)}
               </Text>
             </TouchableOpacity>
           );
         })}
 
-        {/* Đẩy sát mép phải bằng marginLeft: 'auto' — không cần View đệm */}
         <TouchableOpacity
-          style={[styles.filterButton, activeCount > 0 && styles.filterButtonActive]}
+          // ml-auto đẩy sát mép phải — không cần View đệm
+          className={`ml-auto flex-row items-center gap-1.5 rounded-full border-[1.5px] px-md py-2 ${
+            activeCount > 0 ? 'border-primary bg-primary' : 'border-border-strong'
+          }`}
           onPress={() => setFiltersOpen(true)}
           activeOpacity={0.8}
           hitSlop={{ top: 6, bottom: 6 }}
@@ -430,12 +447,20 @@ export default function HomeScreen({ navigation }: Props) {
             size={15}
             color={activeCount > 0 ? colors.onPrimary : colors.textSoft}
           />
-          <Text style={[styles.filterButtonText, activeCount > 0 && styles.chipTextActive]}>
+          <Text
+            className={`text-[13px] font-bold ${
+              activeCount > 0 ? 'text-on-primary' : 'text-text-soft'
+            }`}
+          >
             {t('home.filter')}
           </Text>
           {activeCount > 0 && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>{activeCount}</Text>
+            /*
+             * Con số nhỏ nằm trên nền primary, nên nền viên lấy màu
+             * chữ-trên-primary và chữ lại lấy màu primary.
+             */
+            <View className="h-[17px] min-w-[17px] items-center justify-center rounded-full bg-on-primary px-1">
+              <Text className="text-[10.5px] font-extrabold text-primary">{activeCount}</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -445,13 +470,15 @@ export default function HomeScreen({ navigation }: Props) {
         Nút chuyển. Hai nửa bằng nhau, nửa đang chọn tô nền — kiểu điều khiển
         quen thuộc trên điện thoại, rõ hơn hẳn hai dòng chữ cạnh nhau.
       */}
-      <View style={styles.viewSwitch}>
+      <View className="mx-lg mb-md flex-row rounded-full bg-surface-tint p-[3px]">
         {(['list', 'map'] as const).map((mode) => {
           const on = view === mode;
           return (
             <TouchableOpacity
               key={mode}
-              style={[styles.viewTab, on && styles.viewTabOn]}
+              className={`min-h-11 flex-1 flex-row items-center justify-center gap-1.5 rounded-full ${
+                on ? 'bg-primary' : ''
+              }`}
               onPress={() => setView(mode)}
               activeOpacity={0.8}
             >
@@ -460,7 +487,9 @@ export default function HomeScreen({ navigation }: Props) {
                 size={15}
                 color={on ? colors.onPrimary : colors.textSoft}
               />
-              <Text style={[styles.viewTabText, on && styles.viewTabTextOn]}>
+              <Text
+                className={`text-[13px] font-bold ${on ? 'text-on-primary' : 'text-text-soft'}`}
+              >
                 {t(mode === 'list' ? 'map.listView' : 'map.mapView')}
               </Text>
             </TouchableOpacity>
@@ -482,7 +511,7 @@ export default function HomeScreen({ navigation }: Props) {
           onOpenPet={(id) => navigation.navigate('Detail', { id })}
         />
       ) : loading ? (
-        <View style={styles.center}>
+        <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.teal} />
         </View>
       ) : (
@@ -493,7 +522,9 @@ export default function HomeScreen({ navigation }: Props) {
            */
           data={pets.slice(1)}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={[styles.list, { paddingBottom: 90 }]}
+          contentContainerClassName="p-lg"
+          // Chừa chỗ cho nút "+" nổi ở góc, không thì nó che tin cuối
+          contentContainerStyle={{ paddingBottom: 90 }}
           showsVerticalScrollIndicator={false}
           // Kéo màn hình xuống để tải lại — thao tác quen thuộc trên điện thoại,
           // web không có khái niệm này.
@@ -563,11 +594,12 @@ export default function HomeScreen({ navigation }: Props) {
       */}
       {view === 'list' && (
         <TouchableOpacity
-          style={styles.fab}
+          className="absolute bottom-xl right-xl h-[58px] w-[58px] items-center justify-center rounded-full bg-primary"
+          style={shadow.float}
           onPress={() => navigation.navigate('Form', { mode: 'create' })}
           activeOpacity={0.85}
         >
-          <Text style={styles.fabIcon}>+</Text>
+          <Text className="text-[30px] font-light leading-[34px] text-on-primary">+</Text>
         </TouchableOpacity>
       )}
 
@@ -585,7 +617,6 @@ export default function HomeScreen({ navigation }: Props) {
 function Header() {
   const { t } = useLanguage();
   const { isDark } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   /*
    * insets.top = chiều cao phần bị che ở trên: tai thỏ, Dynamic Island, hoặc
@@ -597,13 +628,27 @@ function Header() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-      <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.headerLogo} />
+    <View
+      className="flex-row items-center bg-background px-lg pb-md"
+      style={{ paddingTop: insets.top + spacing.sm }}
+    >
+      {/*
+        resizeMode để nguyên dạng prop của Image chứ không đổi thành lớp
+        tiện ích: nó là prop riêng của React Native, không phải thuộc tính
+        CSS, nên không có lớp tương ứng chắc chắn hoạt động.
+      */}
+      <Image
+        source={isDark ? LOGO_MARK_DARK : LOGO_MARK}
+        className="h-[42px] w-[42px]"
+        resizeMode="contain"
+      />
 
-      <View style={styles.headerTextBlock}>
-        <Text style={styles.headerTitle}>LostPets</Text>
+      <View className="ml-md flex-1">
+        <Text className="text-[19px] font-extrabold tracking-[-0.3px] text-brand-title">
+          LostPets
+        </Text>
         {/* Slogan — cũng là câu dùng trên web */}
-        <Text style={styles.headerSlogan}>{t('brand.slogan')}</Text>
+        <Text className="mt-px text-[12px] text-text-muted">{t('brand.slogan')}</Text>
       </View>
     </View>
   );
@@ -632,8 +677,7 @@ function Featured({
   onPress: () => void;
 }) {
   const { t, lang } = useLanguage();
-  const { colors, isDark } = useTheme();
-  const styles = useThemedStyles(themedStyles);
+  const { colors, isDark, shadow } = useTheme();
 
   // Danh sách rỗng thì không có gì để làm nổi bật.
   if (!pet) return null;
@@ -653,52 +697,70 @@ function Featured({
         Chuyển xuống đây cũng đúng chỗ hơn: nó nói về DANH SÁCH bên dưới, chứ
         không phải về tên app ở thanh đầu trang.
       */}
-      <Text style={styles.resultCount}>{t('home.results', { n: total })}</Text>
+      <Text className="mb-md text-[12px] text-text-muted">
+        {t('home.results', { n: total })}
+      </Text>
 
-      <TouchableOpacity style={styles.featured} onPress={onPress} activeOpacity={0.9}>
-        <View style={styles.featuredImageBox}>
+      <TouchableOpacity
+        // Luật 44pt: cao theo tỉ lệ ảnh
+        className="mb-lg overflow-hidden rounded-lg border border-border-light bg-surface"
+        style={shadow.card}
+        onPress={onPress}
+        activeOpacity={0.9}
+      >
+        <View className="relative">
           {/* API trả image là CHUỖI RỖNG khi không có ảnh, không phải null */}
           {pet.image ? (
             <Image
               source={{ uri: thumbnail(pet.image, THUMB_FEATURED) }}
-              style={styles.featuredImage}
+              className="aspect-[16/9] w-full bg-surface-tint"
             />
           ) : (
-            <View style={[styles.featuredImage, styles.featuredImageEmpty]}>
-              <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.featuredLogo} />
+            <View className="aspect-[16/9] w-full bg-surface-tint items-center justify-center">
+              <Image
+                source={isDark ? LOGO_MARK_DARK : LOGO_MARK}
+                className="h-14 w-14 opacity-[0.35]"
+                resizeMode="contain"
+              />
             </View>
           )}
 
-          <View style={[styles.featuredBadge, { backgroundColor: status.color }]}>
-            <Text style={[styles.featuredBadgeText, { color: status.onColor }]}>
+          {/* Màu nhãn chạy theo trạng thái tin nên phải ở style */}
+          <View
+            className="absolute left-md top-md rounded-full px-md py-[5px]"
+            style={{ backgroundColor: status.color }}
+          >
+            <Text className="text-[11px] font-extrabold" style={{ color: status.onColor }}>
               {t(status.labelKey)}
             </Text>
           </View>
         </View>
 
-        <View style={styles.featuredBody}>
-          <Text style={styles.featuredLabel}>{t('home.featured')}</Text>
-          <Text style={styles.featuredTitle} numberOfLines={1}>
+        <View className="p-lg">
+          <Text className="mb-sm text-[10px] font-extrabold tracking-[1.2px] text-accent-text">
+            {t('home.featured')}
+          </Text>
+          <Text className="text-[20px] font-extrabold text-text" numberOfLines={1}>
             {pet.name || pet.breed}
           </Text>
-          <Text style={styles.featuredSub} numberOfLines={1}>
+          <Text className="mt-0.5 text-[13px] text-text-muted" numberOfLines={1}>
             {pet.species} · {pet.breed}
           </Text>
-          <Text style={styles.featuredArea} numberOfLines={1}>
+          <Text className="mt-sm text-[13px] text-text-soft" numberOfLines={1}>
             {pet.area}
           </Text>
 
           {!!pet.description && (
-            <Text style={styles.featuredDesc} numberOfLines={3}>
+            <Text className="mt-sm text-[13px] leading-[19px] text-text-muted" numberOfLines={3}>
               {pet.description}
             </Text>
           )}
 
-          <View style={styles.featuredFoot}>
-            <Text style={styles.featuredTime}>{timeAgo(pet.date, t, lang)}</Text>
+          <View className="mt-lg flex-row items-center justify-between border-t border-border-light pt-md">
+            <Text className="text-[11px] text-text-muted">{timeAgo(pet.date, t, lang)}</Text>
             {/* Mũi tên vẽ bằng icon — xem lý do ở SettingsScreen */}
-            <View style={styles.featuredLinkRow}>
-              <Text style={styles.featuredLink}>{t('home.view')}</Text>
+            <View className="flex-row items-center gap-0.5">
+              <Text className="text-[13px] font-bold text-primary">{t('home.view')}</Text>
               <Ionicons name="chevron-forward" size={14} color={colors.primary} />
             </View>
           </View>
@@ -707,7 +769,9 @@ function Featured({
 
       {/* Tiêu đề cho phần còn lại. Chỉ có đúng một tin thì không có "phần còn
           lại" nào để đặt tiêu đề cả. */}
-      {restCount > 0 && <Text style={styles.moreLabel}>{t('home.more')}</Text>}
+      {restCount > 0 && (
+        <Text className="mb-md text-[15px] font-extrabold text-text">{t('home.more')}</Text>
+      )}
     </View>
   );
 }
@@ -723,13 +787,12 @@ function ListFooter({
 }) {
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   if (loadingMore) {
     return (
-      <View style={styles.footer}>
+      <View className="flex-row items-center justify-center gap-sm py-lg">
         <ActivityIndicator color={colors.teal} />
-        <Text style={styles.footerText}>{t('home.loadingMore')}</Text>
+        <Text className="text-[12.5px] text-text-muted">{t('home.loadingMore')}</Text>
       </View>
     );
   }
@@ -737,8 +800,8 @@ function ListFooter({
   // Danh sách rỗng đã có EmptyState lo, đừng báo "đã hiển thị tất cả" ở đó.
   if (shown > 0 && shown >= total) {
     return (
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>{t('home.noMore')}</Text>
+      <View className="flex-row items-center justify-center gap-sm py-lg">
+        <Text className="text-[12.5px] text-text-muted">{t('home.noMore')}</Text>
       </View>
     );
   }
@@ -760,17 +823,20 @@ function ListFooter({
 function EmptyState({ hasError, searching }: { hasError: boolean; searching: boolean }) {
   const { t } = useLanguage();
   const { colors, isDark } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   return (
-    <View style={styles.empty}>
-      <View style={styles.emptyIconWrap}>
-        <Image source={isDark ? LOGO_MARK_DARK : LOGO_MARK} style={styles.emptyLogo} />
+    <View className="items-center px-xl pt-[70px]">
+      <View className="mb-lg h-24 w-24 items-center justify-center rounded-full bg-surface-tint">
+        <Image
+          source={isDark ? LOGO_MARK_DARK : LOGO_MARK}
+          className="h-[58px] w-[58px] opacity-60"
+          resizeMode="contain"
+        />
       </View>
-      <Text style={styles.emptyTitle}>
+      <Text className="text-[16px] font-extrabold text-text">
         {t(hasError ? 'home.errorTitle' : searching ? 'search.noMatchTitle' : 'home.emptyTitle')}
       </Text>
-      <Text style={styles.emptyText}>
+      <Text className="mt-1.5 text-center text-[13px] leading-[19px] text-text-muted">
         {hasError
           ? t('home.errorText', { url: API_URL })
           : t(searching ? 'search.noMatchSub' : 'home.emptySub')}
@@ -778,251 +844,3 @@ function EmptyState({ hasError, searching }: { hasError: boolean; searching: boo
     </View>
   );
 }
-
-/*
- * StyleSheet.create thay cho file CSS.
- *
- * Vài điểm khác CSS trên web:
- *   - flexDirection mặc định là 'column' (web là 'row')
- *   - không có đơn vị: viết 16 chứ không phải '16px'
- *   - tên thuộc tính viết kiểu camelCase: backgroundColor
- *   - không kế thừa: đặt màu chữ ở View cha thì Text con KHÔNG nhận
- */
-const themedStyles = createThemedStyles((colors, shadow) =>
-  StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.background,
-  },
-  headerLogo: { width: 42, height: 42, resizeMode: 'contain' },
-  headerTextBlock: { flex: 1, marginLeft: spacing.md },
-  headerTitle: { fontSize: 19, fontWeight: '800', color: colors.brandTitle, letterSpacing: -0.3 },
-  headerSlogan: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
-  resultCount: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginBottom: spacing.md,
-  },
-
-
-  /* ---- Thẻ tin nổi bật ---- */
-  featured: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    marginBottom: spacing.lg,
-    ...shadow.card,
-  },
-  featuredImageBox: { position: 'relative' },
-  // 16:9 — ảnh ngang, cao vừa phải để phần chữ bên dưới vẫn lọt màn hình
-  featuredImage: { width: '100%', aspectRatio: 16 / 9, backgroundColor: colors.surfaceTint },
-  featuredImageEmpty: { alignItems: 'center', justifyContent: 'center' },
-  featuredLogo: { width: 56, height: 56, opacity: 0.35, resizeMode: 'contain' },
-  featuredBadge: {
-    position: 'absolute',
-    top: spacing.md,
-    left: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 5,
-    borderRadius: radius.full,
-  },
-  // Màu chữ do statusStyle quyết định lúc vẽ
-  featuredBadgeText: { fontSize: 11, fontWeight: '800' },
-
-  featuredBody: { padding: spacing.lg },
-  featuredLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.accentText,
-    letterSpacing: 1.2,
-    marginBottom: spacing.sm,
-  },
-  featuredTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
-  featuredSub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  featuredArea: { fontSize: 13, color: colors.textSoft, marginTop: spacing.sm },
-  featuredDesc: { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginTop: spacing.sm },
-  featuredFoot: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    marginTop: spacing.lg,
-    paddingTop: spacing.md,
-  },
-  featuredTime: { fontSize: 11, color: colors.textMuted },
-  featuredLinkRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  featuredLink: { fontSize: 13, fontWeight: '700', color: colors.primary },
-
-  moreLabel: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-
-  /*
-   * Ô tìm kiếm. Viền 1.5 và dùng borderStrong chứ không phải border nhạt:
-   * đây là chỗ GÕ ĐƯỢC, mà viền chính là dấu hiệu duy nhất cho biết điều đó.
-   * Viền mờ quá thì nó trông như một dòng chữ gợi ý, không ai bấm vào.
-   */
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.full,
-    backgroundColor: colors.surface,
-    // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-    minHeight: 46,
-  },
-  /*
-   * paddingVertical: 0 — Android tự chèn đệm trên dưới vào TextInput, không
-   * gỡ đi thì chữ nằm lệch hẳn so với hai cái icon hai bên.
-   */
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.text,
-    paddingVertical: 0,
-  },
-  searchClear: { padding: 2 },
-  searchNote: {
-    fontSize: 11.5,
-    color: colors.textMuted,
-    marginHorizontal: spacing.lg,
-    marginTop: -spacing.xs,
-    marginBottom: spacing.md,
-  },
-
-  filterRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.background,
-  },
-  chip: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 8,
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.background,
-  },
-  chipText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
-  chipTextActive: { color: colors.onPrimary },
-
-  filterButton: {
-    marginLeft: 'auto',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 8,
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-  },
-  filterButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  filterButtonText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
-  filterBadge: {
-    minWidth: 17,
-    height: 17,
-    borderRadius: radius.full,
-    // Con số nhỏ nằm trên nền primary, nên lấy màu chữ-trên-primary
-    backgroundColor: colors.onPrimary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  filterBadgeText: { fontSize: 10.5, fontWeight: '800', color: colors.primary },
-
-  list: { padding: spacing.lg, paddingBottom: 110 },
-
-
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.lg,
-  },
-  footerText: { fontSize: 12.5, color: colors.textMuted },
-
-  empty: { alignItems: 'center', paddingTop: 70, paddingHorizontal: spacing.xl },
-  emptyIconWrap: {
-    width: 96,
-    height: 96,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceTint,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  emptyLogo: { width: 58, height: 58, resizeMode: 'contain', opacity: 0.6 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  emptyText: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 6,
-    textAlign: 'center',
-    lineHeight: 19,
-  },
-
-  /*
-   * Nút chuyển Danh sách / Bản đồ. Hai nửa bằng nhau trong một khung bo
-   * tròn, nửa đang chọn tô nền đậm — kiểu điều khiển quen thuộc trên điện
-   * thoại, rõ hơn hẳn hai dòng chữ đặt cạnh nhau.
-   */
-  viewSwitch: {
-    flexDirection: 'row',
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    padding: 3,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceTint,
-  },
-  viewTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-    minHeight: 44,
-    borderRadius: radius.full,
-  },
-  viewTabOn: { backgroundColor: colors.primary },
-  viewTabText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
-  viewTabTextOn: { color: colors.onPrimary },
-
-  fab: {
-    position: 'absolute',
-    right: spacing.xl,
-    bottom: spacing.xl,
-    width: 58,
-    height: 58,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadow.float,
-  },
-
-
-  fabIcon: { color: colors.onPrimary, fontSize: 30, lineHeight: 34, fontWeight: '300' },
-  }),
-);
