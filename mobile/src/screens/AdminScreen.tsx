@@ -5,7 +5,6 @@ import {
   FlatList,
   Image,
   RefreshControl,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -20,8 +19,8 @@ import type { Lang, WordKey } from '../word';
 import { timeAgo } from '../components/PetCard';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
-import { createThemedStyles, useTheme, useThemedStyles } from '../context/theme';
-import { radius, spacing, statusStyle } from '../theme';
+import { useTheme } from '../context/theme';
+import { spacing, statusStyle } from '../theme';
 
 /*
  * Trang quản trị — tương đương views/Admin.vue bên web.
@@ -59,7 +58,6 @@ export default function AdminScreen({ navigation }: Props) {
   const { t, lang } = useLanguage();
   const { isAdmin } = useAuth();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [pets, setPets] = useState<Pet[]>([]);
@@ -177,15 +175,15 @@ export default function AdminScreen({ navigation }: Props) {
    */
   if (!isAdmin) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.emptyText}>{t('admin.denied')}</Text>
+      <View className="flex-1 items-center justify-center bg-background p-xl">
+        <Text className="mt-xl text-center text-[14px] leading-5 text-text-soft">{t('admin.denied')}</Text>
       </View>
     );
   }
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View className="flex-1 items-center justify-center bg-background p-xl">
         <ActivityIndicator size="large" color={colors.teal} />
       </View>
     );
@@ -193,10 +191,17 @@ export default function AdminScreen({ navigation }: Props) {
 
   return (
     <FlatList
-      style={styles.container}
+      className="flex-1 bg-background"
       data={pets}
       keyExtractor={(item) => item._id}
-      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
+      /*
+        px-lg pt-lg chứ không phải p-lg: đệm dưới phải tính theo vùng an
+        toàn của máy nên nó ở contentContainerStyle. Để p-lg thì hai nguồn
+        cùng khai paddingBottom, và cái nào thắng là tuỳ thứ tự gộp —
+        không nên phụ thuộc vào điều đó.
+      */
+      contentContainerClassName="px-lg pt-lg"
+      contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
@@ -242,12 +247,14 @@ export default function AdminScreen({ navigation }: Props) {
         </>
       }
       ListEmptyComponent={
-        <Text style={styles.emptyText}>{t(hasError ? 'admin.loadFailed' : 'admin.noPosts')}</Text>
+        <Text className="mt-xl text-center text-[14px] leading-5 text-text-soft">
+          {t(hasError ? 'admin.loadFailed' : 'admin.noPosts')}
+        </Text>
       }
       ListFooterComponent={
         // undefined chu khong phai null: FlatList khai slot nay la
         // Element | ComponentType | undefined, khong nhan null.
-        loadingMore ? <ActivityIndicator style={styles.footer} color={colors.teal} /> : undefined
+        loadingMore ? <ActivityIndicator className="my-lg" color={colors.teal} /> : undefined
       }
       renderItem={({ item }) => (
         <Row
@@ -287,7 +294,6 @@ function Header({
 }) {
   const { t } = useLanguage();
   const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
 
   const [cleaning, setCleaning] = useState(false);
 
@@ -325,11 +331,15 @@ function Header({
 
   return (
     <View>
-      <Text style={styles.subtitle}>{t('admin.subtitle')}</Text>
+      <Text className="mb-lg text-[13px] text-text-soft">{t('admin.subtitle')}</Text>
 
       {stats && (
         <>
-          <View style={styles.tiles}>
+          {/*
+            flex-wrap + basis-[30%] để vừa 3 ô một hàng trên mọi máy, không
+            cần đo bề ngang màn hình.
+          */}
+          <View className="flex-row flex-wrap gap-sm">
             <Tile label={t('admin.totalPosts')} value={stats.total} />
             <Tile label={t('admin.lost')} value={stats.lost} tint={colors.lost} />
             <Tile label={t('admin.found')} value={stats.found} tint={colors.found} />
@@ -340,13 +350,19 @@ function Header({
 
           {/* Thanh tỉ lệ đoàn tụ — con số quan trọng nhất của cả app, nên cho
               nó một dòng riêng thay vì nhét chung vào lưới ô số liệu. */}
-          <View style={styles.rateBox}>
-            <View style={styles.rateTop}>
-              <Text style={styles.rateNumber}>{stats.resolvedRate}%</Text>
-              <Text style={styles.rateLabel}>{t('admin.resolvedRate')}</Text>
+          <View className="mt-md rounded-md border border-border-light bg-surface p-md">
+            <View className="flex-row items-baseline gap-sm">
+              <Text className="text-[24px] font-extrabold text-resolved">
+                {stats.resolvedRate}%
+              </Text>
+              <Text className="shrink text-[12px] text-text-soft">{t('admin.resolvedRate')}</Text>
             </View>
-            <View style={styles.rateTrack}>
-              <View style={[styles.rateFill, { width: `${stats.resolvedRate}%` }]} />
+            <View className="mt-sm h-1.5 overflow-hidden rounded-full bg-border-light">
+              {/* Bề rộng là con số chạy theo dữ liệu nên phải ở style */}
+              <View
+                className="h-full rounded-full bg-resolved"
+                style={{ width: `${stats.resolvedRate}%` }}
+              />
             </View>
           </View>
 
@@ -356,20 +372,30 @@ function Header({
             thử mới biết nó vô dụng.
           */}
           {stats.pendingCleanup > 0 && (
-            <View style={styles.cleanupBox}>
-              <Text style={styles.cleanupText}>
+            /*
+              Bộ màu secret (vàng cam) chứ không phải danger (đỏ): dọn tin là
+              việc đã lên lịch và bình thường, không phải sự cố. Đỏ để dành
+              cho báo cáo tin xấu, thứ thật sự cần người can thiệp.
+            */
+            <View className="mt-md gap-md rounded-md border-[1.5px] border-secret-border bg-secret-bg p-md">
+              <Text className="text-[12.5px] leading-[18px] text-secret-text">
                 {t('admin.cleanupDue', {
                   count: stats.pendingCleanup,
                   days: stats.cleanupDays,
                 })}
               </Text>
               <TouchableOpacity
-                style={[styles.cleanupButton, cleaning && styles.cleanupDisabled]}
+                className={`min-h-11 items-center justify-center rounded-md bg-danger ${
+                  cleaning ? 'opacity-[0.45]' : ''
+                }`}
                 onPress={cleanup}
                 disabled={cleaning}
                 activeOpacity={0.85}
               >
-                <Text style={styles.cleanupButtonText}>
+                {/* text-white chứ không phải text-on-primary: nền nút là màu
+                    danger, và chữ trắng trên nền đỏ đó đạt tương phản ở cả
+                    hai chế độ sáng tối. */}
+                <Text className="text-[13.5px] font-bold text-white">
                   {t(cleaning ? 'admin.cleanupRunning' : 'admin.cleanupNow')}
                 </Text>
               </TouchableOpacity>
@@ -382,7 +408,7 @@ function Header({
       )}
 
       <TextInput
-        style={styles.search}
+        className="mt-lg rounded-md border border-border-strong bg-surface px-md py-2.5 text-[14px] text-text"
         value={search}
         onChangeText={setSearch}
         placeholder={t('admin.search')}
@@ -398,41 +424,48 @@ function Header({
       <ChipRow items={TYPE_FILTERS} value={type} onChange={setType} />
       <ChipRow items={STATUS_FILTERS} value={resolved} onChange={setResolved} />
 
-      {!hasError && <Text style={styles.count}>{t('admin.posts', { n: total })}</Text>}
+      {!hasError && (
+        <Text className="mb-sm mt-lg text-[12px] text-text-muted">
+          {t('admin.posts', { n: total })}
+        </Text>
+      )}
     </View>
   );
 }
 
 function Tile({ label, value, tint }: { label: string; value: number; tint?: string }) {
-  const styles = useThemedStyles(themedStyles);
   return (
-    <View style={styles.tile}>
-      <Text style={[styles.tileValue, !!tint && { color: tint }]}>{value}</Text>
-      <Text style={styles.tileLabel}>{label}</Text>
+    <View className="grow basis-[30%] items-center rounded-md border border-border-light bg-surface px-sm py-md">
+      {/* tint là màu chạy theo loại tin (mất/thấy) nên phải ở style */}
+      <Text className="text-[20px] font-extrabold text-text" style={!!tint && { color: tint }}>
+        {value}
+      </Text>
+      <Text className="mt-0.5 text-center text-[10px] text-text-muted">{label}</Text>
     </View>
   );
 }
 
 function Rank({ title, rows }: { title: string; rows?: { label: string; count: number }[] }) {
   const { t } = useLanguage();
-  const styles = useThemedStyles(themedStyles);
 
   return (
-    <View style={styles.rank}>
-      <Text style={styles.rankTitle}>{title}</Text>
+    <View className="mt-md rounded-md border border-border-light bg-surface p-md">
+      <Text className="mb-sm text-[11px] font-bold tracking-[0.5px] text-text-muted">
+        {title}
+      </Text>
       {rows?.length ? (
         rows.map((row) => (
           // Tên khu vực có thể trùng nhau sau khi cắt bớt, nên ghép thêm số
           // lượng vào key cho chắc.
-          <View key={`${row.label}-${row.count}`} style={styles.rankRow}>
-            <Text style={styles.rankLabel} numberOfLines={1}>
+          <View key={`${row.label}-${row.count}`} className="flex-row items-center gap-sm py-[3px]">
+            <Text className="flex-1 text-[13px] text-text-soft" numberOfLines={1}>
               {row.label || t('admin.noData')}
             </Text>
-            <Text style={styles.rankCount}>{row.count}</Text>
+            <Text className="text-[13px] font-bold text-text">{row.count}</Text>
           </View>
         ))
       ) : (
-        <Text style={styles.rankEmpty}>{t('admin.noData')}</Text>
+        <Text className="text-[12px] text-text-muted">{t('admin.noData')}</Text>
       )}
     </View>
   );
@@ -448,22 +481,27 @@ function ChipRow({
   onChange: (value: string) => void;
 }) {
   const { t } = useLanguage();
-  const styles = useThemedStyles(themedStyles);
 
   return (
-    <View style={styles.chipRow}>
+    <View className="mt-sm flex-row gap-sm">
       {items.map((item) => {
         const active = value === item.value;
         return (
           <TouchableOpacity
             key={item.value || 'all'}
-            style={[styles.chip, active && styles.chipActive]}
+            className={`rounded-full border-[1.5px] px-md py-[7px] ${
+              active ? 'border-primary bg-primary' : 'border-border-strong'
+            }`}
             onPress={() => onChange(item.value)}
             activeOpacity={0.8}
             // Chip cao 28, nới 8 trên 8 dưới cho đủ 44 (chỉ nới dọc)
             hitSlop={{ top: 8, bottom: 8 }}
           >
-            <Text style={[styles.chipText, active && styles.chipTextActive]}>
+            <Text
+              className={`text-[12px] font-bold ${
+                active ? 'text-on-primary' : 'text-text-soft'
+              }`}
+            >
               {t(item.labelKey)}
             </Text>
           </TouchableOpacity>
@@ -487,36 +525,49 @@ function Row({
   lang: Lang;
 }) {
   const { t } = useLanguage();
-  const { colors } = useTheme();
-  const styles = useThemedStyles(themedStyles);
+  const { colors, shadow } = useTheme();
   const status = statusStyle(pet, colors);
 
   return (
-    <TouchableOpacity style={styles.row} onPress={onOpen} activeOpacity={0.85}>
+    <TouchableOpacity
+      /*
+        min-h-16 = 64 = ảnh 48 cộng đệm 8 trên 8 dưới, đúng bằng chiều cao
+        hàng vốn tự có. Khai ra để luật 44pt đo được: không khai thì nó
+        chỉ thấy p-sm và tính ra 34pt, báo động oan.
+      */
+      className="mb-sm min-h-16 flex-row items-center gap-md rounded-md bg-surface p-sm"
+      style={shadow.card}
+      onPress={onOpen}
+      activeOpacity={0.85}
+    >
       {/* API trả image là CHUỖI RỖNG khi không có ảnh, không phải null */}
       {pet.image ? (
-        <Image source={{ uri: pet.image }} style={styles.thumb} />
+        <Image source={{ uri: pet.image }} className="h-12 w-12 rounded-sm bg-surface-tint" />
       ) : (
-        <View style={[styles.thumb, styles.thumbEmpty]} />
+        <View className="h-12 w-12 rounded-sm border border-border-light bg-surface-tint" />
       )}
 
-      <View style={styles.rowBody}>
-        <Text style={styles.rowTitle} numberOfLines={1}>
+      <View className="flex-1 gap-0.5">
+        <Text className="text-[14px] font-bold text-text" numberOfLines={1}>
           {pet.name || pet.breed}
         </Text>
-        <Text style={styles.rowMeta} numberOfLines={1}>
+        <Text className="text-[11px] text-text-muted" numberOfLines={1}>
           {pet.area} · {pet.owner?.name || t('admin.guest')}
         </Text>
-        <View style={styles.rowTags}>
-          <Text style={[styles.badge, { color: status.color, borderColor: status.color }]}>
+        <View className="mt-0.5 flex-row items-center gap-sm">
+          {/* Màu nhãn chạy theo trạng thái tin nên phải ở style */}
+          <Text
+            className="overflow-hidden rounded-full border px-1.5 py-px text-[9px] font-extrabold tracking-[0.4px]"
+            style={{ color: status.color, borderColor: status.color }}
+          >
             {t(status.labelKey)}
           </Text>
-          <Text style={styles.rowDate}>{timeAgo(pet.date, t, lang)}</Text>
+          <Text className="text-[10px] text-text-muted">{timeAgo(pet.date, t, lang)}</Text>
         </View>
       </View>
 
       <TouchableOpacity
-        style={styles.deleteButton}
+        className="min-w-14 items-center px-md py-sm"
         onPress={onDelete}
         disabled={busy}
         hitSlop={8}
@@ -524,183 +575,9 @@ function Row({
         {busy ? (
           <ActivityIndicator size="small" color={colors.danger} />
         ) : (
-          <Text style={styles.deleteText}>{t('admin.delete')}</Text>
+          <Text className="text-[12px] font-bold text-danger">{t('admin.delete')}</Text>
         )}
       </TouchableOpacity>
     </TouchableOpacity>
   );
 }
-
-const themedStyles = createThemedStyles((colors, shadow) =>
-  StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    content: { padding: spacing.lg },
-    center: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: spacing.xl,
-      backgroundColor: colors.background,
-    },
-    footer: { marginVertical: spacing.lg },
-    emptyText: {
-      color: colors.textSoft,
-      fontSize: 14,
-      textAlign: 'center',
-      marginTop: spacing.xl,
-      lineHeight: 20,
-    },
-
-    subtitle: { color: colors.textSoft, fontSize: 13, marginBottom: spacing.lg },
-
-    // Lưới ô số liệu: flexWrap + basis 30% để vừa 3 ô một hàng trên mọi máy,
-    // không cần đo bề ngang màn hình.
-    tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-    tile: {
-      flexGrow: 1,
-      flexBasis: '30%',
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.sm,
-      alignItems: 'center',
-    },
-    tileValue: { fontSize: 20, fontWeight: '800', color: colors.text },
-    tileLabel: { fontSize: 10, color: colors.textMuted, marginTop: 2, textAlign: 'center' },
-
-    /*
-     * Dải cảnh báo dọn tin. Dùng bộ màu warn (vàng cam) chứ không phải
-     * danger (đỏ): đây là việc đã lên lịch và bình thường, không phải sự
-     * cố. Đỏ để dành cho báo cáo tin xấu, thứ thật sự cần người can thiệp.
-     */
-    cleanupBox: {
-      marginTop: spacing.md,
-      padding: spacing.md,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.secretBorder,
-      backgroundColor: colors.secretBg,
-      gap: spacing.md,
-    },
-    cleanupText: { fontSize: 12.5, lineHeight: 18, color: colors.secretText },
-    cleanupButton: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
-      minHeight: 44,
-      borderRadius: radius.md,
-      backgroundColor: colors.danger,
-    },
-    cleanupButtonText: { fontSize: 13.5, fontWeight: '700', color: '#FFFFFF' },
-    cleanupDisabled: { opacity: 0.45 },
-
-    rateBox: {
-      marginTop: spacing.md,
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-      padding: spacing.md,
-    },
-    rateTop: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
-    rateNumber: { fontSize: 24, fontWeight: '800', color: colors.resolved },
-    rateLabel: { fontSize: 12, color: colors.textSoft, flexShrink: 1 },
-    rateTrack: {
-      height: 6,
-      borderRadius: radius.full,
-      backgroundColor: colors.borderLight,
-      marginTop: spacing.sm,
-      overflow: 'hidden',
-    },
-    rateFill: { height: '100%', borderRadius: radius.full, backgroundColor: colors.resolved },
-
-    rank: {
-      marginTop: spacing.md,
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-      padding: spacing.md,
-    },
-    rankTitle: {
-      fontSize: 11,
-      fontWeight: '700',
-      color: colors.textMuted,
-      letterSpacing: 0.5,
-      marginBottom: spacing.sm,
-    },
-    rankRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 3 },
-    rankLabel: { flex: 1, fontSize: 13, color: colors.textSoft },
-    rankCount: { fontSize: 13, fontWeight: '700', color: colors.text },
-    rankEmpty: { fontSize: 12, color: colors.textMuted },
-
-    search: {
-      marginTop: spacing.lg,
-      borderWidth: 1,
-      borderColor: colors.borderStrong,
-      borderRadius: radius.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 10,
-      fontSize: 14,
-      color: colors.text,
-      backgroundColor: colors.surface,
-    },
-
-    chipRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-    chip: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: 7,
-      borderRadius: radius.full,
-      borderWidth: 1.5,
-      borderColor: colors.borderStrong,
-    },
-    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    chipText: { fontSize: 12, fontWeight: '700', color: colors.textSoft },
-    chipTextActive: { color: colors.onPrimary },
-
-    count: {
-      fontSize: 12,
-      color: colors.textMuted,
-      marginTop: spacing.lg,
-      marginBottom: spacing.sm,
-    },
-
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      padding: spacing.sm,
-      marginBottom: spacing.sm,
-      ...shadow.card,
-    },
-    thumb: { width: 48, height: 48, borderRadius: radius.sm, backgroundColor: colors.surfaceTint },
-    thumbEmpty: { borderWidth: 1, borderColor: colors.borderLight },
-    rowBody: { flex: 1, gap: 2 },
-    rowTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
-    rowMeta: { fontSize: 11, color: colors.textMuted },
-    rowTags: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },
-    badge: {
-      fontSize: 9,
-      fontWeight: '800',
-      letterSpacing: 0.4,
-      borderWidth: 1,
-      borderRadius: radius.full,
-      paddingHorizontal: 6,
-      paddingVertical: 1,
-      overflow: 'hidden',
-    },
-    rowDate: { fontSize: 10, color: colors.textMuted },
-
-    deleteButton: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      minWidth: 56,
-      alignItems: 'center',
-    },
-    deleteText: { fontSize: 12, fontWeight: '700', color: colors.danger },
-  }),
-);
