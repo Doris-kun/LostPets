@@ -59,6 +59,25 @@ module.exports = {
        * được. Chỗ nào cần scrim thì vẫn lấy qua useTheme().
        */
       colors,
+
+      /*
+       * Thang khoảng cách và bo góc của chính dự án, lấy từ src/theme.ts.
+       *
+       * Viết tay ở đây chứ không sinh ra như màu: chúng chỉ là chín con số và
+       * gần như không bao giờ đổi. Đổi lại có một bài test canh cho hai nơi
+       * không lệch nhau — xem source.test.ts.
+       *
+       * spacing là THÊM VÀO thang sẵn có, nên p-3 vẫn là 12px như Tailwind
+       * chuẩn, còn p-md cũng là 12px theo từ vựng của dự án.
+       */
+      spacing: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 },
+
+      /*
+       * borderRadius thì GHI ĐÈ chứ không thêm: rounded-lg ở đây là 18px chứ
+       * không phải 8px như Tailwind chuẩn. Cố ý, vì đây là bo góc của app —
+       * nhưng ai quen Tailwind cần biết điều đó.
+       */
+      borderRadius: { sm: 8, md: 12, lg: 18, full: 9999 },
     },
   },
 

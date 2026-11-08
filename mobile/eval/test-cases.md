@@ -1,13 +1,13 @@
 # Bảng test case chức năng — app điện thoại LostPets
 
-Chạy ngày 2026-11-05 · sinh tự động bởi `npm run test:report`
+Chạy ngày 2026-11-08 · sinh tự động bởi `npm run test:report`
 
 ## Tổng hợp
 
 | | |
 |---|---|
-| Tổng số test case | 232 |
-| Pass | 232 |
+| Tổng số test case | 235 |
+| Pass | 235 |
 | Fail | 0 |
 | Tỉ lệ pass | **100%** |
 | Tiêu chí Objective 5 | ≥ 90% |
@@ -22,7 +22,7 @@ Môi trường: Jest 6 bộ test, chạy trên Node với bản giả của ph�
 | Bản đồ: toạ độ và trang Leaflet nhúng | Obj 4 | 42 | 42 | 0 |
 | Tương phản màu WCAG 2.1 AA, hai chế độ sáng/tối | Obj 5 / LSEPI | 68 | 68 | 0 |
 | Giao diện song ngữ Việt/Anh | Obj 4 | 7 | 7 | 0 |
-| Quy tắc giao diện: vùng chạm, icon, API đã bị bỏ | Obj 5 / LSEPI | 57 | 57 | 0 |
+| Quy tắc giao diện: vùng chạm, icon, API đã bị bỏ | Obj 5 / LSEPI | 60 | 60 | 0 |
 | Các hàm thuần: thời gian, bộ lọc, đọc mã lỗi | Obj 4 | 41 | 41 | 0 |
 | Thẻ tin đăng — vẽ thật và tương tác | Obj 4 | 17 | 17 | 0 |
 
@@ -221,72 +221,75 @@ Môi trường: Jest 6 bộ test, chạy trên Node với bản giả của ph�
 | TC-M172 | không dùng StyleSheet.absoluteFillObject › ReportModal.tsx | Pass |
 | TC-M173 | không dùng StyleSheet.absoluteFillObject › ResolveNudge.tsx | Pass |
 | TC-M174 | không dùng StyleSheet.absoluteFillObject › SocialLogin.tsx | Pass |
+| TC-M175 | Tailwind khớp với theme.ts › thang khoảng cách giống hệt nhau | Pass |
+| TC-M176 | Tailwind khớp với theme.ts › bo góc giống nhau, trừ full vốn chỉ cần đủ lớn | Pass |
+| TC-M177 | Tailwind khớp với theme.ts › global.css đã chạy lại sau lần đổi màu gần nhất | Pass |
 
 ### Các hàm thuần: thời gian, bộ lọc, đọc mã lỗi
 
 | Mã | Test case | Kết quả |
 |---|---|---|
-| TC-M175 | timeAgo — các đường ranh giới › chưa tới một phút thì ghi "Vừa xong" | Pass |
-| TC-M176 | timeAgo — các đường ranh giới › đúng một phút thì chuyển sang đếm phút | Pass |
-| TC-M177 | timeAgo — các đường ranh giới › 59 phút vẫn là phút, 60 phút thành giờ | Pass |
-| TC-M178 | timeAgo — các đường ranh giới › 23 giờ vẫn là giờ, 24 giờ thành ngày | Pass |
-| TC-M179 | timeAgo — các đường ranh giới › 29 ngày vẫn đếm ngày, 30 ngày thì quay về ngày tháng | Pass |
-| TC-M180 | timeAgo — các đường ranh giới › tháng viết tắt đổi theo ngôn ngữ | Pass |
-| TC-M181 | timeAgo — các đường ranh giới › bản tiếng Anh dùng đúng kho chữ tiếng Anh | Pass |
-| TC-M182 | countActiveFilters — đếm số điều kiện lọc đang bật › mặc định thì không có điều kiện nào | Pass |
-| TC-M183 | countActiveFilters — đếm số điều kiện lọc đang bật › "newest" là mặc định nên KHÔNG tính là một điều kiện | Pass |
-| TC-M184 | countActiveFilters — đếm số điều kiện lọc đang bật › khu vực chỉ toàn khoảng trắng thì không tính | Pass |
-| TC-M185 | countActiveFilters — đếm số điều kiện lọc đang bật › cộng dồn được | Pass |
-| TC-M186 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lấy được mã từ lỗi của axios | Pass |
-| TC-M187 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lỗi mạng của axios thì không có mã, trả undefined | Pass |
-| TC-M188 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lỗi thường không phải của axios thì cũng không ném | Pass |
-| TC-M189 | report — nhớ tin đã báo cáo › chưa báo cáo thì trả về false | Pass |
-| TC-M190 | report — nhớ tin đã báo cáo › đánh dấu rồi thì nhớ | Pass |
-| TC-M191 | report — nhớ tin đã báo cáo › mỗi tin một chỗ nhớ riêng, không lẫn sang tin khác | Pass |
-| TC-M192 | report — nhớ tin đã báo cáo › id rỗng thì không ghi và không nhận nhầm | Pass |
-| TC-M193 | report — nhớ tin đã báo cáo › lưu kèm mốc thời gian chứ không chỉ lưu cờ có/không | Pass |
-| TC-M194 | buildParams — tham số gửi lên máy chủ › không lọc gì thì chỉ gửi ba tham số bắt buộc | Pass |
-| TC-M195 | buildParams — tham số gửi lên máy chủ › câu tìm kiếm rỗng thì không gửi q | Pass |
-| TC-M196 | buildParams — tham số gửi lên máy chủ › cắt khoảng trắng thừa quanh câu tìm kiếm | Pass |
-| TC-M197 | buildParams — tham số gửi lên máy chủ › giữ nguyên dấu tiếng Việt, không bỏ dấu | Pass |
-| TC-M198 | buildParams — tham số gửi lên máy chủ › skip đi thẳng vào tham số, không nhân chia gì | Pass |
-| TC-M199 | buildParams — tham số gửi lên máy chủ › lọc và tìm kiếm dùng được cùng lúc | Pass |
-| TC-M200 | thumbnail — xin Cloudinary thu nhỏ ảnh › chèn lệnh thu nhỏ vào ngay sau /upload/ | Pass |
-| TC-M201 | thumbnail — xin Cloudinary thu nhỏ ảnh › giữ nguyên si phần đuôi chứa mã ảnh | Pass |
-| TC-M202 | thumbnail — xin Cloudinary thu nhỏ ảnh › bề ngang truyền vào bao nhiêu thì xin bấy nhiêu | Pass |
-| TC-M203 | thumbnail — xin Cloudinary thu nhỏ ảnh › địa chỉ không phải Cloudinary thì trả nguyên si | Pass |
-| TC-M204 | thumbnail — xin Cloudinary thu nhỏ ảnh › đã có sẵn lệnh biến đổi thì không chèn chồng lên | Pass |
-| TC-M205 | thumbnail — xin Cloudinary thu nhỏ ảnh › không có ảnh thì trả chuỗi rỗng, không trả undefined | Pass |
-| TC-M206 | nudge — giữ nhịp hỏi › lần đầu thì được phép dò và được phép hỏi | Pass |
-| TC-M207 | nudge — giữ nhịp hỏi › dò xong thì im trong 12 tiếng | Pass |
-| TC-M208 | nudge — giữ nhịp hỏi › hoãn rồi thì không hỏi lại tin đó nữa | Pass |
-| TC-M209 | nudge — giữ nhịp hỏi › hoãn tin này không làm im tin khác | Pass |
-| TC-M210 | nudge — giữ nhịp hỏi › quên rồi thì lại được phép hỏi | Pass |
-| TC-M211 | nudge — giữ nhịp hỏi › dữ liệu hỏng thì vẫn cho hỏi, không im luôn | Pass |
-| TC-M212 | nudge — giữ nhịp hỏi › hoãn 0 ngày thì hỏi lại được ngay | Pass |
-| TC-M213 | claim.list — tin của máy này › chưa đăng tin nào thì trả mảng rỗng | Pass |
-| TC-M214 | claim.list — tin của máy này › trả về đúng id, đã bỏ tiền tố | Pass |
-| TC-M215 | claim.list — tin của máy này › không lẫn khoá của thứ khác | Pass |
+| TC-M178 | timeAgo — các đường ranh giới › chưa tới một phút thì ghi "Vừa xong" | Pass |
+| TC-M179 | timeAgo — các đường ranh giới › đúng một phút thì chuyển sang đếm phút | Pass |
+| TC-M180 | timeAgo — các đường ranh giới › 59 phút vẫn là phút, 60 phút thành giờ | Pass |
+| TC-M181 | timeAgo — các đường ranh giới › 23 giờ vẫn là giờ, 24 giờ thành ngày | Pass |
+| TC-M182 | timeAgo — các đường ranh giới › 29 ngày vẫn đếm ngày, 30 ngày thì quay về ngày tháng | Pass |
+| TC-M183 | timeAgo — các đường ranh giới › tháng viết tắt đổi theo ngôn ngữ | Pass |
+| TC-M184 | timeAgo — các đường ranh giới › bản tiếng Anh dùng đúng kho chữ tiếng Anh | Pass |
+| TC-M185 | countActiveFilters — đếm số điều kiện lọc đang bật › mặc định thì không có điều kiện nào | Pass |
+| TC-M186 | countActiveFilters — đếm số điều kiện lọc đang bật › "newest" là mặc định nên KHÔNG tính là một điều kiện | Pass |
+| TC-M187 | countActiveFilters — đếm số điều kiện lọc đang bật › khu vực chỉ toàn khoảng trắng thì không tính | Pass |
+| TC-M188 | countActiveFilters — đếm số điều kiện lọc đang bật › cộng dồn được | Pass |
+| TC-M189 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lấy được mã từ lỗi của axios | Pass |
+| TC-M190 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lỗi mạng của axios thì không có mã, trả undefined | Pass |
+| TC-M191 | errorStatus — lấy mã HTTP ra từ một lỗi bắt được › lỗi thường không phải của axios thì cũng không ném | Pass |
+| TC-M192 | report — nhớ tin đã báo cáo › chưa báo cáo thì trả về false | Pass |
+| TC-M193 | report — nhớ tin đã báo cáo › đánh dấu rồi thì nhớ | Pass |
+| TC-M194 | report — nhớ tin đã báo cáo › mỗi tin một chỗ nhớ riêng, không lẫn sang tin khác | Pass |
+| TC-M195 | report — nhớ tin đã báo cáo › id rỗng thì không ghi và không nhận nhầm | Pass |
+| TC-M196 | report — nhớ tin đã báo cáo › lưu kèm mốc thời gian chứ không chỉ lưu cờ có/không | Pass |
+| TC-M197 | buildParams — tham số gửi lên máy chủ › không lọc gì thì chỉ gửi ba tham số bắt buộc | Pass |
+| TC-M198 | buildParams — tham số gửi lên máy chủ › câu tìm kiếm rỗng thì không gửi q | Pass |
+| TC-M199 | buildParams — tham số gửi lên máy chủ › cắt khoảng trắng thừa quanh câu tìm kiếm | Pass |
+| TC-M200 | buildParams — tham số gửi lên máy chủ › giữ nguyên dấu tiếng Việt, không bỏ dấu | Pass |
+| TC-M201 | buildParams — tham số gửi lên máy chủ › skip đi thẳng vào tham số, không nhân chia gì | Pass |
+| TC-M202 | buildParams — tham số gửi lên máy chủ › lọc và tìm kiếm dùng được cùng lúc | Pass |
+| TC-M203 | thumbnail — xin Cloudinary thu nhỏ ảnh › chèn lệnh thu nhỏ vào ngay sau /upload/ | Pass |
+| TC-M204 | thumbnail — xin Cloudinary thu nhỏ ảnh › giữ nguyên si phần đuôi chứa mã ảnh | Pass |
+| TC-M205 | thumbnail — xin Cloudinary thu nhỏ ảnh › bề ngang truyền vào bao nhiêu thì xin bấy nhiêu | Pass |
+| TC-M206 | thumbnail — xin Cloudinary thu nhỏ ảnh › địa chỉ không phải Cloudinary thì trả nguyên si | Pass |
+| TC-M207 | thumbnail — xin Cloudinary thu nhỏ ảnh › đã có sẵn lệnh biến đổi thì không chèn chồng lên | Pass |
+| TC-M208 | thumbnail — xin Cloudinary thu nhỏ ảnh › không có ảnh thì trả chuỗi rỗng, không trả undefined | Pass |
+| TC-M209 | nudge — giữ nhịp hỏi › lần đầu thì được phép dò và được phép hỏi | Pass |
+| TC-M210 | nudge — giữ nhịp hỏi › dò xong thì im trong 12 tiếng | Pass |
+| TC-M211 | nudge — giữ nhịp hỏi › hoãn rồi thì không hỏi lại tin đó nữa | Pass |
+| TC-M212 | nudge — giữ nhịp hỏi › hoãn tin này không làm im tin khác | Pass |
+| TC-M213 | nudge — giữ nhịp hỏi › quên rồi thì lại được phép hỏi | Pass |
+| TC-M214 | nudge — giữ nhịp hỏi › dữ liệu hỏng thì vẫn cho hỏi, không im luôn | Pass |
+| TC-M215 | nudge — giữ nhịp hỏi › hoãn 0 ngày thì hỏi lại được ngay | Pass |
+| TC-M216 | claim.list — tin của máy này › chưa đăng tin nào thì trả mảng rỗng | Pass |
+| TC-M217 | claim.list — tin của máy này › trả về đúng id, đã bỏ tiền tố | Pass |
+| TC-M218 | claim.list — tin của máy này › không lẫn khoá của thứ khác | Pass |
 
 ### Thẻ tin đăng — vẽ thật và tương tác
 
 | Mã | Test case | Kết quả |
 |---|---|---|
-| TC-M216 | PetCard vẽ ra được › không nổ, và hiện tên con vật | Pass |
-| TC-M217 | PetCard vẽ ra được › không có tên thì lấy giống thay thế | Pass |
-| TC-M218 | PetCard vẽ ra được › hiện khu vực | Pass |
-| TC-M219 | PetCard vẽ ra được › mặc định KHÔNG hiện mã tin | Pass |
-| TC-M220 | PetCard vẽ ra được › bật showCode thì mới hiện mã tin | Pass |
-| TC-M221 | PetCard vẽ ra được › bấm vào thì gọi onPress đúng một lần | Pass |
-| TC-M222 | nhãn trạng thái › tin báo mất | Pass |
-| TC-M223 | nhãn trạng thái › tin nhặt được | Pass |
-| TC-M224 | nhãn trạng thái › đã đoàn tụ thì thắng cả type | Pass |
-| TC-M225 | nhãn trạng thái › chữ trên nhãn dùng màu riêng của nhãn đó, không phải màu cố định | Pass |
-| TC-M226 | ảnh › có ảnh thì vẽ đúng ảnh đó | Pass |
-| TC-M227 | ảnh › không có ảnh thì vẽ logo thay thế, không để trống | Pass |
-| TC-M228 | ghim địa chỉ vẽ bằng icon › dùng icon location chứ không phải ký tự 📍 | Pass |
-| TC-M229 | PetCard — hàng dưới cùng luôn có nội dung › biết vị trí người xem thì hiện khoảng cách | Pass |
-| TC-M230 | PetCard — hàng dưới cùng luôn có nội dung › chưa biết vị trí thì mời bấm vào, không để trống | Pass |
-| TC-M231 | PetCard — hàng dưới cùng luôn có nội dung › tin không có toạ độ thì cũng mời bấm vào | Pass |
-| TC-M232 | PetCard — hàng dưới cùng luôn có nội dung › bật showCode thì mã tin thắng khoảng cách | Pass |
+| TC-M219 | PetCard vẽ ra được › không nổ, và hiện tên con vật | Pass |
+| TC-M220 | PetCard vẽ ra được › không có tên thì lấy giống thay thế | Pass |
+| TC-M221 | PetCard vẽ ra được › hiện khu vực | Pass |
+| TC-M222 | PetCard vẽ ra được › mặc định KHÔNG hiện mã tin | Pass |
+| TC-M223 | PetCard vẽ ra được › bật showCode thì mới hiện mã tin | Pass |
+| TC-M224 | PetCard vẽ ra được › bấm vào thì gọi onPress đúng một lần | Pass |
+| TC-M225 | nhãn trạng thái › tin báo mất | Pass |
+| TC-M226 | nhãn trạng thái › tin nhặt được | Pass |
+| TC-M227 | nhãn trạng thái › đã đoàn tụ thì thắng cả type | Pass |
+| TC-M228 | nhãn trạng thái › chữ trên nhãn dùng màu riêng của nhãn đó, không phải màu cố định | Pass |
+| TC-M229 | ảnh › có ảnh thì vẽ đúng ảnh đó | Pass |
+| TC-M230 | ảnh › không có ảnh thì vẽ logo thay thế, không để trống | Pass |
+| TC-M231 | ghim địa chỉ vẽ bằng icon › dùng icon location chứ không phải ký tự 📍 | Pass |
+| TC-M232 | PetCard — hàng dưới cùng luôn có nội dung › biết vị trí người xem thì hiện khoảng cách | Pass |
+| TC-M233 | PetCard — hàng dưới cùng luôn có nội dung › chưa biết vị trí thì mời bấm vào, không để trống | Pass |
+| TC-M234 | PetCard — hàng dưới cùng luôn có nội dung › tin không có toạ độ thì cũng mời bấm vào | Pass |
+| TC-M235 | PetCard — hàng dưới cùng luôn có nội dung › bật showCode thì mã tin thắng khoảng cách | Pass |
 

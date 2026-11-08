@@ -245,3 +245,56 @@ describe('không dùng StyleSheet.absoluteFillObject', () => {
     },
   );
 });
+
+/*
+ * Tailwind và theme.ts phải nói cùng một thứ tiếng.
+ *
+ * Màu thì đã an toàn: tailwind.config.js đọc ngược từ global.css, mà
+ * global.css do máy sinh ra từ theme.ts. Không ai chép tay gì cả.
+ *
+ * Nhưng chín con số khoảng cách và bo góc thì viết tay trong
+ * tailwind.config.js. Lệch một con số thì p-md bên className ra 12px mà
+ * spacing.md bên style ra 16px — hai nửa cùng một màn hình so le nhau vài
+ * điểm ảnh, đủ xấu để thấy nhưng không đủ rõ để biết vì sao.
+ */
+describe('Tailwind khớp với theme.ts', () => {
+  // require thẳng file .ts: Node 22.18 trở lên tự bóc phần khai kiểu.
+  const theme = require('../theme');
+  const tw = require('../../tailwind.config.js');
+
+  it('thang khoảng cách giống hệt nhau', () => {
+    expect(tw.theme.extend.spacing).toEqual(theme.spacing);
+  });
+
+  // radius.full là 999 bên theme.ts, 9999 bên Tailwind. Cả hai đều lớn hơn
+  // mọi chiều cao thật nên cùng cho ra hình viên thuốc — so riêng bốn tên,
+  // bỏ qua chênh lệch vô nghĩa đó.
+  it('bo góc giống nhau, trừ full vốn chỉ cần đủ lớn', () => {
+    const tailwind = tw.theme.extend.borderRadius;
+    expect(tailwind.sm).toBe(theme.radius.sm);
+    expect(tailwind.md).toBe(theme.radius.md);
+    expect(tailwind.lg).toBe(theme.radius.lg);
+    expect(tailwind.full).toBeGreaterThanOrEqual(999);
+  });
+
+  /*
+   * global.css phải chứa đúng từng ấy màu như theme.ts.
+   *
+   * Quên chạy `npm run make:css` sau khi thêm màu thì lớp bg-... của màu
+   * mới im lặng không ra màu gì — Tailwind không báo lỗi với một tên màu
+   * nó chưa từng nghe, nó chỉ bỏ qua.
+   */
+  it('global.css đã chạy lại sau lần đổi màu gần nhất', () => {
+    const css = docFile(join(GOC, '..', 'global.css'));
+    const tenTrongCss = [...css.matchAll(/--color-([a-z0-9-]+):/g)].map((m) => m[1]);
+    // Hai khối :root và .dark:root nên mỗi tên xuất hiện đúng hai lần.
+    const soMau = new Set(tenTrongCss).size;
+
+    // scrim lưu dạng rgba() nên không tách thành ba kênh được, script bỏ qua.
+    const soMauTrongTheme = Object.keys(theme.lightColors).filter(
+      (k) => typeof theme.lightColors[k] === 'string' && theme.lightColors[k].startsWith('#'),
+    ).length;
+
+    expect(soMau).toBe(soMauTrongTheme);
+  });
+});
