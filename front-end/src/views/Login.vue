@@ -28,6 +28,11 @@
         {{ $t('auth.noAccount') }}
         <router-link to="/register" class="text-orange-600 font-semibold hover:underline">{{ $t('auth.registerBtn') }}</router-link>
       </p>
+      <p class="text-sm text-center">
+        <router-link to="/forgot-password" class="text-gray-400 hover:text-gray-600 transition-colors">
+          {{ $t('forgot.link') }}
+        </router-link>
+      </p>
       <SocialLogin @done="afterSocial"/>
     </form>
 
