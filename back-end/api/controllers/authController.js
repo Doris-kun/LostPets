@@ -1,10 +1,12 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const User = require('../models/userModel');
 const { signToken, isAdminEmail } = require('../middleware/auth');
 const {
   OAuthError, verifyGoogle, verifyFacebook, googleConfigured, facebookConfigured,
   googleMobileConfigured, facebookPublic,
 } = require('../lib/oauth');
+const { mailerConfigured, sendMail } = require('../lib/mailer');
 
 const SALT_ROUNDS = 10;
 const MIN_PASSWORD_LENGTH = 6;
@@ -181,6 +183,117 @@ exports.me = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'Không tìm thấy tài khoản' });
     res.json(publicUser(user));
   } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ---------------------------------------------------------- quên mật khẩu
+
+const RESET_TTL_MS = 60 * 60 * 1000; // một giờ
+const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+const appUrl = () => (process.env.APP_URL || 'http://localhost:8080').replace(/\/+$/, '');
+
+// Trả về CÙNG MỘT CÂU dù email có tài khoản hay không.
+//
+// Nếu báo "email không tồn tại" thì trang quên mật khẩu biến thành công cụ dò:
+// gõ lần lượt vài nghìn địa chỉ là biết ai có tài khoản ở đây. Với web đăng
+// tin thú cưng thì danh sách đó đủ để nhắm mục tiêu lừa đảo.
+const RESET_SENT = 'Nếu email này có tài khoản, thư hướng dẫn đã được gửi. Kiểm tra cả hộp thư rác.';
+
+exports.forgotPassword = async (req, res) => {
+  if (secretMissing(res)) return;
+  if (!mailerConfigured()) {
+    return res.status(503).json({ message: 'Chức năng này chưa được cấu hình. Thiếu thiết lập gửi thư.' });
+  }
+
+  const email = String((req.body || {}).email || '').trim().toLowerCase();
+  if (!email) return res.status(400).json({ message: 'Thiếu email' });
+
+  try {
+    const user = await User.findOne({ email }).select('+passwordHash +google +facebook');
+
+    // Không có tài khoản: im lặng, vẫn trả về câu chung.
+    if (!user) return res.json({ message: RESET_SENT });
+
+    // Tài khoản tạo bằng Google/Facebook thì chưa từng có mật khẩu để mà quên.
+    // Vẫn gửi thư, nhưng chỉ đường về đúng nút họ cần bấm — để họ khỏi ngồi
+    // chờ một lá thư đặt lại mật khẩu không bao giờ tới.
+    if (!user.passwordHash) {
+      const provider = user.google ? 'Google' : 'Facebook';
+      await sendMail({
+        to: email,
+        subject: 'LostPets — cách đăng nhập vào tài khoản của bạn',
+        text: [
+          `Chào ${user.name},`,
+          '',
+          `Tài khoản này được tạo bằng ${provider}, nên nó chưa từng có mật khẩu.`,
+          `Bạn đăng nhập bằng cách bấm nút "Tiếp tục với ${provider}" ở trang đăng nhập.`,
+          '',
+          `${appUrl()}/login`,
+        ].join('\n'),
+      });
+      return res.json({ message: RESET_SENT });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    user.resetHash = hashResetToken(token);
+    user.resetExpires = new Date(Date.now() + RESET_TTL_MS);
+    await user.save();
+
+    const link = `${appUrl()}/reset-password?token=${token}`;
+    await sendMail({
+      to: email,
+      subject: 'LostPets — đặt lại mật khẩu',
+      text: [
+        `Chào ${user.name},`,
+        '',
+        'Bấm vào đường dẫn dưới đây để đặt mật khẩu mới. Đường dẫn có hiệu lực trong một giờ.',
+        '',
+        link,
+        '',
+        'Nếu không phải bạn yêu cầu, cứ bỏ qua thư này — mật khẩu hiện tại vẫn nguyên.',
+      ].join('\n'),
+    });
+
+    res.json({ message: RESET_SENT });
+  } catch (err) {
+    console.error('forgotPassword:', err && err.message);
+    // Vẫn trả về câu chung. Lỗi máy chủ cũng không được làm lộ email nào có
+    // tài khoản — một mã 500 đúng lúc cũng là một tín hiệu.
+    res.json({ message: RESET_SENT });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  if (secretMissing(res)) return;
+
+  const { token, password } = req.body || {};
+  if (!token || !password) return res.status(400).json({ message: 'Thiếu thông tin' });
+  if (String(password).length < MIN_PASSWORD_LENGTH) {
+    return res.status(400).json({ message: `Mật khẩu tối thiểu ${MIN_PASSWORD_LENGTH} ký tự` });
+  }
+
+  try {
+    const user = await User.findOne({
+      resetHash: hashResetToken(String(token)),
+      resetExpires: { $gt: new Date() },
+    }).select('+resetHash +resetExpires');
+
+    if (!user) {
+      return res.status(400).json({ message: 'Đường dẫn không còn hiệu lực. Hãy yêu cầu lại.' });
+    }
+
+    user.passwordHash = await bcrypt.hash(String(password), SALT_ROUNDS);
+    // Dùng một lần rồi bỏ. Không xoá thì cùng một đường dẫn đặt lại được mãi,
+    // và ai đọc được hộp thư cũ vẫn chiếm được tài khoản.
+    user.resetHash = undefined;
+    user.resetExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Đã đổi mật khẩu. Hãy đăng nhập lại.' });
+  } catch (err) {
+    console.error('resetPassword:', err && err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };

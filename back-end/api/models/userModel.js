@@ -38,6 +38,12 @@ const UserSchema = new Schema({
   // như tên gọi, và bao nhiêu tài khoản bỏ trống cũng được.
   google:   { type: String, unique: true, sparse: true, select: false },
   facebook: { type: String, unique: true, sparse: true, select: false },
+  // Đặt lại mật khẩu. Lưu BĂM của mã chứ không lưu mã, cùng lý do với mã xác
+  // nhận tin: ai đọc được database cũng không đặt lại được mật khẩu người khác.
+  //
+  // select: false để mã băm không vô tình lọt vào phản hồi API nào.
+  resetHash:    { type: String, select: false },
+  resetExpires: { type: Date, select: false },
   // Quản trị viên được xác định bằng biến môi trường ADMIN_EMAILS, không phải
   // bằng cách tự sửa trong database — đổi người quản trị chỉ cần sửa cấu hình.
   role:         { type: String, enum: ['user', 'admin'], default: 'user' },

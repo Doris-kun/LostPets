@@ -29,6 +29,21 @@ const providerLimit = rateLimit({
   scope: 'auth:provider',
 });
 
+// Quên mật khẩu. Chặn chặt hơn đăng nhập: mỗi lượt gọi là một lá thư gửi đi,
+// nên lạm dụng ở đây vừa đốt hạn mức gửi thư vừa biến web thành công cụ dội
+// thư vào hộp thư người khác.
+const forgotLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: () => Number(process.env.FORGOT_RATE_LIMIT) || 5,
+  message: 'Bạn đã yêu cầu quá nhiều lần, thử lại sau một giờ',
+  scope: 'auth:forgot',
+});
+
+router.post('/forgot-password', forgotLimit, authController.forgotPassword);
+// Đặt lại thì không gửi thư, nhưng vẫn chặn để không ai dò mã bằng cách thử
+// hàng loạt. Mã dài 64 ký tự hex nên dò mù là vô vọng, chặn cho chắc.
+router.post('/reset-password', loginLimit, authController.resetPassword);
+
 router.get('/providers', authController.providers);
 router.post('/google', providerLimit, authController.google);
 router.post('/facebook', providerLimit, authController.facebook);
