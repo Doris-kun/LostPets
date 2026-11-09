@@ -20,6 +20,11 @@ const router = new Router({
     // sách bảo mật công khai thì mới cho chuyển ứng dụng sang chế độ Live.
     { path: '/privacy',      component: () => import('./views/Privacy.vue') },
     { path: '/contact',      component: () => import('./views/Contact.vue') },
+    { path: '/forgot-password', component: () => import('./views/ForgotPassword.vue') },
+    // Mã đặt lại đi qua query chứ không qua đường dẫn: đường dẫn hay bị ghi
+    // vào log máy chủ và lịch sử trình duyệt chia sẻ được, còn query thì ít
+    // nhất cũng không nằm trong phần ai cũng chép đi chép lại.
+    { path: '/reset-password',  component: () => import('./views/ResetPassword.vue') },
     { path: '*',             component: () => import('./views/NotFound.vue') },
   ]
 });
