@@ -13,7 +13,17 @@ function connectDB() {
   if (isConnecting) return;
   isConnecting = true;
   mongoose
-    .connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 })
+    .connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      // Mongoose để mặc định 100 kết nối. Atlas gói miễn phí chỉ cho 500 kết
+      // nối cho cả cluster, nên mặc định đó chặn ở 5 instance — mà web này
+      // chạy trên 0,1 CPU thì không bao giờ dùng hết 100 kết nối cùng lúc.
+      // Ghim xuống 20 để sau này bật nhiều instance không phải sửa gì.
+      maxPoolSize: 20,
+      // Trả lại kết nối rỗi sau một phút. Render ngủ rồi thức liên tục, giữ
+      // kết nối chết trong pool thì lượt gọi đầu sau khi thức bị chờ timeout.
+      maxIdleTimeMS: 60000,
+    })
     .then(() => {
       isConnecting = false;
       console.log('Connected to MongoDB');
