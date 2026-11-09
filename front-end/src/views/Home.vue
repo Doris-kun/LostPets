@@ -198,7 +198,7 @@
         <h2 class="text-lg font-bold text-gray-900 mb-4">{{ $t('home.more') }}</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <router-link v-for="pet in rest" :key="pet._id" :to="`/pet/${pet._id}`"
-            class="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            class="group flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div class="relative aspect-[4/3] overflow-hidden bg-gray-100">
               <PetPhoto :src="pet.image" :alt="pet.breed"
                 :type="pet.type" :resolved="pet.resolved" :width="600"
@@ -208,7 +208,7 @@
                 {{ $t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found') }}
               </span>
             </div>
-            <div class="p-4">
+            <div class="p-4 flex flex-col flex-1">
               <h3 class="font-bold text-gray-900 text-base leading-tight">{{ pet.name || pet.breed }}</h3>
               <p class="text-sm text-gray-400 mt-0.5">{{ pet.species }} · {{ pet.breed }}</p>
               <div class="flex items-center gap-1 mt-1.5">
@@ -217,6 +217,13 @@
                 </svg>
                 <p class="text-sm text-gray-400 truncate">{{ pet.area }}</p>
               </div>
+              <!-- Mô tả là chỗ chứa đặc điểm giúp người ta NHẬN RA con vật của
+                   mình: lông xoăn, đeo vòng cổ đỏ, sợ người lạ. Tên và giống
+                   thì tin nào cũng na ná nhau. Cắt hai dòng để thẻ không dài
+                   lệch nhau quá. -->
+              <p v-if="pet.description" class="text-sm text-gray-400 leading-relaxed mt-2 line-clamp-2">
+                {{ pet.description }}
+              </p>
               <!-- Mã tin cố ý KHÔNG hiện ở đây. Người lạ lướt danh sách không
                    cần tới nó, mà in ra thì vừa rối mắt vừa giống thứ gì đó
                    quan trọng. Chủ tin vẫn xem được mã của mình ở "Tin của tôi",
@@ -225,7 +232,7 @@
                    khoảng cách nếu biết vị trí người xem.
                    Không biết vị trí thì thay bằng lời mời bấm vào, chứ không
                    để trống một nửa — thầy hướng dẫn nhận xét đúng chỗ đó. -->
-              <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-50">
+              <div class="flex items-center justify-between gap-2 mt-auto pt-3 border-t border-gray-50">
                 <p class="text-xs text-gray-400">{{ relativeTime(pet.date) }}</p>
                 <p v-if="distanceOf(pet)" class="text-xs text-gray-400 shrink-0">
                   {{ $t('card.away', { d: distanceOf(pet) }) }}
