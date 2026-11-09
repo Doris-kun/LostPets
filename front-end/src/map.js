@@ -146,6 +146,14 @@ export function meIcon() {
 // đọc. Hai nơi cùng gõ chuỗi 'map:me' thì sớm muộn cũng lệch nhau một chữ.
 export const ME_KEY = 'map:me';
 
+export function saveMe(point) {
+  try {
+    localStorage.setItem(ME_KEY, JSON.stringify(point));
+  } catch {
+    /* chế độ ẩn danh hoặc trình duyệt chặn lưu trữ: lần sau hỏi lại */
+  }
+}
+
 export function readSavedMe() {
   try {
     const raw = JSON.parse(localStorage.getItem(ME_KEY) || 'null');
