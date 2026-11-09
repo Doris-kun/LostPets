@@ -32,9 +32,13 @@ import { spacing } from '../theme';
 /*
  * Email công khai để người dùng liên hệ về dữ liệu của họ.
  *
- * PHẢI TRÙNG với CONTACT_EMAIL trong front-end/src/views/Privacy.vue. Hai
- * địa chỉ khác nhau nghĩa là cùng một dịch vụ mà hứa hai đường liên hệ khác
- * nhau — người dùng gửi vào đường nào cũng có thể rơi vào chỗ không ai đọc.
+ * PHẢI TRÙNG với CONTACT_EMAIL trong front-end/src/contact.js. Hai địa chỉ
+ * khác nhau nghĩa là cùng một dịch vụ mà hứa hai đường liên hệ khác nhau —
+ * người dùng gửi vào đường nào cũng có thể rơi vào chỗ không ai đọc.
+ *
+ * Bên web nó từng nằm trong views/Privacy.vue; PR #73 chuyển ra contact.js vì
+ * trang Liên hệ mới cũng cần đọc. Bên mobile chưa có trang Liên hệ riêng nên
+ * vẫn để ở đây — thêm màn thứ hai cần địa chỉ này thì tách ra trước đã.
  *
  * Mục 10 hứa "yêu cầu xoá tài khoản bằng cách liên hệ theo địa chỉ bên
  * dưới", nên bỏ trống là chính sách hứa một thứ không thực hiện được. Meta

@@ -20,7 +20,7 @@ import type { WordKey } from '../word';
 import { API_URL } from '../config';
 import PetCard, { timeAgo } from '../components/PetCard';
 import { THUMB_FEATURED, thumbnail } from '../image';
-import { readSavedMe, type Point } from '../map';
+import { locateMe, readSavedMe, type Point } from '../map';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
 import PetMapView from '../components/PetMapView';
 import ResolveNudge from '../components/ResolveNudge';
@@ -323,6 +323,31 @@ export default function HomeScreen({ navigation }: Props) {
     setLoading(true);
   };
 
+  /*
+   * Đang đi lấy toạ độ. Chỉ để đổi chữ trên nút, không khoá màn hình: lấy vị
+   * trí mất một hai giây và người dùng vẫn cuộn danh sách bình thường được
+   * trong lúc đó.
+   */
+  const [locating, setLocating] = useState(false);
+
+  /*
+   * Xin vị trí NGAY TẠI TRANG CHỦ.
+   *
+   * Trước đây muốn thấy khoảng cách trên thẻ tin thì phải sang tab Bản đồ,
+   * bấm "Gần tôi", rồi quay lại — ba thao tác cho một việc, mà chẳng có gì
+   * trên trang chủ gợi ý rằng phải làm vậy. Bản web vừa vá đúng chỗ này, xem
+   * front-end PR #75.
+   *
+   * Vẫn KHÔNG tự xin lúc mở màn: trang chính sách đã cam kết "chỉ hỏi vị trí
+   * khi bạn tự bấm nút", nên nó phải đi sau một cú bấm thật.
+   */
+  const askLocation = useCallback(async () => {
+    setLocating(true);
+    const diem = await locateMe();
+    if (diem) setMe(diem);
+    setLocating(false);
+  }, []);
+
   const activeCount = countActiveFilters(filters);
 
   return (
@@ -493,6 +518,31 @@ export default function HomeScreen({ navigation }: Props) {
           );
         })}
       </View>
+
+      {/*
+        Chỉ hiện khi CHƯA biết vị trí, và chỉ ở chế độ danh sách.
+
+        Biết rồi thì nút không còn việc gì để làm, để lại chỉ tổ chiếm chỗ. Còn
+        bản đồ đã có nút "Gần tôi" của riêng nó ở đúng góc ngón cái với tới —
+        hai nút cùng một việc trên một màn thì người dùng phải đoán chúng khác
+        nhau chỗ nào.
+
+        Bấm xong mà bị từ chối thì nút vẫn nằm đó: không báo lỗi gì, vì người
+        vừa bấm "Không cho phép" là người đã biết mình vừa làm gì.
+      */}
+      {view === 'list' && !me && (
+        <TouchableOpacity
+          className="mx-lg mb-md min-h-11 flex-row items-center gap-1.5 self-start rounded-full border-[1.5px] border-border-strong px-md"
+          onPress={askLocation}
+          disabled={locating}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="navigate-outline" size={14} color={colors.textSoft} />
+          <Text className="text-[12.5px] font-bold text-text-soft">
+            {t(locating ? 'map.locating' : 'home.showDistance')}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {view === 'map' ? (
         /*

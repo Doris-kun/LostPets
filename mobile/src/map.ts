@@ -17,6 +17,7 @@
 // Leaflet tải từ CDN. Ghim số phiên bản — để trống thì bản mới ra là app đổi
 // theo mà mình không biết, hỏng lúc nào không hay.
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import { darkColors, lightColors } from './theme';
 
 const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4';
@@ -165,6 +166,38 @@ export async function readSavedMe(): Promise<Point | null> {
     // Kiểm từng số: file lưu có thể hỏng, hoặc do bản app cũ ghi kiểu khác.
     // Tin bừa thì bản đồ bay ra giữa đại dương, lỗi này đã xảy ra một lần rồi.
     return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  } catch {
+    return null;
+  }
+}
+
+/*
+ * Xin quyền, lấy toạ độ, lưu lại — ba bước trong một lượt gọi.
+ *
+ * Để ở đây vì CẢ HAI chỗ đều cần: nút "Gần tôi" trên bản đồ, và nút "Hiện
+ * khoảng cách" ở Trang chủ. Chép thủ tục này làm hai bản thì sớm muộn một bên
+ * quên gọi saveMe, và triệu chứng là khoảng cách hiện ở màn này mà không hiện
+ * ở màn kia — thứ rất khó lần ra vì cả hai đều "chạy".
+ *
+ * Trả về null cho MỌI đường hỏng: người dùng từ chối, máy tắt GPS, hết giờ
+ * chờ. Chỗ gọi không cần phân biệt vì câu nói với người dùng là một: không
+ * lấy được vị trí. Gom lại cũng để không chỗ nào quên bọc try.
+ *
+ * KHÔNG tự gọi hàm này lúc mở màn hình. Trang chính sách đã cam kết "chỉ hỏi
+ * vị trí khi bạn tự bấm nút", nên nó phải đi sau một cú bấm thật.
+ */
+export async function locateMe(): Promise<Point | null> {
+  try {
+    const { granted } = await Location.requestForegroundPermissionsAsync();
+    if (!granted) return null;
+
+    const pos = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    const point = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+    await saveMe(point);
+    return point;
   } catch {
     return null;
   }

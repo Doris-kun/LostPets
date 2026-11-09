@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
 import api, { type PetQuery } from '../api';
 import type { MapPage, MapPet } from '../types';
 import PetMap from './PetMap';
 import { THUMB_CARD, thumbnail } from '../image';
-import { distanceKm, hasPoint, NEAR_ME_KM, readSavedMe, saveMe, type Point } from '../map';
+import { distanceKm, hasPoint, locateMe, NEAR_ME_KM, readSavedMe, type Point } from '../map';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
 import { statusStyle } from '../theme';
@@ -137,25 +136,16 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
   const goToMe = useCallback(async () => {
     setLocating(true);
     setLocationError('');
-    try {
-      const { granted } = await Location.requestForegroundPermissionsAsync();
-      if (!granted) {
-        setLocationError(t('map.denied'));
-        return;
-      }
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      const diem = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      setMe(diem);
-      // Lưu lại để thẻ tin ở Trang chủ hiện được khoảng cách. Trang chủ cố ý
-      // KHÔNG tự xin quyền vị trí, nó chỉ đọc thứ đã lưu ở đây.
-      saveMe(diem);
-    } catch {
-      setLocationError(t('map.denied'));
-    } finally {
-      setLocating(false);
-    }
+
+    // locateMe lo cả xin quyền, lấy toạ độ và lưu lại — xem src/map.ts. Lưu là
+    // để Trang chủ hiện được khoảng cách: nó cố ý KHÔNG tự xin quyền, chỉ đọc
+    // thứ đã lưu ở đây hoặc do nút "Hiện khoảng cách" bên đó ghi.
+    const diem = await locateMe();
+
+    if (diem) setMe(diem);
+    else setLocationError(t('map.denied'));
+
+    setLocating(false);
   }, [t]);
 
   if (loading) {

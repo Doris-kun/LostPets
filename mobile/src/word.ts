@@ -112,6 +112,7 @@ const vi = {
   'search.noMatchSub':
     'Thử tả ngắn hơn, hoặc viết như nói thường: giống gì, màu gì, mất ở đâu.',
   'home.filter': 'Lọc',
+  'home.showDistance': 'Hiện khoảng cách',
   'home.results': '{n} bài đăng',
   'home.featured': 'TIN MỚI NHẤT',
   'home.more': 'Các bài đăng khác',
@@ -494,6 +495,7 @@ const en: Record<WordKey, string> = {
   'search.noMatchSub':
     'Try a shorter description, or write it plainly: breed, colour, where it went missing.',
   'home.filter': 'Filter',
+  'home.showDistance': 'Show distance',
   'home.results': '{n} posts shown',
   'home.featured': 'LATEST POST',
   'home.more': 'More posts',
