@@ -7,6 +7,7 @@ const {
   googleMobileConfigured, facebookPublic,
 } = require('../lib/oauth');
 const { mailerConfigured, sendMail } = require('../lib/mailer');
+const { isExpoToken } = require('../lib/push');
 
 const SALT_ROUNDS = 10;
 const MIN_PASSWORD_LENGTH = 6;
@@ -294,6 +295,38 @@ exports.resetPassword = async (req, res) => {
     res.json({ message: 'Đã đổi mật khẩu. Hãy đăng nhập lại.' });
   } catch (err) {
     console.error('resetPassword:', err && err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+// ------------------------------------------------ mã thiết bị nhận thông báo
+
+exports.savePushToken = async (req, res) => {
+  const { token } = req.body || {};
+  if (!isExpoToken(token)) return res.status(400).json({ message: 'Mã thiết bị không hợp lệ' });
+
+  try {
+    // $addToSet chứ không $push: mở app mười lần thì app gửi lên mười lần
+    // cùng một mã, mà $push thì thành mười dòng, và người dùng nhận mười
+    // thông báo giống hệt nhau cho mỗi tin mới.
+    await User.updateOne({ _id: req.user.sub }, { $addToSet: { pushTokens: String(token) } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('savePushToken:', err && err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.removePushToken = async (req, res) => {
+  const { token } = req.body || {};
+  if (!token) return res.status(400).json({ message: 'Thiếu mã thiết bị' });
+
+  try {
+    await User.updateOne({ _id: req.user.sub }, { $pull: { pushTokens: String(token) } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('removePushToken:', err && err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };

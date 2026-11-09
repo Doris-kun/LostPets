@@ -74,7 +74,7 @@
 const CONTENT = {
   vi: {
     title: 'Chính sách bảo mật',
-    updated: 'Cập nhật lần cuối: 4 tháng 11, 2026',
+    updated: 'Cập nhật lần cuối: 9 tháng 11, 2026',
     intro:
       'LostPets là website giúp người mất thú cưng và người nhặt được thú cưng tìm thấy nhau. '
       + 'Đây là đồ án tốt nghiệp của sinh viên, không phải dịch vụ thương mại. Trang này nói rõ '
@@ -109,6 +109,7 @@ const CONTENT = {
           'Tên và địa chỉ email.',
           'Mật khẩu được lưu dưới dạng băm bcrypt. Website không giữ mật khẩu gốc và không khôi phục lại được, kể cả quản trị viên.',
           'Nếu bạn đăng nhập bằng Google hoặc Facebook: website nhận mã định danh của bạn ở nhà cung cấp đó, kèm tên và email họ gửi sang. Website KHÔNG nhận mật khẩu Google hay Facebook của bạn.',
+          'Nếu bạn dùng ứng dụng điện thoại và cho phép nhận thông báo: website lưu mã thiết bị do Expo cấp, để gửi thông báo tới đúng máy đó. Mã này không phải số điện thoại và không cho biết bạn đang ở đâu. Đăng xuất là xoá mã khỏi tài khoản.',
         ],
       },
       {
@@ -150,6 +151,8 @@ const CONTENT = {
           'Render — máy chủ chạy website.',
           'Google Gemini — phân tích ảnh, hiểu nghĩa câu tìm kiếm, đối chiếu các tin với nhau, và trả lời trong phần trợ lý. Nội dung tin đăng cùng câu bạn gõ được gửi tới dịch vụ này.',
           'Google và Meta — chỉ khi bạn tự bấm nút đăng nhập tương ứng.',
+          'Expo — chuyển thông báo đẩy tới ứng dụng điện thoại. Chỉ gửi mã thiết bị kèm tiêu đề và dòng mô tả ngắn của tin mới; không gửi ảnh, số điện thoại hay đặc điểm nhận dạng giữ kín.',
+          'Dịch vụ gửi thư — chuyển thư đặt lại mật khẩu. Chỉ gửi địa chỉ email của bạn kèm đường dẫn đặt lại.',
           'OpenStreetMap — ảnh nền bản đồ. Khi bản đồ hiện ra, trình duyệt của bạn gọi thẳng tới máy chủ của họ, nên họ thấy địa chỉ IP của bạn.',
         ],
       },
@@ -162,6 +165,8 @@ const CONTENT = {
           'Tin chưa đoàn tụ: giữ cho tới khi bạn xoá.',
           'Tài khoản: giữ cho tới khi bạn yêu cầu xoá.',
           'Báo cáo tin xấu: xoá cùng lúc với tin bị báo cáo.',
+          'Mã thiết bị nhận thông báo: xoá khi bạn đăng xuất, và cũng tự xoá khi Expo báo lại rằng máy đó đã gỡ ứng dụng.',
+          'Yêu cầu đặt lại mật khẩu: đường dẫn hết hiệu lực sau một giờ và chỉ dùng được một lần.',
         ],
       },
       {
@@ -200,7 +205,7 @@ const CONTENT = {
 
   en: {
     title: 'Privacy Policy',
-    updated: 'Last updated: 4 November 2026',
+    updated: 'Last updated: 9 November 2026',
     intro:
       'LostPets helps people who have lost a pet and people who have found one find each other. '
       + 'It is a student final-year project, not a commercial service. This page explains what the '
@@ -235,6 +240,7 @@ const CONTENT = {
           'Your name and email address.',
           'Your password is stored as a bcrypt hash. The site never keeps the original and cannot recover it, not even an administrator.',
           'If you sign in with Google or Facebook, the site receives your identifier at that provider plus the name and email they send. The site never receives your Google or Facebook password.',
+          'If you use the mobile app and allow notifications, the site stores the device token issued by Expo so notifications reach that device. The token is not a phone number and does not reveal where you are. Signing out removes it from your account.',
         ],
       },
       {
@@ -276,6 +282,8 @@ const CONTENT = {
           'Render — hosts the site.',
           'Google Gemini — analyses photos, interprets search phrases, compares listings, and answers in the help assistant. Listing content and what you type are sent to this service.',
           'Google and Meta — only when you press the matching sign-in button.',
+          'Expo — delivers push notifications to the mobile app. Only the device token, a title and a short description of the new listing are sent; never the photo, the phone number or the private identifying details.',
+          'An email delivery service — sends password reset messages. Only your email address and the reset link are sent.',
           'OpenStreetMap — map imagery. When a map loads, your browser contacts their servers directly, so they see your IP address.',
         ],
       },
@@ -288,6 +296,8 @@ const CONTENT = {
           'Listings not yet reunited: kept until you delete them.',
           'Accounts: kept until you ask for deletion.',
           'Reports about a listing: deleted together with the listing they concern.',
+          'Notification device tokens: removed when you sign out, and removed automatically when Expo reports that the device has uninstalled the app.',
+          'Password reset requests: the link expires after one hour and works only once.',
         ],
       },
       {

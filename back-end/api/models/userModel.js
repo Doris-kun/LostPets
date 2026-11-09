@@ -38,6 +38,14 @@ const UserSchema = new Schema({
   // như tên gọi, và bao nhiêu tài khoản bỏ trống cũng được.
   google:   { type: String, unique: true, sparse: true, select: false },
   facebook: { type: String, unique: true, sparse: true, select: false },
+  // Mã thiết bị để gửi thông báo đẩy. MẢNG chứ không phải một trường đơn:
+  // một người có thể có cả điện thoại và máy tính bảng, lưu một trường thì
+  // máy đăng nhập sau đẩy mất máy trước.
+  //
+  // select: false vì mã này tuy không phải mật khẩu, nhưng ai có nó thì gửi
+  // được thông báo tới đúng máy đó. Không trả ra API nào.
+  pushTokens:   { type: [String], default: [], select: false },
+
   // Đặt lại mật khẩu. Lưu BĂM của mã chứ không lưu mã, cùng lý do với mã xác
   // nhận tin: ai đọc được database cũng không đặt lại được mật khẩu người khác.
   //

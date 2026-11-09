@@ -48,6 +48,12 @@ router.get('/providers', authController.providers);
 router.post('/google', providerLimit, authController.google);
 router.post('/facebook', providerLimit, authController.facebook);
 
+// Mã thiết bị nhận thông báo đẩy. Bắt buộc đăng nhập: thông báo gắn với tài
+// khoản, nên khách vãng lai đăng tin bằng mã xác nhận sẽ không nhận được gì.
+// Đó là giới hạn đã biết, không phải chỗ sót.
+router.post('/push-token', optionalAuth, requireAuth, authController.savePushToken);
+router.delete('/push-token', optionalAuth, requireAuth, authController.removePushToken);
+
 router.get('/me', optionalAuth, requireAuth, authController.me);
 
 module.exports = router;
