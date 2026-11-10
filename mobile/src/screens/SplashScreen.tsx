@@ -42,7 +42,17 @@ import { useTheme } from '../context/theme';
  * trang chủ được.
  */
 
-const HOLD_MS = 1100; // giữ logo đứng yên trước khi rút đi
+/*
+ * Giữ logo đứng yên bao lâu trước khi rút đi.
+ *
+ * Hạ từ 1100 xuống 450. Cả màn chào trước đây ngốn 2,2 giây cố định — và đó
+ * là 2,2 giây người dùng KHÔNG làm gì được, cộng thêm vào mọi thứ chậm khác.
+ * Nay còn chừng 1,57 giây, vẫn đủ một nhịp để nhận ra logo chứ không hụt.
+ *
+ * Không rút ngắn thêm nữa: dưới khoảng 300ms thì logo chớp một cái rồi biến,
+ * nhìn như app lỗi chứ không ra màn chào.
+ */
+const HOLD_MS = 450;
 
 // logo-full.png gốc 471x590.
 // Giữ đúng tỉ lệ để chữ và hình không bị bóp méo.

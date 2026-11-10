@@ -9,6 +9,7 @@ import nudge from '../nudge';
 import claim from '../claim';
 import { THUMB_CARD, thumbnail } from '../image';
 import { getPushToken, readTarget } from '../notify';
+import { clearPets, readPets, savePets } from '../cache';
 import { words, type WordKey } from '../word';
 import type { Filters } from '../types';
 
@@ -470,5 +471,103 @@ describe('lấy mã thiết bị để nhận thông báo', () => {
       ok: true,
       token: 'ExponentPushToken[test]',
     });
+  });
+});
+
+/*
+ * Nhớ tạm danh sách tin.
+ *
+ * Đây là chỗ đọc dữ liệu TỪ Ổ ĐĨA vào, nên nó phải chịu được mọi thứ nằm sẵn
+ * ở đó: bản app cũ ghi kiểu khác, file ghi dở vì hết pin, người dùng khôi phục
+ * máy từ bản sao lưu cũ. Hỏng cái nào cũng chỉ được phép ra null — đây là
+ * đường tăng tốc, không phải đường chính, nên nó không bao giờ được làm sập
+ * màn hình.
+ */
+describe('nhớ tạm danh sách tin', () => {
+  const petGia = (id: string) =>
+    ({ _id: id, name: `Tin ${id}`, type: "lost", species: "Chó" }) as never;
+
+  beforeEach(async () => {
+    await clearPets();
+  });
+
+  it('chưa có gì thì ra null', async () => {
+    await expect(readPets()).resolves.toBeNull();
+  });
+
+  it('ghi rồi đọc lại ra đúng thứ đã ghi', async () => {
+    await savePets([petGia('a'), petGia('b')], 42);
+
+    const saved = await readPets();
+    expect(saved?.total).toBe(42);
+    expect(saved?.pets).toHaveLength(2);
+    expect(saved?.pets[0]._id).toBe('a');
+  });
+
+  /*
+   * Cắt bớt để mỗi lần ghi không thành một chuỗi JSON vài trăm KB. Người dùng
+   * cuộn xuống là danh sách nối dài ra cả trăm tin, mà mở app lên cũng chỉ
+   * nhìn được chừng mười tin đầu.
+   */
+  it('chỉ nhớ 12 tin đầu dù đưa vào nhiều hơn', async () => {
+    const nhieu = Array.from({ length: 50 }, (_, i) => petGia(String(i)));
+    await savePets(nhieu, 50);
+
+    const saved = await readPets();
+    expect(saved?.pets).toHaveLength(12);
+    // Vẫn nhớ TỔNG thật, không phải 12 — con số đó hiện ra cho người dùng đọc.
+    expect(saved?.total).toBe(50);
+  });
+
+  /*
+   * Quá một ngày thì bỏ. Danh sách cũ một tuần có thể đầy tin đã đoàn tụ —
+   * hiện ra rồi lặng lẽ biến mất lúc làm mới xong, nhìn như app bị lỗi.
+   */
+  it('quá một ngày thì coi như không có', async () => {
+    await savePets([petGia('a')], 1);
+
+    // Nhảy tới 25 giờ sau. Đổi đồng hồ chứ không chờ thật.
+    const that = Date.now;
+    Date.now = () => that() + 25 * 60 * 60 * 1000;
+    try {
+      await expect(readPets()).resolves.toBeNull();
+    } finally {
+      Date.now = that;
+    }
+  });
+
+  it('vẫn trong ngày thì giữ', async () => {
+    await savePets([petGia('a')], 1);
+
+    const that = Date.now;
+    Date.now = () => that() + 23 * 60 * 60 * 1000;
+    try {
+      await expect(readPets()).resolves.not.toBeNull();
+    } finally {
+      Date.now = that;
+    }
+  });
+
+  // Mấy dạng hỏng dưới đây đều có thật trên máy người dùng.
+  it('dữ liệu hỏng thì ra null chứ không ném lỗi', async () => {
+    const kho = [
+      'khong phai JSON',
+      'null',
+      '[]',
+      JSON.stringify({ pets: [], total: 1 }), // thiếu savedAt
+      JSON.stringify({ pets: 'khong phai mang', total: 1, savedAt: Date.now() }),
+      JSON.stringify({ pets: [], total: 'khong phai so', savedAt: Date.now() }),
+    ];
+
+    for (const xau of kho) {
+      await AsyncStorage.setItem('cache:pets', xau);
+      await expect(readPets()).resolves.toBeNull();
+    }
+  });
+
+  it('xoá rồi thì đọc ra null', async () => {
+    await savePets([petGia('a')], 1);
+    await clearPets();
+    await expect(readPets()).resolves.toBeNull();
   });
 });

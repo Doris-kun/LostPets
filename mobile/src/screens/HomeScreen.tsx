@@ -21,6 +21,7 @@ import { API_URL } from '../config';
 import PetCard, { timeAgo } from '../components/PetCard';
 import { THUMB_FEATURED, thumbnail } from '../image';
 import { locateMe, readSavedMe, type Point } from '../map';
+import { readPets, savePets } from '../cache';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
 import PetMapView from '../components/PetMapView';
 import ResolveNudge from '../components/ResolveNudge';
@@ -199,6 +200,16 @@ export default function HomeScreen({ navigation }: Props) {
    */
   const [me, setMe] = useState<Point | null>(null);
   const [loading, setLoading] = useState(true);
+
+  /*
+   * Chờ đã quá lâu hay chưa.
+   *
+   * Máy chủ chạy trên Render bản miễn phí, ngủ sau 15 phút không ai gọi, và
+   * lượt gọi đầu tiên sau đó phải chờ nó thức dậy — có khi 30 giây. Một vòng
+   * xoay im lặng suốt 30 giây thì ai cũng kết luận app hỏng. Nói thẳng ra là
+   * đang chờ máy chủ thì người dùng biết mình nên chờ, chứ không bấm loạn.
+   */
+  const [slow, setSlow] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   // Đang nối thêm trang sau — khác loading là vòng xoay che cả màn hình
   const [loadingMore, setLoadingMore] = useState(false);
@@ -224,6 +235,17 @@ export default function HomeScreen({ navigation }: Props) {
     return () => clearTimeout(hen);
   }, [search]);
 
+  /*
+   * Danh sách MẶC ĐỊNH là danh sách không lọc gì, không tìm gì.
+   *
+   * Chỉ danh sách đó mới được nhớ tạm: kết quả của một bộ lọc cũ mà hiện ra
+   * dưới bộ lọc vừa đổi thì SAI chứ không phải chậm — người dùng tưởng bộ lọc
+   * không ăn. So nguyên cả object thay vì đếm số điều kiện, để không sót
+   * trường sort.
+   */
+  const laMacDinh = (filterType: string, activeFilters: Filters, q: string) =>
+    !filterType && !q.trim() && JSON.stringify(activeFilters) === JSON.stringify(EMPTY_FILTERS);
+
   // Tải TRANG ĐẦU: thay sạch danh sách cũ. Dùng khi mở màn, đổi lọc, kéo làm mới.
   const loadPets = useCallback(async (filterType: string, activeFilters: Filters, q: string) => {
     try {
@@ -231,6 +253,10 @@ export default function HomeScreen({ navigation }: Props) {
       setPets(data.pets);
       setTotal(data.total);
       setHasError(false);
+
+      // Ghi lại để lần mở app sau có cái hiện ngay. Không chờ nó xong: ghi ổ
+      // đĩa mất vài mili giây, mà màn hình thì đã vẽ được rồi.
+      if (laMacDinh(filterType, activeFilters, q)) savePets(data.pets, data.total);
     } catch {
       setPets([]);
       setTotal(0);
@@ -238,8 +264,52 @@ export default function HomeScreen({ navigation }: Props) {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setSlow(false);
     }
   }, []);
+
+  /*
+   * Mở app ra: hiện ngay danh sách lần trước, rồi mới chờ máy chủ.
+   *
+   * Chạy đúng MỘT lần, và chỉ đổ vào khi màn hình còn trống. Nếu lượt gọi
+   * thật về trước (máy chủ đang thức, mạng nhanh) thì bỏ qua hoàn toàn — đè
+   * dữ liệu cũ lên dữ liệu mới là đi lùi.
+   */
+  useEffect(() => {
+    let bo = false;
+
+    readPets().then((saved) => {
+      if (bo || !saved || saved.pets.length === 0) return;
+
+      setPets((truoc) => {
+        if (truoc.length > 0) return truoc; // đã có dữ liệu thật rồi
+        setTotal(saved.total);
+        setLoading(false);
+        return saved.pets;
+      });
+    });
+
+    return () => {
+      bo = true;
+    };
+  }, []);
+
+  /*
+   * Quá 4 giây mà chưa xong thì coi là máy chủ đang thức dậy.
+   *
+   * 4 giây vì lượt gọi bình thường mất 0,6 đến 3 giây — báo sớm hơn thì câu
+   * "máy chủ đang khởi động" hiện ra cả lúc mọi thứ vẫn chạy tốt, và một câu
+   * báo sai vài lần là câu không ai còn tin.
+   */
+  useEffect(() => {
+    if (!loading) {
+      setSlow(false);
+      return;
+    }
+
+    const hen = setTimeout(() => setSlow(true), 4000);
+    return () => clearTimeout(hen);
+  }, [loading]);
 
   /*
    * useFocusEffect chạy mỗi khi màn hình được quay lại, khác useEffect chỉ chạy
@@ -557,9 +627,23 @@ export default function HomeScreen({ navigation }: Props) {
           params={buildParams(type, filters, 0, query)}
           onOpenPet={(id) => navigation.navigate('Detail', { id })}
         />
-      ) : loading ? (
-        <View className="flex-1 items-center justify-center">
+      ) : loading && pets.length === 0 ? (
+        /*
+          Vòng xoay chiếm cả màn hình CHỈ khi không có gì để hiện.
+
+          Trước đây mọi lượt tải đều che sạch màn hình, kể cả lúc đổi bộ lọc
+          hay gõ tìm kiếm — kết quả cũ biến mất, thay bằng nền trống. Hai giây
+          nhìn màn hình trống thấy lâu hơn năm giây mà vẫn đọc được gì đó.
+
+          Nay còn dữ liệu thì giữ nguyên dữ liệu, chỉ đổi phần đang tải.
+        */
+        <View className="flex-1 items-center justify-center gap-md px-xl">
           <ActivityIndicator size="large" color={colors.teal} />
+          {slow && (
+            <Text className="text-center text-[12.5px] leading-[19px] text-text-muted">
+              {t('home.waking')}
+            </Text>
+          )}
         </View>
       ) : (
         <FlatList

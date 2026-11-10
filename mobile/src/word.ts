@@ -122,6 +122,8 @@ const vi = {
     'Thử tả ngắn hơn, hoặc viết như nói thường: giống gì, màu gì, mất ở đâu.',
   'home.filter': 'Lọc',
   'home.showDistance': 'Hiện khoảng cách',
+  'home.waking':
+    'Máy chủ đang khởi động lại sau một lúc không ai dùng. Lần đầu có thể mất vài chục giây.',
   'settings.contact': 'Liên hệ',
   'settings.contactSub': 'Hỏi trợ lý, hoặc gửi email cho nhóm',
   'home.results': '{n} bài đăng',
@@ -516,6 +518,8 @@ const en: Record<WordKey, string> = {
     'Try a shorter description, or write it plainly: breed, colour, where it went missing.',
   'home.filter': 'Filter',
   'home.showDistance': 'Show distance',
+  'home.waking':
+    'The server is waking up after a quiet spell. The first load can take a few dozen seconds.',
   'settings.contact': 'Contact',
   'settings.contactSub': 'Ask the assistant, or email us',
   'home.results': '{n} posts shown',

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/auth';
+import { clearPets } from '../cache';
 import { forgetPushToken } from '../notify';
 import type { MainTabParamList, RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
@@ -57,6 +58,17 @@ export default function SettingsScreen({ navigation }: Props) {
            * tiếp phía sau — forgetPushToken đã nuốt sẵn mọi lỗi mạng.
            */
           forgetPushToken();
+
+          /*
+           * Xoá danh sách đã nhớ tạm.
+           *
+           * Danh sách tin vốn công khai, ai xem cũng được — nên đây không
+           * phải chuyện lộ dữ liệu. Nhưng máy vừa đổi người dùng mà mở ra
+           * vẫn nguyên màn hình của người trước thì trông như chưa đăng
+           * xuất xong.
+           */
+          clearPets();
+
           logout();
         },
       },
