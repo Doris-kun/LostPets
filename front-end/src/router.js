@@ -44,4 +44,44 @@ router.beforeEach((to, from, next) => {
   }
 });
 
+// Deploy bản mới xong thì trang đang mở trong trình duyệt hỏng một nửa.
+//
+// Mỗi trang là một tệp rời, chỉ tải khi người dùng bấm sang. Tên tệp có kèm
+// mã băm nội dung, nên deploy bản mới là tên đổi và tệp cũ biến mất khỏi máy
+// chủ. Ai đang mở web từ trước thì vẫn giữ bản đồ tên CŨ trong bộ nhớ: trang
+// hiện tại chạy bình thường vì đã tải xong, nhưng bấm sang trang khác là đi
+// tìm một tệp không còn tồn tại.
+//
+// Vue Router không báo gì cả — nó chỉ im lặng huỷ chuyến đi. Người dùng bấm
+// "Đăng tin" và không có gì xảy ra, không một dòng lỗi nào.
+//
+// Gặp trường hợp đó thì tải lại trang: index.html mới mang bản đồ tên mới.
+const KHOA_TAI_LAI = 'lostpets:tai-lai-vi-chunk-hong';
+const CACH_NHAU_TOI_THIEU_MS = 10000;
+
+const doc = (khoa) => {
+  // Cửa sổ ẩn danh hoặc trình duyệt chặn lưu trữ thì ném lỗi ngay ở đây.
+  try { return sessionStorage.getItem(khoa); } catch { return null; }
+};
+const ghi = (khoa, giaTri) => {
+  try { sessionStorage.setItem(khoa, giaTri); } catch { /* không lưu được thì thôi */ }
+};
+
+const laLoiThieuTep = (err) => {
+  const m = String((err && err.message) || '');
+  return /Loading chunk|Loading CSS chunk|ChunkLoadError|dynamically imported module/i.test(m);
+};
+
+router.onError((err) => {
+  if (!laLoiThieuTep(err)) return;
+
+  // Chặn vòng lặp tải lại vô hạn: nếu vừa tải lại chưa tới 10 giây mà vẫn
+  // hỏng thì máy chủ đang thiếu tệp thật, tải lại nữa cũng vậy.
+  const lanTruoc = Number(doc(KHOA_TAI_LAI) || 0);
+  if (Date.now() - lanTruoc < CACH_NHAU_TOI_THIEU_MS) return;
+
+  ghi(KHOA_TAI_LAI, String(Date.now()));
+  window.location.reload();
+});
+
 export default router;
