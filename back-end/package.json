@@ -15,6 +15,7 @@
     "check:mail": "node scripts/check-mail.js"
   },
   "jest": {
+    "maxWorkers": 3,
     "setupFiles": [
       "<rootDir>/tests/setup-env.js"
     ],
