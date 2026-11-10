@@ -1,5 +1,6 @@
 const express = require('express');
 const compression = require('compression');
+const helmet = require('helmet');
 const cors = require('cors');
 const multer = require('multer');
 const petRoutes = require('./api/routes/petRoutes');
@@ -38,6 +39,17 @@ if (allowedOrigins.length === 0) {
 
 // Không cần quảng cáo đang chạy Express.
 app.disable('x-powered-by');
+
+// Vài header bảo mật cơ bản. Đây là API trả JSON nên phần lớn mặc định của
+// helmet không áp dụng, nhưng hai cái dưới đây thì có.
+app.use(helmet({
+  // Chính sách nội dung dành cho trang HTML, mà đây không phục vụ HTML nào.
+  // Bật lên chỉ thêm một header không ai đọc.
+  contentSecurityPolicy: false,
+  // Ảnh trên Cloudinary nằm khác gốc, và front-end nằm khác gốc với API.
+  // Để mặc định 'same-origin' thì chặn nhầm chính mình.
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 // Nén phản hồi. Danh sách tin là JSON lặp nhiều khoá giống nhau nên nén rất
 // tốt, mà người dùng Việt Nam phần lớn vào bằng 4G.

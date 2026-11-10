@@ -166,14 +166,18 @@ describe('Mã xác nhận', () => {
     expect(res.status).toBe(403);
   });
 
-  it('tin cũ chưa có mã thì vẫn sửa được', async () => {
+  it('tin cũ không chủ, không mã thì KHOÁ LẠI, không ai sửa được', async () => {
     const Pet = require('../api/models/petModel');
     const legacy = await Pet.create({
       type: 'found', species: 'Chó', breed: 'Chó cỏ',
       color: 'Vàng', area: 'Gò Vấp', contact: '0900 000 098',
     });
     const res = await request(app).put(`/pets/${legacy._id}`).send({ resolved: true });
-    expect(res.status).toBe(200);
+
+    // Trước đây chỗ này mở, với lý do để dữ liệu cũ không bị khoá. Nhưng
+    // người đăng ra nó cũng không chứng minh được quyền sở hữu, nên thực tế
+    // là mở cho BẤT KỲ AI xoá. Quản trị viên vẫn xử lý được qua /admin.
+    expect(res.status).toBe(403);
   });
 });
 
