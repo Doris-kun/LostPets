@@ -5,10 +5,18 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 
 // Chặn hẳn đường ra mạng và giữ lại thư để đọc nội dung.
 let mockMailerOn = true;
+// Bật lên thì sendMail trả về một promise KHÔNG BAO GIỜ xong — giả cảnh máy
+// chủ thư nhận kết nối rồi im luôn. Đó là cách duy nhất chứng minh luồng trả
+// lời không đứng đợi gửi thư.
+let mockMailHangs = false;
 const mockSent = [];
 jest.mock('../api/lib/mailer', () => ({
   mailerConfigured: () => mockMailerOn,
-  sendMail: async (mail) => { mockSent.push(mail); return true; },
+  sendMail: (mail) => {
+    mockSent.push(mail);
+    if (mockMailHangs) return new Promise(() => {});
+    return Promise.resolve(true);
+  },
 }));
 
 process.env.JWT_SECRET = 'test-secret-chi-dung-trong-test';
@@ -32,6 +40,7 @@ afterAll(async () => {
 
 beforeEach(() => {
   mockMailerOn = true;
+  mockMailHangs = false;
   mockSent.length = 0;
   if (rateLimit.reset) rateLimit.reset();
 });
@@ -249,5 +258,49 @@ describe('thư kèm đường mở thẳng ứng dụng điện thoại', () => 
     // đường đều phải vắng mặt, kể cả đường deep link vừa thêm.
     expect(mockSent[0].text).not.toContain('reset-password?token=');
     expect(mockSent[0].text).not.toContain('lostpets://');
+  });
+});
+describe('không đứng đợi máy chủ thư', () => {
+  it('trả lời ngay cả khi máy chủ thư treo hẳn', async () => {
+    mockMailHangs = true;
+    await seedWithPassword();
+
+    const t0 = Date.now();
+    const res = await forgot('nguoidung@example.com');
+
+    // Có await trước sendMail thì dòng này không bao giờ tới, Jest hết giờ.
+    expect(res.status).toBe(200);
+    expect(Date.now() - t0).toBeLessThan(1000);
+  });
+
+  it('vẫn lưu mã đặt lại dù thư chưa gửi xong', async () => {
+    mockMailHangs = true;
+    const user = await seedWithPassword();
+    await forgot('nguoidung@example.com');
+
+    // Trả lời sớm không được phép bỏ qua việc chính: mã phải nằm trong
+    // database trước khi thư đi, nếu không thì người dùng bấm vào đường dẫn
+    // nhanh tay sẽ gặp mã không hợp lệ.
+    const raw = await User.findById(user._id).select('+resetHash +resetExpires');
+    expect(raw.resetHash).toBeTruthy();
+    expect(raw.resetExpires.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('email KHÔNG có tài khoản và email CÓ tài khoản trả lời gần bằng nhau', async () => {
+    mockMailHangs = true;
+    await seedWithPassword();
+
+    const t1 = Date.now();
+    await forgot('khong-ai-dung@example.com');
+    const khongCo = Date.now() - t1;
+
+    const t2 = Date.now();
+    await forgot('nguoidung@example.com');
+    const co = Date.now() - t2;
+
+    // Cùng một câu chữ mà lệch thời gian thì vẫn lộ: bấm giờ là dò ra email
+    // nào có tài khoản. Ngưỡng rộng vì máy chạy test hay giật, nhưng đủ chật
+    // để bắt trường hợp đứng đợi gửi thư — lúc đó chên lệch là vô hạn.
+    expect(Math.abs(co - khongCo)).toBeLessThan(500);
   });
 });
