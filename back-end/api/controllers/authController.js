@@ -195,6 +195,22 @@ const hashResetToken = (token) => crypto.createHash('sha256').update(token).dige
 
 const appUrl = () => (process.env.APP_URL || 'http://localhost:8080').replace(/\/+$/, '');
 
+// Scheme của ứng dụng điện thoại, để thư đặt lại mật khẩu mở thẳng app thay vì
+// bắt người dùng đặt mật khẩu trên trình duyệt rồi tự quay lại app.
+//
+// PHẢI KHỚP với "scheme" trong mobile/app.json của bản React Native. Đổi một
+// bên mà quên bên kia thì đường dẫn im lặng không làm gì — không có lỗi nào
+// báo ra, nên để hằng số ở đây kèm ghi chú thay vì rải chuỗi trong thư.
+//
+// LƯU Ý BẢO MẬT: scheme riêng KHÔNG độc quyền. Trên Android, ứng dụng khác
+// cũng khai được "lostpets" và người dùng sẽ thấy hộp chọn ứng dụng; trên iOS
+// thì ứng dụng cài trước thắng. Nghĩa là một app độc hại đã nằm sẵn trên máy
+// có thể nhận được mã đặt lại. Cách chặn triệt để là App Links / Universal
+// Links — dùng chính đường https và cho miền xác minh quyền sở hữu app — mà
+// việc đó cần miền riêng và bản app đã ký, chưa làm được ở giai đoạn này.
+// Thiệt hại bị chặn hai lớp sẵn có: mã dùng MỘT LẦN và hết hạn sau một giờ.
+const MOBILE_SCHEME = 'lostpets';
+
 // Trả về CÙNG MỘT CÂU dù email có tài khoản hay không.
 //
 // Nếu báo "email không tồn tại" thì trang quên mật khẩu biến thành công cụ dò:
@@ -222,7 +238,17 @@ exports.forgotPassword = async (req, res) => {
     // chờ một lá thư đặt lại mật khẩu không bao giờ tới.
     if (!user.passwordHash) {
       const provider = user.google ? 'Google' : 'Facebook';
-      await sendMail({
+      // KHÔNG await, và đó là cố ý — đừng thêm await vào.
+      //
+      // Trả lời phải tốn chừng ấy thời gian dù email có tài khoản hay không.
+      // Đợi gửi thư xong mới trả lời thì hai nhánh lệch nhau rất xa — đo trên
+      // Render: email không có tài khoản 0,58 giây, email có tài khoản hàng chục
+      // giây. Cùng một câu chữ, nhưng đồng hồ tố cáo hết: bấm giờ là dò ra email
+      // nào có tài khoản, đúng thứ mà RESET_SENT sinh ra để ngăn.
+      //
+      // .catch() là bắt buộc: một promise bị bỏ rơi mà văng lỗi sẽ làm Node giết
+      // cả tiến trình. sendMail tự nuốt lỗi rồi, đây là lớp chặn cuối.
+      sendMail({
         to: email,
         subject: 'LostPets — cách đăng nhập vào tài khoản của bạn',
         text: [
@@ -233,7 +259,7 @@ exports.forgotPassword = async (req, res) => {
           '',
           `${appUrl()}/login`,
         ].join('\n'),
-      });
+      }).catch(() => {});
       return res.json({ message: RESET_SENT });
     }
 
@@ -242,8 +268,19 @@ exports.forgotPassword = async (req, res) => {
     user.resetExpires = new Date(Date.now() + RESET_TTL_MS);
     await user.save();
 
-    const link = `${appUrl()}/reset-password?token=${token}`;
-    await sendMail({
+    const webLink = `${appUrl()}/reset-password?token=${token}`;
+    const appLink = `${MOBILE_SCHEME}://reset-password?token=${token}`;
+    // KHÔNG await, và đó là cố ý — đừng thêm await vào.
+    //
+    // Trả lời phải tốn chừng ấy thời gian dù email có tài khoản hay không.
+    // Đợi gửi thư xong mới trả lời thì hai nhánh lệch nhau rất xa — đo trên
+    // Render: email không có tài khoản 0,58 giây, email có tài khoản hàng chục
+    // giây. Cùng một câu chữ, nhưng đồng hồ tố cáo hết: bấm giờ là dò ra email
+    // nào có tài khoản, đúng thứ mà RESET_SENT sinh ra để ngăn.
+    //
+    // .catch() là bắt buộc: một promise bị bỏ rơi mà văng lỗi sẽ làm Node giết
+    // cả tiến trình. sendMail tự nuốt lỗi rồi, đây là lớp chặn cuối.
+    sendMail({
       to: email,
       subject: 'LostPets — đặt lại mật khẩu',
       text: [
@@ -251,11 +288,18 @@ exports.forgotPassword = async (req, res) => {
         '',
         'Bấm vào đường dẫn dưới đây để đặt mật khẩu mới. Đường dẫn có hiệu lực trong một giờ.',
         '',
-        link,
+        // Đường web đứng TRƯỚC vì nó chạy được với mọi người. Đường app chỉ
+        // chạy khi đã cài ứng dụng, mà ứng dụng thì chưa phát hành — để nó
+        // đứng đầu là phần lớn người nhận bấm vào một thứ không mở ra gì.
+        'Mở bằng trình duyệt:',
+        webLink,
+        '',
+        'Hoặc mở thẳng trong ứng dụng LostPets (nếu bạn đã cài):',
+        appLink,
         '',
         'Nếu không phải bạn yêu cầu, cứ bỏ qua thư này — mật khẩu hiện tại vẫn nguyên.',
       ].join('\n'),
-    });
+    }).catch(() => {});
 
     res.json({ message: RESET_SENT });
   } catch (err) {

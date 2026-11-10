@@ -28,6 +28,12 @@ function getTransport() {
       // báo lỗi lại không nói gì về nguyên nhân.
       secure: port === 465,
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      // Ba mốc hết giờ. Mặc định của nodemailer là 2 phút để nối và 10 phút
+      // cho socket — quá dài. Một máy chủ thư không trả lời sẽ giữ kết nối
+      // treo suốt ngần ấy, mà instance miễn phí của Render chỉ có 512MB.
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
     });
   }
   return transport;
