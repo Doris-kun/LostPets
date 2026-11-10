@@ -1,6 +1,8 @@
 import axios from 'axios';
 import claim from './claim';
 import auth from './auth';
+import { showToast } from './toast';
+import { t } from './i18n';
 
 const http = axios.create({ baseURL: process.env.VUE_APP_API_URL || 'http://localhost:3000' });
 
@@ -10,11 +12,24 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-// Token hết hạn hoặc bị thu hồi thì xoá phiên để giao diện quay về trạng thái khách.
+// Token hết hạn hoặc bị thu hồi thì xoá phiên và NÓI RA.
+//
+// Trước đây chỉ lặng lẽ gọi auth.logout(). Các trang gọi API đều bắt lỗi rồi
+// hiện trang rỗng, nên người dùng thấy "Tin của tôi" không có gì và không
+// hiểu vì sao — trông như web hỏng, trong khi thật ra họ vừa bị đăng xuất.
+//
+// Tình huống này thành thường gặp từ khi đặt lại mật khẩu huỷ mọi phiên đang
+// mở: đổi mật khẩu xong là token đang cầm trong tay hết hiệu lực ngay.
+//
+// Máy chủ đã nói rõ lý do trong body; dùng lại câu của nó thay vì đoán.
 http.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response && err.response.status === 401 && auth.isLoggedIn()) auth.logout();
+    if (err.response && err.response.status === 401 && auth.isLoggedIn()) {
+      auth.logout();
+      const message = err.response.data && err.response.data.message;
+      showToast(message || t('auth.expired'), 'error');
+    }
     return Promise.reject(err);
   }
 );
