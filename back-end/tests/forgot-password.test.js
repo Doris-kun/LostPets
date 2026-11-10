@@ -196,3 +196,58 @@ describe('mã băm không được lọt ra ngoài', () => {
     expect(raw.resetHash).not.toBe(tokenFromMail());
   });
 });
+describe('thư kèm đường mở thẳng ứng dụng điện thoại', () => {
+  it('có cả đường web lẫn đường app', async () => {
+    await seedWithPassword();
+    await forgot('nguoidung@example.com');
+
+    const { text } = mockSent[0];
+    expect(text).toContain('https://lostpets.test/reset-password?token=');
+    expect(text).toContain('lostpets://reset-password?token=');
+  });
+
+  it('hai đường mang CÙNG một mã', async () => {
+    await seedWithPassword();
+    await forgot('nguoidung@example.com');
+
+    const { text } = mockSent[0];
+    const web = /https:\/\/lostpets\.test\/reset-password\?token=([a-f0-9]+)/.exec(text);
+    const app = /lostpets:\/\/reset-password\?token=([a-f0-9]+)/.exec(text);
+    // Lấy nhầm mã cho một trong hai đường thì đường đó im lặng hỏng: người
+    // dùng bấm vào, app mở ra, rồi báo mã không hợp lệ mà không ai hiểu vì sao.
+    expect(app[1]).toBe(web[1]);
+  });
+
+  it('mã lấy từ đường app đặt lại được mật khẩu thật', async () => {
+    await seedWithPassword();
+    await forgot('nguoidung@example.com');
+
+    const token = /lostpets:\/\/reset-password\?token=([a-f0-9]+)/.exec(mockSent[0].text)[1];
+    // Đây mới là thứ cần chứng minh: đường deep link không chỉ có mặt trong
+    // thư mà còn dùng được từ đầu đến cuối.
+    expect((await reset(token, 'matkhaumoi')).status).toBe(200);
+  });
+
+  it('đường web đứng TRƯỚC đường app', async () => {
+    await seedWithPassword();
+    await forgot('nguoidung@example.com');
+
+    const { text } = mockSent[0];
+    // Ứng dụng chưa phát hành, nên phần lớn người nhận không cài nó. Để đường
+    // app đứng đầu là họ bấm vào một thứ không mở ra gì.
+    expect(text.indexOf('https://lostpets.test/reset-password'))
+      .toBeLessThan(text.indexOf('lostpets://reset-password'));
+  });
+
+  it('thư cho tài khoản Google KHÔNG kèm đường đặt lại nào', async () => {
+    await User.create({
+      name: 'Người Dùng', email: 'google@example.com', google: 'google-123',
+    });
+    await forgot('google@example.com');
+
+    // Tài khoản chưa từng có mật khẩu thì không có gì để đặt lại — cả hai
+    // đường đều phải vắng mặt, kể cả đường deep link vừa thêm.
+    expect(mockSent[0].text).not.toContain('reset-password?token=');
+    expect(mockSent[0].text).not.toContain('lostpets://');
+  });
+});
