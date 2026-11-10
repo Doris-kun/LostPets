@@ -259,6 +259,7 @@ const translations = {
     'verify.resend': 'Gửi lại thư xác minh',
     'verify.sending': 'Đang gửi...',
     'verify.note': 'Chưa xác minh thì bạn vẫn đăng tin và dùng web bình thường.',
+    'auth.expired': 'Phiên đăng nhập đã hết hiệu lực. Hãy đăng nhập lại.',
     'auth.optionalNote': 'Không có tài khoản bạn vẫn đăng tin bình thường.',
     'chat.title': 'Trợ lý LostPets',
     'chat.subtitle': 'Hỏi gì về website cũng được',
@@ -556,6 +557,7 @@ const translations = {
     'verify.resend': 'Send the verification email again',
     'verify.sending': 'Sending...',
     'verify.note': 'You can post and use the site normally before verifying.',
+    'auth.expired': 'Your session has expired. Please sign in again.',
     'auth.optionalNote': 'You can still post without an account.',
     'chat.title': 'LostPets Assistant',
     'chat.subtitle': 'Ask anything about the site',
@@ -607,17 +609,24 @@ export function setLang(lang) {
   localStorage.setItem('lang', lang);
 }
 
+// Hàm dịch độc lập, để những chỗ không phải component vẫn dùng được — ví dụ
+// bộ chặn lỗi của axios.
+//
+// vars thay các ô {tên} trong câu dịch. Cần vì tiếng Việt và tiếng Anh đặt
+// con số ở vị trí khác nhau trong câu — ghép chuỗi ngoài chỗ gọi thì có câu
+// dịch đúng ngữ pháp một thứ tiếng và sai thứ tiếng kia.
+export function t(key, vars) {
+  const text = translations[langStore.lang]?.[key] ?? key;
+  if (!vars) return text;
+  return text.replace(/\{(\w+)\}/g, (match, name) =>
+    (name in vars ? String(vars[name]) : match)
+  );
+}
+
 export const i18nMixin = {
   methods: {
-    // vars thay các ô {tên} trong câu dịch. Cần vì tiếng Việt và tiếng Anh đặt
-    // con số ở vị trí khác nhau trong câu — ghép chuỗi ngoài chỗ gọi thì có câu
-    // dịch đúng ngữ pháp một thứ tiếng và sai thứ tiếng kia.
     $t(key, vars) {
-      const text = translations[langStore.lang]?.[key] ?? key;
-      if (!vars) return text;
-      return text.replace(/\{(\w+)\}/g, (match, name) =>
-        (name in vars ? String(vars[name]) : match)
-      );
+      return t(key, vars);
     },
     $setLang(lang) {
       setLang(lang);

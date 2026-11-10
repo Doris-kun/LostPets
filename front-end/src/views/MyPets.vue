@@ -79,6 +79,7 @@
 
 <script>
 import api from '../api';
+import auth from '../auth';
 import PetPhoto from '../components/PetPhoto.vue';
 
 export default {
@@ -106,6 +107,13 @@ export default {
         this.pets = data.pets;
       } catch {
         this.pets = [];
+        // Mất phiên giữa chừng thì đưa thẳng về trang đăng nhập, đừng để lại
+        // trang rỗng. Trang rỗng ở đây có nghĩa là "bạn chưa đăng tin nào" —
+        // nói sai hẳn với sự thật, và người dùng sẽ đi tìm tin của họ ở chỗ
+        // khác. Bộ chặn lỗi của axios đã hiện thông báo giải thích rồi.
+        if (!auth.isLoggedIn()) {
+          this.$router.replace({ path: '/login', query: { next: '/me' } });
+        }
       } finally {
         this.loading = false;
       }
