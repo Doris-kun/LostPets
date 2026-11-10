@@ -14,11 +14,11 @@
       </button>
 
       <button v-if="hasPoint" type="button" @click="clear"
-        class="text-xs font-semibold text-gray-400 hover:text-rose-600 px-2 py-1.5 transition-colors">
+        class="text-xs font-semibold text-gray-500 hover:text-rose-600 px-2 py-1.5 transition-colors">
         {{ $t('map.clear') }}
       </button>
 
-      <span class="text-xs text-gray-400 ml-auto">
+      <span class="text-xs text-gray-500 ml-auto">
         {{ hasPoint ? $t('map.picked') : $t('map.tapToPick') }}
       </span>
     </div>

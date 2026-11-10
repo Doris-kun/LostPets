@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-3xl mx-auto px-4 py-10">
     <h1 class="text-3xl font-bold text-gray-900">{{ c.title }}</h1>
-    <p class="text-sm text-gray-400 mt-2">{{ c.updated }}</p>
+    <p class="text-sm text-gray-500 mt-2">{{ c.updated }}</p>
     <p class="text-gray-600 leading-relaxed mt-5">{{ c.intro }}</p>
 
     <!-- Tóm tắt nhanh. Gần như không ai đọc hết một trang chính sách; bốn điều
@@ -24,7 +24,7 @@
       <ol class="mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
         <li v-for="s in c.sections" :key="s.id">
           <a :href="`#${s.id}`" class="text-sm text-gray-500 hover:text-orange-600 transition-colors">
-            <span class="text-gray-300 tabular-nums">{{ s.n }}.</span> {{ s.h }}
+            <span class="text-gray-500 tabular-nums">{{ s.n }}.</span> {{ s.h }}
           </a>
         </li>
       </ol>

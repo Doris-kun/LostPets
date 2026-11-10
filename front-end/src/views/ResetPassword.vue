@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-md mx-auto px-4 py-12">
     <h1 class="text-2xl font-bold text-gray-900 text-center">{{ $t('reset.title') }}</h1>
-    <p class="text-sm text-gray-400 text-center mt-2">{{ $t('reset.subtitle') }}</p>
+    <p class="text-sm text-gray-500 text-center mt-2">{{ $t('reset.subtitle') }}</p>
 
     <!-- Vào thẳng đường dẫn mà không có mã thì nói rõ luôn, đừng bày biểu mẫu
          ra để người ta gõ xong mới báo hỏng. -->
@@ -20,7 +20,7 @@
         <input id="password" name="password" v-model="password" type="password" required minlength="6"
           autocomplete="new-password"
           class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent"/>
-        <p class="text-xs text-gray-400 mt-1.5">{{ $t('auth.passwordHint') }}</p>
+        <p class="text-xs text-gray-500 mt-1.5">{{ $t('auth.passwordHint') }}</p>
       </div>
 
       <div>

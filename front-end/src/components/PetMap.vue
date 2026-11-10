@@ -18,14 +18,14 @@
         <option v-for="km in radiusChoices" :key="km" :value="km">{{ km }} km</option>
       </select>
 
-      <span class="text-xs text-gray-400 ml-auto">{{ summary }}</span>
+      <span class="text-xs text-gray-500 ml-auto">{{ summary }}</span>
     </div>
 
     <div ref="map" :class="height" class="w-full rounded-2xl border border-gray-100 overflow-hidden z-0"></div>
 
     <p v-if="geoError" class="text-xs text-rose-500 mt-1.5">{{ geoError }}</p>
     <p v-if="capped" class="text-xs text-amber-600 mt-1.5">{{ $t('map.capped') }}</p>
-    <p v-if="unlocated > 0" class="text-xs text-gray-400 mt-2">
+    <p v-if="unlocated > 0" class="text-xs text-gray-500 mt-2">
       {{ unlocated }} {{ $t('map.withoutCoords') }}
     </p>
   </div>

@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-    <router-link to="/" class="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+    <router-link to="/" class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-600 transition-colors">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
       </svg>
@@ -22,7 +22,7 @@
 
     <!-- Not found -->
     <div v-else-if="!pet" class="mt-6 text-center py-20">
-      <p class="text-gray-400">{{ $t('detail.notFound') }}</p>
+      <p class="text-gray-500">{{ $t('detail.notFound') }}</p>
     </div>
 
     <!-- Detail -->
@@ -60,22 +60,22 @@
 
       <div class="p-6">
         <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ pet.name || pet.breed }}</h1>
-        <p class="text-gray-400 text-sm mt-1">{{ pet.species }} · {{ pet.breed }} · {{ formatDate(pet.date) }}</p>
+        <p class="text-gray-500 text-sm mt-1">{{ pet.species }} · {{ pet.breed }} · {{ formatDate(pet.date) }}</p>
 
         <div class="grid grid-cols-2 gap-3 mt-5">
           <div class="bg-gray-50 rounded-xl p-4">
-            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">{{ $t('detail.color') }}</p>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">{{ $t('detail.color') }}</p>
             <p class="text-gray-800 font-semibold text-sm">{{ pet.color }}</p>
           </div>
           <div class="bg-gray-50 rounded-xl p-4">
-            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">{{ $t('detail.area') }}</p>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">{{ $t('detail.area') }}</p>
             <p class="text-gray-800 font-semibold text-sm">{{ pet.area }}</p>
           </div>
         </div>
 
         <div v-if="hasCoords" class="mt-5">
           <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
-            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">{{ $t('map.where') }}</p>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">{{ $t('map.where') }}</p>
             <a :href="directionsHref" target="_blank" rel="noopener"
               class="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-orange-300 hover:text-orange-600 transition-all">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,11 +86,11 @@
             </a>
           </div>
           <PetMap :pets="[pet]" height="h-56"/>
-          <p class="text-xs text-gray-400 mt-2 leading-relaxed">{{ $t('map.approxNote') }}</p>
+          <p class="text-xs text-gray-500 mt-2 leading-relaxed">{{ $t('map.approxNote') }}</p>
         </div>
 
         <div v-if="pet.description" class="mt-5">
-          <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">{{ $t('detail.desc') }}</p>
+          <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">{{ $t('detail.desc') }}</p>
           <p class="text-gray-600 text-sm leading-relaxed">{{ pet.description }}</p>
         </div>
 
@@ -162,7 +162,7 @@
         -->
         <div v-if="claimCode" class="mt-4 pt-4 border-t border-gray-100">
           <button v-if="!showCode" type="button" @click="showCode = true"
-            class="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+            class="text-xs font-semibold text-gray-500 hover:text-gray-600 transition-colors">
             {{ $t('claim.view') }}
           </button>
 
@@ -177,7 +177,7 @@
                 {{ copied ? $t('claim.copied') : $t('claim.copy') }}
               </button>
             </div>
-            <p class="text-xs text-gray-400 leading-relaxed">{{ $t('claim.viewHint') }}</p>
+            <p class="text-xs text-gray-500 leading-relaxed">{{ $t('claim.viewHint') }}</p>
           </div>
         </div>
       </div>
@@ -188,7 +188,7 @@
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <p class="text-sm font-bold text-gray-900">{{ $t('match.title') }}</p>
-          <p class="text-xs text-gray-400 mt-0.5">{{ $t('match.subtitle') }}</p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ $t('match.subtitle') }}</p>
         </div>
         <button @click="findMatches" :disabled="matchLoading"
           class="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:from-violet-600 hover:to-indigo-600 disabled:opacity-50 transition-all shadow-sm">
@@ -208,7 +208,7 @@
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-semibold text-gray-900">{{ m.pet.breed }}</span>
-              <span class="text-xs text-gray-400">{{ m.pet.area }}</span>
+              <span class="text-xs text-gray-500">{{ m.pet.area }}</span>
               <span class="ml-auto text-xs font-bold px-2 py-0.5 rounded-full"
                 :class="m.score >= 70 ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'">
                 {{ m.score }}%
@@ -219,7 +219,7 @@
         </router-link>
       </div>
 
-      <p v-else-if="matchDone && !matchError" class="text-sm text-gray-400 mt-4 text-center py-3">
+      <p v-else-if="matchDone && !matchError" class="text-sm text-gray-500 mt-4 text-center py-3">
         {{ $t('match.none') }}
       </p>
       <p v-if="matchError" class="text-sm text-rose-500 mt-4 text-center">{{ matchError }}</p>
@@ -228,7 +228,7 @@
     <!-- Báo cáo tin xấu. Để cuối trang và cố ý nhạt màu: đây là lối thoát hiểm,
          không phải việc người xem bình thường cần làm. -->
     <div v-if="pet" class="text-center mt-6">
-      <span v-if="reported" class="inline-flex items-center gap-2 text-sm text-gray-400 px-4 py-2.5 rounded-full border border-gray-100">
+      <span v-if="reported" class="inline-flex items-center gap-2 text-sm text-gray-500 px-4 py-2.5 rounded-full border border-gray-100">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>

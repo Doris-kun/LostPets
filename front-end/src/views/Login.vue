@@ -2,7 +2,7 @@
   <div class="max-w-md mx-auto px-4 sm:px-6 py-12">
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ $t('auth.loginTitle') }}</h1>
-      <p class="text-sm text-gray-400 mt-1">{{ $t('auth.loginSubtitle') }}</p>
+      <p class="text-sm text-gray-500 mt-1">{{ $t('auth.loginSubtitle') }}</p>
     </div>
 
     <form @submit.prevent="submit" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
@@ -24,19 +24,19 @@
         {{ loading ? $t('auth.loggingIn') : $t('auth.loginBtn') }}
       </button>
 
-      <p class="text-sm text-gray-400 text-center">
+      <p class="text-sm text-gray-500 text-center">
         {{ $t('auth.noAccount') }}
         <router-link to="/register" class="text-orange-600 font-semibold hover:underline">{{ $t('auth.registerBtn') }}</router-link>
       </p>
       <p class="text-sm text-center">
-        <router-link to="/forgot-password" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <router-link to="/forgot-password" class="text-gray-500 hover:text-gray-600 transition-colors">
           {{ $t('forgot.link') }}
         </router-link>
       </p>
       <SocialLogin @done="afterSocial"/>
     </form>
 
-    <p class="text-xs text-gray-400 text-center mt-4">{{ $t('auth.optionalNote') }}</p>
+    <p class="text-xs text-gray-500 text-center mt-4">{{ $t('auth.optionalNote') }}</p>
   </div>
 </template>
 
