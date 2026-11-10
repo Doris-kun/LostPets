@@ -24,11 +24,26 @@ const fuzz = (n) => Number((Math.round(n / FUZZ_GRID) * FUZZ_GRID).toFixed(6));
 // Thứ tự ưu tiên đi từ đơn vị hành chính cấp quận/huyện xuống phường, vì ô
 // "khu vực" là để người khác ước lượng chỗ nào — "Quận 3, TP.HCM" hữu ích hơn
 // "Phường Võ Thị Sáu", mà cũng ít lộ hơn.
+// Rút gọn tên tỉnh/thành cho khớp cách người ta viết, và cho khớp dữ liệu đã
+// có trong database ("Quận 3, TP.HCM").
+//
+// Ô "khu vực" được lọc bằng so chuỗi, nên "Thành phố Hồ Chí Minh" và "TP.HCM"
+// là hai thứ không tìm thấy nhau. Một bên tự điền dạng dài còn người dùng gõ
+// dạng ngắn thì bộ lọc hỏng mà không ai hiểu vì sao.
+function rutGonTinh(ten) {
+  if (/hồ chí minh/i.test(ten)) return 'TP.HCM';
+  return ten.replace(/^(Thành phố|Tỉnh)\s+/i, '');
+}
+
 function ghepTen(address = {}) {
-  const quan = address.city_district || address.district || address.suburb
+  // Từ 1/7/2025 Việt Nam bỏ cấp quận huyện, chạy chính quyền hai cấp: tỉnh và
+  // phường/xã. Nominatim đã cập nhật theo, nên với địa chỉ ở Việt Nam nó chỉ
+  // trả về phường (suburb) và thành phố — không còn trường quận nào cả.
+  // Giữ city_district và district làm đường lui cho dữ liệu cũ hoặc nước khác.
+  const cap2 = address.city_district || address.district || address.suburb
     || address.quarter || address.town || address.village;
   const tinh = address.city || address.state;
-  return [quan, tinh].filter(Boolean).join(', ');
+  return [cap2, tinh && rutGonTinh(tinh)].filter(Boolean).join(', ');
 }
 
 /**
