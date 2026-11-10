@@ -158,7 +158,12 @@
         <div class="flex flex-col sm:flex-row">
           <!-- Không có ảnh thì bỏ hẳn cột ảnh, nhường chỗ cho phần chữ. Một ô
                xám to bằng 3/5 thẻ chỉ để chứa biểu tượng thì nhìn như web hỏng. -->
-          <div v-if="featured.image" class="relative sm:w-3/5 aspect-video overflow-hidden bg-gray-100">
+          <!-- aspect-video chỉ giữ ở màn hình hẹp, nơi ảnh nằm trên chữ.
+               Từ sm trở lên thì bỏ đi: để nguyên thì cột ảnh cao cố định
+               ~460px và kéo giãn cột chữ cho bằng, sinh ra một mảng trắng lớn
+               dưới phần mô tả. Đổi lại cho hàng tự quyết định chiều cao theo
+               nội dung, kèm một mức sàn để ảnh không bao giờ quá dẹt. -->
+          <div v-if="featured.image" class="relative sm:w-3/5 aspect-video sm:aspect-auto sm:min-h-[21rem] overflow-hidden bg-gray-100">
             <PetPhoto :src="featured.image" :alt="featured.breed"
               :type="featured.type" :resolved="featured.resolved" :width="800"
               img-class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
@@ -176,7 +181,12 @@
                 {{ $t(featured.resolved ? 'badge.resolved' : featured.type === 'lost' ? 'badge.lost' : 'badge.found') }}
               </span>
               <h2 class="text-2xl font-bold text-gray-900 leading-tight mb-1">{{ featured.name || featured.breed }}</h2>
-              <p class="text-sm text-gray-400 mb-3">{{ featured.species }} · {{ featured.breed }}</p>
+              <!-- Thêm màu lông: loài, giống, màu là ba thứ người ta dùng để
+                   nhận ra con vật của mình. Thẻ nhỏ không đủ chỗ nên chỉ hiện
+                   loài và giống, còn thẻ này thì đủ. -->
+              <p class="text-sm text-gray-400 mb-3">
+                {{ featured.species }} · {{ featured.breed }}<template v-if="featured.color"> · {{ featured.color }}</template>
+              </p>
               <div class="flex items-center gap-1.5 mb-4">
                 <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -185,9 +195,17 @@
               </div>
               <p v-if="featured.description" class="text-sm text-gray-400 leading-relaxed line-clamp-3">{{ featured.description }}</p>
             </div>
-            <div class="mt-6 pt-5 border-t border-gray-100 flex items-center justify-between">
-              <p class="text-xs text-gray-400">{{ relativeTime(featured.date) }}</p>
-              <span class="text-sm font-semibold text-orange-500 group-hover:text-orange-600 transition-colors">{{ $t('home.view') }}</span>
+            <!-- Khoảng cách hiện ở đây giống hệt thẻ nhỏ. Trước đây thẻ này
+                 không có, nên tin mới nhất — tin được chú ý nhất — lại là tin
+                 duy nhất không cho biết nó ở gần hay xa. -->
+            <div class="mt-6 pt-5 border-t border-gray-100 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <p class="text-xs text-gray-400 shrink-0">{{ relativeTime(featured.date) }}</p>
+                <p v-if="distanceOf(featured)" class="text-xs text-gray-400 shrink-0">
+                  {{ $t('card.away', { d: distanceOf(featured) }) }}
+                </p>
+              </div>
+              <span class="text-sm font-semibold text-orange-500 group-hover:text-orange-600 transition-colors shrink-0">{{ $t('home.view') }}</span>
             </div>
           </div>
         </div>
