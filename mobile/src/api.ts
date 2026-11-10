@@ -153,6 +153,19 @@ export default {
   register: (data: { name: string; email: string; password: string }) =>
     http.post<AuthResult>('/auth/register', data),
   login: (data: { email: string; password: string }) => http.post<AuthResult>('/auth/login', data),
+
+  /*
+   * Quên mật khẩu. Hai bước, hai đường, KHÔNG đòi đăng nhập — người quên mật
+   * khẩu thì theo định nghĩa là không đăng nhập được.
+   *
+   * forgotPassword trả về CÙNG MỘT CÂU dù email có tài khoản hay không, kể cả
+   * khi gặp lỗi máy chủ. Nếu báo "email không tồn tại" thì đường này thành
+   * công cụ dò: gõ lần lượt vài nghìn địa chỉ là biết ai có tài khoản.
+   */
+  forgotPassword: (data: { email: string }) =>
+    http.post<{ message: string }>('/auth/forgot-password', data),
+  resetPassword: (data: { token: string; password: string }) =>
+    http.post<{ message: string }>('/auth/reset-password', data),
   me: () => http.get<User>('/auth/me'),
 
   /*

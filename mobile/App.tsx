@@ -32,6 +32,7 @@ import MyPetsScreen from './src/screens/MyPetsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import ContactScreen from './src/screens/ContactScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import PrivacyScreen from './src/screens/PrivacyScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import {
@@ -78,6 +79,35 @@ ExpoSplashScreen.preventAutoHideAsync().catch(() => {
  */
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+/*
+ * Bảng đường dẫn sâu (deep link).
+ *
+ * Thư đặt lại mật khẩu kèm một đường dẫn dạng:
+ *
+ *   lostpets://reset-password?token=abc123
+ *
+ * Bấm vào đó trên điện thoại là hệ điều hành mở thẳng app, vào đúng màn đặt
+ * mật khẩu mới, mang theo token. Không có bảng này thì app vẫn mở nhưng rơi
+ * về trang chủ, và token rụng mất — người dùng không hiểu vì sao bấm link
+ * trong thư mà chẳng tới đâu.
+ *
+ * "lostpets" lấy từ scheme trong app.json. Ba scheme khai ở đó thì đây chỉ
+ * dùng cái đầu; hai cái kia là của Facebook và của gói ứng dụng.
+ *
+ * CHÚ Ý: Expo Go có scheme riêng (exp://) nên đường dẫn lostpets:// không mở
+ * được trong Expo Go. Phải cài bản APK thật mới thử được.
+ */
+const linking = {
+  prefixes: ['lostpets://'],
+  config: {
+    screens: {
+      // Tên tham số ?token= khớp luôn với tên tham số của màn, nên không phải
+      // viết hàm chuyển đổi.
+      ForgotPassword: 'reset-password',
+    },
+  },
+};
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -243,6 +273,7 @@ function Root({
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <NavigationContainer
             ref={navRef}
+            linking={linking}
             onReady={handleNavReady}
             /*
              * Báo cho react-navigation biết đang ở chế độ nào. Thiếu dòng này
@@ -383,6 +414,7 @@ function RootStack() {
       */}
       {/* Tiêu đề do chính màn đặt qua setOptions, vì nó đổi theo thứ tiếng */}
       <Stack.Screen name="Contact" component={ContactScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
     </Stack.Navigator>
   );

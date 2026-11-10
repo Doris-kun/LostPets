@@ -285,6 +285,11 @@ export type RootStackParamList = {
   Auth: undefined;
   Chat: undefined;
   Admin: undefined;
+  /*
+   * token chỉ có khi mở từ đường dẫn trong thư đặt lại mật khẩu. Không có thì
+   * màn hiện ô nhập email để xin một đường dẫn mới.
+   */
+  ForgotPassword: { token?: string } | undefined;
   Contact: undefined;
   Privacy: undefined;
 };

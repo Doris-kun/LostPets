@@ -222,6 +222,22 @@ export default function AuthScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         {/*
+          Chỉ hiện ở tab Đăng nhập.
+
+          Người đang TẠO tài khoản thì chưa có mật khẩu nào để mà quên — bày
+          dòng này ra lúc đó chỉ làm họ phân vân mình có bỏ sót bước nào không.
+        */}
+        {!isRegister && (
+          <TouchableOpacity
+            className="mt-md min-h-11 items-center justify-center"
+            onPress={() => navigation.navigate('ForgotPassword')}
+            activeOpacity={0.7}
+          >
+            <Text className="text-[13px] font-semibold text-primary">{t('auth.forgot')}</Text>
+          </TouchableOpacity>
+        )}
+
+        {/*
           Đặt DƯỚI phần email chứ không phải trên.
 
           Trên web nút mạng xã hội hay nằm trên cùng, nhưng ở đây đăng nhập
