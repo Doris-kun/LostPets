@@ -80,6 +80,15 @@ async function kiemApi(to) {
     }
   } catch (err) {
     const d = err && err.response && err.response.data;
+    const code = err && err.response && err.response.status;
+    // Khoá giới hạn quyền (chỉ có Transactional email) KHÔNG đọc được
+    // /v3/account. Đó là cấu hình ĐÚNG, nên không được coi là hỏng — báo
+    // "khoá sai" ở đây là đuổi người đi tạo lại một khoá vốn đã tốt.
+    if (code === 401 || code === 403) {
+      console.log('  Không đọc được thông tin tài khoản — bình thường nếu khoá');
+      console.log('  bị giới hạn quyền. Kiểm bằng cách gửi thử luôn.');
+      return;
+    }
     console.log('  HỎNG:', (err && err.message) || '', d ? JSON.stringify(d) : '');
     console.log('\n  Khoá sai hoặc đã bị thu hồi. Tạo lại ở Brevo > SMTP & API > API Keys.');
     process.exit(1);
@@ -106,9 +115,14 @@ async function kiemApi(to) {
   } catch (err) {
     const d = err && err.response && err.response.data;
     console.log('  HỎNG:', (err && err.message) || '', d ? JSON.stringify(d) : '');
-    if (d && /sender/i.test(JSON.stringify(d))) {
+    const code = err && err.response && err.response.status;
+    if (/sender/i.test(JSON.stringify(d || {}))) {
       console.log('\n  Địa chỉ người gửi chưa được xác minh ở Brevo.');
       console.log('  Vào Brevo > Senders & IP > Senders, thêm và xác minh đúng địa chỉ trong MAIL_FROM.');
+    } else if (code === 401 || code === 403) {
+      console.log('');
+      console.log('  Khoá không có quyền gửi thư. Lúc tạo khoá phải đặt');
+      console.log('  "Transactional email" = All. Để Read là đọc được nhưng không gửi được.');
     }
     process.exit(1);
   }
