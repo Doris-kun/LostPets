@@ -3,7 +3,7 @@
     <div class="mb-6 flex items-end justify-between gap-3 flex-wrap">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ $t('mine.title') }}</h1>
-        <p class="text-sm text-gray-400 mt-1">{{ $t('mine.subtitle') }}</p>
+        <p class="text-sm text-gray-500 mt-1">{{ $t('mine.subtitle') }}</p>
       </div>
       <router-link to="/new"
         class="inline-flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-orange-600 transition-all shadow-sm">
@@ -19,11 +19,11 @@
       <div v-for="card in summary" :key="card.label"
         class="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3">
         <p class="text-2xl font-bold" :class="card.color">{{ card.value }}</p>
-        <p class="text-xs text-gray-400 mt-0.5">{{ card.label }}</p>
+        <p class="text-xs text-gray-500 mt-0.5">{{ card.label }}</p>
       </div>
     </div>
 
-    <p v-if="loading" class="text-sm text-gray-400 text-center py-12">{{ $t('mine.loading') }}</p>
+    <p v-if="loading" class="text-sm text-gray-500 text-center py-12">{{ $t('mine.loading') }}</p>
 
     <div v-else-if="!pets.length" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
       <p class="text-sm text-gray-500">{{ $t('mine.empty') }}</p>
@@ -49,13 +49,13 @@
               :class="pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'">
               {{ $t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found') }}
             </span>
-            <span class="text-xs text-gray-300 font-mono">{{ pet.postId }}</span>
+            <span class="text-xs text-gray-500 font-mono">{{ pet.postId }}</span>
           </div>
           <router-link :to="`/pet/${pet._id}`"
             class="block text-base font-bold text-gray-900 mt-1 hover:text-orange-600 transition-colors">
             {{ pet.name || pet.breed }}
           </router-link>
-          <p class="text-xs text-gray-400 mt-0.5">{{ pet.color }} · {{ pet.area }} · {{ formatDate(pet.date) }}</p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ pet.color }} · {{ pet.area }} · {{ formatDate(pet.date) }}</p>
 
           <div class="flex items-center gap-2 mt-3">
             <button v-if="!pet.resolved" @click="resolve(pet)" :disabled="busyId === pet._id"

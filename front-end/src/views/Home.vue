@@ -4,7 +4,7 @@
     <!-- Page header -->
     <div class="mb-6">
       <h1 class="text-3xl font-bold text-gray-900 tracking-tight">{{ pageTitle }}</h1>
-      <p class="text-sm text-gray-400 mt-1">
+      <p class="text-sm text-gray-500 mt-1">
         {{ loading ? $t('home.loading') : `${total} ${$t('home.results')}` }}
       </p>
     </div>
@@ -23,13 +23,13 @@
           :placeholder="$t('search.placeholder')"
           class="w-full border border-gray-200 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent placeholder-gray-400"/>
         <button v-if="filters.q" @click="clearSearch" :aria-label="$t('search.clear')"
-          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 p-1 transition-colors">
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600 p-1 transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
-      <p v-if="filters.q" class="text-xs text-gray-400 -mt-1">{{ $t('search.hint') }}</p>
+      <p v-if="filters.q" class="text-xs text-gray-500 -mt-1">{{ $t('search.hint') }}</p>
 
       <!-- Type tabs -->
       <div class="flex items-center gap-2 flex-wrap">
@@ -89,12 +89,12 @@
         <!-- Chuyển giữa danh sách và bản đồ -->
         <div class="flex items-center bg-gray-100 rounded-full p-0.5">
           <button @click="setView('list')"
-            :class="view === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
+            :class="view === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-600'"
             class="px-3 py-1 rounded-full text-xs font-semibold transition-all">
             {{ $t('map.listView') }}
           </button>
           <button @click="setView('map')"
-            :class="view === 'map' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
+            :class="view === 'map' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-600'"
             class="px-3 py-1 rounded-full text-xs font-semibold transition-all">
             {{ $t('map.mapView') }}
           </button>
@@ -104,7 +104,7 @@
 
     <!-- Bản đồ: dùng chung bộ lọc với danh sách -->
     <div v-if="view === 'map'">
-      <p v-if="mapLoading" class="text-sm text-gray-400 text-center py-16">{{ $t('mine.loading') }}</p>
+      <p v-if="mapLoading" class="text-sm text-gray-500 text-center py-16">{{ $t('mine.loading') }}</p>
       <div v-else-if="!locatedCount" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
         <p class="text-sm text-gray-500">{{ $t('map.noLocated') }}</p>
       </div>
@@ -139,12 +139,12 @@
     <!-- Empty state -->
     <div v-else-if="view === 'list' && pets.length === 0" class="text-center py-28">
       <div class="w-16 h-16 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
       </div>
       <p class="text-gray-700 font-semibold text-base">{{ $t('home.empty') }}</p>
-      <p class="text-gray-400 text-sm mt-1">{{ $t('home.emptySub') }}</p>
+      <p class="text-gray-500 text-sm mt-1">{{ $t('home.emptySub') }}</p>
       <router-link to="/new" class="mt-5 inline-flex items-center gap-2 bg-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors">
         {{ $t('home.postNow') }}
       </router-link>
@@ -184,24 +184,24 @@
               <!-- Thêm màu lông: loài, giống, màu là ba thứ người ta dùng để
                    nhận ra con vật của mình. Thẻ nhỏ không đủ chỗ nên chỉ hiện
                    loài và giống, còn thẻ này thì đủ. -->
-              <p class="text-sm text-gray-400 mb-3">
+              <p class="text-sm text-gray-500 mb-3">
                 {{ featured.species }} · {{ featured.breed }}<template v-if="featured.color"> · {{ featured.color }}</template>
               </p>
               <div class="flex items-center gap-1.5 mb-4">
-                <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
                 <p class="text-sm text-gray-500">{{ featured.area }}</p>
               </div>
-              <p v-if="featured.description" class="text-sm text-gray-400 leading-relaxed line-clamp-3">{{ featured.description }}</p>
+              <p v-if="featured.description" class="text-sm text-gray-500 leading-relaxed line-clamp-3">{{ featured.description }}</p>
             </div>
             <!-- Khoảng cách hiện ở đây giống hệt thẻ nhỏ. Trước đây thẻ này
                  không có, nên tin mới nhất — tin được chú ý nhất — lại là tin
                  duy nhất không cho biết nó ở gần hay xa. -->
             <div class="mt-6 pt-5 border-t border-gray-100 flex items-center justify-between gap-3">
               <div class="flex items-center gap-3 min-w-0">
-                <p class="text-xs text-gray-400 shrink-0">{{ relativeTime(featured.date) }}</p>
-                <p v-if="distanceOf(featured)" class="text-xs text-gray-400 shrink-0">
+                <p class="text-xs text-gray-500 shrink-0">{{ relativeTime(featured.date) }}</p>
+                <p v-if="distanceOf(featured)" class="text-xs text-gray-500 shrink-0">
                   {{ $t('card.away', { d: distanceOf(featured) }) }}
                 </p>
               </div>
@@ -228,18 +228,18 @@
             </div>
             <div class="p-4 flex flex-col flex-1">
               <h3 class="font-bold text-gray-900 text-base leading-tight">{{ pet.name || pet.breed }}</h3>
-              <p class="text-sm text-gray-400 mt-0.5">{{ pet.species }} · {{ pet.breed }}</p>
+              <p class="text-sm text-gray-500 mt-0.5">{{ pet.species }} · {{ pet.breed }}</p>
               <div class="flex items-center gap-1 mt-1.5">
-                <svg class="w-3.5 h-3.5 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                <p class="text-sm text-gray-400 truncate">{{ pet.area }}</p>
+                <p class="text-sm text-gray-500 truncate">{{ pet.area }}</p>
               </div>
               <!-- Mô tả là chỗ chứa đặc điểm giúp người ta NHẬN RA con vật của
                    mình: lông xoăn, đeo vòng cổ đỏ, sợ người lạ. Tên và giống
                    thì tin nào cũng na ná nhau. Cắt hai dòng để thẻ không dài
                    lệch nhau quá. -->
-              <p v-if="pet.description" class="text-sm text-gray-400 leading-relaxed mt-2 line-clamp-2">
+              <p v-if="pet.description" class="text-sm text-gray-500 leading-relaxed mt-2 line-clamp-2">
                 {{ pet.description }}
               </p>
               <!-- Mã tin cố ý KHÔNG hiện ở đây. Người lạ lướt danh sách không
@@ -251,12 +251,12 @@
                    Không biết vị trí thì thay bằng lời mời bấm vào, chứ không
                    để trống một nửa — thầy hướng dẫn nhận xét đúng chỗ đó. -->
               <div class="flex items-center justify-between gap-2 mt-auto pt-3 border-t border-gray-50">
-                <p class="text-xs text-gray-400">{{ relativeTime(pet.date) }}</p>
-                <p v-if="distanceOf(pet)" class="text-xs text-gray-400 shrink-0">
+                <p class="text-xs text-gray-500">{{ relativeTime(pet.date) }}</p>
+                <p v-if="distanceOf(pet)" class="text-xs text-gray-500 shrink-0">
                   {{ $t('card.away', { d: distanceOf(pet) }) }}
                 </p>
                 <span v-else
-                  class="text-xs text-gray-300 group-hover:text-orange-500 transition-colors shrink-0">
+                  class="text-xs text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
                   {{ $t('card.detail') }} →
                 </span>
               </div>
@@ -275,7 +275,7 @@
           </svg>
           {{ loadingMore ? $t('home.loadingMore') : $t('home.loadMore') }}
         </button>
-        <p v-else-if="pets.length > 0" class="text-sm text-gray-400">{{ $t('home.noMore') }}</p>
+        <p v-else-if="pets.length > 0" class="text-sm text-gray-500">{{ $t('home.noMore') }}</p>
       </div>
     </div>
   </div>

@@ -2,7 +2,7 @@
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ $t('admin.title') }}</h1>
-      <p class="text-sm text-gray-400 mt-1">{{ $t('admin.subtitle') }}</p>
+      <p class="text-sm text-gray-500 mt-1">{{ $t('admin.subtitle') }}</p>
     </div>
 
     <!-- Số liệu tổng quan: con số đứng một mình thì dùng thẻ số, không vẽ biểu đồ -->
@@ -12,7 +12,7 @@
         <p class="text-2xl font-bold text-gray-900 tabular-nums">{{ tile.value }}</p>
         <div class="flex items-center gap-1.5 mt-1">
           <span v-if="tile.dot" class="w-2 h-2 rounded-full shrink-0" :class="tile.dot"></span>
-          <p class="text-xs text-gray-400">{{ tile.label }}</p>
+          <p class="text-xs text-gray-500">{{ tile.label }}</p>
         </div>
       </div>
     </div>
@@ -21,12 +21,12 @@
     <div v-if="stats" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
       <div class="flex items-baseline gap-2">
         <p class="text-3xl font-bold text-gray-900 tabular-nums">{{ stats.resolvedRate }}%</p>
-        <p class="text-sm text-gray-400">{{ $t('admin.resolvedRate') }}</p>
+        <p class="text-sm text-gray-500">{{ $t('admin.resolvedRate') }}</p>
       </div>
       <div class="mt-3 h-2 rounded-full bg-gray-100 overflow-hidden">
         <div class="h-full rounded-full bg-teal-500 transition-all" :style="{ width: stats.resolvedRate + '%' }"></div>
       </div>
-      <p class="text-xs text-gray-400 mt-2">
+      <p class="text-xs text-gray-500 mt-2">
         {{ stats.resolved }} / {{ stats.total }} {{ $t('admin.resolvedOf') }}
       </p>
 
@@ -67,10 +67,10 @@
               {{ r.pet.breed }} · {{ r.pet.area }}
             </router-link>
             <!-- Tin có thể đã bị xoá bởi chính chủ tin trong lúc báo cáo nằm chờ. -->
-            <span v-else class="text-sm text-gray-400 italic">{{ $t('admin.reportPetGone') }}</span>
+            <span v-else class="text-sm text-gray-500 italic">{{ $t('admin.reportPetGone') }}</span>
           </div>
           <p v-if="r.note" class="text-xs text-gray-500 mt-1.5 leading-relaxed break-words">{{ r.note }}</p>
-          <p class="text-xs text-gray-300 mt-1 font-mono">{{ r.pet ? r.pet.postId : '' }}</p>
+          <p class="text-xs text-gray-500 mt-1 font-mono">{{ r.pet ? r.pet.postId : '' }}</p>
         </div>
         <div class="flex flex-col gap-1.5 flex-shrink-0">
           <button v-if="r.pet" @click="removeReported(r)" :disabled="busyReport === r._id"
@@ -95,7 +95,7 @@
       <div v-for="rank in rankings" :key="rank.title"
         class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <p class="text-sm font-bold text-gray-900 mb-3">{{ rank.title }}</p>
-        <p v-if="!rank.rows.length" class="text-xs text-gray-400">{{ $t('admin.noData') }}</p>
+        <p v-if="!rank.rows.length" class="text-xs text-gray-500">{{ $t('admin.noData') }}</p>
         <div v-else class="space-y-2.5">
           <div v-for="row in rank.rows" :key="row.label" :title="`${row.label}: ${row.count}`">
             <div class="flex items-baseline justify-between gap-3 mb-1">
@@ -127,16 +127,16 @@
       </select>
       <input id="q" name="q" v-model="filters.q" @input="debounceReload" type="text" :placeholder="$t('admin.search')"
         class="flex-1 min-w-[10rem] border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"/>
-      <span class="text-xs text-gray-400">{{ total }} {{ $t('admin.posts') }}</span>
+      <span class="text-xs text-gray-500">{{ total }} {{ $t('admin.posts') }}</span>
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <p v-if="loading" class="text-sm text-gray-400 text-center py-10">{{ $t('mine.loading') }}</p>
-      <p v-else-if="!pets.length" class="text-sm text-gray-400 text-center py-10">{{ $t('admin.noPosts') }}</p>
+      <p v-if="loading" class="text-sm text-gray-500 text-center py-10">{{ $t('mine.loading') }}</p>
+      <p v-else-if="!pets.length" class="text-sm text-gray-500 text-center py-10">{{ $t('admin.noPosts') }}</p>
 
       <div v-else class="overflow-x-auto">
         <table class="w-full text-sm">
-          <thead class="bg-gray-50 text-gray-400 text-xs uppercase tracking-wider">
+          <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
             <tr>
               <th class="text-left font-semibold px-4 py-2.5">{{ $t('admin.colPost') }}</th>
               <th class="text-left font-semibold px-4 py-2.5 hidden sm:table-cell">{{ $t('admin.colArea') }}</th>
@@ -154,16 +154,16 @@
                   <router-link :to="`/pet/${pet._id}`" class="font-semibold text-gray-900 hover:text-orange-600">
                     {{ pet.name || pet.breed }}
                   </router-link>
-                  <span class="text-xs text-gray-300 font-mono">{{ pet.postId }}</span>
+                  <span class="text-xs text-gray-500 font-mono">{{ pet.postId }}</span>
                 </div>
-                <p class="text-xs text-gray-400 mt-0.5">{{ pet.species }} · {{ pet.color }}</p>
+                <p class="text-xs text-gray-500 mt-0.5">{{ pet.species }} · {{ pet.color }}</p>
               </td>
               <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">{{ pet.area }}</td>
               <td class="px-4 py-3 text-gray-500 hidden md:table-cell">
                 <span v-if="pet.owner">{{ pet.owner.name }}</span>
-                <span v-else class="text-gray-300">{{ $t('admin.guest') }}</span>
+                <span v-else class="text-gray-500">{{ $t('admin.guest') }}</span>
               </td>
-              <td class="px-4 py-3 text-gray-400 hidden sm:table-cell whitespace-nowrap">{{ formatDate(pet.date) }}</td>
+              <td class="px-4 py-3 text-gray-500 hidden sm:table-cell whitespace-nowrap">{{ formatDate(pet.date) }}</td>
               <td class="px-4 py-3 text-right">
                 <button @click="remove(pet)" :disabled="busyId === pet._id"
                   class="text-rose-500 px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-rose-50 disabled:opacity-50 transition-all">

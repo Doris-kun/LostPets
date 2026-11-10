@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-md mx-auto px-4 py-12">
     <h1 class="text-2xl font-bold text-gray-900 text-center">{{ $t('forgot.title') }}</h1>
-    <p class="text-sm text-gray-400 text-center mt-2">{{ $t('forgot.subtitle') }}</p>
+    <p class="text-sm text-gray-500 text-center mt-2">{{ $t('forgot.subtitle') }}</p>
 
     <!-- Gửi xong thì KHÔNG quay lại biểu mẫu. Để người ta gõ lại email lần nữa
          chỉ khiến họ tưởng lần đầu hỏng, rồi bấm thêm mấy lần nữa — mỗi lần là
@@ -35,7 +35,7 @@
         {{ loading ? $t('forgot.sending') : $t('forgot.submit') }}
       </button>
 
-      <p class="text-sm text-gray-400 text-center">
+      <p class="text-sm text-gray-500 text-center">
         <router-link to="/login" class="text-orange-600 font-semibold hover:underline">{{ $t('forgot.backToLogin') }}</router-link>
       </p>
     </form>
