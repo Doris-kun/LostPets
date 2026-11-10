@@ -44,6 +44,11 @@ router.post('/forgot-password', forgotLimit, authController.forgotPassword);
 // hàng loạt. Mã dài 64 ký tự hex nên dò mù là vô vọng, chặn cho chắc.
 router.post('/reset-password', loginLimit, authController.resetPassword);
 
+// Xác minh địa chỉ thư. Dùng chung bộ đếm với quên mật khẩu: cả hai đều là
+// đường làm máy chủ gửi thư đi, nên để riêng thì lách bằng cách gọi xen kẽ.
+router.post('/verify-email', loginLimit, authController.verifyEmail);
+router.post('/resend-verification', forgotLimit, authController.resendVerification);
+
 router.get('/providers', authController.providers);
 router.post('/google', providerLimit, authController.google);
 router.post('/facebook', providerLimit, authController.facebook);

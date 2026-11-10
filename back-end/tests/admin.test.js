@@ -7,6 +7,7 @@ process.env.ADMIN_EMAILS = 'sep@example.com, thuky@example.com';
 const app = require('../app');
 const rateLimit = require('../api/middleware/rateLimit');
 const Pet = require('../api/models/petModel');
+const User = require('../api/models/userModel');
 
 let mongoServer;
 
@@ -27,7 +28,19 @@ afterEach(async () => {
   for (const key in collections) await collections[key].deleteMany({});
 });
 
+// Đăng ký xong PHẢI xác minh hộp thư thì mới được cấp quyền quản trị.
+// Trong test không có máy chủ thư nên không bấm được đường dẫn trong thư;
+// đặt thẳng emailVerified rồi đăng nhập lại, đúng bằng việc người dùng bấm.
 async function signUp(email) {
+  await dangKyThoi(email);
+  await User.updateOne({ email: email.toLowerCase().trim() }, { emailVerified: true });
+  const { body } = await request(app).post('/auth/login')
+    .send({ email, password: 'matkhau123' });
+  return body;
+}
+
+// Đăng ký xong để nguyên, chưa xác minh gì cả.
+async function dangKyThoi(email) {
   const { body } = await request(app)
     .post('/auth/register')
     .send({ name: 'Ai đó', email, password: 'matkhau123' });
