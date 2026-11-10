@@ -159,6 +159,20 @@ export default function PetCard({ pet, onPress, showCode = false, me = null }: P
           {pet.species} · {pet.breed}
         </Text>
 
+        {/*
+          Mô tả là chỗ chứa đặc điểm giúp người ta NHẬN RA con vật của mình:
+          lông xoăn, đeo vòng cổ đỏ, sợ người lạ. Tên và giống thì tin nào
+          cũng na ná nhau. Bản web vừa thêm ở PR #76.
+
+          Cắt hai dòng, và chỉ vẽ khi tin có mô tả — tin không có thì thẻ giữ
+          nguyên chiều cao cũ, không chừa một khoảng trống không ai hiểu.
+        */}
+        {!!pet.description && (
+          <Text className="mt-1 text-[12px] leading-[17px] text-text-muted" numberOfLines={2}>
+            {pet.description}
+          </Text>
+        )}
+
         <View className="mt-1.5 flex-row items-center justify-between">
           <View className="flex-1 flex-row items-center gap-[3px]">
             <Ionicons name="location" size={12} color={colors.textMuted} />

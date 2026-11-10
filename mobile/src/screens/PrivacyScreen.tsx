@@ -1,7 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import type { ComponentRef } from 'react';
-import { Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types';
@@ -29,22 +28,6 @@ import { spacing } from '../theme';
  * xem bản tiếng Việt và tiếng Anh còn khớp nhau không. Nam làm y vậy bên web.
  */
 
-/*
- * Email công khai để người dùng liên hệ về dữ liệu của họ.
- *
- * PHẢI TRÙNG với CONTACT_EMAIL trong front-end/src/contact.js. Hai địa chỉ
- * khác nhau nghĩa là cùng một dịch vụ mà hứa hai đường liên hệ khác nhau —
- * người dùng gửi vào đường nào cũng có thể rơi vào chỗ không ai đọc.
- *
- * Bên web nó từng nằm trong views/Privacy.vue; PR #73 chuyển ra contact.js vì
- * trang Liên hệ mới cũng cần đọc. Bên mobile chưa có trang Liên hệ riêng nên
- * vẫn để ở đây — thêm màn thứ hai cần địa chỉ này thì tách ra trước đã.
- *
- * Mục 10 hứa "yêu cầu xoá tài khoản bằng cách liên hệ theo địa chỉ bên
- * dưới", nên bỏ trống là chính sách hứa một thứ không thực hiện được. Meta
- * cũng bắt buộc có chỗ liên hệ mới duyệt.
- */
-const CONTACT_EMAIL = 'nampham2212004@gmail.com';
 
 interface Section {
   h: string;
@@ -70,6 +53,7 @@ interface Policy {
   sections: Section[];
   contactH: string;
   contactP: string;
+  contactBtn: string;
 }
 
 const CONTENT: Record<'vi' | 'en', Policy> = {
@@ -196,7 +180,9 @@ const CONTENT: Record<'vi' | 'en', Policy> = {
       },
     ],
     contactH: 'Liên hệ',
-    contactP: 'Mọi câu hỏi về dữ liệu của bạn, hoặc yêu cầu xoá tài khoản, gửi tới ',
+    contactP:
+      'Mọi câu hỏi về dữ liệu của bạn, hoặc yêu cầu xoá tài khoản, có hai cách liên hệ ở màn bên.',
+    contactBtn: 'Liên hệ với chúng tôi',
   },
 
   en: {
@@ -322,7 +308,9 @@ const CONTENT: Record<'vi' | 'en', Policy> = {
       },
     ],
     contactH: 'Contact',
-    contactP: 'For any question about your data, or to request account deletion, write to ',
+    contactP:
+      'For any question about your data, or to request account deletion, there are two ways to get in touch.',
+    contactBtn: 'Contact us',
   },
 };
 
@@ -361,29 +349,6 @@ export default function PrivacyScreen({ navigation }: Props) {
     if (y === undefined) return;
     // Trừ bớt một chút để tiêu đề không dính sát mép trên màn hình.
     scrollRef.current?.scrollTo({ y: Math.max(0, y - spacing.md), animated: true });
-  };
-
-  /*
-   * Đã sao chép địa chỉ hay chưa, để đổi chữ trên nút trong vài giây.
-   *
-   * Phải dọn đồng hồ hẹn giờ lúc rời màn: bấm xong rồi thoát ra ngay thì hẹn
-   * giờ vẫn chạy và gọi setState trên một component đã biến mất.
-   */
-  const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
-
-  const copyEmail = async () => {
-    await Clipboard.setStringAsync(CONTACT_EMAIL);
-    setCopied(true);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setCopied(false), 2500);
   };
 
   return (
@@ -471,53 +436,27 @@ export default function PrivacyScreen({ navigation }: Props) {
         </View>
       ))}
 
-      {/* Không có email thì KHÔNG vẽ mục Liên hệ: một tiêu đề "Liên hệ" mà bên
-          dưới trống rỗng còn tệ hơn là không có mục nào. */}
-      {!!CONTACT_EMAIL && (
-        <View className="mt-xl">
-          <Text className="mb-sm text-[15px] font-extrabold text-text">{c.contactH}</Text>
-          <Text className="mt-sm text-[13.5px] leading-[21px] text-text-soft">{c.contactP}</Text>
+      {/*
+        Mục Liên hệ chỉ còn MỘT nút dẫn sang màn Liên hệ.
 
-          {/*
-            Hai nút, không in địa chỉ ra làm chữ.
+        Trước đây hai nút gửi thư và chép địa chỉ nằm ngay đây. Nhưng trang
+        chính sách không phải chỗ người ta mở ra khi muốn liên hệ — họ mở nó
+        khi muốn biết app thu thập gì. Hai kênh nay gom về một màn riêng, vào
+        từ Cài đặt, nên ở đây chỉ cần chỉ đường. Bản web làm y vậy ở PR #73.
+      */}
+      <View className="mt-xl">
+        <Text className="mb-sm text-[15px] font-extrabold text-text">{c.contactH}</Text>
+        <Text className="mt-sm text-[13.5px] leading-[21px] text-text-soft">{c.contactP}</Text>
 
-            mailto không phải đường duy nhất nên có: máy chưa đặt trình gửi
-            thư mặc định thì bấm vào chỉ nhận một hộp thoại bắt chọn ứng
-            dụng. Nút sao chép cứu đúng trường hợp đó.
-
-            Không in địa chỉ thành chữ là theo bản web, nhưng nói thẳng giới
-            hạn: địa chỉ VẪN nằm trong đường dẫn mailto, nên con bot nào chịu
-            đọc vẫn lấy được. Đổi nhãn chỉ chặn loại quét hời hợt.
-          */}
-          <View className="mt-md flex-row gap-sm">
-            <TouchableOpacity
-              className="min-h-[46px] flex-1 flex-row items-center justify-center gap-1.5 rounded-md border-[1.5px] border-primary bg-primary"
-              onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="mail-outline" size={16} color={colors.onPrimary} />
-              <Text className="text-[13px] font-bold text-on-primary">
-                {t('privacy.sendMail')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="min-h-[46px] flex-1 flex-row items-center justify-center gap-1.5 rounded-md border-[1.5px] border-border-strong bg-surface"
-              onPress={copyEmail}
-              activeOpacity={0.85}
-            >
-              <Ionicons
-                name={copied ? 'checkmark' : 'copy-outline'}
-                size={16}
-                color={colors.textSoft}
-              />
-              <Text className="text-[13px] font-bold text-text-soft">
-                {t(copied ? 'privacy.copied' : 'privacy.copyMail')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+        <TouchableOpacity
+          className="mt-md min-h-[46px] flex-row items-center justify-center gap-1.5 rounded-md border-[1.5px] border-primary bg-primary"
+          onPress={() => navigation.navigate('Contact')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="chatbubbles-outline" size={16} color={colors.onPrimary} />
+          <Text className="text-[13px] font-bold text-on-primary">{c.contactBtn}</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }

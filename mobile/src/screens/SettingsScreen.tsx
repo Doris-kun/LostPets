@@ -181,47 +181,33 @@ export default function SettingsScreen({ navigation }: Props) {
         Đặt vào Cài đặt thành hẳn một mục có tên và có mô tả thì người cần giúp
         đỡ sẽ tìm thấy — vì Cài đặt chính là chỗ người ta mở ra khi bí.
       */}
+      {/*
+        Một dòng duy nhất dẫn sang màn Liên hệ.
+
+        Trước đây chỗ này là một thẻ lồng thẻ: tiêu đề "Trung tâm trợ giúp",
+        bên trong một ô nữa dẫn thẳng vào trợ lý. Nhưng trợ lý chỉ là MỘT
+        trong hai kênh — địa chỉ email thì nằm tận cuối trang Chính sách bảo
+        mật, chỗ không ai nghĩ tới khi muốn gửi thư. Gom cả hai về màn Liên hệ
+        rồi thì ở đây chỉ cần một đường dẫn, cùng kiểu với dòng Chính sách bảo
+        mật bên dưới.
+      */}
       <Text className="mt-lg mb-sm text-[11px] font-bold tracking-[0.6px] text-text-muted">{t('settings.help')}</Text>
 
-      <View className="rounded-lg bg-background p-lg">
-        <View className="flex-row items-center gap-md">
-          <Ionicons name="headset-outline" size={22} color={colors.primary} />
-          <View className="flex-1">
-            <Text className="text-[15px] font-extrabold text-text">{t('settings.helpTitle')}</Text>
-            <Text className="mt-px text-[12px] text-text-muted">{t('settings.helpSub')}</Text>
-          </View>
+      <TouchableOpacity
+        // 44 là mức tối thiểu cho một vùng chạm trên iOS (Android là 48dp)
+        className="min-h-[52px] flex-row items-center gap-md rounded-lg bg-background px-md py-sm"
+        onPress={() => navigation.navigate('Contact')}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="headset-outline" size={20} color={colors.primary} />
+
+        <View className="flex-1">
+          <Text className="text-[14px] font-bold text-text">{t('settings.contact')}</Text>
+          <Text className="mt-px text-[12px] text-text-muted">{t('settings.contactSub')}</Text>
         </View>
 
-        {/* Khung con lồng trong thẻ — nền nhạt hơn để tách khỏi phần tiêu đề */}
-        <TouchableOpacity
-          /* min-h-[60px] = ảnh tròn 36 + đệm 24. Khai ra vì luật 44pt ước
-             lượng chiều cao theo cỡ CHỮ, mà thứ cao nhất ở đây là cái ảnh. */
-          className="mt-md min-h-[60px] flex-row items-center gap-md rounded-md bg-surface-tint p-md"
-          onPress={() => navigation.navigate('Chat')}
-          activeOpacity={0.8}
-        >
-          <View className="h-9 w-9 items-center justify-center rounded-full bg-ai-accent">
-            <Ionicons name="chatbubble-ellipses" size={18} color={colors.onPrimary} />
-          </View>
-
-          <View className="flex-1">
-            <Text className="text-[14px] font-bold text-text">{t('settings.helpOnline')}</Text>
-            <Text className="mt-px text-[11px] text-text-muted">{t('settings.helpHours')}</Text>
-          </View>
-
-          {/*
-            Mũi tên vẽ bằng icon, KHÔNG dùng ký tự → trong chuỗi chữ.
-
-            Ký tự → (U+2192) không có trong phông hệ thống của một số máy
-            Android, máy sẽ lấy phông thay thế và vẽ ra ký tự lạ. Phông icon
-            thì đóng gói sẵn bên trong app nên máy nào cũng vẽ giống nhau.
-          */}
-          <View className="flex-row items-center gap-0.5">
-            <Text className="text-[13px] font-bold text-primary">{t('settings.helpAction')}</Text>
-            <Ionicons name="chevron-forward" size={14} color={colors.primary} />
-          </View>
-        </TouchableOpacity>
-      </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      </TouchableOpacity>
 
       {/* ---- Giới thiệu ---- */}
       <Text className="mt-lg mb-sm text-[11px] font-bold tracking-[0.6px] text-text-muted">{t('settings.about')}</Text>

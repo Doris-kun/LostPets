@@ -31,6 +31,7 @@ import ChatScreen from './src/screens/ChatScreen';
 import MyPetsScreen from './src/screens/MyPetsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AdminScreen from './src/screens/AdminScreen';
+import ContactScreen from './src/screens/ContactScreen';
 import PrivacyScreen from './src/screens/PrivacyScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import {
@@ -380,6 +381,8 @@ function RootStack() {
         đọc nó đúng một lần, không phải thứ cần có mặt thường trực ở thanh
         dưới. Lối vào ở màn Cài đặt. Tiêu đề do chính màn đó tự đặt.
       */}
+      {/* Tiêu đề do chính màn đặt qua setOptions, vì nó đổi theo thứ tiếng */}
+      <Stack.Screen name="Contact" component={ContactScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
     </Stack.Navigator>
   );

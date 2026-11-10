@@ -285,6 +285,7 @@ export type RootStackParamList = {
   Auth: undefined;
   Chat: undefined;
   Admin: undefined;
+  Contact: undefined;
   Privacy: undefined;
 };
 
