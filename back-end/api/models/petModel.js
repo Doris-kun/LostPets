@@ -75,4 +75,37 @@ const PetSchema = new Schema({
   date:        { type: Date, default: Date.now }
 }, { collection: 'pets' });
 
+// Hai index phục vụ hai đường đi, không phải thêm cho đủ.
+//
+// 1. Mọi lần mở danh sách và mở bản đồ đều sắp theo `date`, vì front-end luôn
+//    gửi kèm sort (xem Home.vue). Không có index này thì MongoDB phải quét cả
+//    collection rồi sắp xếp trong RAM trước khi cắt lấy 9 tin — công việc tỉ
+//    lệ với TỔNG số tin, dù người dùng chỉ xem một trang. Có index thì nó đi
+//    dọc index theo đúng thứ tự cần và dừng sau skip+limit bản ghi.
+//
+//    Mấy ô lọc còn lại (species, breed, color, area) là biểu thức chính quy
+//    không neo đầu chuỗi nên không index được — nhưng chúng chỉ lọc, còn chỗ
+//    đắt là sắp xếp, và sắp xếp thì index này lo.
+//
+//    Đo bằng scripts/bench-list.js, 20.000 tin: COLLSCAN + SORT đổi thành
+//    IXSCAN, trang đầu đi từ 251 lên 675 req/s (nhanh 2,7 lần, p95 117ms ->
+//    36ms), trang có lọc loại + loài đi từ 166 lên 549 req/s (nhanh 3,3 lần).
+//    Truy vấn có lọc giảm từ 20.000 xuống 66 bản ghi phải lấy lên.
+//
+//    Đã thử thêm {type, date} cho ô lọc "loại tin" và BỎ. Nó chỉ giảm 66 bản
+//    ghi xuống 33 — không đáng để mọi lượt đăng tin trả phí cập nhật thêm một
+//    index. Mà đo xong thì bỏ nó còn NHANH HƠN: 549 req/s so với 272 khi có
+//    nó, vì planner bớt một phương án phải cân ở mỗi truy vấn.
+PetSchema.index({ date: -1 });
+
+// 2. Tầng so khớp và tầng thông báo đẩy dùng chung một hình dạng truy vấn:
+//    bằng đúng type + species + resolved, rồi chặn khoảng `date`, rồi sắp theo
+//    `date`. Đặt ba trường bằng-đúng lên trước, `date` xuống cuối, thì một
+//    index lo cả phần lọc, phần chặn khoảng và phần sắp xếp.
+//
+//    Đo trên 20.000 tin: truy vấn lấy ứng viên giảm từ 497 xuống 50 bản ghi
+//    phải lấy lên — đúng bằng số nó cần trả về, không lấy thừa cái nào. Chỉ
+//    riêng {date} thì không đủ, vì nó phải lấy lên 497 tin rồi loại bớt.
+PetSchema.index({ type: 1, species: 1, resolved: 1, date: -1 });
+
 module.exports = mongoose.model('Pet', PetSchema);

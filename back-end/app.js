@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const cors = require('cors');
 const multer = require('multer');
 const petRoutes = require('./api/routes/petRoutes');
@@ -37,6 +38,13 @@ if (allowedOrigins.length === 0) {
 
 // Không cần quảng cáo đang chạy Express.
 app.disable('x-powered-by');
+
+// Nén phản hồi. Danh sách tin là JSON lặp nhiều khoá giống nhau nên nén rất
+// tốt, mà người dùng Việt Nam phần lớn vào bằng 4G.
+//
+// Đặt TRƯỚC các route để nó bọc được mọi phản hồi. Chỉ nén khi trình duyệt tự
+// khai Accept-Encoding, nên không ảnh hưởng tới ai không đỡ được.
+app.use(compression());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

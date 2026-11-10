@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const petController = require('../controllers/petController');
 const reportController = require('../controllers/reportController');
@@ -8,6 +9,21 @@ const rateLimit = require('../middleware/rateLimit');
 // optionalAuth ở mọi route: khách vãng lai vẫn dùng được, người đã đăng nhập
 // thì server biết họ là ai để gắn chủ sở hữu và bỏ qua bước hỏi mã.
 router.use(optionalAuth);
+// Mã tin sai định dạng thì trả 404, đừng để nó chạy tiếp vào Mongoose.
+//
+// findById với một chuỗi không phải ObjectId sẽ ném CastError, rơi xuống nhánh
+// 500 và báo "Server error" — nghe như máy chủ hỏng, trong khi thật ra người
+// dùng gõ sai đường dẫn. Đo trên web thật trước khi sửa: GET, PUT và DELETE
+// /pets/:petId đều trả 500 khi nhận id rác.
+//
+// Đặt ở router.param nên nó chặn cho MỌI route có :petId, kể cả route thêm
+// sau này — chứ không phải nhớ chép lại một dòng if vào từng hàm.
+router.param('petId', (req, res, next, value) => {
+  if (!mongoose.Types.ObjectId.isValid(value)) {
+    return res.status(404).json({ message: 'Pet not found' });
+  }
+  next();
+});
 
 // Mỗi lượt tìm kiếm có chữ đều gọi Gemini để nhúng câu hỏi, tức là tốn quota.
 // GET /pets là endpoint công khai không cần đăng nhập, nên không chặn thì một

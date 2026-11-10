@@ -5,6 +5,7 @@ const Pet = require('../models/petModel');
 const { discardImage } = require('../lib/images');
 const { textForPet, embedDocument, embedQuery, cosine } = require('../lib/embedding');
 const { rerank, shouldRerank } = require('../lib/rerank');
+const { notifyNearby } = require('../lib/notify');
 
 // Những trường mà sửa đi thì vector cũ không còn đúng nữa. contact và
 // secretDetail không có trong đây vì chúng không được nhúng ngay từ đầu.
@@ -362,6 +363,13 @@ exports.create_a_pet = async (req, res) => {
       owner: req.user ? req.user.sub : null,
     });
     refreshEmbedding(pet);
+    // Báo cho chủ những tin ngược loại đang mở ở gần. Không await, cùng lý do
+    // với refreshEmbedding: người vừa đăng tin không phải ngồi chờ một dịch vụ
+    // của bên thứ ba, và tin đã lưu xong rồi.
+    //
+    // Thông báo chỉ lọc theo loài, loại tin và khoảng cách nên không cần vector
+    // — chạy song song với việc nhúng là được, không phải đợi nhúng xong.
+    notifyNearby(pet);
     // claimCode chỉ xuất hiện đúng lần này, không có endpoint nào đọc lại được.
     // select: false chỉ lọc ở truy vấn, tài liệu vừa tạo vẫn giữ claimHash nên phải bỏ tay.
     const { claimHash: _h, secretDetail: _s, imageId: _i, ...created } = pet.toObject();

@@ -3,6 +3,7 @@ const Pet = require('../models/petModel');
 const User = require('../models/userModel');
 const Report = require('../models/reportModel');
 const { discardImage, discardImages } = require('../lib/images');
+const { checkReceipts } = require('../lib/push');
 
 const TOP_LIMIT = 5;
 const PAGE_SIZE = 20;
@@ -104,6 +105,13 @@ exports.list_pets = async (req, res) => {
 // Đổi một việc tốn vài chục dòng lấy một đống rác không bao giờ dọn được.
 exports.cleanup = async (_req, res) => {
   try {
+    // Đọc biên nhận thông báo đẩy và gỡ những mã thiết bị đã chết.
+    //
+    // Gắn vào đợt dọn hằng đêm chứ không hẹn giờ trong tiến trình: Render bản
+    // miễn phí ngủ sau 15 phút không ai dùng, mọi setTimeout dài đều chết theo.
+    // Expo cũng chỉ trả biên nhận sau một lúc, nên đọc ngay sau khi gửi là đọc
+    // vào chỗ trống.
+    const receipts = await checkReceipts().catch(() => ({ checked: 0, dead: 0 }));
     // Tin đã đoàn tụ từ trước khi có trường resolvedAt thì không có mốc thời
     // gian nào để tính hạn. Đóng dấu mốc "bây giờ" cho chúng, nghĩa là chúng
     // được hưởng trọn kỳ hạn kể từ lần dọn đầu tiên. Cố ý không suy ra mốc cũ
@@ -132,6 +140,9 @@ exports.cleanup = async (_req, res) => {
       deleted: doomed.length,
       stamped: stamp.modifiedCount || 0,
       days: cleanupAfterDays(),
+      // Để nhật ký của cron nói được là đợt dọn có đụng tới mã thiết bị không.
+      pushReceipts: receipts.checked,
+      pushTokensDropped: receipts.dead,
     });
   } catch {
     res.status(500).json({ message: 'Server error' });

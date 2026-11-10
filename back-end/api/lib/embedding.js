@@ -68,7 +68,54 @@ async function embed(text, taskType) {
 }
 
 const embedDocument = (text) => embed(text, TASK_DOCUMENT);
-const embedQuery = (text) => embed(text, TASK_QUERY);
+
+// Nhớ tạm vector của CÂU TÌM KIẾM.
+//
+// Vì sao cần: gói miễn phí của Gemini chặn 100 lượt nhúng mỗi phút cho CẢ dự
+// án, không phải cho mỗi người. Đo được bằng chính lỗi nó trả về:
+//   "limit: 100, model: gemini-embedding-1.0 ... Embed content requests per
+//    minute limit exceeded on Free Tier"
+// Tức là web chịu khoảng 100 lượt tìm mỗi phút rồi tắt tính năng tìm theo
+// nghĩa, bất kể máy chủ còn rảnh bao nhiêu.
+//
+// Mà câu tìm kiếm LẶP LẠI rất nhiều: "mèo", "chó lạc quận 7", "mèo tam thể".
+// Cùng một câu luôn cho cùng một vector, nên lần thứ hai trở đi không có lý
+// gì gọi lại.
+//
+// Chỉ nhớ câu tìm kiếm, không nhớ nội dung tin: mỗi tin chỉ nhúng một lần
+// trong đời nên nhớ lại chẳng ích gì.
+const QUERY_CACHE_MAX = 500;
+const queryCache = new Map();
+
+// LRU dựa vào việc Map giữ đúng thứ tự chèn: đọc lại thì xoá rồi đặt lại để
+// đẩy xuống cuối, hết chỗ thì bỏ khoá đầu tiên — tức khoá lâu nhất không ai
+// dùng. 500 câu x 768 số ~ 3MB, không đáng kể so với 512MB của instance.
+async function embedQuery(text) {
+  if (!text) return null;
+  const key = String(text);
+
+  if (queryCache.has(key)) {
+    const hit = queryCache.get(key);
+    queryCache.delete(key);
+    queryCache.set(key, hit);
+    return hit;
+  }
+
+  const vector = await embed(key, TASK_QUERY);
+  // KHÔNG nhớ khi hỏng. Nhớ null lại thì một phút hết quota sẽ đóng băng câu
+  // đó vĩnh viễn, dù phút sau quota đã hồi.
+  if (!vector) return null;
+
+  queryCache.set(key, vector);
+  if (queryCache.size > QUERY_CACHE_MAX) {
+    queryCache.delete(queryCache.keys().next().value);
+  }
+  return vector;
+}
+
+// Cho test xoá giữa các lượt, cùng lý do với rateLimit.reset.
+embedQuery.reset = () => queryCache.clear();
+embedQuery.size = () => queryCache.size;
 
 // Chia cho tích độ dài nên không cần chuẩn hoá vector trước. Model trả về
 // vector chưa chuẩn hoá khi hạ số chiều xuống dưới 3072, dễ quên chỗ này.
