@@ -113,3 +113,87 @@ describe('findCandidates', () => {
     expect(await findCandidates(source, { limit: 2 })).toHaveLength(2);
   });
 });
+describe('lọc theo khoảng cách', () => {
+  // Quận 3 TP.HCM, một điểm cách đó vài km, và Cần Thơ cách khoảng 170km.
+  const Q3 = { lat: 10.78, lng: 106.68 };
+  const GAN = { lat: 10.82, lng: 106.72 };
+  const CAN_THO = { lat: 10.03, lng: 105.78 };
+  // Nằm TRONG khung vuông 50km nhưng NGOÀI hình tròn 50km — thật ra cách
+  // 62,3km. Điểm này tồn tại để phân biệt hai lớp lọc: khung vuông ở tầng
+  // truy vấn cho nó lọt, haversine mới cắt được.
+  const GOC_KHUNG = { lat: 11.18, lng: 107.08 };
+
+  const nguon = (over = {}) => ({
+    _id: new mongoose.Types.ObjectId(),
+    type: 'lost', species: 'Chó', embedding: [],
+    ...Q3, ...over,
+  });
+
+  it('giữ tin ở gần', async () => {
+    await Pet.create(make({ breed: 'Gần', ...GAN }));
+    const out = await findCandidates(nguon());
+    expect(out.map((p) => p.breed)).toEqual(['Gần']);
+  });
+
+  it('LOẠI tin ở tỉnh khác', async () => {
+    await Pet.create(make({ breed: 'Cần Thơ', ...CAN_THO }));
+    // Đây là trường hợp đã gặp thật: mèo mất ở Quận 3 được gợi ý khớp
+    // với tin nhặt được cách 170km.
+    const out = await findCandidates(nguon());
+    expect(out).toHaveLength(0);
+  });
+
+  it('GIỮ tin không có toạ độ, vì không có cơ sở để loại', async () => {
+    await Pet.create(make({ breed: 'Không toạ độ', lat: null, lng: null }));
+    // Tin cũ đăng trước khi có bản đồ đều rơi vào diện này. Loại hết là
+    // xóa sổ một phần lớn kho tin.
+    const out = await findCandidates(nguon());
+    expect(out.map((p) => p.breed)).toEqual(['Không toạ độ']);
+  });
+
+  it('tin NGUỒN không có toạ độ thì không lọc theo khoảng cách', async () => {
+    await Pet.create(make({ breed: 'Cần Thơ', ...CAN_THO }));
+    const out = await findCandidates(nguon({ lat: null, lng: null }));
+    expect(out.map((p) => p.breed)).toEqual(['Cần Thơ']);
+  });
+
+  it('lọc cả khi tin nguồn CHƯA có vector', async () => {
+    await Pet.create(make({ breed: 'Cần Thơ', ...CAN_THO }));
+    await Pet.create(make({ breed: 'Gần', ...GAN }));
+    // Hai nhánh đi đường khác nhau. Lọc khác nhau thì cùng một tin lúc hiện
+    // lúc không, tuỳ nó đã được nhúng hay chưa.
+    const out = await findCandidates(nguon({ embedding: [] }));
+    expect(out.map((p) => p.breed)).toEqual(['Gần']);
+  });
+
+  it('lọc cả khi tin nguồn ĐÃ có vector', async () => {
+    await Pet.create(make({ breed: 'Cần Thơ', embedding: V.same, ...CAN_THO }));
+    await Pet.create(make({ breed: 'Gần', embedding: V.far, ...GAN }));
+
+    // Cần Thơ khớp vector HOÀN HẢO còn tin gần thì vuông góc. Nếu khoảng
+    // cách không được lọc TRƯỚC khi xếp hạng thì điểm cao sẽ kéo nó lên đầu.
+    const out = await findCandidates(nguon({ embedding: V.same }));
+    expect(out.map((p) => p.breed)).toEqual(['Gần']);
+  });
+
+  it('LOẠI tin nằm ở góc khung vuông, ngoài bán kính thật', async () => {
+    await Pet.create(make({ breed: 'Góc khung', ...GOC_KHUNG }));
+    // Khung vuông ở tầng truy vấn KHÔNG loại được tin này. Chỉ có haversine
+    // mới thấy nó cách 62,3km.
+    expect(await findCandidates(nguon())).toHaveLength(0);
+  });
+
+  it('khung vuông có mặt trong bộ lọc truy vấn, để không kéo cả kho tin về', () => {
+    // Haversine một mình đã đúng, nhưng nó chạy SAU khi database trả dữ liệu
+    // về. Thiếu khung vuông thì mỗi lượt so khớp kéo 50 tin kèm vector từ khắp
+    // nơi rồi mới loại — đúng, mà đắt.
+    const box = candidateFilter(nguon()).$or;
+    expect(box).toBeDefined();
+    expect(box.some((v) => v.lat && v.lat.$gte !== undefined)).toBe(true);
+  });
+
+  it('bộ lọc truy vấn không đụng tới khoảng cách khi nguồn thiếu toạ độ', () => {
+    expect(candidateFilter(nguon({ lat: null, lng: null })).$or).toBeUndefined();
+    expect(candidateFilter(nguon()).$or).toBeDefined();
+  });
+});
