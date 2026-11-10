@@ -46,6 +46,8 @@ export default {
   login:    (data) => http.post('/auth/login', data),
   forgotPassword: (data) => http.post('/auth/forgot-password', data),
   resetPassword:  (data) => http.post('/auth/reset-password', data),
+  verifyEmail:        (data) => http.post('/auth/verify-email', data),
+  resendVerification: (data) => http.post('/auth/resend-verification', data),
   me:       ()     => http.get('/auth/me'),
   authProviders:  ()     => http.get('/auth/providers'),
   googleLogin:    (data) => http.post('/auth/google', data),

@@ -65,6 +65,18 @@ const UserSchema = new Schema({
   // danh sách trắng nên nó không lọt ra API nào. Để select: false thì mọi chỗ
   // gọi signToken phải nhớ chọn tay, quên một chỗ là token mang số sai.
   tokenVersion: { type: Number, default: 0 },
+  // Đã chứng minh đọc được hộp thư này hay chưa.
+  //
+  // Không có trường này thì quyền quản trị chỉ cần BIẾT một địa chỉ email là
+  // chiếm được: role gán theo ADMIN_EMAILS ngay lúc đăng ký, mà đăng ký thì
+  // không ai kiểm tra bạn có mở được hộp thư đó không.
+  //
+  // Thành true khi: bấm đường dẫn trong thư xác minh, đăng nhập bằng Google
+  // (Google đã xác minh hộ), hoặc đặt lại mật khẩu thành công (đọc được thư
+  // tức là mở được hộp thư).
+  emailVerified: { type: Boolean, default: false },
+  verifyHash:    { type: String, select: false },
+  verifyExpires: { type: Date, select: false },
   createdAt:    { type: Date, default: Date.now },
 }, { collection: 'users' });
 

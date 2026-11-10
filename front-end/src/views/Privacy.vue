@@ -74,7 +74,7 @@
 const CONTENT = {
   vi: {
     title: 'Chính sách bảo mật',
-    updated: 'Cập nhật lần cuối: 10 tháng 11, 2026',
+    updated: 'Cập nhật lần cuối: 11 tháng 11, 2026',
     intro:
       'LostPets là website giúp người mất thú cưng và người nhặt được thú cưng tìm thấy nhau. '
       + 'Đây là đồ án tốt nghiệp của sinh viên, không phải dịch vụ thương mại. Trang này nói rõ '
@@ -167,6 +167,7 @@ const CONTENT = {
           'Báo cáo tin xấu: xoá cùng lúc với tin bị báo cáo.',
           'Mã thiết bị nhận thông báo: xoá khi bạn đăng xuất, và cũng tự xoá khi Expo báo lại rằng máy đó đã gỡ ứng dụng.',
           'Yêu cầu đặt lại mật khẩu: đường dẫn hết hiệu lực sau một giờ và chỉ dùng được một lần.',
+          'Đường dẫn xác minh email: hết hiệu lực sau 24 giờ và cũng chỉ dùng được một lần.',
         ],
       },
       {
@@ -205,7 +206,7 @@ const CONTENT = {
 
   en: {
     title: 'Privacy Policy',
-    updated: 'Last updated: 10 November 2026',
+    updated: 'Last updated: 11 November 2026',
     intro:
       'LostPets helps people who have lost a pet and people who have found one find each other. '
       + 'It is a student final-year project, not a commercial service. This page explains what the '
@@ -298,6 +299,7 @@ const CONTENT = {
           'Reports about a listing: deleted together with the listing they concern.',
           'Notification device tokens: removed when you sign out, and removed automatically when Expo reports that the device has uninstalled the app.',
           'Password reset requests: the link expires after one hour and works only once.',
+          'Email verification links: they expire after 24 hours and also work only once.',
         ],
       },
       {

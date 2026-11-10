@@ -25,6 +25,7 @@ const router = new Router({
     // vào log máy chủ và lịch sử trình duyệt chia sẻ được, còn query thì ít
     // nhất cũng không nằm trong phần ai cũng chép đi chép lại.
     { path: '/reset-password',  component: () => import('./views/ResetPassword.vue') },
+    { path: '/verify-email',    component: () => import('./views/VerifyEmail.vue') },
     { path: '*',             component: () => import('./views/NotFound.vue') },
   ]
 });

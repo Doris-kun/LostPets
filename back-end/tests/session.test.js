@@ -47,8 +47,18 @@ const dangKy = async (email = 'nguoidung@example.com') => {
 const goiMe = (token) =>
   request(app).get('/auth/me').set('Authorization', `Bearer ${token}`);
 
-const maTuThu = () =>
-  /reset-password\?token=([a-f0-9]+)/.exec(mockSent[mockSent.length - 1].text)[1];
+// Tìm thư theo NỘI DUNG chứ không lấy cái cuối cùng: một lượt đăng ký sinh
+// ra thư xác minh, một lượt quên mật khẩu sinh ra thư đặt lại, và thứ tự
+// chúng trong mảng không phải thứ nào cũng đoán được.
+const maTrongThu = (mau) => {
+  for (let i = mockSent.length - 1; i >= 0; i--) {
+    const m = mau.exec(mockSent[i].text);
+    if (m) return m[1];
+  }
+  throw new Error('Không tìm thấy thư khớp mẫu ' + mau);
+};
+
+const maTuThu = () => maTrongThu(/reset-password\?token=([a-f0-9]+)/);
 
 const datLaiMatKhau = async (email) => {
   await request(app).post('/auth/forgot-password').send({ email });
@@ -101,10 +111,14 @@ describe('đặt lại mật khẩu đuổi được phiên đang mở', () => {
 });
 
 describe('quyền quản trị lấy từ database, không lấy từ token', () => {
+  // Đăng ký xong PHẢI xác minh hộp thư thì mới được cấp quyền quản trị.
   const dangKyAdmin = async () => {
     process.env.ADMIN_EMAILS = 'sep@example.com';
-    const token = await dangKy('sep@example.com');
-    return token;
+    await dangKy('sep@example.com');
+    await User.updateOne({ email: 'sep@example.com' }, { emailVerified: true });
+    const { body } = await request(app).post('/auth/login')
+      .send({ email: 'sep@example.com', password: 'matkhaucu' });
+    return body.token;
   };
 
   it('quản trị viên vào được trang quản trị', async () => {
@@ -140,5 +154,85 @@ describe('tài khoản không còn thì token cũng không còn', () => {
     await User.deleteMany({ email: 'nguoidung@example.com' });
 
     expect((await goiMe(token)).status).toBe(401);
+  });
+});
+describe('xác minh địa chỉ email', () => {
+  const maXacMinh = () => maTrongThu(/verify-email\?token=([a-f0-9]+)/);
+
+  it('chỉ BIẾT một địa chỉ trong ADMIN_EMAILS thì KHÔNG thành quản trị viên', async () => {
+    process.env.ADMIN_EMAILS = 'sep@example.com';
+    const token = await dangKy('sep@example.com');
+
+    // Đây là đường leo thang quyền rẻ nhất có thể có: trước đây ai đoán
+    // được địa chỉ quản trị là đăng ký bằng địa chỉ đó và thành admin ngay,
+    // không cần mở được hộp thư.
+    expect((await request(app).get('/admin/stats')
+      .set('Authorization', `Bearer ${token}`)).status).toBe(403);
+  });
+
+  it('chưa xác minh thì ĐĂNG NHẬP LẠI cũng không được cấp quyền', async () => {
+    process.env.ADMIN_EMAILS = 'sep@example.com';
+    await dangKy('sep@example.com');
+
+    // Đăng nhập là chỗ vai trò được tính lại. Không chặn ở đây thì việc
+    // đăng ký không cấp quyền chỉ là chậm một nhịp: đăng nhập lại là có ngay.
+    const { body } = await request(app).post('/auth/login')
+      .send({ email: 'sep@example.com', password: 'matkhaucu' });
+
+    expect(body.user.role).toBe('user');
+    expect((await request(app).get('/admin/stats')
+      .set('Authorization', `Bearer ${body.token}`)).status).toBe(403);
+  });
+
+  it('xác minh xong thì mới được cấp quyền', async () => {
+    process.env.ADMIN_EMAILS = 'sep@example.com';
+    await dangKy('sep@example.com');
+
+    const res = await request(app).post('/auth/verify-email').send({ token: maXacMinh() });
+    expect(res.status).toBe(200);
+    expect(res.body.user.role).toBe('admin');
+
+    expect((await request(app).get('/admin/stats')
+      .set('Authorization', `Bearer ${res.body.token}`)).status).toBe(200);
+  });
+
+  it('mã xác minh chỉ dùng được một lần', async () => {
+    await dangKy();
+    const ma = maXacMinh();
+
+    expect((await request(app).post('/auth/verify-email').send({ token: ma })).status).toBe(200);
+    expect((await request(app).post('/auth/verify-email').send({ token: ma })).status).toBe(400);
+  });
+
+  it('mã bịa thì bị từ chối', async () => {
+    await dangKy();
+    const res = await request(app).post('/auth/verify-email').send({ token: 'khong-phai-ma-that' });
+    expect(res.status).toBe(400);
+  });
+
+  it('đặt lại mật khẩu thành công cũng tính là đã xác minh', async () => {
+    process.env.ADMIN_EMAILS = 'sep@example.com';
+    await dangKy('sep@example.com');
+    // Đọc được thư đặt lại tức là mở được hộp thư — bằng chứng tương
+    // đương với bấm đường dẫn xác minh.
+    await datLaiMatKhau('sep@example.com');
+
+    const { body } = await request(app).post('/auth/login')
+      .send({ email: 'sep@example.com', password: 'matkhaumoi' });
+    expect(body.user.role).toBe('admin');
+  });
+
+  it('gửi lại thư xác minh trả cùng một câu dù email có tồn tại hay không', async () => {
+    await dangKy();
+    const co = await request(app).post('/auth/resend-verification')
+      .send({ email: 'nguoidung@example.com' });
+    const khong = await request(app).post('/auth/resend-verification')
+      .send({ email: 'khong-ai@example.com' });
+
+    // Cùng lý do với luồng quên mật khẩu: không biến endpoint này thành
+    // công cụ dò xem ai đã đăng ký.
+    expect(co.status).toBe(200);
+    expect(khong.status).toBe(200);
+    expect(co.body.message).toBe(khong.body.message);
   });
 });
