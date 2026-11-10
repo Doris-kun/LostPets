@@ -170,6 +170,7 @@
 <script>
 import api from '../api';
 import MapPicker from '../components/MapPicker.vue';
+import { areaFromCoords } from '../geocode';
 import claim from '../claim';
 import auth from '../auth';
 
@@ -187,9 +188,22 @@ export default {
     this.gone = true;
   },
   methods: {
-    setPoint({ lat, lng }) {
+    async setPoint({ lat, lng }) {
       this.form.lat = lat;
       this.form.lng = lng;
+
+      // Tự điền ô "khu vực" từ toạ độ, nhưng CHỈ KHI ô đó đang trống.
+      //
+      // Người dùng gõ tay thì luôn đúng hơn máy: họ biết "hẻm 54 Nguyễn Văn
+      // Nghi" còn máy chỉ biết "Gò Vấp". Ghi đè lên chữ họ vừa gõ là cướp mất
+      // thông tin tốt hơn để thay bằng thông tin tệ hơn.
+      //
+      // Tra cứu hỏng thì im lặng bỏ qua — ô đó vẫn là ô bắt buộc, họ tự điền
+      // như trước. Không được chặn người ta đăng tin chỉ vì bản đồ lỗi.
+      if (this.form.area.trim()) return;
+      const area = await areaFromCoords(lat, lng);
+      // Đợi tên một lát mới về; trong lúc đó người dùng có thể đã tự gõ rồi.
+      if (area && !this.form.area.trim()) this.form.area = area;
     },
     handleImage(e) {
       const file = e.target.files[0];
