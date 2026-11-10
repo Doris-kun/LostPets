@@ -244,8 +244,14 @@
               <!-- Mô tả là chỗ chứa đặc điểm giúp người ta NHẬN RA con vật của
                    mình: lông xoăn, đeo vòng cổ đỏ, sợ người lạ. Tên và giống
                    thì tin nào cũng na ná nhau. Cắt hai dòng để thẻ không dài
-                   lệch nhau quá. -->
-              <p v-if="pet.description" class="text-sm text-gray-500 leading-relaxed mt-2 line-clamp-2">
+                   lệch nhau quá.
+
+                   Luôn chiếm đúng hai dòng, kể cả khi mô tả ngắn hoặc không có.
+                   Lưới thẻ kéo mọi thẻ cao bằng thẻ cao nhất trong hàng, nên
+                   thẻ nào nội dung ngắn hơn sẽ bị dư ra một khoảng trắng ngay
+                   trên hàng dưới cùng. Giữ chiều cao cố định thì mọi thẻ cao
+                   bằng nhau và không còn khoảng nào. -->
+              <p class="text-sm text-gray-500 leading-relaxed mt-2 line-clamp-2 min-h-[2.85rem]">
                 {{ pet.description }}
               </p>
               <!-- Mã tin cố ý KHÔNG hiện ở đây. Người lạ lướt danh sách không
