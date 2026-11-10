@@ -19,8 +19,8 @@ Môi trường: Jest 28 bộ test, cơ sở dữ liệu tạm trong bộ nhớ (
 
 | Nhóm | Mục tiêu | Số case | Pass | Fail |
 |---|---|---|---|---|
-| push.test.js | — | 22 | 22 | 0 |
 | scaling.test.js | — | 9 | 9 | 0 |
+| push.test.js | — | 22 | 22 | 0 |
 | no-network.test.js | — | 1 | 1 | 0 |
 | forgot-password.test.js | — | 22 | 22 | 0 |
 | user-providers.test.js | — | 8 | 8 | 0 |
@@ -50,46 +50,46 @@ Môi trường: Jest 28 bộ test, cơ sở dữ liệu tạm trong bộ nhớ (
 
 ## Chi tiết từng test case
 
-### push.test.js
-
-| Mã | Test case | Kết quả |
-|---|---|---|
-| TC-001 | lưu mã thiết bị › bắt buộc đăng nhập | Pass |
-| TC-002 | lưu mã thiết bị › từ chối mã sai định dạng | Pass |
-| TC-003 | lưu mã thiết bị › lưu mã hợp lệ | Pass |
-| TC-004 | lưu mã thiết bị › gửi cùng một mã nhiều lần vẫn chỉ lưu một dòng | Pass |
-| TC-005 | lưu mã thiết bị › một người giữ được nhiều máy | Pass |
-| TC-006 | lưu mã thiết bị › xoá được mã lúc đăng xuất | Pass |
-| TC-007 | lưu mã thiết bị › mã thiết bị không lọt ra API nào | Pass |
-| TC-008 | ai được nhận thông báo › báo cho chủ tin NGƯỢC LOẠI ở gần | Pass |
-| TC-009 | ai được nhận thông báo › KHÔNG báo cho tin cùng loại | Pass |
-| TC-010 | ai được nhận thông báo › KHÔNG báo cho tin khác loài | Pass |
-| TC-011 | ai được nhận thông báo › KHÔNG báo cho tin ở quá xa | Pass |
-| TC-012 | ai được nhận thông báo › KHÔNG tự báo cho chính người vừa đăng | Pass |
-| TC-013 | ai được nhận thông báo › một tin của khách vãng lai ở gần không làm mất thông báo của người khác | Pass |
-| TC-014 | ai được nhận thông báo › KHÔNG báo cho tin đã tìm được chủ | Pass |
-| TC-015 | ai được nhận thông báo › KHÔNG báo cho tin đã quá cũ | Pass |
-| TC-016 | ai được nhận thông báo › chặn trần số người nhận cho mỗi tin | Pass |
-| TC-017 | ai được nhận thông báo › tin mới không có toạ độ thì không báo cho ai | Pass |
-| TC-018 | ai được nhận thông báo › dịch vụ của Expo hỏng thì không làm hỏng luồng đăng tin | Pass |
-| TC-019 | dọn mã thiết bị đã chết › tầng một: Expo báo DeviceNotRegistered ngay lúc gửi | Pass |
-| TC-020 | dọn mã thiết bị đã chết › tầng hai: lỗi chỉ lộ ra trong biên nhận đọc sau | Pass |
-| TC-021 | dọn mã thiết bị đã chết › biên nhận chưa có thì giữ lại, lần dọn sau đọc tiếp | Pass |
-| TC-022 | dọn mã thiết bị đã chết › biên nhận báo ok thì xoá khỏi hàng chờ, giữ nguyên mã | Pass |
-
 ### scaling.test.js
 
 | Mã | Test case | Kết quả |
 |---|---|---|
-| TC-023 | index phục vụ đúng truy vấn thật › danh sách tin KHÔNG được quét toàn bộ collection | Pass |
-| TC-024 | index phục vụ đúng truy vấn thật › truy vấn lấy ứng viên so khớp chỉ lấy đúng số bản ghi cần | Pass |
-| TC-025 | nhớ tạm vector câu tìm kiếm › cùng một câu chỉ gọi Gemini một lần | Pass |
-| TC-026 | nhớ tạm vector câu tìm kiếm › câu khác nhau vẫn gọi riêng | Pass |
-| TC-027 | nhớ tạm vector câu tìm kiếm › trả về đúng vector ở lần đọc lại | Pass |
-| TC-028 | nhớ tạm vector câu tìm kiếm › KHÔNG nhớ lần hỏng, để phút sau quota hồi thì thử lại được | Pass |
-| TC-029 | nhớ tạm vector câu tìm kiếm › không phình quá trần, và bỏ câu lâu nhất không ai dùng | Pass |
-| TC-030 | nén phản hồi › nén khi trình duyệt khai là đỡ được | Pass |
-| TC-031 | nén phản hồi › KHÔNG nén khi trình duyệt không khai | Pass |
+| TC-001 | index phục vụ đúng truy vấn thật › danh sách tin KHÔNG được quét toàn bộ collection | Pass |
+| TC-002 | index phục vụ đúng truy vấn thật › truy vấn lấy ứng viên so khớp chỉ lấy đúng số bản ghi cần | Pass |
+| TC-003 | nhớ tạm vector câu tìm kiếm › cùng một câu chỉ gọi Gemini một lần | Pass |
+| TC-004 | nhớ tạm vector câu tìm kiếm › câu khác nhau vẫn gọi riêng | Pass |
+| TC-005 | nhớ tạm vector câu tìm kiếm › trả về đúng vector ở lần đọc lại | Pass |
+| TC-006 | nhớ tạm vector câu tìm kiếm › KHÔNG nhớ lần hỏng, để phút sau quota hồi thì thử lại được | Pass |
+| TC-007 | nhớ tạm vector câu tìm kiếm › không phình quá trần, và bỏ câu lâu nhất không ai dùng | Pass |
+| TC-008 | nén phản hồi › nén khi trình duyệt khai là đỡ được | Pass |
+| TC-009 | nén phản hồi › KHÔNG nén khi trình duyệt không khai | Pass |
+
+### push.test.js
+
+| Mã | Test case | Kết quả |
+|---|---|---|
+| TC-010 | lưu mã thiết bị › bắt buộc đăng nhập | Pass |
+| TC-011 | lưu mã thiết bị › từ chối mã sai định dạng | Pass |
+| TC-012 | lưu mã thiết bị › lưu mã hợp lệ | Pass |
+| TC-013 | lưu mã thiết bị › gửi cùng một mã nhiều lần vẫn chỉ lưu một dòng | Pass |
+| TC-014 | lưu mã thiết bị › một người giữ được nhiều máy | Pass |
+| TC-015 | lưu mã thiết bị › xoá được mã lúc đăng xuất | Pass |
+| TC-016 | lưu mã thiết bị › mã thiết bị không lọt ra API nào | Pass |
+| TC-017 | ai được nhận thông báo › báo cho chủ tin NGƯỢC LOẠI ở gần | Pass |
+| TC-018 | ai được nhận thông báo › KHÔNG báo cho tin cùng loại | Pass |
+| TC-019 | ai được nhận thông báo › KHÔNG báo cho tin khác loài | Pass |
+| TC-020 | ai được nhận thông báo › KHÔNG báo cho tin ở quá xa | Pass |
+| TC-021 | ai được nhận thông báo › KHÔNG tự báo cho chính người vừa đăng | Pass |
+| TC-022 | ai được nhận thông báo › một tin của khách vãng lai ở gần không làm mất thông báo của người khác | Pass |
+| TC-023 | ai được nhận thông báo › KHÔNG báo cho tin đã tìm được chủ | Pass |
+| TC-024 | ai được nhận thông báo › KHÔNG báo cho tin đã quá cũ | Pass |
+| TC-025 | ai được nhận thông báo › chặn trần số người nhận cho mỗi tin | Pass |
+| TC-026 | ai được nhận thông báo › tin mới không có toạ độ thì không báo cho ai | Pass |
+| TC-027 | ai được nhận thông báo › dịch vụ của Expo hỏng thì không làm hỏng luồng đăng tin | Pass |
+| TC-028 | dọn mã thiết bị đã chết › tầng một: Expo báo DeviceNotRegistered ngay lúc gửi | Pass |
+| TC-029 | dọn mã thiết bị đã chết › tầng hai: lỗi chỉ lộ ra trong biên nhận đọc sau | Pass |
+| TC-030 | dọn mã thiết bị đã chết › biên nhận chưa có thì giữ lại, lần dọn sau đọc tiếp | Pass |
+| TC-031 | dọn mã thiết bị đã chết › biên nhận báo ok thì xoá khỏi hàng chờ, giữ nguyên mã | Pass |
 
 ### no-network.test.js
 
