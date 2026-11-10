@@ -158,12 +158,13 @@
         <div class="flex flex-col sm:flex-row">
           <!-- Không có ảnh thì bỏ hẳn cột ảnh, nhường chỗ cho phần chữ. Một ô
                xám to bằng 3/5 thẻ chỉ để chứa biểu tượng thì nhìn như web hỏng. -->
-          <!-- aspect-video chỉ giữ ở màn hình hẹp, nơi ảnh nằm trên chữ.
-               Từ sm trở lên thì bỏ đi: để nguyên thì cột ảnh cao cố định
-               ~460px và kéo giãn cột chữ cho bằng, sinh ra một mảng trắng lớn
-               dưới phần mô tả. Đổi lại cho hàng tự quyết định chiều cao theo
-               nội dung, kèm một mức sàn để ảnh không bao giờ quá dẹt. -->
-          <div v-if="featured.image" class="relative sm:w-3/5 aspect-video sm:aspect-auto sm:min-h-[21rem] overflow-hidden bg-gray-100">
+          <!-- GIỮ aspect-video ở mọi kích thước.
+               Đã thử bỏ nó từ sm trở lên để cột chữ khỏi bị kéo giãn, và hỏng
+               nặng hơn: ảnh chân dung không còn bị ràng buộc tỉ lệ nên giãn
+               theo tỉ lệ gốc ở 3/5 chiều ngang, cao gấp đôi lúc trước.
+               Khoảng trắng dưới mô tả giải quyết ở cột chữ bên cạnh, không
+               phải bằng cách tháo ràng buộc chiều cao của ảnh. -->
+          <div v-if="featured.image" class="relative sm:w-3/5 aspect-video overflow-hidden bg-gray-100">
             <PetPhoto :src="featured.image" :alt="featured.breed"
               :type="featured.type" :resolved="featured.resolved" :width="800"
               img-class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
@@ -172,8 +173,13 @@
               {{ $t(featured.resolved ? 'badge.resolved' : featured.type === 'lost' ? 'badge.lost' : 'badge.found') }}
             </span>
           </div>
-          <div :class="featured.image ? 'sm:w-2/5' : 'w-full'" class="p-6 sm:p-8 flex flex-col justify-between">
-            <div>
+          <div :class="featured.image ? 'sm:w-2/5' : 'w-full'" class="p-6 sm:p-8 flex flex-col">
+            <!-- Căn giữa theo chiều dọc thay vì dồn hết chữ lên trên.
+                 Cột chữ luôn thấp hơn cột ảnh, nên chỗ nào cũng dư ra một
+                 khoảng. Đặt chữ ở giữa thì khoảng đó chia đều trên dưới và
+                 trông như có ý; dồn lên trên thì nó dồn lại thành một mảng
+                 trắng duy nhất ngay dưới mô tả, trông như trang bị lỗi. -->
+            <div class="flex-1 flex flex-col justify-center">
               <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-3">{{ $t('home.featured') }}</p>
               <!-- Mất cột ảnh thì mất luôn chỗ gắn nhãn loại tin, dựng lại ở đây. -->
               <span v-if="!featured.image" :class="featured.resolved ? 'bg-teal-500' : featured.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500'"
@@ -238,8 +244,14 @@
               <!-- Mô tả là chỗ chứa đặc điểm giúp người ta NHẬN RA con vật của
                    mình: lông xoăn, đeo vòng cổ đỏ, sợ người lạ. Tên và giống
                    thì tin nào cũng na ná nhau. Cắt hai dòng để thẻ không dài
-                   lệch nhau quá. -->
-              <p v-if="pet.description" class="text-sm text-gray-500 leading-relaxed mt-2 line-clamp-2">
+                   lệch nhau quá.
+
+                   Luôn chiếm đúng hai dòng, kể cả khi mô tả ngắn hoặc không có.
+                   Lưới thẻ kéo mọi thẻ cao bằng thẻ cao nhất trong hàng, nên
+                   thẻ nào nội dung ngắn hơn sẽ bị dư ra một khoảng trắng ngay
+                   trên hàng dưới cùng. Giữ chiều cao cố định thì mọi thẻ cao
+                   bằng nhau và không còn khoảng nào. -->
+              <p class="text-sm text-gray-500 leading-relaxed mt-2 line-clamp-2 min-h-[2.85rem]">
                 {{ pet.description }}
               </p>
               <!-- Mã tin cố ý KHÔNG hiện ở đây. Người lạ lướt danh sách không
