@@ -4,6 +4,18 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 const mongoose = require('mongoose');
 const app = require('./app');
 
+// Khai rõ strictQuery thay vì để Mongoose tự đoán.
+//
+// Mongoose 6 mặc định true, Mongoose 7 đổi về false, và bản 6.13 in một
+// cảnh báo dài mỗi lần khởi động để nhắc chuyện đó. Trên Render, log khởi
+// động là chỗ đầu tiên người ta nhìn khi có sự cố — hai dòng cảnh báo lặp
+// lại mỗi lần deploy làm lỗi thật khó thấy hơn.
+//
+// Chọn true vì đó đúng là hành vi đang chạy, nên khai ra không đổi gì cả:
+// điều kiện lọc theo trường không có trong schema thì bị bỏ đi thay vì được
+// chuyển xuống MongoDB. Giữ nguyên cả khi nâng lên Mongoose 7 sau này.
+mongoose.set('strictQuery', true);
+
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/lost-pets';
 const RETRY_DELAY_MS = 5000;
 

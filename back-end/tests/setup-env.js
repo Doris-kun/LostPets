@@ -16,3 +16,12 @@
 // dòng đó chạy sau dòng này nên vẫn có tác dụng.
 process.env.GEMINI_API_KEY = '';
 process.env.GOOGLE_API_KEY = '';
+
+// Dọn cảnh báo strictQuery khỏi log test, cùng một lý do với server.js: mỗi
+// bộ test in ra một đoạn cảnh báo dài, mà log test là chỗ phải đọc được khi
+// có gì đó hỏng. Chính đống cảnh báo này từng làm khó thấy dòng "fetch
+// failed" — manh mối cho thấy test đang gọi mạng thật.
+//
+// Đặt ở đây được vì mongoose là singleton: file test nạp lại thì vẫn là cùng
+// một thể hiện đã được cấu hình.
+require('mongoose').set('strictQuery', true);
