@@ -1,6 +1,7 @@
 const Pet = require('../models/petModel');
 const User = require('../models/userModel');
 const { send } = require('./push');
+const { distanceKm, hasCoords } = require('./geo');
 
 // Quyết định AI được nhận thông báo khi có tin mới.
 //
@@ -18,18 +19,6 @@ const WINDOW_DAYS = 120;
 // hàng trăm chủ tin; gửi hết là vừa đốt hạn mức vừa biến thông báo thành rác.
 const MAX_RECIPIENTS = 50;
 
-const EARTH_KM = 6371;
-const rad = (deg) => (deg * Math.PI) / 180;
-
-function distanceKm(aLat, aLng, bLat, bLng) {
-  const dLat = rad(bLat - aLat);
-  const dLng = rad(bLng - aLng);
-  const h = Math.sin(dLat / 2) ** 2
-    + Math.cos(rad(aLat)) * Math.cos(rad(bLat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * EARTH_KM * Math.asin(Math.sqrt(h));
-}
-
-const hasCoords = (pet) => Number.isFinite(pet.lat) && Number.isFinite(pet.lng);
 
 // Tiêu đề và nội dung ghép từ dữ liệu của tin, không qua model nào — cùng lý
 // do với câu giải thích gợi ý so khớp: thông báo đẩy không được bịa chi tiết.
