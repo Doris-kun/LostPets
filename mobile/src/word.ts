@@ -170,6 +170,7 @@ const vi = {
 
   'detail.color': 'MÀU LÔNG',
   'detail.area': 'KHU VỰC',
+  'detail.distance': 'KHOẢNG CÁCH',
   'detail.desc': 'MÔ TẢ',
   'detail.contact': 'LIÊN HỆ',
   'detail.edit': 'Chỉnh sửa',
@@ -566,6 +567,7 @@ const en: Record<WordKey, string> = {
 
   'detail.color': 'COLOUR',
   'detail.area': 'AREA',
+  'detail.distance': 'DISTANCE',
   'detail.desc': 'DESCRIPTION',
   'detail.contact': 'CONTACT',
   'detail.edit': 'Edit',

@@ -20,7 +20,14 @@ import type { WordKey } from '../word';
 import { API_URL } from '../config';
 import PetCard, { timeAgo } from '../components/PetCard';
 import { THUMB_FEATURED, thumbnail } from '../image';
-import { locateMe, readSavedMe, type Point } from '../map';
+import {
+  distanceKm,
+  formatDistanceKm,
+  hasPoint,
+  locateMe,
+  readSavedMe,
+  type Point,
+} from '../map';
 import { readPets, savePets } from '../cache';
 import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/PetFilters';
 import PetMapView from '../components/PetMapView';
@@ -676,6 +683,7 @@ export default function HomeScreen({ navigation }: Props) {
           ListHeaderComponent={
             <Featured
               pet={pets[0]}
+              me={me}
               total={total}
               restCount={pets.length - 1}
               onPress={() => navigation.navigate('Detail', { id: pets[0]._id })}
@@ -797,12 +805,15 @@ function Header() {
  */
 function Featured({
   pet,
+  me,
   total,
   restCount,
   onPress,
 }: {
   /** undefined khi danh sách rỗng — lúc đó không có gì để làm nổi bật. */
   pet?: Pet;
+  /** Vị trí người xem, để tính khoảng cách. null khi chưa biết. */
+  me: Point | null;
   total: number;
   restCount: number;
   onPress: () => void;
@@ -814,6 +825,33 @@ function Featured({
   if (!pet) return null;
 
   const status = statusStyle(pet, colors);
+
+  /*
+   * Hai ô đặc điểm, lấp chỗ trống bên phải mà vẫn nói điều có ích.
+   *
+   * Người ta nhận ra con vật của mình bằng ba thứ: loài, giống, MÀU. Hai cái
+   * đầu đã có ở dòng trên, còn màu thì trước đây người đọc phải tự mò trong
+   * câu mô tả. Khoảng cách thì thẻ tin nhỏ bên dưới vốn đã hiện, riêng thẻ
+   * nổi bật lại không — mà đây mới là tin người ta đọc kỹ nhất.
+   *
+   * Dựng thành DANH SÁCH rồi lấy hai cái đầu, thay vì viết cứng hai ô. Lý do:
+   * không phải tin nào cũng đủ dữ liệu. Tin cũ có thể bỏ trống màu, và khoảng
+   * cách thì cần cả hai điều kiện — tin có ghim toạ độ, và máy đã biết vị trí
+   * người xem. Viết cứng thì gặp tin thiếu là lòi ra một ô rỗng.
+   */
+  const away =
+    me && hasPoint(pet) ? formatDistanceKm(distanceKm(me, { lat: pet.lat, lng: pet.lng })) : '';
+
+  const facts: { key: WordKey; value: string }[] = [];
+  if (pet.color) facts.push({ key: 'detail.color', value: pet.color });
+  if (away) facts.push({ key: 'detail.distance', value: away });
+  if (pet.area) facts.push({ key: 'detail.area', value: pet.area });
+
+  const shown = facts.slice(0, 2);
+
+  // Khu vực đã nằm trong ô thì bỏ dòng khu vực riêng đi, không ai muốn đọc
+  // cùng một chỗ hai lần cách nhau ba dòng.
+  const areaInBox = shown.some((f) => f.key === 'detail.area');
 
   return (
     <View>
@@ -877,9 +915,25 @@ function Featured({
           <Text className="mt-0.5 text-[13px] text-text-muted" numberOfLines={1}>
             {pet.species} · {pet.breed}
           </Text>
-          <Text className="mt-sm text-[13px] text-text-soft" numberOfLines={1}>
-            {pet.area}
-          </Text>
+          {/* flex-1 cho mỗi ô: một ô thì chiếm cả hàng, hai ô thì chia đôi */}
+          <View className="mt-md flex-row gap-sm">
+            {shown.map((f) => (
+              <View key={f.key} className="flex-1 rounded-md bg-surface-tint px-md py-sm">
+                <Text className="text-[10px] font-extrabold tracking-[0.5px] text-text-muted">
+                  {t(f.key)}
+                </Text>
+                <Text className="mt-px text-[13px] font-semibold text-text" numberOfLines={1}>
+                  {f.value}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {!areaInBox && (
+            <Text className="mt-sm text-[13px] text-text-soft" numberOfLines={1}>
+              {pet.area}
+            </Text>
+          )}
 
           {!!pet.description && (
             <Text className="mt-sm text-[13px] leading-[19px] text-text-muted" numberOfLines={3}>
