@@ -330,6 +330,10 @@ exports.resetPassword = async (req, res) => {
     }
 
     user.passwordHash = await bcrypt.hash(String(password), SALT_ROUNDS);
+    // Huỷ MỌI phiên đang đăng nhập. Đặt lại mật khẩu là việc người ta làm khi
+    // nghi tài khoản bị chiếm; không tăng số này thì token của kẻ chiếm vẫn
+    // sống tới 7 ngày và việc đặt lại chắng đuổi được ai.
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     // Dùng một lần rồi bỏ. Không xoá thì cùng một đường dẫn đặt lại được mãi,
     // và ai đọc được hộp thư cũ vẫn chiếm được tài khoản.
     user.resetHash = undefined;
