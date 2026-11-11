@@ -166,6 +166,16 @@ export default {
     http.post<{ message: string }>('/auth/forgot-password', data),
   resetPassword: (data: { token: string; password: string }) =>
     http.post<{ message: string }>('/auth/reset-password', data),
+
+  /*
+   * Xác minh địa chỉ email.
+   *
+   * Trả về TOKEN MỚI chứ không phải một câu thông báo: vai trò nằm trong
+   * token, mà xác minh xong mới là lúc quyền quản trị được cấp (nếu email có
+   * trong ADMIN_EMAILS). Token cũ đang mang vai trò lạc hậu, nên phải thay.
+   */
+  verifyEmail: (data: { token: string }) =>
+    http.post<AuthResult>('/auth/verify-email', data),
   me: () => http.get<User>('/auth/me'),
 
   /*

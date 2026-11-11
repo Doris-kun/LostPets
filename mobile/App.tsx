@@ -7,7 +7,7 @@
 import './global.css';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Alert, Linking, View } from 'react-native';
 import {
   DarkTheme,
   DefaultTheme,
@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ExpoSplashScreen from 'expo-splash-screen';
+import api from './src/api';
 import { AuthProvider, useAuth } from './src/context/auth';
 import { LanguageProvider, useLanguage } from './src/context/language';
 import { ThemeProvider, useTheme } from './src/context/theme';
@@ -155,7 +156,63 @@ function Root({
   onSplashFinish: () => void;
 }) {
   const { colors, isDark } = useTheme();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, login } = useAuth();
+  const { t } = useLanguage();
+
+  /*
+   * Xác minh email mở từ đường dẫn trong thư: lostpets://verify-email?token=…
+   *
+   * KHÔNG đi qua bảng đường dẫn của react-navigation như reset-password, vì
+   * bảng đó phải trỏ tới một MÀN HÌNH. Xác minh thì không cần màn nào: nó là
+   * một lượt gọi máy chủ rồi báo một câu, làm đúng một lần trong đời tài
+   * khoản. Dựng hẳn một màn cho việc đó là thừa.
+   *
+   * Phải đón CẢ HAI đường, giống hệt chuyện thông báo đẩy:
+   *   - app đang chạy      -> sự kiện 'url'
+   *   - app đang tắt hẳn   -> getInitialURL, vì sự kiện đã nổ trước khi mình
+   *                           kịp đăng ký nghe
+   */
+  useEffect(() => {
+    let bo = false;
+
+    // undefined chứ không chỉ null: getInitialURL() khai cả hai.
+    const xuLy = async (url: string | null | undefined) => {
+      if (!url || bo) return;
+
+      // Tự tách thay vì dùng expo-linking: thêm hẳn một thư viện chỉ để đọc
+      // một tham số thì không đáng.
+      const khop = /^lostpets:\/\/verify-email\?(?:.*&)?token=([^&]+)/.exec(url);
+      if (!khop) return;
+
+      const token = decodeURIComponent(khop[1]);
+      if (!token) return;
+
+      try {
+        /*
+         * Máy chủ trả về TOKEN MỚI, nên đăng nhập luôn bằng nó.
+         *
+         * Vai trò nằm trong token, mà xác minh xong mới là lúc quyền quản trị
+         * được cấp. Giữ token cũ thì tab Quản trị vẫn không hiện ra, và người
+         * dùng không hiểu vì sao xác minh rồi mà chẳng có gì đổi.
+         */
+        const { data } = await api.verifyEmail({ token });
+        if (bo) return;
+
+        login(data.token, data.user);
+        Alert.alert(t('verify.doneTitle'), t('verify.doneText'));
+      } catch {
+        if (!bo) Alert.alert(t('verify.failTitle'), t('verify.failText'));
+      }
+    };
+
+    Linking.getInitialURL().then(xuLy);
+    const theo = Linking.addEventListener('url', (e) => xuLy(e.url));
+
+    return () => {
+      bo = true;
+      theo.remove();
+    };
+  }, [login, t]);
 
   /*
    * Tay nam điều hướng, dùng được từ NGOÀI cây màn hình.

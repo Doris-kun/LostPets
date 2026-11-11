@@ -4,10 +4,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLanguage } from './language';
 import type { User } from '../types';
 
 /*
@@ -61,6 +64,9 @@ export interface AuthValue {
 const AuthContext = createContext<AuthValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // AuthProvider nằm TRONG LanguageProvider (xem App.tsx) nên gọi được hook này.
+  const { t } = useLanguage();
+
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   // Chưa đọc xong ổ đĩa. Khác với "đã đọc xong và không có ai đăng nhập".
@@ -101,7 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  /*
+   * Đã báo "hết phiên" chưa, để không hiện ba hộp thoại chồng nhau khi vài
+   * lượt gọi cùng nhận 401 một lúc. Đăng nhập lại thì xoá dấu, vì lần sau là
+   * một phiên khác.
+   */
+  const daBao = useRef(false);
+
   const login = useCallback((nextToken: string, nextUser: User) => {
+    daBao.current = false;
     currentToken = nextToken;
     setToken(nextToken);
     setUser(nextUser);
@@ -124,11 +138,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Nối hàm đăng xuất vào cái móc mà api.js sẽ giật khi gặp 401.
   // Đặt trong effect để luôn trỏ tới bản logout mới nhất.
   useEffect(() => {
-    handleUnauthorized = logout;
+    /*
+     * Bị đăng xuất ÉP BUỘC thì phải nói ra.
+     *
+     * Trước đây chỗ này chỉ gọi logout(): người dùng đang xem dở bỗng thành
+     * khách, không một lời giải thích, và họ sẽ tưởng app lỗi. Chuyện này nay
+     * xảy ra thật chứ không còn hiếm — back-end huỷ mọi phiên cũ sau khi đổi
+     * mật khẩu (PR #94), nên đổi mật khẩu trên web là máy này bị đẩy ra ngay.
+     *
+     * Hai điều kiện trước khi báo:
+     *
+     *   1. Phải ĐANG có phiên. Khách vãng lai gặp 401 là chuyện bình thường
+     *      của vài đường API, báo cho họ thì vừa sai vừa khó hiểu.
+     *   2. Chỉ báo MỘT lần. Mở một màn là vài lượt gọi chạy song song, hỏng
+     *      cùng lúc thì không được đổ ra ba cái hộp thoại chồng lên nhau.
+     */
+    handleUnauthorized = () => {
+      if (!currentToken) return;
+      if (daBao.current) return;
+      daBao.current = true;
+
+      logout();
+      Alert.alert(t('auth.expiredTitle'), t('auth.expiredText'));
+    };
+
     return () => {
       handleUnauthorized = () => {};
     };
-  }, [logout]);
+  }, [logout, t]);
 
   const value = useMemo(
     () => ({
