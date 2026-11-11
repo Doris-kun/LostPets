@@ -302,6 +302,31 @@ describe('tra tên khu vực từ toạ độ', () => {
     await expect(areaFromCoords(11.0, 107.2, 'vi')).resolves.toBe('Xã Tân Phú, Đồng Nai');
   });
 
+  /*
+   * Ô "Khu vực" được lọc bằng so chuỗi, nên "Thành phố Hồ Chí Minh" và
+   * "TP.HCM" là hai thứ KHÔNG tìm thấy nhau. Tự điền dạng dài trong khi dữ
+   * liệu trong database là dạng ngắn thì bộ lọc hỏng mà không ai hiểu vì sao:
+   * tin vẫn nằm đó nhưng lọc ra rỗng.
+   *
+   * Phải khớp từng chữ với rutGonTinh bên front-end/src/geocode.js.
+   */
+  it('rút gọn tên tỉnh thành cho khớp dữ liệu đã có', async () => {
+    goi({ address: { suburb: 'Phường Võ Thị Sáu', city: 'Thành phố Hồ Chí Minh' } });
+    await expect(areaFromCoords(10.77, 106.7, 'vi')).resolves.toBe('Phường Võ Thị Sáu, TP.HCM');
+
+    goi({ address: { suburb: 'Phường 1', state: 'Tỉnh Lâm Đồng' } });
+    await expect(areaFromCoords(11.9, 108.4, 'vi')).resolves.toBe('Phường 1, Lâm Đồng');
+
+    goi({ address: { suburb: 'Hải Châu', city: 'Thành phố Đà Nẵng' } });
+    await expect(areaFromCoords(16.05, 108.2, 'vi')).resolves.toBe('Hải Châu, Đà Nẵng');
+  });
+
+  // Tên không mang tiền tố thì để nguyên, đừng cắt nhầm chữ đầu.
+  it('tên tỉnh không có tiền tố thì giữ nguyên', async () => {
+    goi({ address: { suburb: 'Phường 5', city: 'Cần Thơ' } });
+    await expect(areaFromCoords(10.03, 105.78, 'vi')).resolves.toBe('Phường 5, Cần Thơ');
+  });
+
   it('chỉ có một mảnh thì không để lại dấu phẩy thừa', async () => {
     goi({ address: { city: 'Đà Nẵng' } });
     await expect(areaFromCoords(16.05, 108.2, 'vi')).resolves.toBe('Đà Nẵng');

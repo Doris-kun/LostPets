@@ -241,14 +241,36 @@ interface NominatimAddress {
 }
 
 /*
+ * Rút gọn tên tỉnh/thành cho khớp cách người ta viết, và cho khớp dữ liệu đã
+ * có trong database ("Quận 3, TP.HCM").
+ *
+ * Đây KHÔNG phải chuyện cho đẹp. Ô "Khu vực" được lọc bằng so chuỗi, nên
+ * "Thành phố Hồ Chí Minh" và "TP.HCM" là hai thứ không tìm thấy nhau. Một bên
+ * tự điền dạng dài còn người dùng gõ dạng ngắn thì bộ lọc hỏng mà không ai
+ * hiểu vì sao — tin vẫn nằm đó nhưng lọc ra rỗng.
+ *
+ * Phải khớp từng chữ với rutGonTinh trong front-end/src/geocode.js, không thì
+ * web và app tự điền ra hai chuỗi khác nhau cho cùng một chỗ.
+ */
+function rutGonTinh(ten: string): string {
+  if (/hồ chí minh/i.test(ten)) return 'TP.HCM';
+  return ten.replace(/^(Thành phố|Tỉnh)\s+/i, '');
+}
+
+/*
  * Ghép tên khu vực từ các mảnh Nominatim trả về.
  *
- * Thứ tự ưu tiên đi từ đơn vị hành chính cấp quận/huyện xuống phường, vì ô
- * "Khu vực" là để người khác ước lượng chỗ nào — "Quận 3, TP.HCM" hữu ích hơn
- * "Phường Võ Thị Sáu", mà cũng ít lộ hơn.
+ * Thứ tự ưu tiên đi từ đơn vị hành chính cấp dưới tỉnh xuống, vì ô "Khu vực"
+ * là để người khác ước lượng chỗ nào — "Quận 3, TP.HCM" hữu ích hơn "Phường
+ * Võ Thị Sáu", mà cũng ít lộ hơn.
+ *
+ * Từ 1/7/2025 Việt Nam bỏ cấp quận huyện, chạy chính quyền hai cấp: tỉnh và
+ * phường/xã. Nominatim đã cập nhật theo, nên với địa chỉ ở Việt Nam nó chỉ
+ * trả về phường (suburb) và thành phố — không còn trường quận nào cả. Giữ
+ * city_district và district làm đường lui cho dữ liệu cũ hoặc nước khác.
  */
 function ghepTen(address: NominatimAddress = {}): string {
-  const quan =
+  const cap2 =
     address.city_district ||
     address.district ||
     address.suburb ||
@@ -256,7 +278,7 @@ function ghepTen(address: NominatimAddress = {}): string {
     address.town ||
     address.village;
   const tinh = address.city || address.state;
-  return [quan, tinh].filter(Boolean).join(', ');
+  return [cap2, tinh && rutGonTinh(tinh)].filter(Boolean).join(', ');
 }
 
 /**
