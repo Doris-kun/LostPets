@@ -142,6 +142,7 @@ export default function ClaimCodeModal({
                 value={typed}
                 onChangeText={(next) => setTyped(next.toUpperCase())}
                 placeholder={t('claim.placeholder')}
+                accessibilityLabel={t('claim.askTitle')}
                 placeholderTextColor={colors.textMuted}
                 // Mã toàn chữ in hoa và số, nên tắt hết phần bàn phím tự sửa
                 autoCapitalize="characters"

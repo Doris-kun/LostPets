@@ -285,9 +285,18 @@ function Field({ label, ...props }: ComponentProps<typeof TextInput> & { label: 
   return (
     <View className="mb-lg">
       <Text className="mb-1.5 text-[13px] font-semibold text-text">{label}</Text>
+      {/*
+        accessibilityLabel lấy luôn chữ đang hiện phía trên.
+
+        Chữ đó KHÔNG tự gắn vào ô nhập — React Native không có <label for>
+        như web. Trình đọc màn hình đọc được placeholder, nhưng placeholder
+        biến mất ngay khi gõ ký tự đầu tiên, nên người dùng mất luôn manh mối
+        mình đang ở ô nào. Đặt trước {...props} để chỗ gọi vẫn ghi đè được.
+      */}
       <TextInput
         className="rounded-md border-[1.5px] border-border-strong px-md py-3 text-[15px] text-text"
         placeholderTextColor={colors.textMuted}
+        accessibilityLabel={label}
         {...props}
       />
     </View>

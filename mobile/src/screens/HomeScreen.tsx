@@ -463,6 +463,7 @@ export default function HomeScreen({ navigation }: Props) {
           value={search}
           onChangeText={setSearch}
           placeholder={t('search.placeholder')}
+          accessibilityLabel={t('search.label')}
           placeholderTextColor={colors.textMuted}
           returnKeyType="search"
           autoCorrect={false}

@@ -412,6 +412,7 @@ function Header({
         value={search}
         onChangeText={setSearch}
         placeholder={t('admin.search')}
+        accessibilityLabel={t('admin.search')}
         placeholderTextColor={colors.textMuted}
         autoCorrect={false}
         // Tên giống và khu vực là danh từ riêng, iOS tự viết hoa chữ đầu sẽ

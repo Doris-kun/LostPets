@@ -121,6 +121,7 @@ const vi = {
   // bên không lệch nhau, cùng một tính năng mà mỗi nơi giải thích một kiểu.
   'search.placeholder':
     'Mô tả con vật bạn đang tìm, ví dụ "chó nâu chân ngắn mất gần công viên"',
+  'search.label': 'Tìm kiếm',
   'search.hint': 'Kết quả sắp theo mức độ giống với mô tả của bạn.',
   'search.clear': 'Xoá ô tìm kiếm',
   'search.sortLocked': 'Đang tìm kiếm nên sắp theo độ liên quan',
@@ -525,6 +526,7 @@ const en: Record<WordKey, string> = {
   'theme.toDark': 'Switch to dark mode',
   'search.placeholder':
     'Describe the pet you are looking for, e.g. "brown short-legged dog lost near the park"',
+  'search.label': 'Search',
   'search.hint': 'Results are ranked by how closely they match your description.',
   'search.clear': 'Clear search',
   'search.sortLocked': 'Sorted by relevance while searching',

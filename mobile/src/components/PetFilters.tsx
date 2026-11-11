@@ -251,6 +251,7 @@ export default function PetFilters({
               value={draft.area}
               onChangeText={(next) => setField('area', next)}
               placeholder={t('filter.areaPh')}
+              accessibilityLabel={t('filter.areaLabel')}
               placeholderTextColor={colors.textMuted}
               returnKeyType="done"
             />

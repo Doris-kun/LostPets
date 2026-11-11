@@ -205,6 +205,7 @@ export default function ChatScreen() {
           value={draft}
           onChangeText={setDraft}
           placeholder={t('chat.placeholder')}
+          accessibilityLabel={t('chat.placeholder')}
           placeholderTextColor={colors.textMuted}
           maxLength={MAX_CHARS}
           multiline

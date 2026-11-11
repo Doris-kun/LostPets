@@ -155,6 +155,7 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
             value={password}
             onChangeText={setPassword}
             placeholder={t('auth.passwordPh')}
+            accessibilityLabel={t('auth.password')}
             placeholderTextColor={colors.textMuted}
             secureTextEntry
             autoCapitalize="none"
@@ -165,6 +166,7 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
             value={email}
             onChangeText={setEmail}
             placeholder={t('auth.emailPh')}
+            accessibilityLabel={t('auth.email')}
             placeholderTextColor={colors.textMuted}
             keyboardType="email-address"
             // Email không bao giờ viết hoa chữ đầu, mà iOS thì tự viết hoa —

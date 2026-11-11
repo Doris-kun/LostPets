@@ -18,4 +18,4 @@
  * trống là chính sách hứa một thứ không thực hiện được. Meta cũng bắt buộc có
  * chỗ liên hệ mới duyệt ứng dụng.
  */
-export const CONTACT_EMAIL = 'nampham2212004@gmail.com';
+export const CONTACT_EMAIL = 'supportlostpets@gmail.com';

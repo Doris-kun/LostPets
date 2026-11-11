@@ -202,6 +202,7 @@ export default function ReportModal({
                 value={note}
                 onChangeText={setNote}
                 placeholder={t('report.notePlaceholder')}
+                accessibilityLabel={t('report.notePlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 multiline
                 maxLength={MAX_NOTE}

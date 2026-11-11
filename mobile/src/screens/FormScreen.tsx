@@ -943,6 +943,8 @@ function Field({
         {label}
       </Text>
       <TextInput
+        // Chữ hiện phía trên không tự gắn vào ô — xem giải thích ở AuthScreen.
+        accessibilityLabel={label}
         className={`rounded-md border border-border-strong px-md py-[11px] text-[14px] text-text ${
           multiline ? 'h-[90px]' : ''
         }`}
