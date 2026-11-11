@@ -4,6 +4,6 @@
 // tới lúc có người gửi thư vào hộp đã bỏ.
 //
 // Bỏ trống thì cả hai trang tự ẩn phần liên hệ đi.
-export const CONTACT_EMAIL = 'nampham2212004@gmail.com';
+export const CONTACT_EMAIL = 'supportlostpets@gmail.com';
 
 export default { CONTACT_EMAIL };

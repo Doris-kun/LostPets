@@ -123,7 +123,7 @@
               </svg>
               <p class="text-sm text-gray-500">{{ $t('form.photoUpload') }}</p>
             </div>
-            <input id="fileinput" name="fileinput" ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleImage"/>
+            <input id="fileinput" name="fileinput" :aria-label="$t('form.photoUpload')" ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleImage"/>
           </div>
 
           <button v-if="shownPhoto" type="button" @click="dropPhoto"

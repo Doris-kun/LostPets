@@ -13,7 +13,7 @@
         {{ locating ? $t('map.locating') : $t('map.nearMe') }}
       </button>
 
-      <select id="radiuskm" name="radiuskm" v-if="me" v-model.number="radiusKm"
+      <select id="radiuskm" :aria-label="$t('map.radius')" name="radiuskm" v-if="me" v-model.number="radiusKm"
         class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-600 bg-white focus:outline-none focus:border-orange-300">
         <option v-for="km in radiusChoices" :key="km" :value="km">{{ km }} km</option>
       </select>

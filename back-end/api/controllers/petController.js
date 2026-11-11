@@ -109,7 +109,16 @@ async function assertMayModify(req, res) {
       res.status(403).json({ message: 'Tin này thuộc về tài khoản khác' });
       return null;
     }
-    return pet;
+    // Tin không chủ mà cũng không mã xác nhận: KHOÁ LẠI.
+    //
+    // Trước đây chỗ này mở cho tất cả, với lý do "để dữ liệu đăng trước đây
+    // không bị khoá". Nhưng người đăng ra nó cũng không chứng minh được
+    // quyền sở hữu, nên thực tế là mở cho BẤT KỲ AI xoá — tệ hơn hẳn so với
+    // khoá lại. Quản trị viên vẫn xử lý được qua /admin/pets/:petId.
+    res.status(403).json({
+      message: 'Tin này không có mã xác nhận nên không sửa được. Hãy liên hệ để được hỗ trợ.',
+    });
+    return null;
   }
 
   const provided = req.get('x-claim-code') || (req.body && req.body.claimCode);
@@ -144,7 +153,42 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 // là thử lại được; gộp vào "Server error" thì họ tưởng tin của mình mất rồi.
 class ImageUploadError extends Error {}
 
+// Tệp không phải ảnh là lỗi của NGƯỜI GỬI, không phải của máy chủ. Gộp chung
+// vào ImageUploadError thì trả 502 — nói rằng "thử lại sau", trong khi thử
+// lại bao nhiêu lần cũng vậy. Tách ra để trả 400 kèm câu nói đúng việc.
+class ImageFormatError extends Error {}
+
+// Nhận ra định dạng ảnh bằng mấy byte đầu file.
+//
+// fileFilter của multer chỉ xem được file.mimetype, mà giá trị đó do trình
+// duyệt khai — ai cũng gửi được một file bất kỳ kèm nhãn 'image/jpeg'.
+// Cloudinary sẽ từ chối, nhưng để bên thứ ba lo việc kiểm đầu vào của mình
+// là nhờ đúng chỗ không nên nhờ: tốn một vòng gọi mạng, và nếu sau này đổi
+// nơi lưu ảnh thì mất luôn lớp chặn mà không ai nhận ra.
+const LA_ANH = [
+  { ten: 'jpeg', byte: [0xff, 0xd8, 0xff] },
+  { ten: 'png', byte: [0x89, 0x50, 0x4e, 0x47] },
+  { ten: 'gif', byte: [0x47, 0x49, 0x46, 0x38] },
+  // WEBP: 'RIFF' ở byte 0-3 rồi 'WEBP' ở byte 8-11.
+  { ten: 'webp', byte: [0x52, 0x49, 0x46, 0x46], byte8: [0x57, 0x45, 0x42, 0x50] },
+];
+
+const nhanDangAnh = (buffer) => {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 12) return '';
+  for (const dang of LA_ANH) {
+    const dau = dang.byte.every((b, i) => buffer[i] === b);
+    const sau = !dang.byte8 || dang.byte8.every((b, i) => buffer[8 + i] === b);
+    if (dau && sau) return dang.ten;
+  }
+  return '';
+};
+
 const uploadImage = async (buffer) => {
+  // Kiểm TRƯỚC khi gọi mạng: tệp sai định dạng thì không cần làm phiền
+  // Cloudinary, và người dùng biết ngay thay vì đợi một vòng gọi ra ngoài.
+  if (!nhanDangAnh(buffer)) {
+    throw new ImageFormatError('Tệp tải lên không phải ảnh. Chỉ hỗ trợ JPEG, PNG, GIF hoặc WEBP.');
+  }
   try {
     return await new Promise((resolve, reject) => {
       cloudinary.uploader
@@ -175,6 +219,34 @@ const generatePostId = (type) => {
   const random = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   return `${prefix}-${random}`;
 };
+
+// Số lần thử lại khi mã tin bị trùng.
+//
+// generatePostId dùng 36^6 tổ hợp, nhưng theo nghịch lý ngày sinh thì quanh
+// 47.000 tin là bắt đầu trùng thường xuyên. Trước đây trùng một cái là
+// Pet.create ném lỗi trùng khoá và người dùng MẤT LUÔN tin vừa gõ — một lần
+// hỏng không thể giải thích nổi cho họ.
+//
+// Ba lần thử là đủ: xác suất trùng ba lần liên tiếp nhỏ tới mức không đáng kể
+// ngay cả khi kho tin lớn gấp nhiều lần hiện nay.
+const SO_LAN_THU_MA_TIN = 3;
+
+async function taoTinVoiMaKhongTrung(fields) {
+  let loiCuoi;
+  for (let i = 0; i < SO_LAN_THU_MA_TIN; i++) {
+    try {
+      return await Pet.create({ ...fields, postId: generatePostId(fields.type) });
+    } catch (err) {
+      // 11000 là mã lỗi trùng khoá duy nhất của MongoDB. Lỗi khác thì ném
+      // ngay, đừng thử lại — thử lại một lỗi xác thực chỉ tốn thời gian.
+      const trungMaTin = err && err.code === 11000
+        && String(JSON.stringify(err.keyPattern || err.keyValue || '')).includes('postId');
+      if (!trungMaTin) throw err;
+      loiCuoi = err;
+    }
+  }
+  throw loiCuoi;
+}
 
 const MAX_QUERY_CHARS = 200;
 // Tìm kiếm xếp hạng trong bộ nhớ nên phải đọc vector của mọi tin khớp bộ lọc.
@@ -351,17 +423,25 @@ exports.create_a_pet = async (req, res) => {
       imageId = result.public_id;
     }
 
-    const postId = generatePostId(type);
     const claimCode = generateClaimCode();
-    const pet = await Pet.create({
-      postId, type, name, species, breed, color, area, contact, description,
-      secretDetail: secretDetail || '',
-      lat: coords.lat === undefined ? null : coords.lat,
-      lng: coords.lng === undefined ? null : coords.lng,
-      image: imageUrl, imageId, claimHash: hashClaimCode(claimCode),
-      // Đăng khi đã đăng nhập thì tin gắn luôn vào tài khoản.
-      owner: req.user ? req.user.sub : null,
-    });
+    let pet;
+    try {
+      pet = await taoTinVoiMaKhongTrung({
+        type, name, species, breed, color, area, contact, description,
+        secretDetail: secretDetail || '',
+        lat: coords.lat === undefined ? null : coords.lat,
+        lng: coords.lng === undefined ? null : coords.lng,
+        image: imageUrl, imageId, claimHash: hashClaimCode(claimCode),
+        // Đăng khi đã đăng nhập thì tin gắn luôn vào tài khoản.
+        owner: req.user ? req.user.sub : null,
+      });
+    } catch (err) {
+      // Ảnh đã nằm trên Cloudinary trước khi tới bước này. Lưu tin hỏng mà
+      // không dọn thì ảnh ở lại vĩnh viễn, không bản ghi nào trỏ tới, mà đợt
+      // dọn tự động chỉ xoá ảnh gắn với tin. Dùng lâu là đầy dung lượng.
+      if (imageId) discardImage({ imageId });
+      throw err;
+    }
     refreshEmbedding(pet);
     // Báo cho chủ những tin ngược loại đang mở ở gần. Không await, cùng lý do
     // với refreshEmbedding: người vừa đăng tin không phải ngồi chờ một dịch vụ
@@ -375,6 +455,9 @@ exports.create_a_pet = async (req, res) => {
     const { claimHash: _h, secretDetail: _s, imageId: _i, ...created } = pet.toObject();
     res.status(201).json({ ...created, claimCode });
   } catch (err) {
+    if (err instanceof ImageFormatError) {
+      return res.status(400).json({ message: err.message });
+    }
     if (err instanceof ImageUploadError) {
       return res.status(502).json({ message: 'Không tải được ảnh lên, thử lại sau' });
     }
@@ -456,6 +539,9 @@ exports.update_a_pet = async (req, res) => {
 
     res.json(pet);
   } catch (err) {
+    if (err instanceof ImageFormatError) {
+      return res.status(400).json({ message: err.message });
+    }
     if (err instanceof ImageUploadError) {
       return res.status(502).json({ message: 'Không tải được ảnh lên, thử lại sau' });
     }

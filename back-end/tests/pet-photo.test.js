@@ -23,6 +23,7 @@ jest.mock('cloudinary', () => ({
 
 const app = require('../app');
 const Pet = require('../api/models/petModel');
+const { anhGia } = require('./anh-gia');
 
 let mongoServer;
 
@@ -48,7 +49,7 @@ beforeEach(() => {
 
 const jpeg = (name = 'a.jpg') => [
   'image',
-  Buffer.from('gia-lam-anh'),
+  anhGia(),
   { filename: name, contentType: 'image/jpeg' },
 ];
 
@@ -65,6 +66,18 @@ const createWithPhoto = async () => {
 
 const putPhoto = (id, code) =>
   request(app).put(`/pets/${id}`).set('x-claim-code', code);
+
+// Dựng một tin "kiểu cũ": chỉ lưu URL ảnh, chưa có trường imageId.
+//
+// Phải đi qua API để có mã xác nhận thật. Trước đây test tạo thẳng bằng
+// Pet.create rồi PUT không kèm mã, được là nhờ kẽ hở "tin không chủ không mã
+// thì ai sửa cũng được" — kẽ hở đó đã bị khoá.
+const tinKieuCu = async (url) => {
+  const pet = await createWithPhoto();
+  await Pet.updateOne({ _id: pet._id }, { image: url, $unset: { imageId: 1 } });
+  mockDestroy.mockClear();
+  return pet;
+};
 
 describe('Đăng tin kèm ảnh', () => {
   it('lưu cả URL và public_id của ảnh', async () => {
@@ -136,7 +149,7 @@ describe('Đổi ảnh khi sửa tin', () => {
 
   it('tệp không phải ảnh bị từ chối', async () => {
     const pet = await createWithPhoto();
-    const res = await putPhoto(pet._id, pet.claimCode).attach('image', Buffer.from('x'), {
+    const res = await putPhoto(pet._id, pet.claimCode).attach('image', anhGia(), {
       filename: 'virus.exe',
       contentType: 'application/octet-stream',
     });
@@ -219,26 +232,25 @@ describe('Ảnh không đổi được bằng cách gửi URL', () => {
 
 describe('Tin cũ chỉ có URL, chưa có public_id', () => {
   it('moi public_id từ URL ra để vẫn dọn được ảnh cũ', async () => {
-    const legacy = await Pet.create({
-      type: 'found', species: 'Chó', breed: 'Phốc', color: 'Đen',
-      area: 'Quận 5', contact: '0900 000 003',
-      image: 'https://res.cloudinary.com/demo/image/upload/v1700000000/lost-pets/cu123.jpg',
-    });
+    const legacy = await tinKieuCu(
+      'https://res.cloudinary.com/demo/image/upload/v1700000000/lost-pets/cu123.jpg'
+    );
 
-    await request(app).put(`/pets/${legacy._id}`).attach(...jpeg('moi.jpg'));
+    const res = await putPhoto(legacy._id, legacy.claimCode).attach(...jpeg('moi.jpg'));
 
+    expect(res.status).toBe(200);
     expect(mockDestroy).toHaveBeenCalledWith('lost-pets/cu123');
   });
 
   it('URL lạ không phải của Cloudinary thì bỏ qua, không gọi xoá bừa', async () => {
-    const legacy = await Pet.create({
-      type: 'found', species: 'Mèo', breed: 'Ta', color: 'Vàng',
-      area: 'Quận 5', contact: '0900 000 004',
-      image: 'https://example.com/anh.jpg',
-    });
+    const legacy = await tinKieuCu('https://example.com/anh.jpg');
 
-    await request(app).put(`/pets/${legacy._id}`).attach(...jpeg('moi.jpg'));
+    const res = await putPhoto(legacy._id, legacy.claimCode).attach(...jpeg('moi.jpg'));
 
+    // Phải khẳng định 200 trước. Thiếu dòng này thì test xanh cả khi PUT bị
+    // từ chối — không gọi xoá vì không làm gì cả, chứ không phải vì biết bỏ
+    // qua URL lạ.
+    expect(res.status).toBe(200);
     expect(mockDestroy).not.toHaveBeenCalled();
   });
 });
