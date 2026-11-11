@@ -38,12 +38,29 @@ describe('Giới hạn tần suất', () => {
     expect(Number(res.headers['retry-after'])).toBeGreaterThan(0);
   });
 
-  it('mỗi endpoint đếm riêng, chặn chat không chặn luôn match', async () => {
-    for (let i = 0; i < 5; i += 1) {
+  it('ba đường AI dùng CHUNG một hạn mức, không lách được bằng cách gọi xen kẽ', async () => {
+    const max = Number(process.env.AI_RATE_LIMIT) || 30;
+    for (let i = 0; i < max; i += 1) {
       await request(app).post('/ai/chat').send({ messages: [{ role: 'user', content: 'hi' }] });
     }
     const other = await request(app).get('/ai/match/507f1f77bcf86cd799439011');
-    expect(other.status).not.toBe(429);
+
+    // Cả ba đường đều tốn quota như nhau. Đếm riêng thì gọi luân phiên là
+    // nhân ngưỡng lên ba lần.
+    expect(other.status).toBe(429);
+  });
+
+  it('hạn mức AI đếm chung cho MỌI tin, không phải mỗi tin một suất', async () => {
+    const max = Number(process.env.AI_RATE_LIMIT) || 30;
+    // Mỗi lượt một mã tin khác nhau. Thiếu scope thì bộ đếm lấy khoá theo
+    // đường dẫn, mà mã tin nằm ngay trong đường dẫn — mỗi tin một hạn mức
+    // riêng, và lặp qua danh sách tin là gọi được bao nhiêu tuỳ thích.
+    const id = (i) => `507f1f77bcf86cd7994${String(39011 + i).padStart(5, '0')}`;
+    let cuoi;
+    for (let i = 0; i <= max; i += 1) {
+      cuoi = await request(app).get(`/ai/match/${id(i)}`);
+    }
+    expect(cuoi.status).toBe(429);
   });
 
   it('chặn tạo tài khoản hàng loạt', async () => {
