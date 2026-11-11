@@ -41,8 +41,17 @@ exports.register = async (req, res) => {
       name: String(name).trim(),
       email: normalisedEmail,
       passwordHash: await bcrypt.hash(String(password), SALT_ROUNDS),
-      role: isAdminEmail(normalisedEmail) ? 'admin' : 'user',
+      // LUÔN là 'user' dù email có nằm trong ADMIN_EMAILS. Quyền quản trị chỉ
+      // đến sau khi xác minh hộp thư — xem hàm vaiTro() ở trên.
+      role: 'user',
     });
+
+    // CÓ await, khác với luồng quên mật khẩu. Ở đây không có kênh thời gian
+    // nào để lộ, vì đăng ký đã tự báo email trùng bằng mã 409 rồi. Đợi ở đây
+    // chỉ là đợi một lượt ghi database; việc gửi thư vẫn bắn-rồi-quên bên
+    // trong hàm. Đổi lại được tính xác định: mã xác minh chắc chắn đã lưu
+    // xong trước khi người dùng cầm token trong tay.
+    await guiThuXacMinh(user);
 
     res.status(201).json({ token: signToken(user), user: publicUser(user) });
   } catch (err) {
@@ -74,8 +83,7 @@ exports.login = async (req, res) => {
 
     // Đồng bộ lại vai trò mỗi lần đăng nhập, để thêm hoặc bỏ quản trị viên
     // chỉ cần sửa ADMIN_EMAILS rồi đăng nhập lại, không phải động vào database.
-    const shouldBeAdmin = isAdminEmail(user.email);
-    const expectedRole = shouldBeAdmin ? 'admin' : 'user';
+    const expectedRole = vaiTro(user);
     if (user.role !== expectedRole) {
       user.role = expectedRole;
       await user.save();
@@ -120,8 +128,12 @@ async function signInWithProvider(res, provider, profile) {
     }
   }
 
+  // Đăng nhập bằng Google hay Facebook thì chính nhà cung cấp đã xác minh hộp
+  // thư trước khi trả email sang đây. Không công nhận điều đó thì người dùng
+  // Google vĩnh viễn không xác minh được, vì họ chưa từng đặt mật khẩu.
+  user.emailVerified = true;
   // Đồng bộ vai trò mỗi lần đăng nhập, giống hệt đường đăng nhập bằng mật khẩu.
-  user.role = isAdminEmail(user.email) ? 'admin' : 'user';
+  user.role = vaiTro(user);
   await user.save();
 
   res.json({ token: signToken(user), user: publicUser(user) });
@@ -189,6 +201,18 @@ exports.me = async (req, res) => {
 };
 
 // ---------------------------------------------------------- quên mật khẩu
+
+// Thư xác minh sống lâu hơn thư đặt lại mật khẩu: đặt lại là việc gấp, còn
+// xác minh thì người ta hay để đó rồi quay lại sau.
+const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
+
+// Chỉ cấp quyền quản trị cho email ĐÃ XÁC MINH.
+//
+// Không có điều kiện emailVerified thì ai đoán được địa chỉ trong ADMIN_EMAILS
+// là đăng ký bằng địa chỉ đó và thành quản trị viên ngay — không cần mở được
+// hộp thư. Đây là đường leo thang quyền rẻ nhất có thể có.
+const vaiTro = (user) =>
+  (user.emailVerified && isAdminEmail(user.email)) ? 'admin' : 'user';
 
 const RESET_TTL_MS = 60 * 60 * 1000; // một giờ
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
@@ -330,6 +354,14 @@ exports.resetPassword = async (req, res) => {
     }
 
     user.passwordHash = await bcrypt.hash(String(password), SALT_ROUNDS);
+    // Huỷ MỌI phiên đang đăng nhập. Đặt lại mật khẩu là việc người ta làm khi
+    // nghi tài khoản bị chiếm; không tăng số này thì token của kẻ chiếm vẫn
+    // sống tới 7 ngày và việc đặt lại chắng đuổi được ai.
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    // Đọc được thư đặt lại tức là mở được hộp thư. Đây là bằng chứng tương
+    // đương với bấm đường dẫn xác minh, nên không bắt họ làm lại một lần nữa.
+    user.emailVerified = true;
+    user.role = vaiTro(user);
     // Dùng một lần rồi bỏ. Không xoá thì cùng một đường dẫn đặt lại được mãi,
     // và ai đọc được hộp thư cũ vẫn chiếm được tài khoản.
     user.resetHash = undefined;
@@ -345,6 +377,100 @@ exports.resetPassword = async (req, res) => {
 
 
 // ------------------------------------------------ mã thiết bị nhận thông báo
+
+// ------------------------------------------------------ xác minh địa chỉ thư
+
+const hashVerifyToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+// Sinh mã xác minh, lưu BĂM của nó, rồi gửi thư. Không ném lỗi ra ngoài.
+async function guiThuXacMinh(user) {
+  if (!mailerConfigured()) return false;
+  try {
+    const token = crypto.randomBytes(32).toString('hex');
+    user.verifyHash = hashVerifyToken(token);
+    user.verifyExpires = new Date(Date.now() + VERIFY_TTL_MS);
+    await user.save();
+
+    const webLink = `${appUrl()}/verify-email?token=${token}`;
+    const appLink = `${MOBILE_SCHEME}://verify-email?token=${token}`;
+    sendMail({
+      to: user.email,
+      subject: 'LostPets — xác minh địa chỉ email',
+      text: [
+        `Chào ${user.name},`,
+        '',
+        'Bấm vào đường dẫn dưới đây để xác nhận đây đúng là hộp thư của bạn. Đường dẫn có hiệu lực trong 24 giờ.',
+        '',
+        'Mở bằng trình duyệt:',
+        webLink,
+        '',
+        'Hoặc mở thẳng trong ứng dụng LostPets (nếu bạn đã cài):',
+        appLink,
+        '',
+        'Chưa xác minh thì bạn vẫn đăng tin và dùng web bình thường.',
+        '',
+        'Nếu không phải bạn đăng ký, cứ bỏ qua thư này.',
+      ].join('\n'),
+    }).catch(() => {});
+    return true;
+  } catch (err) {
+    console.error('guiThuXacMinh:', err && err.message);
+    return false;
+  }
+}
+
+exports.verifyEmail = async (req, res) => {
+  if (secretMissing(res)) return;
+  const { token } = req.body || {};
+  if (!token) return res.status(400).json({ message: 'Thiếu mã xác minh' });
+
+  try {
+    const user = await User.findOne({
+      verifyHash: hashVerifyToken(String(token)),
+      verifyExpires: { $gt: new Date() },
+    }).select('+verifyHash +verifyExpires');
+
+    if (!user) {
+      return res.status(400).json({ message: 'Đường dẫn không còn hiệu lực. Hãy yêu cầu gửi lại.' });
+    }
+
+    user.emailVerified = true;
+    // Dùng một lần rồi bỏ, giống hệt mã đặt lại mật khẩu.
+    user.verifyHash = undefined;
+    user.verifyExpires = undefined;
+    // Chỉ tại đây quyền quản trị mới được cấp, nếu email nằm trong ADMIN_EMAILS.
+    user.role = vaiTro(user);
+    await user.save();
+
+    // Trả token mới vì vai trò trong token cũ đã lạc hậu.
+    res.json({ token: signToken(user), user: publicUser(user) });
+  } catch (err) {
+    console.error('verifyEmail:', err && err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Trả về CÙNG MỘT CÂU dù email có tài khoản hay không, cùng lý do với luồng
+// quên mật khẩu: không biến endpoint này thành công cụ dò xem ai đã đăng ký.
+const VERIFY_SENT = 'Nếu địa chỉ này cần xác minh, thư đã được gửi. Kiểm tra cả hộp thư rác.';
+
+exports.resendVerification = async (req, res) => {
+  if (!mailerConfigured()) {
+    return res.status(503).json({ message: 'Chức năng này chưa được cấu hình. Thiếu thiết lập gửi thư.' });
+  }
+  const email = String((req.body || {}).email || '').trim().toLowerCase();
+  if (!email) return res.status(400).json({ message: 'Thiếu email' });
+
+  try {
+    const user = await User.findOne({ email });
+    // Không có tài khoản, hoặc đã xác minh rồi: im lặng, vẫn trả câu chung.
+    if (user && !user.emailVerified) await guiThuXacMinh(user);
+    res.json({ message: VERIFY_SENT });
+  } catch (err) {
+    console.error('resendVerification:', err && err.message);
+    res.json({ message: VERIFY_SENT });
+  }
+};
 
 exports.savePushToken = async (req, res) => {
   const { token } = req.body || {};

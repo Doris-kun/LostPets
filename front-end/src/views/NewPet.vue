@@ -1,21 +1,21 @@
 <template>
   <div class="max-w-2xl mx-auto px-4 sm:px-6 py-10">
     <div class="mb-8">
-      <router-link to="/" class="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+      <router-link to="/" class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-600 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
         {{ $t('new.back') }}
       </router-link>
       <h1 class="text-2xl font-bold text-gray-900 mt-3 tracking-tight">{{ $t('new.title') }}</h1>
-      <p class="text-sm text-gray-400 mt-1">{{ $t('new.subtitle') }}</p>
+      <p class="text-sm text-gray-500 mt-1">{{ $t('new.subtitle') }}</p>
     </div>
 
     <form @submit.prevent="submit" class="space-y-4">
 
       <!-- General -->
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $t('form.general') }}</p>
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $t('form.general') }}</p>
         <div>
           <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">{{ $t('form.status') }}</label>
           <div class="flex gap-3">
@@ -51,10 +51,10 @@
 
       <!-- Pet Info -->
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $t('form.petInfo') }}</p>
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $t('form.petInfo') }}</p>
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-            {{ $t('form.name') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
+            {{ $t('form.name') }} <span class="text-gray-500 font-normal text-xs">{{ $t('form.optional') }}</span>
           </label>
           <input id="name" name="name" v-model="form.name" type="text" :placeholder="$t('form.namePh')"
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"/>
@@ -73,7 +73,7 @@
 
       <!-- Location & Contact -->
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $t('form.locationContact') }}</p>
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $t('form.locationContact') }}</p>
         <div>
           <label for="area" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.area') }}</label>
           <input id="area" name="area" v-model="form.area" type="text" :placeholder="$t('form.areaPh')" required
@@ -81,10 +81,10 @@
         </div>
         <div>
           <label for="contact" class="block text-sm font-semibold text-gray-700 mb-2">
-            {{ $t('map.label') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
+            {{ $t('map.label') }} <span class="text-gray-500 font-normal text-xs">{{ $t('form.optional') }}</span>
           </label>
           <MapPicker :lat="form.lat" :lng="form.lng" @change="setPoint"/>
-          <p class="text-xs text-gray-400 mt-1.5 leading-relaxed">{{ $t('map.hint') }}</p>
+          <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">{{ $t('map.hint') }}</p>
         </div>
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.contact') }}</label>
@@ -95,7 +95,7 @@
 
       <!-- Details -->
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $t('form.details') }}</p>
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $t('form.details') }}</p>
         <div>
           <label for="description" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('form.desc') }}</label>
           <textarea id="description" name="description" v-model="form.description" rows="3" :placeholder="$t('form.descPh')"
@@ -103,7 +103,7 @@
         </div>
         <div>
           <label for="secretdetail" class="block text-sm font-semibold text-gray-700 mb-1.5">
-            {{ $t('secret.label') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
+            {{ $t('secret.label') }} <span class="text-gray-500 font-normal text-xs">{{ $t('form.optional') }}</span>
           </label>
           <input id="secretdetail" name="secretdetail" v-model="form.secretDetail" type="text" :placeholder="$t('secret.placeholder')" maxlength="200"
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition"/>
@@ -111,16 +111,16 @@
         </div>
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-            {{ $t('form.photo') }} <span class="text-gray-400 font-normal text-xs">{{ $t('form.optional') }}</span>
+            {{ $t('form.photo') }} <span class="text-gray-500 font-normal text-xs">{{ $t('form.optional') }}</span>
           </label>
           <div @click="$refs.fileInput.click()"
             class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/50 transition-all">
             <img v-if="preview" :src="preview" class="mx-auto max-h-52 rounded-xl object-cover mb-3"/>
             <div v-else class="py-4">
-              <svg class="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
-              <p class="text-sm text-gray-400">{{ $t('form.photoUpload') }}</p>
+              <p class="text-sm text-gray-500">{{ $t('form.photoUpload') }}</p>
             </div>
             <input id="fileinput" name="fileinput" ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleImage"/>
           </div>
@@ -143,7 +143,7 @@
               <span class="font-semibold">{{ aiResult.confidence }}%</span>
             </p>
 
-            <p v-else-if="aiError" class="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
+            <p v-else-if="aiError" class="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
               <span>{{ aiError }}</span>
               <button type="button" @click="analyzeImage"
                 class="font-semibold text-violet-600 hover:underline">{{ $t('ai.retry') }}</button>
@@ -170,6 +170,7 @@
 <script>
 import api from '../api';
 import MapPicker from '../components/MapPicker.vue';
+import { areaFromCoords } from '../geocode';
 import claim from '../claim';
 import auth from '../auth';
 
@@ -187,9 +188,22 @@ export default {
     this.gone = true;
   },
   methods: {
-    setPoint({ lat, lng }) {
+    async setPoint({ lat, lng }) {
       this.form.lat = lat;
       this.form.lng = lng;
+
+      // Tự điền ô "khu vực" từ toạ độ, nhưng CHỈ KHI ô đó đang trống.
+      //
+      // Người dùng gõ tay thì luôn đúng hơn máy: họ biết "hẻm 54 Nguyễn Văn
+      // Nghi" còn máy chỉ biết "Gò Vấp". Ghi đè lên chữ họ vừa gõ là cướp mất
+      // thông tin tốt hơn để thay bằng thông tin tệ hơn.
+      //
+      // Tra cứu hỏng thì im lặng bỏ qua — ô đó vẫn là ô bắt buộc, họ tự điền
+      // như trước. Không được chặn người ta đăng tin chỉ vì bản đồ lỗi.
+      if (this.form.area.trim()) return;
+      const area = await areaFromCoords(lat, lng);
+      // Đợi tên một lát mới về; trong lúc đó người dùng có thể đã tự gõ rồi.
+      if (area && !this.form.area.trim()) this.form.area = area;
     },
     handleImage(e) {
       const file = e.target.files[0];

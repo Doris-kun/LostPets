@@ -55,6 +55,28 @@ const UserSchema = new Schema({
   // Quản trị viên được xác định bằng biến môi trường ADMIN_EMAILS, không phải
   // bằng cách tự sửa trong database — đổi người quản trị chỉ cần sửa cấu hình.
   role:         { type: String, enum: ['user', 'admin'], default: 'user' },
+  // Số phiên bản của token. Tăng lên một là MỌI token đã phát đều hết hiệu lực.
+  //
+  // Không có trường này thì đổi mật khẩu không đuổi được ai ra cả: JWT đã phát
+  // vẫn sống tới 7 ngày. Mà đặt lại mật khẩu chính là việc người ta làm KHI
+  // nghi tài khoản bị chiếm — để nguyên thì kẻ đang ở trong vẫn ở nguyên đó.
+  //
+  // KHÔNG đặt select: false. Đây không phải bí mật, và publicUser đã lọc theo
+  // danh sách trắng nên nó không lọt ra API nào. Để select: false thì mọi chỗ
+  // gọi signToken phải nhớ chọn tay, quên một chỗ là token mang số sai.
+  tokenVersion: { type: Number, default: 0 },
+  // Đã chứng minh đọc được hộp thư này hay chưa.
+  //
+  // Không có trường này thì quyền quản trị chỉ cần BIẾT một địa chỉ email là
+  // chiếm được: role gán theo ADMIN_EMAILS ngay lúc đăng ký, mà đăng ký thì
+  // không ai kiểm tra bạn có mở được hộp thư đó không.
+  //
+  // Thành true khi: bấm đường dẫn trong thư xác minh, đăng nhập bằng Google
+  // (Google đã xác minh hộ), hoặc đặt lại mật khẩu thành công (đọc được thư
+  // tức là mở được hộp thư).
+  emailVerified: { type: Boolean, default: false },
+  verifyHash:    { type: String, select: false },
+  verifyExpires: { type: Date, select: false },
   createdAt:    { type: Date, default: Date.now },
 }, { collection: 'users' });
 

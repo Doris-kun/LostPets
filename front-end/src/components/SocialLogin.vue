@@ -2,7 +2,7 @@
   <div v-if="ready && (showGoogle || showFacebook)" ref="wrap" class="mt-5">
     <div class="flex items-center gap-3 mb-4">
       <span class="h-px bg-gray-100 flex-1"></span>
-      <span class="text-xs text-gray-400">{{ $t('auth.or') }}</span>
+      <span class="text-xs text-gray-500">{{ $t('auth.or') }}</span>
       <span class="h-px bg-gray-100 flex-1"></span>
     </div>
 

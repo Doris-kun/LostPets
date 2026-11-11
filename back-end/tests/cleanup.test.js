@@ -21,6 +21,7 @@ process.env.CLEANUP_TOKEN = 'ma-cron-bi-mat';
 const app = require('../app');
 const rateLimit = require('../api/middleware/rateLimit');
 const Pet = require('../api/models/petModel');
+const User = require('../api/models/userModel');
 
 let mongoServer;
 
@@ -62,10 +63,15 @@ const giveClaimCode = async (pet, code) => {
   );
 };
 
+// Đăng ký xong PHẢI xác minh hộp thư thì mới được cấp quyền quản trị.
+// Trong test không có máy chủ thư nên không bấm được đường dẫn trong thư;
+// đặt thẳng emailVerified rồi đăng nhập lại, đúng bằng việc người dùng bấm.
 async function adminToken() {
-  const { body } = await request(app)
-    .post('/auth/register')
+  await request(app).post('/auth/register')
     .send({ name: 'Sếp', email: 'sep@example.com', password: 'matkhau123' });
+  await User.updateOne({ email: 'sep@example.com' }, { emailVerified: true });
+  const { body } = await request(app).post('/auth/login')
+    .send({ email: 'sep@example.com', password: 'matkhau123' });
   return body.token;
 }
 

@@ -34,14 +34,14 @@
           <div class="flex items-center bg-gray-100 rounded-full p-0.5 ml-1">
             <button
               @click="$setLang('vi')"
-              :class="$lang === 'vi' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
+              :class="$lang === 'vi' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-600'"
               class="px-2.5 py-1 rounded-full text-xs font-semibold transition-all"
             >
               VI
             </button>
             <button
               @click="$setLang('en')"
-              :class="$lang === 'en' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
+              :class="$lang === 'en' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-600'"
               class="px-2.5 py-1 rounded-full text-xs font-semibold transition-all"
             >
               EN
@@ -73,7 +73,7 @@
               class="absolute right-0 mt-2 w-60 bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden z-50">
               <div class="px-4 py-3 border-b border-gray-50">
                 <p class="text-sm font-bold text-gray-900 truncate">{{ auth.user.name }}</p>
-                <p class="text-xs text-gray-400 truncate">{{ auth.user.email }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ auth.user.email }}</p>
               </div>
 
               <router-link to="/me" @click.native="menuOpen = false"
@@ -134,12 +134,12 @@
          viên quên xoá, chứ không ra chủ ý. -->
     <footer class="mt-16 border-t border-gray-100">
       <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
-        <p class="text-xs text-gray-400">© {{ year }} LostPets</p>
+        <p class="text-xs text-gray-500">© {{ year }} LostPets</p>
         <div class="flex items-center gap-5">
-          <router-link to="/contact" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          <router-link to="/contact" class="text-xs text-gray-500 hover:text-gray-600 transition-colors">
             {{ $t('nav.contact') }}
           </router-link>
-          <router-link to="/privacy" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          <router-link to="/privacy" class="text-xs text-gray-500 hover:text-gray-600 transition-colors">
             {{ $t('nav.privacy') }}
           </router-link>
         </div>

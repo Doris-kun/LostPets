@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-3xl mx-auto px-4 py-10">
     <h1 class="text-3xl font-bold text-gray-900">{{ c.title }}</h1>
-    <p class="text-sm text-gray-400 mt-2">{{ c.updated }}</p>
+    <p class="text-sm text-gray-500 mt-2">{{ c.updated }}</p>
     <p class="text-gray-600 leading-relaxed mt-5">{{ c.intro }}</p>
 
     <!-- Tóm tắt nhanh. Gần như không ai đọc hết một trang chính sách; bốn điều
@@ -24,7 +24,7 @@
       <ol class="mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
         <li v-for="s in c.sections" :key="s.id">
           <a :href="`#${s.id}`" class="text-sm text-gray-500 hover:text-orange-600 transition-colors">
-            <span class="text-gray-300 tabular-nums">{{ s.n }}.</span> {{ s.h }}
+            <span class="text-gray-500 tabular-nums">{{ s.n }}.</span> {{ s.h }}
           </a>
         </li>
       </ol>
@@ -74,7 +74,7 @@
 const CONTENT = {
   vi: {
     title: 'Chính sách bảo mật',
-    updated: 'Cập nhật lần cuối: 9 tháng 11, 2026',
+    updated: 'Cập nhật lần cuối: 11 tháng 11, 2026',
     intro:
       'LostPets là website giúp người mất thú cưng và người nhặt được thú cưng tìm thấy nhau. '
       + 'Đây là đồ án tốt nghiệp của sinh viên, không phải dịch vụ thương mại. Trang này nói rõ '
@@ -153,7 +153,7 @@ const CONTENT = {
           'Google và Meta — chỉ khi bạn tự bấm nút đăng nhập tương ứng.',
           'Expo — chuyển thông báo đẩy tới ứng dụng điện thoại. Chỉ gửi mã thiết bị kèm tiêu đề và dòng mô tả ngắn của tin mới; không gửi ảnh, số điện thoại hay đặc điểm nhận dạng giữ kín.',
           'Dịch vụ gửi thư — chuyển thư đặt lại mật khẩu. Chỉ gửi địa chỉ email của bạn kèm đường dẫn đặt lại.',
-          'OpenStreetMap — ảnh nền bản đồ. Khi bản đồ hiện ra, trình duyệt của bạn gọi thẳng tới máy chủ của họ, nên họ thấy địa chỉ IP của bạn.',
+          'OpenStreetMap — ảnh nền bản đồ, và tra tên khu vực từ toạ độ. Khi bản đồ hiện ra, trình duyệt của bạn gọi thẳng tới máy chủ của họ, nên họ thấy địa chỉ IP của bạn. Khi bạn ghim vị trí lúc đăng tin, toạ độ được gửi sang để lấy tên quận — nhưng đã LÀM TRÒN về lưới 500m ngay trong trình duyệt trước khi gửi, cùng mức với bản lưu trong cơ sở dữ liệu. Bản chính xác không rời khỏi máy bạn.',
         ],
       },
       {
@@ -167,6 +167,7 @@ const CONTENT = {
           'Báo cáo tin xấu: xoá cùng lúc với tin bị báo cáo.',
           'Mã thiết bị nhận thông báo: xoá khi bạn đăng xuất, và cũng tự xoá khi Expo báo lại rằng máy đó đã gỡ ứng dụng.',
           'Yêu cầu đặt lại mật khẩu: đường dẫn hết hiệu lực sau một giờ và chỉ dùng được một lần.',
+          'Đường dẫn xác minh email: hết hiệu lực sau 24 giờ và cũng chỉ dùng được một lần.',
         ],
       },
       {
@@ -205,7 +206,7 @@ const CONTENT = {
 
   en: {
     title: 'Privacy Policy',
-    updated: 'Last updated: 9 November 2026',
+    updated: 'Last updated: 11 November 2026',
     intro:
       'LostPets helps people who have lost a pet and people who have found one find each other. '
       + 'It is a student final-year project, not a commercial service. This page explains what the '
@@ -284,7 +285,7 @@ const CONTENT = {
           'Google and Meta — only when you press the matching sign-in button.',
           'Expo — delivers push notifications to the mobile app. Only the device token, a title and a short description of the new listing are sent; never the photo, the phone number or the private identifying details.',
           'An email delivery service — sends password reset messages. Only your email address and the reset link are sent.',
-          'OpenStreetMap — map imagery. When a map loads, your browser contacts their servers directly, so they see your IP address.',
+          'OpenStreetMap — map imagery, and looking up an area name from coordinates. When a map loads, your browser contacts their servers directly, so they see your IP address. When you pin a location while posting, the coordinates are sent over to fetch the district name — but they are ROUNDED to a 500m grid in your browser first, the same precision stored in the database. The exact position never leaves your device.',
         ],
       },
       {
@@ -298,6 +299,7 @@ const CONTENT = {
           'Reports about a listing: deleted together with the listing they concern.',
           'Notification device tokens: removed when you sign out, and removed automatically when Expo reports that the device has uninstalled the app.',
           'Password reset requests: the link expires after one hour and works only once.',
+          'Email verification links: they expire after 24 hours and also work only once.',
         ],
       },
       {

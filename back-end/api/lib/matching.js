@@ -1,4 +1,5 @@
 const Pet = require('../models/petModel');
+const { distanceKm, boxAround, hasCoords } = require('./geo');
 const { cosine } = require('./embedding');
 
 // Tầng truy hồi của tính năng so khớp Lost<->Found.
@@ -17,16 +18,41 @@ const oppositeType = (type) => (type === 'lost' ? 'found' : 'lost');
 // Bộ lọc cứng: phải ngược loại tin, cùng loài, chưa giải quyết, và trong
 // khoảng thời gian còn hợp lý. Đây là lọc nhị phân, không phải chấm điểm —
 // một tin trượt bộ lọc này thì không có cơ hội nào được AI nhìn tới.
+// Bán kính so khớp. Rộng hơn hẳn 10km của tầng thông báo, và có chủ ý.
+//
+// Hai tầng trả lời hai câu hỏi khác nhau. Thông báo hỏi "có đáng báo động
+// cho người này không" — làm phiền người ở xa là rác, nên phải chặt. So khớp
+// hỏi "hai tin này có thể là một con không" — thú cưng đi lạc thì đi xa, và
+// bỏ sót một tin đúng nguy hiểm hơn nhiều so với hiện thừa một tin sai.
+//
+// 50km phủ hết một vùng đô thị kể cả ngoại ô, nhưng vẫn loại được tin ở tỉnh
+// khác. Trước khi có mốc này, một con mèo mất ở Quận 3 được gợi ý khớp với
+// tin nhặt được ở Cần Thơ, cách 170km.
+const MATCH_RADIUS_KM = 50;
+
 const candidateFilter = (source, windowDays = CANDIDATE_WINDOW_DAYS) => {
   const since = new Date();
   since.setDate(since.getDate() - windowDays);
-  return {
+  const filter = {
     _id: { $ne: source._id },
     type: oppositeType(source.type),
     species: source.species,
     resolved: false,
     date: { $gte: since },
   };
+
+  if (hasCoords(source)) {
+    // GIỮ LẠI tin không có toạ độ. Không biết nó ở đâu thì không có cơ sở
+    // loại, mà tin cũ đăng trước khi có bản đồ thì không tin nào có toạ độ —
+    // loại hết là xóa sổ một phần lớn kho tin.
+    const box = boxAround(source.lat, source.lng, MATCH_RADIUS_KM);
+    filter.$or = [
+      { lat: null },
+      { lat: box.lat, lng: box.lng },
+    ];
+  }
+
+  return filter;
 };
 
 // Số tin lấy ra để xếp hạng trước khi cắt xuống còn `limit`. Rộng hơn `limit`
@@ -49,6 +75,12 @@ const RANKING_POOL = 50;
 //
 // Không có vector thì rơi về ngày đăng: tin cũ đăng trước khi có tính năng
 // nhúng vẫn phải so khớp được, thà xếp kém còn hơn không trả gì.
+// Cắt nốt mấy góc thừa của khung vuông. Dùng ở CẢ HAI nhánh, vì hai nhánh
+// lọc khác nhau thì cùng một tin lúc hiện lúc không, tuỳ có vector hay chưa.
+const trongBanKinh = (source) => (pet) =>
+  !hasCoords(source) || !hasCoords(pet)
+  || distanceKm(source.lat, source.lng, pet.lat, pet.lng) <= MATCH_RADIUS_KM;
+
 async function findCandidates(source, options = {}) {
   const limit = options.limit || MAX_CANDIDATES;
   const windowDays = options.windowDays || CANDIDATE_WINDOW_DAYS;
@@ -56,10 +88,12 @@ async function findCandidates(source, options = {}) {
 
   const query = Array.isArray(source.embedding) ? source.embedding : [];
   if (query.length === 0) {
-    return Pet.find(filter).sort({ date: -1 }).limit(limit);
+    const cu = await Pet.find(filter).sort({ date: -1 }).limit(RANKING_POOL);
+    return cu.filter(trongBanKinh(source)).slice(0, limit);
   }
 
-  const pool = await Pet.find(filter).select('+embedding').sort({ date: -1 }).limit(RANKING_POOL);
+  const pool = (await Pet.find(filter).select('+embedding').sort({ date: -1 }).limit(RANKING_POOL))
+    .filter(trongBanKinh(source));
   return pool
     .map((pet) => ({ pet, score: cosine(query, pet.embedding) }))
     // Giữ nguyên thứ tự ngày khi điểm bằng nhau — tin chưa nhúng đều 0 điểm,
@@ -71,6 +105,7 @@ async function findCandidates(source, options = {}) {
 
 module.exports = {
   MAX_CANDIDATES,
+  MATCH_RADIUS_KM,
   CANDIDATE_WINDOW_DAYS,
   oppositeType,
   candidateFilter,

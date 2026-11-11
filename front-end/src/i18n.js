@@ -250,6 +250,16 @@ const translations = {
     'reset.invalid': 'Đường dẫn không còn hiệu lực. Hãy yêu cầu lại.',
     'reset.noToken': 'Đường dẫn này thiếu mã đặt lại. Có thể bạn mở nhầm, hoặc đường dẫn bị cắt mất khi sao chép.',
     'reset.askAgain': 'Yêu cầu đường dẫn mới',
+    'verify.title': 'Xác minh địa chỉ email',
+    'verify.working': 'Đang xác minh...',
+    'verify.done': 'Đã xác minh xong. Cảm ơn bạn!',
+    'verify.failed': 'Đường dẫn không còn hiệu lực. Hãy nhập email để nhận đường dẫn mới.',
+    'verify.goHome': 'Về trang chủ',
+    'verify.resendLabel': 'Email đã đăng ký',
+    'verify.resend': 'Gửi lại thư xác minh',
+    'verify.sending': 'Đang gửi...',
+    'verify.note': 'Chưa xác minh thì bạn vẫn đăng tin và dùng web bình thường.',
+    'auth.expired': 'Phiên đăng nhập đã hết hiệu lực. Hãy đăng nhập lại.',
     'auth.optionalNote': 'Không có tài khoản bạn vẫn đăng tin bình thường.',
     'chat.title': 'Trợ lý LostPets',
     'chat.subtitle': 'Hỏi gì về website cũng được',
@@ -538,6 +548,16 @@ const translations = {
     'reset.invalid': 'This link is no longer valid. Please request a new one.',
     'reset.noToken': 'This link is missing its reset code. You may have opened the wrong link, or it was cut short when copied.',
     'reset.askAgain': 'Request a new link',
+    'verify.title': 'Verify your email',
+    'verify.working': 'Verifying...',
+    'verify.done': 'Your email is verified. Thank you!',
+    'verify.failed': 'This link is no longer valid. Enter your email to get a new one.',
+    'verify.goHome': 'Back to home',
+    'verify.resendLabel': 'Registered email',
+    'verify.resend': 'Send the verification email again',
+    'verify.sending': 'Sending...',
+    'verify.note': 'You can post and use the site normally before verifying.',
+    'auth.expired': 'Your session has expired. Please sign in again.',
     'auth.optionalNote': 'You can still post without an account.',
     'chat.title': 'LostPets Assistant',
     'chat.subtitle': 'Ask anything about the site',
@@ -589,17 +609,24 @@ export function setLang(lang) {
   localStorage.setItem('lang', lang);
 }
 
+// Hàm dịch độc lập, để những chỗ không phải component vẫn dùng được — ví dụ
+// bộ chặn lỗi của axios.
+//
+// vars thay các ô {tên} trong câu dịch. Cần vì tiếng Việt và tiếng Anh đặt
+// con số ở vị trí khác nhau trong câu — ghép chuỗi ngoài chỗ gọi thì có câu
+// dịch đúng ngữ pháp một thứ tiếng và sai thứ tiếng kia.
+export function t(key, vars) {
+  const text = translations[langStore.lang]?.[key] ?? key;
+  if (!vars) return text;
+  return text.replace(/\{(\w+)\}/g, (match, name) =>
+    (name in vars ? String(vars[name]) : match)
+  );
+}
+
 export const i18nMixin = {
   methods: {
-    // vars thay các ô {tên} trong câu dịch. Cần vì tiếng Việt và tiếng Anh đặt
-    // con số ở vị trí khác nhau trong câu — ghép chuỗi ngoài chỗ gọi thì có câu
-    // dịch đúng ngữ pháp một thứ tiếng và sai thứ tiếng kia.
     $t(key, vars) {
-      const text = translations[langStore.lang]?.[key] ?? key;
-      if (!vars) return text;
-      return text.replace(/\{(\w+)\}/g, (match, name) =>
-        (name in vars ? String(vars[name]) : match)
-      );
+      return t(key, vars);
     },
     $setLang(lang) {
       setLang(lang);

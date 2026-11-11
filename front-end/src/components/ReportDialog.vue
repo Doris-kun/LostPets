@@ -10,7 +10,7 @@
           </svg>
         </div>
         <p class="font-bold text-gray-900">{{ $t('report.thanks') }}</p>
-        <p class="text-sm text-gray-400 mt-1.5 leading-relaxed">{{ $t('report.thanksSub') }}</p>
+        <p class="text-sm text-gray-500 mt-1.5 leading-relaxed">{{ $t('report.thanksSub') }}</p>
         <button @click="close"
           class="mt-5 w-full bg-gray-900 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-800 transition-colors">
           {{ $t('report.done') }}
@@ -19,7 +19,7 @@
 
       <template v-else>
         <h3 class="font-bold text-lg text-gray-900">{{ $t('report.title') }}</h3>
-        <p class="text-sm text-gray-400 mt-1 mb-4 leading-relaxed">{{ $t('report.subtitle') }}</p>
+        <p class="text-sm text-gray-500 mt-1 mb-4 leading-relaxed">{{ $t('report.subtitle') }}</p>
 
         <label v-for="r in reasons" :key="r"
           class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all mb-1.5"

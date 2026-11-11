@@ -41,7 +41,7 @@
       </div>
     </div>
 
-    <p class="text-sm text-gray-400 leading-relaxed mt-8 text-center">{{ c.note }}</p>
+    <p class="text-sm text-gray-500 leading-relaxed mt-8 text-center">{{ c.note }}</p>
   </div>
 </template>
 

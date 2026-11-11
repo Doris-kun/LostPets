@@ -2,63 +2,133 @@
  * Kiểm thiết lập gửi thư, nói rõ hỏng ở đâu.
  *
  * Cách dùng:
- *   node scripts/check-mail.js                    chỉ kiểm đăng nhập
+ *   node scripts/check-mail.js                    chỉ kiểm cấu hình
  *   node scripts/check-mail.js you@example.com    kiểm rồi gửi thử một thư
  *
  * Đọc biến từ back-end/.env, hoặc từ biến môi trường nếu bạn đặt sẵn.
- * KHÔNG in mật khẩu ra màn hình, chỉ in độ dài và cảnh báo nếu có dấu cách.
+ * KHÔNG in khoá hay mật khẩu ra màn hình.
  */
 require('dotenv').config();
 const nodemailer = require('nodemailer');
+const axios = require('axios');
+const { parseFrom } = require('../api/lib/mailer');
 
 const H = (s) => `\n=== ${s} ===`;
+const che = (v) => `có, dài ${v.length} ký tự`;
+
+const duongDi = () => (process.env.BREVO_API_KEY ? 'HTTP API (Brevo)' : 'SMTP');
 
 function kiemBien() {
-  const can = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'MAIL_FROM', 'APP_URL'];
-  let hong = false;
+  console.log(H('Đường gửi đang dùng'));
+  console.log('  ' + duongDi());
+  if (!process.env.BREVO_API_KEY) {
+    console.log('  (Render chặn cổng SMTP trên gói miễn phí. Ở máy thì chạy được,');
+    console.log('   nhưng muốn chạy trên Render thì phải đặt BREVO_API_KEY.)');
+  }
 
   console.log(H('Biến môi trường'));
-  for (const k of can) {
-    const v = process.env[k];
-    if (!v) {
-      console.log(`  ${k.padEnd(12)} THIẾU`);
-      if (k !== 'MAIL_FROM' && k !== 'APP_URL') hong = true;
-      continue;
+  let hong = false;
+
+  if (process.env.BREVO_API_KEY) {
+    console.log('  BREVO_API_KEY   ' + che(process.env.BREVO_API_KEY));
+  } else {
+    for (const k of ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER']) {
+      const v = process.env[k];
+      console.log(`  ${k.padEnd(15)} ${v || 'THIẾU'}`);
+      if (!v && k !== 'SMTP_PORT') hong = true;
     }
-    if (k === 'SMTP_PASS') {
-      const space = /\s/.test(v);
-      console.log(`  ${k.padEnd(12)} có, dài ${v.length} ký tự${space ? '  <-- CÓ DẤU CÁCH, phải bỏ' : ''}`);
-      // Mật khẩu ứng dụng của Google luôn đúng 16 ký tự sau khi bỏ dấu cách.
-      const sach = v.replace(/\s/g, '');
-      if (sach.length !== 16) {
-        console.log(`               (dài ${sach.length} sau khi bỏ dấu cách — mật khẩu ứng dụng Google phải đúng 16)`);
+    const pass = process.env.SMTP_PASS;
+    if (!pass) {
+      console.log('  SMTP_PASS       THIẾU');
+      hong = true;
+    } else {
+      const space = /\s/.test(pass);
+      const sach = pass.replace(/\s/g, '');
+      console.log(`  SMTP_PASS       ${che(pass)}${space ? '  (có dấu cách — mã tự bỏ, nhưng nên sửa cho sạch)' : ''}`);
+      if (sach.length !== 16 && /gmail/i.test(process.env.SMTP_HOST || '')) {
+        console.log(`                  dài ${sach.length} sau khi bỏ dấu cách — mật khẩu ứng dụng Google phải đúng 16`);
       }
-      if (space) hong = true;
-      continue;
     }
-    console.log(`  ${k.padEnd(12)} ${v}`);
   }
 
-  const port = Number(process.env.SMTP_PORT) || 587;
-  const host = process.env.SMTP_HOST || '';
-  if (/gmail/i.test(host) && port !== 587 && port !== 465) {
-    console.log(`  CẢNH BÁO: Gmail dùng cổng 587 hoặc 465, đang để ${port}`);
+  for (const k of ['MAIL_FROM', 'APP_URL']) {
+    console.log(`  ${k.padEnd(15)} ${process.env[k] || 'THIẾU'}`);
   }
-  // MAIL_FROM phải chứa đúng tài khoản đã đăng nhập, vì Gmail luôn ghi đè
-  // người gửi về tài khoản đó — khai lệch thì thư hiện sai tên người gửi.
-  if (process.env.MAIL_FROM && process.env.SMTP_USER
-      && !process.env.MAIL_FROM.includes(process.env.SMTP_USER)) {
-    console.log('  CẢNH BÁO: MAIL_FROM không chứa địa chỉ của SMTP_USER');
+
+  const from = parseFrom(process.env.MAIL_FROM);
+  console.log(`  -> người gửi    tên "${from.name}", địa chỉ ${from.email}`);
+  if (process.env.SMTP_USER && from.email !== process.env.SMTP_USER) {
+    console.log('  CẢNH BÁO: địa chỉ người gửi khác SMTP_USER. Gmail luôn ghi đè về tài khoản đã đăng nhập.');
   }
   return !hong;
 }
 
-async function main() {
-  if (!kiemBien()) {
-    console.log('\nCó biến sai ở trên, sửa trước rồi chạy lại.');
+async function kiemApi(to) {
+  console.log(H('Thử gọi API'));
+  const from = parseFrom(process.env.MAIL_FROM);
+  // Không có đường "chỉ kiểm đăng nhập" như SMTP, nên muốn biết khoá đúng hay
+  // không thì phải gọi một đường đọc vô hại.
+  try {
+    const res = await axios.get('https://api.brevo.com/v3/account', {
+      timeout: 15000,
+      headers: { 'api-key': process.env.BREVO_API_KEY, accept: 'application/json' },
+    });
+    console.log('  KHOÁ ĐÚNG. Tài khoản:', (res.data && res.data.email) || '(không rõ)');
+    const hanMuc = res.data && res.data.plan;
+    if (Array.isArray(hanMuc)) {
+      for (const p of hanMuc) console.log(`  hạn mức: ${p.type} — còn ${p.credits}`);
+    }
+  } catch (err) {
+    const d = err && err.response && err.response.data;
+    const code = err && err.response && err.response.status;
+    // Khoá giới hạn quyền (chỉ có Transactional email) KHÔNG đọc được
+    // /v3/account. Đó là cấu hình ĐÚNG, nên không được coi là hỏng — báo
+    // "khoá sai" ở đây là đuổi người đi tạo lại một khoá vốn đã tốt.
+    if (code === 401 || code === 403) {
+      console.log('  Không đọc được thông tin tài khoản — bình thường nếu khoá');
+      console.log('  bị giới hạn quyền. Kiểm bằng cách gửi thử luôn.');
+      return;
+    }
+    console.log('  HỎNG:', (err && err.message) || '', d ? JSON.stringify(d) : '');
+    console.log('\n  Khoá sai hoặc đã bị thu hồi. Tạo lại ở Brevo > SMTP & API > API Keys.');
     process.exit(1);
   }
 
+  if (!to) return;
+  console.log(H(`Gửi thử tới ${to}`));
+  try {
+    const res = await axios.post('https://api.brevo.com/v3/smtp/email', {
+      sender: from,
+      to: [{ email: to }],
+      subject: 'LostPets — thư kiểm tra thiết lập',
+      textContent: 'Nhận được thư này nghĩa là thiết lập gửi thư đã chạy đúng.',
+    }, {
+      timeout: 15000,
+      headers: {
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json',
+        accept: 'application/json',
+      },
+    });
+    console.log('  GỬI ĐƯỢC. Mã thư:', (res.data && res.data.messageId) || '(không rõ)');
+    console.log('  Kiểm hộp thư, nhớ xem cả mục Spam.');
+  } catch (err) {
+    const d = err && err.response && err.response.data;
+    console.log('  HỎNG:', (err && err.message) || '', d ? JSON.stringify(d) : '');
+    const code = err && err.response && err.response.status;
+    if (/sender/i.test(JSON.stringify(d || {}))) {
+      console.log('\n  Địa chỉ người gửi chưa được xác minh ở Brevo.');
+      console.log('  Vào Brevo > Senders & IP > Senders, thêm và xác minh đúng địa chỉ trong MAIL_FROM.');
+    } else if (code === 401 || code === 403) {
+      console.log('');
+      console.log('  Khoá không có quyền gửi thư. Lúc tạo khoá phải đặt');
+      console.log('  "Transactional email" = All. Để Read là đọc được nhưng không gửi được.');
+    }
+    process.exit(1);
+  }
+}
+
+async function kiemSmtp(to) {
   const port = Number(process.env.SMTP_PORT) || 587;
   const tx = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -66,7 +136,6 @@ async function main() {
     secure: port === 465,
     auth: {
       user: process.env.SMTP_USER,
-      // Bỏ dấu cách giống cách Google hiển thị mật khẩu ứng dụng.
       pass: String(process.env.SMTP_PASS).replace(/\s/g, ''),
     },
     connectionTimeout: 10000,
@@ -79,26 +148,20 @@ async function main() {
     await tx.verify();
     console.log('  ĐĂNG NHẬP ĐƯỢC. Host, cổng, tài khoản và mật khẩu đều đúng.');
   } catch (err) {
-    console.log('  HỎNG:', err && err.message);
     const m = String((err && err.message) || '');
+    console.log('  HỎNG:', m);
     if (/Username and Password not accepted|BadCredentials|535/i.test(m)) {
-      console.log('\n  Nghĩa là tài khoản hoặc mật khẩu sai. Hay gặp nhất:');
-      console.log('   - Mật khẩu ứng dụng đã bị thu hồi mà chưa cập nhật lại trên Render');
+      console.log('\n  Tài khoản hoặc mật khẩu sai. Hay gặp nhất:');
+      console.log('   - Mật khẩu ứng dụng đã bị thu hồi mà chưa cập nhật lại');
       console.log('   - Dán nhầm mật khẩu Gmail thường thay vì mật khẩu ứng dụng 16 ký tự');
-      console.log('   - Chưa bật xác minh 2 bước nên mật khẩu ứng dụng không còn hiệu lực');
     } else if (/timeout|ETIMEDOUT|ECONNREFUSED/i.test(m)) {
-      console.log('\n  Nghĩa là không nối được tới máy chủ. Thường do sai cổng,');
-      console.log('  hoặc mạng/nhà cung cấp chặn cổng đó.');
+      console.log('\n  Không nối được tới máy chủ. Nếu đang chạy trên Render gói miễn phí');
+      console.log('  thì đây là tường lửa của họ chặn cổng SMTP — đặt BREVO_API_KEY để đi đường HTTP.');
     }
     process.exit(1);
   }
 
-  const to = process.argv[2];
-  if (!to) {
-    console.log('\nMuốn gửi thử một thư: node scripts/check-mail.js dia-chi@cua-ban.com');
-    return;
-  }
-
+  if (!to) return;
   console.log(H(`Gửi thử tới ${to}`));
   try {
     const info = await tx.sendMail({
@@ -113,6 +176,17 @@ async function main() {
     console.log('  HỎNG:', err && err.message);
     process.exit(1);
   }
+}
+
+async function main() {
+  if (!kiemBien()) {
+    console.log('\nCó biến thiếu ở trên, điền rồi chạy lại.');
+    process.exit(1);
+  }
+  const to = process.argv[2];
+  if (process.env.BREVO_API_KEY) await kiemApi(to);
+  else await kiemSmtp(to);
+  if (!to) console.log('\nMuốn gửi thử một thư: npm run check:mail -- dia-chi@cua-ban.com');
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });
