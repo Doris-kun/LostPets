@@ -148,6 +148,25 @@ describe('quyền quản trị lấy từ database, không lấy từ token', ()
   });
 });
 
+describe('trả trạng thái xác minh ra API', () => {
+  it('/auth/me nói rõ đã xác minh hay chưa', async () => {
+    const token = await dangKy();
+    const chua = await goiMe(token);
+
+    // Front-end cần biết để hiện lối vào trang xác minh. Không trả ra thì
+    // trang /verify-email không được liên kết từ đâu cả, chỉ tới được bằng
+    // đường dẫn trong thư — thư lạc là hết đường.
+    expect(chua.body.emailVerified).toBe(false);
+
+    await request(app).post('/auth/verify-email')
+      .send({ token: maTrongThu(/verify-email\?token=([a-f0-9]+)/) });
+
+    const { body } = await request(app).post('/auth/login')
+      .send({ email: 'nguoidung@example.com', password: 'matkhaucu' });
+    expect(body.user.emailVerified).toBe(true);
+  });
+});
+
 describe('tài khoản không còn thì token cũng không còn', () => {
   it('xoá tài khoản là mọi token của nó hết hiệu lực', async () => {
     const token = await dangKy();
