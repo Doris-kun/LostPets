@@ -1,4 +1,4 @@
-import { formatDistanceKm, distanceKm, directionsUrl, hasPoint, mapHtml, AREA_RADIUS_M, DEFAULT_CENTER } from '../map';
+import { areaFromCoords, formatDistanceKm, distanceKm, directionsUrl, hasPoint, mapHtml, AREA_RADIUS_M, DEFAULT_CENTER } from '../map';
 import { darkColors, lightColors } from '../theme';
 
 /*
@@ -239,5 +239,107 @@ describe('màu nền bản đồ lấy từ bảng màu, không chép tay', () =
   // một token thì nền bản đồ ngừng đổi theo chế độ, mà test trên vẫn xanh.
   it('hai chế độ ra hai màu khác nhau', () => {
     expect(nen(mapHtml({ isDark: false }))).not.toBe(nen(mapHtml({ isDark: true })));
+  });
+});
+
+/*
+ * Tra tên khu vực từ toạ độ.
+ *
+ * Gọi ra MÁY CHỦ CỦA NGƯỜI KHÁC (Nominatim), nên hai thứ phải đúng: toạ độ
+ * gửi đi đã được làm tròn, và mọi đường hỏng đều ra chuỗi rỗng chứ không ném
+ * lỗi — chỗ gọi là lúc người dùng đang điền tin đăng, dịch vụ bản đồ hỏng
+ * không được phép chặn họ đăng tin.
+ */
+describe('tra tên khu vực từ toạ độ', () => {
+  const goi = (body: unknown, ok = true) => {
+    // Khai rõ tham số url: không khai thì TypeScript hiểu bản giả là hàm không
+    // nhận gì, và gia.mock.calls[0][0] thành "phần tử không tồn tại".
+    const gia = jest.fn(async (_url: string) => ({ ok, json: async () => body }));
+    (globalThis as { fetch?: unknown }).fetch = gia;
+    return gia;
+  };
+
+  afterEach(() => {
+    delete (globalThis as { fetch?: unknown }).fetch;
+  });
+
+  /*
+   * Bài quan trọng nhất của cả nhóm này.
+   *
+   * Nút "dùng vị trí của tôi" trả về toạ độ chính xác tới từng mét. Database
+   * còn không lưu bản chính xác đó, nên không có lý do gì để một dịch vụ bên
+   * ngoài thấy nó. Làm tròn PHẢI xảy ra trước khi rời khỏi máy.
+   */
+  it('làm tròn toạ độ về lưới 500m TRƯỚC khi gửi đi', async () => {
+    const gia = goi({ address: { city_district: 'Quận 3', city: 'TP.HCM' } });
+
+    await areaFromCoords(10.7769123, 106.7009456, 'vi');
+
+    const url = String(gia.mock.calls[0][0]);
+    // 10,7769123 -> 10,775 và 106,7009456 -> 106,7 theo lưới 0,005
+    expect(url).toContain('lat=10.775');
+    expect(url).toContain('lon=106.7');
+    // Toạ độ chính xác KHÔNG được xuất hiện ở bất cứ đâu trong đường dẫn
+    expect(url).not.toContain('10.7769');
+    expect(url).not.toContain('106.7009');
+  });
+
+  it('ghép quận và tỉnh thành một chuỗi', async () => {
+    goi({ address: { city_district: 'Quận 3', city: 'TP.HCM' } });
+    await expect(areaFromCoords(10.77, 106.7, 'vi')).resolves.toBe('Quận 3, TP.HCM');
+  });
+
+  /*
+   * Nominatim không trả về cùng một bộ trường cho mọi nơi: thành phố lớn có
+   * city_district, vùng quê chỉ có village. Thứ tự ưu tiên đi từ cấp quận
+   * xuống, vì ô "Khu vực" là để người khác ước lượng chỗ nào.
+   */
+  it('thiếu city_district thì lấy tới suburb, rồi village', async () => {
+    goi({ address: { suburb: 'Phường 7', state: 'Lâm Đồng' } });
+    await expect(areaFromCoords(11.9, 108.4, 'vi')).resolves.toBe('Phường 7, Lâm Đồng');
+
+    goi({ address: { village: 'Xã Tân Phú', state: 'Đồng Nai' } });
+    await expect(areaFromCoords(11.0, 107.2, 'vi')).resolves.toBe('Xã Tân Phú, Đồng Nai');
+  });
+
+  it('chỉ có một mảnh thì không để lại dấu phẩy thừa', async () => {
+    goi({ address: { city: 'Đà Nẵng' } });
+    await expect(areaFromCoords(16.05, 108.2, 'vi')).resolves.toBe('Đà Nẵng');
+  });
+
+  it('xin tiếng Anh khi app đang để tiếng Anh', async () => {
+    const gia = goi({ address: { city: 'Da Nang' } });
+    await areaFromCoords(16.05, 108.2, 'en');
+    expect(String(gia.mock.calls[0][0])).toContain('accept-language=en');
+  });
+
+  // Bốn đường hỏng, cả bốn đều phải ra chuỗi rỗng chứ không ném.
+  it('toạ độ không hợp lệ: ra chuỗi rỗng, không gọi mạng', async () => {
+    const gia = goi({});
+    await expect(areaFromCoords(NaN, 106.7, 'vi')).resolves.toBe('');
+    expect(gia).not.toHaveBeenCalled();
+  });
+
+  it('máy chủ trả lỗi: ra chuỗi rỗng', async () => {
+    goi({}, false);
+    await expect(areaFromCoords(10.77, 106.7, 'vi')).resolves.toBe('');
+  });
+
+  it('mất mạng: ra chuỗi rỗng, không ném lỗi', async () => {
+    (globalThis as { fetch?: unknown }).fetch = jest.fn(async () => {
+      throw new Error('mat mang');
+    });
+    await expect(areaFromCoords(10.77, 106.7, 'vi')).resolves.toBe('');
+  });
+
+  it('trả về thứ không phải object: ra chuỗi rỗng', async () => {
+    goi('khong phai object');
+    await expect(areaFromCoords(10.77, 106.7, 'vi')).resolves.toBe('');
+
+    goi(null);
+    await expect(areaFromCoords(10.77, 106.7, 'vi')).resolves.toBe('');
+
+    goi({});  // có object nhưng không có address
+    await expect(areaFromCoords(10.77, 106.7, 'vi')).resolves.toBe('');
   });
 });

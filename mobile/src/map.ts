@@ -18,6 +18,7 @@
 // theo mà mình không biết, hỏng lúc nào không hay.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import type { Lang } from './word';
 import { darkColors, lightColors } from './theme';
 
 const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4';
@@ -200,6 +201,102 @@ export async function locateMe(): Promise<Point | null> {
     return point;
   } catch {
     return null;
+  }
+}
+
+/*
+ * ----------------------------------------------------------------------
+ * Tra tên khu vực từ toạ độ, để ô "Khu vực" tự điền khi người dùng ghim
+ * điểm lên bản đồ. Bản web làm y vậy ở PR #89.
+ *
+ * Dùng Nominatim của OpenStreetMap: miễn phí, không cần khoá, và app đã dùng
+ * ảnh nền bản đồ của họ rồi nên không thêm bên thứ ba nào mới.
+ * ----------------------------------------------------------------------
+ */
+
+const NOMINATIM = 'https://nominatim.openstreetmap.org/reverse';
+
+/*
+ * CÙNG lưới làm nhiễu với tầng schema ở back-end.
+ *
+ * Toạ độ phải được làm tròn TRƯỚC khi rời khỏi máy. Nút "dùng vị trí của tôi"
+ * trả về toạ độ chính xác tới từng mét; gửi nguyên như vậy ra một dịch vụ
+ * ngoài là tự phá nguyên tắc mà cả dự án đang giữ — database còn không lưu
+ * bản chính xác, thì không có lý do gì để một bên thứ ba thấy nó.
+ *
+ * Lưới 500m vẫn thừa sức cho ra đúng tên quận.
+ */
+const FUZZ_GRID = 0.005;
+const fuzz = (n: number) => Number((Math.round(n / FUZZ_GRID) * FUZZ_GRID).toFixed(6));
+
+interface NominatimAddress {
+  city_district?: string;
+  district?: string;
+  suburb?: string;
+  quarter?: string;
+  town?: string;
+  village?: string;
+  city?: string;
+  state?: string;
+}
+
+/*
+ * Ghép tên khu vực từ các mảnh Nominatim trả về.
+ *
+ * Thứ tự ưu tiên đi từ đơn vị hành chính cấp quận/huyện xuống phường, vì ô
+ * "Khu vực" là để người khác ước lượng chỗ nào — "Quận 3, TP.HCM" hữu ích hơn
+ * "Phường Võ Thị Sáu", mà cũng ít lộ hơn.
+ */
+function ghepTen(address: NominatimAddress = {}): string {
+  const quan =
+    address.city_district ||
+    address.district ||
+    address.suburb ||
+    address.quarter ||
+    address.town ||
+    address.village;
+  const tinh = address.city || address.state;
+  return [quan, tinh].filter(Boolean).join(', ');
+}
+
+/**
+ * Trả về tên khu vực, hoặc chuỗi rỗng nếu không tra được.
+ *
+ * KHÔNG ném lỗi. Chỗ gọi là lúc người dùng đang điền tin đăng — dịch vụ bản
+ * đồ hỏng thì họ tự gõ khu vực như trước, chứ không được chặn họ đăng tin.
+ */
+export async function areaFromCoords(lat: number, lng: number, lang: Lang): Promise<string> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return '';
+
+  const params = new URLSearchParams({
+    format: 'jsonv2',
+    lat: String(fuzz(lat)),
+    lon: String(fuzz(lng)),
+    // zoom 14 ra mức quận/huyện. Để mặc định thì ra cả số nhà.
+    zoom: '14',
+    'accept-language': lang === 'en' ? 'en' : 'vi',
+  });
+
+  try {
+    /*
+     * fetch chứ KHÔNG dùng api.ts.
+     *
+     * Thực thể axios trong api.ts tự gắn "Authorization: Bearer <token>" vào
+     * mọi lượt gọi. Token đăng nhập thì tuyệt đối không được gửi sang máy chủ
+     * của người khác — Nominatim không cần nó, và gửi đi là cho không một thứ
+     * mở được tài khoản.
+     */
+    const res = await fetch(`${NOMINATIM}?${params}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return '';
+
+    const data: unknown = await res.json();
+    if (!data || typeof data !== 'object') return '';
+
+    return ghepTen((data as { address?: NominatimAddress }).address);
+  } catch {
+    return '';
   }
 }
 

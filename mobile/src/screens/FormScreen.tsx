@@ -25,6 +25,7 @@ import type { AnalyzeResult, PetType, RootStackParamList } from '../types';
 import claim from '../claim';
 import ClaimCodeModal from '../components/ClaimCodeModal';
 import PetMap from '../components/PetMap';
+import { areaFromCoords } from '../map';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
 import { spacing } from '../theme';
@@ -146,7 +147,7 @@ export default function FormScreen({ route, navigation }: Props) {
   const { mode, pet } = route.params;
   const isEdit = mode === 'edit';
   const insets = useSafeAreaInsets();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { isLoggedIn } = useAuth();
   const { colors } = useTheme();
 
@@ -221,6 +222,30 @@ export default function FormScreen({ route, navigation }: Props) {
   // Generic: gõ update('breed', 5) là báo lỗi ngay, vì breed phải là chuỗi.
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
+
+  /*
+   * Ghim điểm lên bản đồ -> tự điền ô Khu vực.
+   *
+   * CHỈ điền khi ô còn trống. Người dùng đã gõ "Gần chợ Bến Thành, hẻm 25"
+   * thì đó là thứ họ cố ý viết, chi tiết hơn hẳn "Quận 1, TP.HCM" — đè lên là
+   * xoá công của họ, và họ sẽ không hiểu vì sao chữ mình vừa gõ biến mất.
+   *
+   * Toạ độ vào form NGAY, không chờ tra tên: tra tên là một lượt gọi mạng
+   * tới máy chủ của người khác, hỏng được và chậm được. Vị trí thì đã ghim
+   * rồi, không có lý do gì để nó đứng chờ.
+   */
+  const pickPoint = (lat: number | null, lng: number | null) => {
+    setForm((current) => ({ ...current, lat, lng }));
+
+    if (lat === null || lng === null) return;
+
+    areaFromCoords(lat, lng, lang).then((area) => {
+      if (!area) return;
+      // Kiểm lại trong setForm chứ không kiểm bên ngoài: giữa lúc chờ mạng
+      // người dùng có thể đã tự gõ khu vực rồi.
+      setForm((current) => (current.area.trim() ? current : { ...current, area }));
+    });
+  };
 
   // Đổi tiêu đề trên thanh điều hướng theo chế độ.
   useLayoutEffect(() => {
@@ -619,7 +644,7 @@ export default function FormScreen({ route, navigation }: Props) {
             mode="pick"
             lat={form.lat}
             lng={form.lng}
-            onChange={({ lat, lng }) => setForm((current) => ({ ...current, lat, lng }))}
+            onChange={({ lat, lng }) => pickPoint(lat, lng)}
           />
         </View>
 
