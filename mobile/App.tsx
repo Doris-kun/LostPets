@@ -21,6 +21,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import api from './src/api';
+import { WEB_URL } from './src/config';
 import { AuthProvider, useAuth } from './src/context/auth';
 import { LanguageProvider, useLanguage } from './src/context/language';
 import { ThemeProvider, useTheme } from './src/context/theme';
@@ -99,8 +100,29 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
  * CHÚ Ý: Expo Go có scheme riêng (exp://) nên đường dẫn lostpets:// không mở
  * được trong Expo Go. Phải cài bản APK thật mới thử được.
  */
+/*
+ * Scheme riêng của app, khai trong app.json. Để một chỗ vì hai nơi cùng
+ * dùng: bảng đường dẫn bên dưới, và phần bắt đường xác minh email.
+ */
+const MOBILE_SCHEME = 'lostpets';
+
 const linking = {
-  prefixes: ['lostpets://'],
+  /*
+   * Hai dạng đường dẫn, và phải có CẢ HAI.
+   *
+   * lostpets:// là dạng gọn, nhưng ứng dụng mail KHÔNG biến nó thành link bấm
+   * được: thư gửi dạng chữ thuần, mà mail chỉ tự nhận ra http và https. Người
+   * dùng nhìn thấy dòng chữ đó nhưng bấm vào không ra gì — đã gặp thật trên
+   * Gmail, dòng https hiện màu xanh còn dòng lostpets:// là chữ trắng.
+   *
+   * Nên nhận luôn đường https, vốn LUÔN bấm được. Cùng một đường dẫn: mở trên
+   * máy có app thì vào app, mở trên máy tính thì ra web — người gửi thư không
+   * phải đoán người nhận đang dùng máy gì.
+   *
+   * Để Android mở thẳng app mà không hỏi, còn cần file .well-known/
+   * assetlinks.json đặt trên chính web đó — xem intentFilters trong app.json.
+   */
+  prefixes: [`${MOBILE_SCHEME}://`, WEB_URL],
   config: {
     screens: {
       // Tên tham số ?token= khớp luôn với tên tham số của màn, nên không phải
@@ -179,12 +201,34 @@ function Root({
     const xuLy = async (url: string | null | undefined) => {
       if (!url || bo) return;
 
-      // Tự tách thay vì dùng expo-linking: thêm hẳn một thư viện chỉ để đọc
-      // một tham số thì không đáng.
-      const khop = /^lostpets:\/\/verify-email\?(?:.*&)?token=([^&]+)/.exec(url);
-      if (!khop) return;
+      /*
+       * Nhận hai dạng, và CHỈ hai dạng:
+       *
+       *   lostpets://verify-email?token=…
+       *   <WEB_URL>/verify-email?token=…
+       *
+       * So chuỗi đầu chứ không ghép một regex từ WEB_URL. Ghép regex động
+       * thì phải thoát ký tự cho tên miền (dấu chấm trong regex nghĩa là
+       * "ký tự bất kỳ"), mà một lỗi thoát ký tự thì không ai thấy — nó chỉ
+       * làm mẫu khớp rộng hơn ý định. So chuỗi không có cái bẫy đó.
+       *
+       * Buộc đúng tên miền của mình chứ không nhận "bất kỳ đường nào có
+       * đuôi /verify-email": Android đã chỉ định tuyến đúng tên miền này
+       * vào đây, nhưng mã xác minh là thứ không nên nhận từ chỗ chưa kiểm.
+       */
+      const dangApp = `${MOBILE_SCHEME}://verify-email?`;
+      const dangWeb = `${WEB_URL}/verify-email?`;
 
-      const token = decodeURIComponent(khop[1]);
+      const dau = url.startsWith(dangApp)
+        ? dangApp
+        : url.startsWith(dangWeb)
+          ? dangWeb
+          : "";
+      if (!dau) return;
+
+      // URLSearchParams tự giải mã, và không quan tâm token đứng thứ mấy —
+      // khác hẳn một regex chỉ chờ token ở ngay sau dấu hỏi.
+      const token = new URLSearchParams(url.slice(dau.length)).get('token') ?? '';
       if (!token) return;
 
       try {
