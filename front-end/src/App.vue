@@ -169,6 +169,7 @@ import Toast from './components/Toast.vue';
 import ChatWidget from './components/ChatWidget.vue';
 import ResolveNudge from './components/ResolveNudge.vue';
 import auth from './auth';
+import api from './api';
 export default {
   name: 'App',
   components: { Toast, ChatWidget, ResolveNudge },
@@ -191,6 +192,9 @@ export default {
     // Chuyển trang thì đóng menu, tránh nó còn mở lơ lửng trên trang mới.
     $route() { this.menuOpen = false; },
   },
+  created() {
+    this.lamMoiTaiKhoan();
+  },
   mounted() {
     document.addEventListener('click', this.closeOnOutside);
     document.addEventListener('keydown', this.closeOnEscape);
@@ -200,6 +204,25 @@ export default {
     document.removeEventListener('keydown', this.closeOnEscape);
   },
   methods: {
+    // Hỏi lại máy chủ xem tài khoản giờ ra sao, mỗi lần mở trang.
+    //
+    // Tốn một lượt gọi cho người đã đăng nhập, đổi lại mọi thay đổi từ nơi
+    // khác hiện ra sau một lần tải trang thay vì phải đăng xuất rồi đăng nhập
+    // lại. Đã gặp thật: xác minh email trên điện thoại xong, trên web vẫn
+    // không thấy mục Quản trị, vì web giữ bản sao cũ ghi role là 'user'.
+    //
+    // Hỏng thì im lặng bỏ qua: bản cũ vẫn dùng được, và token hết hiệu lực đã
+    // có bộ chặn lỗi của axios lo. Không được chặn ai dùng web chỉ vì lượt
+    // làm mới này thất bại.
+    async lamMoiTaiKhoan() {
+      if (!auth.isLoggedIn()) return;
+      try {
+        const { data } = await api.me();
+        if (data && data._id) auth.setUser(data);
+      } catch {
+        /* mạng chập chờn hoặc máy chủ đang ngủ: giữ nguyên bản cũ */
+      }
+    },
     closeOnOutside(e) {
       const el = this.$refs.account;
       if (this.menuOpen && el && !el.contains(e.target)) this.menuOpen = false;
