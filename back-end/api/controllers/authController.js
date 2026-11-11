@@ -12,7 +12,12 @@ const { isExpoToken } = require('../lib/push');
 const SALT_ROUNDS = 10;
 const MIN_PASSWORD_LENGTH = 6;
 
-const publicUser = (user) => ({ _id: user._id, name: user.name, email: user.email, role: user.role });
+const publicUser = (user) => ({
+  _id: user._id, name: user.name, email: user.email, role: user.role,
+  // Front-end cần biết để hiện lối vào trang xác minh cho ai chưa xác minh.
+  // Trạng thái của chính người đang đăng nhập, không phải bí mật.
+  emailVerified: Boolean(user.emailVerified),
+});
 
 const secretMissing = (res) => {
   if (process.env.JWT_SECRET) return false;
