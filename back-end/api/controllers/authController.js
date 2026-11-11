@@ -12,7 +12,21 @@ const { isExpoToken } = require('../lib/push');
 const SALT_ROUNDS = 10;
 const MIN_PASSWORD_LENGTH = 6;
 
-const publicUser = (user) => ({ _id: user._id, name: user.name, email: user.email, role: user.role });
+const publicUser = (user) => ({
+  _id: user._id, name: user.name, email: user.email, role: user.role,
+  emailVerified: Boolean(user.emailVerified),
+  // Tài khoản này SẼ thành quản trị viên nếu xác minh hộp thư.
+  //
+  // Có trường này thì front-end mới hiện lối vào trang xác minh đúng cho
+  // người cần. Không thể dùng role để quyết định: role đang là 'user' chính
+  // VÌ chưa xác minh, nên hỏi "có phải quản trị viên không" thì câu trả lời
+  // luôn là không, và mục đó không bao giờ hiện ra.
+  //
+  // Chỉ trả cho chính chủ tài khoản qua /auth/me. Muốn biết một địa chỉ có
+  // nằm trong ADMIN_EMAILS hay không thì phải đăng ký và đăng nhập được bằng
+  // chính địa chỉ đó — mà địa chỉ quản trị thì đã có chủ đăng ký rồi.
+  adminPending: Boolean(!user.emailVerified && isAdminEmail(user.email)),
+});
 
 const secretMissing = (res) => {
   if (process.env.JWT_SECRET) return false;
