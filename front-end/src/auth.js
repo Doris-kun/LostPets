@@ -38,6 +38,17 @@ export default {
     write(USER_KEY, JSON.stringify(user));
   },
 
+  // Cập nhật lại thông tin tài khoản mà KHÔNG đụng tới token.
+  //
+  // Cần vì bản sao tài khoản trong trình duyệt là ảnh chụp lúc đăng nhập và
+  // trước đây không bao giờ được làm mới. Đổi vai trò ở nơi khác — xác minh
+  // email trên điện thoại, được cấp quyền quản trị, bị gỡ quyền — thì máy này
+  // vẫn hiện thông tin cũ cho tới khi đăng xuất rồi đăng nhập lại.
+  setUser(user) {
+    state.user = user;
+    write(USER_KEY, JSON.stringify(user));
+  },
+
   logout() {
     state.token = null;
     state.user = null;
