@@ -86,11 +86,16 @@
                 {{ $t('mine.link') }}
               </router-link>
 
-              <!-- Lối vào trang xác minh, chỉ hiện khi chưa xác minh.
-                   Trước đây trang /verify-email KHÔNG được liên kết từ đâu cả — chỉ
-                   tới được bằng đường dẫn trong thư. Thư lạc là hết đường vào ô gửi
-                   lại, mà người dùng thì không tự đoán ra địa chỉ trang. -->
-              <router-link v-if="!auth.user.emailVerified" to="/verify-email" @click.native="menuOpen = false"
+              <!-- Lối vào trang xác minh. Trang /verify-email không được liên kết
+                   từ đâu khác — chỉ tới được bằng đường dẫn trong thư, mà thư lạc
+                   là hết đường vào ô gửi lại.
+
+                   Chỉ hiện cho tài khoản SẮP thành quản trị viên, không hiện cho
+                   mọi người chưa xác minh: xác minh hiện chỉ dùng đúng một việc là
+                   cấp quyền quản trị, nên với người dùng thường nó là một việc
+                   không đem lại gì, mà bày ra thì họ tưởng tài khoản mình đang bị
+                   hạn chế. -->
+              <router-link v-if="auth.user.adminPending" to="/verify-email" @click.native="menuOpen = false"
                 class="flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors"
                 :class="$route.path === '/verify-email' ? 'text-orange-600 bg-orange-50/60 font-semibold' : 'text-gray-600 hover:bg-gray-50'">
                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
