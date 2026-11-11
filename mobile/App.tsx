@@ -178,8 +178,49 @@ function Root({
   onSplashFinish: () => void;
 }) {
   const { colors, isDark } = useTheme();
-  const { isLoggedIn, login } = useAuth();
+  const { isLoggedIn, login, token } = useAuth();
   const { t } = useLanguage();
+
+  /*
+   * Hỏi lại máy chủ xem thông tin người dùng có còn đúng không.
+   *
+   * Bản lưu trong máy là ẢNH CHỤP lúc đăng nhập, và nó cũ dần:
+   *
+   *   - Xác minh hộp thư trên web -> emailVerified đổi, vai trò có thể lên
+   *     quản trị. App không hỏi lại thì tab Quản trị không bao giờ hiện ra,
+   *     dù máy chủ đã cấp quyền.
+   *   - Ngược lại, bị hạ quyền thì app vẫn bày tab Quản trị, bấm vào nhận 403
+   *     — trông như app hỏng.
+   *   - Người đăng nhập từ bản app cũ không có trường emailVerified, nên dải
+   *     nhắc xác minh không bao giờ hiện và họ hết đường gửi lại thư.
+   *
+   * Đặt ở ĐÂY chứ không trong context/auth.tsx, dù về mặt ý nghĩa nó thuộc về
+   * bên đó: api.ts đã import auth.tsx để lấy token, nên auth.tsx gọi ngược lại
+   * api.ts là thành vòng lặp import. Vòng lặp module chạy được hay không tuỳ
+   * thứ tự nạp — thứ không nên đánh cược.
+   *
+   * Không chờ nó xong mới cho dùng app: dữ liệu cũ đã nằm trên màn hình rồi,
+   * lượt này chỉ sửa lại nếu có gì khác. Nuốt lỗi mạng vì mất mạng thì vẫn
+   * dùng được bằng dữ liệu cũ; riêng 401 đã có bộ chặn trong api.ts lo.
+   */
+  useEffect(() => {
+    if (!token) return;
+
+    let bo = false;
+    api
+      .me()
+      .then(({ data }) => {
+        if (!bo) login(token, data);
+      })
+      .catch(() => {});
+
+    return () => {
+      bo = true;
+    };
+    // Chỉ chạy lại khi ĐỔI phiên, không chạy theo login: login đổi tham chiếu
+    // sau mỗi lượt gọi của chính nó, để vào đây là vòng lặp vô tận.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   /*
    * Xác minh email mở từ đường dẫn trong thư: lostpets://verify-email?token=…

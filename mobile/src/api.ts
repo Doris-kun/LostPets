@@ -176,6 +176,16 @@ export default {
    */
   verifyEmail: (data: { token: string }) =>
     http.post<AuthResult>('/auth/verify-email', data),
+
+  /*
+   * Gửi lại thư xác minh.
+   *
+   * Trả về CÙNG MỘT CÂU dù email có tài khoản hay không, và cả khi tài khoản
+   * đó đã xác minh rồi — cùng lý do với quên mật khẩu: không để chỗ này thành
+   * công cụ dò xem ai đã đăng ký.
+   */
+  resendVerification: (data: { email: string }) =>
+    http.post<{ message: string }>('/auth/resend-verification', data),
   me: () => http.get<User>('/auth/me'),
 
   /*

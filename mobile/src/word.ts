@@ -73,6 +73,15 @@ const vi = {
   'auth.expiredTitle': 'Phiên đăng nhập đã hết',
   'auth.expiredText':
     'Bạn vừa bị đăng xuất. Thường là do mật khẩu đã đổi ở nơi khác. Hãy đăng nhập lại.',
+  'verify.needTitle': 'Chưa xác minh email',
+  'verify.needText':
+    'Bấm đường dẫn trong thư đã gửi tới hộp thư của bạn. Không thấy thư thì kiểm cả hộp thư rác.',
+  'verify.needAdmin':
+    'Tài khoản này sẽ có quyền quản trị sau khi xác minh. Trước đó app chỉ cho dùng như người thường.',
+  'verify.resend': 'Gửi lại thư',
+  'verify.sending': 'Đang gửi...',
+  'verify.resentTitle': 'Đã gửi',
+  'verify.resentText': 'Nếu hộp thư này chưa xác minh, thư hướng dẫn vừa được gửi tới. Kiểm cả hộp thư rác.',
   'verify.doneTitle': 'Đã xác minh email',
   'verify.doneText': 'Tài khoản của bạn đã được xác minh và đăng nhập xong.',
   'verify.failTitle': 'Không xác minh được',
@@ -480,6 +489,15 @@ const en: Record<WordKey, string> = {
   'auth.expiredTitle': 'Session expired',
   'auth.expiredText':
     'You have been signed out. This usually means the password was changed elsewhere. Please sign in again.',
+  'verify.needTitle': 'Email not verified',
+  'verify.needText':
+    'Tap the link in the email we sent you. If it is not there, check your spam folder.',
+  'verify.needAdmin':
+    'This account gets admin rights once verified. Until then the app treats it as a normal account.',
+  'verify.resend': 'Send again',
+  'verify.sending': 'Sending...',
+  'verify.resentTitle': 'Sent',
+  'verify.resentText': 'If this inbox is unverified, the instructions have just been sent. Check your spam folder too.',
   'verify.doneTitle': 'Email verified',
   'verify.doneText': 'Your account has been verified and you are now signed in.',
   'verify.failTitle': 'Could not verify',

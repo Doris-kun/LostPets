@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/auth';
+import api from '../api';
 import { clearPets } from '../cache';
 import { forgetPushToken } from '../notify';
 import type { MainTabParamList, RootStackParamList } from '../types';
@@ -37,6 +39,29 @@ export default function SettingsScreen({ navigation }: Props) {
   const { t, lang, setLang } = useLanguage();
   const { colors, isDark, scheme, setScheme } = useTheme();
   const { user, isLoggedIn, isAdmin, logout } = useAuth();
+
+  /*
+   * Đang gửi lại thư xác minh. Chỉ để đổi chữ trên nút — back-end có bộ đếm
+   * chặn gửi quá nhiều, nên bấm liên tục là bị khoá một lúc.
+   */
+  const [resending, setResending] = useState(false);
+
+  const resendVerify = async () => {
+    if (!user?.email) return;
+
+    setResending(true);
+    try {
+      await api.resendVerification({ email: user.email });
+      Alert.alert(t('verify.resentTitle'), t('verify.resentText'));
+    } catch {
+      // Nuốt lỗi và vẫn báo "đã gửi": back-end cố ý trả cùng một câu dù email
+      // có tài khoản hay không, để chỗ này không thành công cụ dò. Mình báo
+      // khác đi lúc hỏng thì tự phá mất điều đó.
+      Alert.alert(t('verify.resentTitle'), t('verify.resentText'));
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(t('auth.welcome', { name: user?.name || '' }), t('auth.logoutConfirm'), [
@@ -133,6 +158,50 @@ export default function SettingsScreen({ navigation }: Props) {
             >
               <Text className="text-[14px] font-bold text-primary">{t('admin.link')}</Text>
             </TouchableOpacity>
+          )}
+
+          {/*
+            Dải nhắc xác minh, chỉ hiện khi back-end nói RÕ là chưa xác minh.
+
+            Kiểm === false chứ không phải !emailVerified: bản app cũ lưu user
+            vào ổ đĩa khi back-end chưa có trường này, nên người đang đăng nhập
+            sẵn đọc lên undefined. Kiểm lỏng thì họ bị nhắc xác minh dù đã xác
+            minh từ lâu, và không có cách nào làm dải đó biến mất.
+
+            Có dải này vì thư xác minh lạc vào hộp thư rác là hết đường gửi
+            lại — người dùng không tự đoán ra địa chỉ trang web được. Bản web
+            vừa vá đúng chỗ này ở PR #102.
+          */}
+          {user?.emailVerified === false && (
+            <View className="mt-lg rounded-md border-[1.5px] border-secret-border bg-secret-bg p-md">
+              <Text className="text-[13px] font-extrabold text-secret-text">
+                {t('verify.needTitle')}
+              </Text>
+              <Text className="mt-sm text-[12px] leading-[18px] text-text-soft">
+                {t('verify.needText')}
+              </Text>
+
+              {/* Nói thêm vì sao tab Quản trị biến mất — không nói thì người
+                  dùng tưởng app lỗi hoặc tưởng mình bị tước quyền. */}
+              {user?.adminPending && (
+                <Text className="mt-sm text-[12px] leading-[18px] text-secret-text">
+                  {t('verify.needAdmin')}
+                </Text>
+              )}
+
+              <TouchableOpacity
+                className={`mt-md min-h-11 items-center justify-center rounded-md bg-primary ${
+                  resending ? 'opacity-50' : ''
+                }`}
+                onPress={resendVerify}
+                disabled={resending}
+                activeOpacity={0.85}
+              >
+                <Text className="text-[13px] font-bold text-on-primary">
+                  {t(resending ? 'verify.sending' : 'verify.resend')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
 
           <TouchableOpacity

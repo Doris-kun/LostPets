@@ -123,6 +123,22 @@ export interface User {
   name: string;
   email: string;
   role: 'user' | 'admin';
+  /*
+   * Hộp thư đã xác minh chưa.
+   *
+   * KHÔNG BẮT BUỘC, và đó là cố ý: bản app cũ lưu user vào ổ đĩa khi back-end
+   * chưa có trường này, nên người đang đăng nhập sẵn sẽ đọc lên undefined.
+   * Chỗ dùng phải kiểm === false, đừng kiểm !emailVerified — không thì mọi
+   * người dùng cũ bị nhắc xác minh dù họ đã xác minh từ lâu.
+   */
+  emailVerified?: boolean;
+  /*
+   * Tài khoản này SẼ thành quản trị viên nếu xác minh hộp thư.
+   *
+   * Không thể dùng role để đoán: role đang là 'user' chính VÌ chưa xác minh.
+   * Back-end chỉ trả trường này cho chính chủ qua /auth/me.
+   */
+  adminPending?: boolean;
 }
 
 export interface AuthResult {
