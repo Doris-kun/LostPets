@@ -61,13 +61,7 @@
           "image": "./assets/logo-full.png",
           "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF",
-          "dark": {
-            "image": "./assets/logo-dark.png",
-            "imageWidth": 220,
-            "resizeMode": "contain",
-            "backgroundColor": "#0E1A23"
-          }
+          "backgroundColor": "#FFFFFF"
         }
       ],
       [

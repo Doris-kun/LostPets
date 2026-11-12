@@ -8,7 +8,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colorScheme } from 'nativewind';
 import { darkColors, darkShadow, lightColors, lightShadow, type Colors } from '../theme';
@@ -25,9 +24,14 @@ export type Shadow = typeof lightShadow;
  * Cùng cách làm với context/language.js — cũng là "giữ một lựa chọn của người
  * dùng rồi phát cho cả app". Khác hai điểm:
  *
- *   1. Có giá trị mặc định THÔNG MINH: lần đầu mở app thì theo luôn cài đặt
- *      của điện thoại. Máy đang để nền tối thì app mở ra cũng tối, không bắt
- *      người dùng phải tự chỉnh.
+ *   1. KHÔNG đọc cài đặt sáng/tối của điện thoại. Lần đầu mở app là sáng,
+ *      sau đó chỉ đổi khi người dùng tự chọn trong màn Cài đặt.
+ *
+ *      Trước đây có đọc, và nó đẻ ra lỗi màn chào: màn chào GỐC chạy trước cả
+ *      JavaScript nên nó chỉ biết cài đặt của máy, còn màn chào của app thì
+ *      biết lựa chọn trong app. Máy để tối mà app để sáng là hai màn ra hai
+ *      màu khác nhau — nhìn ra như logo hiện hai lần, cái sau đè lên cái trước.
+ *      Bỏ hẳn một trong hai nguồn thì hết đường lệch.
  *
  *   2. Đổi chế độ làm TOÀN BỘ bảng màu đổi theo. Phần đó nay do NativeWind
  *      lo: colorScheme.set() ở dưới đổi giá trị các biến --color-*, nên mọi
@@ -47,33 +51,27 @@ export interface ThemeValue {
 const ThemeContext = createContext<ThemeValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  /*
-   * Cài đặt sáng/tối của chính điện thoại. Trả 'light', 'dark', hoặc null khi
-   * chưa đọc được. Người dùng đổi trong Cài đặt máy thì giá trị này tự đổi.
-   */
-  const systemScheme = useColorScheme();
-
-  // null = chưa đọc xong ổ đĩa, đang tạm theo máy.
+  // null = chưa đọc xong ổ đĩa, hoặc người dùng chưa chọn bao giờ.
   const [savedScheme, setSavedScheme] = useState<Scheme | null>(null);
 
   /*
    * Đã đọc xong lựa chọn trong ổ đĩa chưa.
    *
    * Cần vì đọc ổ đĩa mất một nhịp, và trong nhịp đó app ĐÃ VẼ RỒI — vẽ bằng
-   * cài đặt của máy, vì chưa biết người dùng đã chọn gì. Đọc xong mới đổi
+   * màu sáng mặc định, vì chưa biết người dùng đã chọn gì. Đọc xong mới đổi
    * sang lựa chọn thật.
    *
-   * Hậu quả thấy được: máy để tối mà app để sáng thì màn chào hiện ra TỐI
-   * một nhịp rồi mới chuyển sang sáng. Người dùng thấy một màn đen chớp lên
-   * rồi biến mất — tưởng app lỗi.
+   * Hậu quả thấy được nếu không chặn: người dùng để app chế độ tối thì màn
+   * chào hiện ra SÁNG một nhịp rồi mới chuyển sang tối — một mảng trắng chớp
+   * lên rồi biến mất, tưởng app lỗi.
    *
    * Chặn không vẽ gì cho tới khi biết chắc. Màn chào gốc của hệ điều hành
    * vẫn đang che màn hình trong lúc đó, nên không ai thấy khoảng trống này.
    */
   const [ready, setReady] = useState(false);
 
-  // Lựa chọn riêng trong app luôn thắng cài đặt máy. Chưa chọn gì thì theo máy.
-  const scheme = savedScheme ?? systemScheme ?? 'light';
+  // Chỉ có một nguồn duy nhất: lựa chọn trong app. Chưa chọn gì thì sáng.
+  const scheme = savedScheme ?? 'light';
 
   // Đọc lựa chọn của lần chạy trước. Chạy đúng một lần lúc app mở.
   useEffect(() => {
@@ -123,13 +121,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
    *
    * useLayoutEffect chứ không useEffect: nó chạy TRƯỚC khi màn hình được vẽ
    * ra. Dùng useEffect thì khung hình đầu tiên vẽ bằng chế độ mặc định của
-   * ĐIỆN THOẠI rồi mới nhảy sang chế độ của app — máy để tối mà app để sáng
-   * thì thấy một nháy tối rồi mới sáng.
+   * NativeWind rồi mới nhảy sang chế độ của app — app để tối thì thấy một
+   * nháy sáng rồi mới tối.
    *
-   * Chỗ khó nhất trước đây là màn chào riêng của app: nó nằm trong Modal, mà
+   * Vẫn còn đúng một chỗ không cứu được: màn chào. Nó nằm trong Modal, mà
    * hiệu ứng của component con chạy TRƯỚC của component cha, nên lúc nó gắn
-   * thì dòng này chưa chạy. Màn chào đó nay đã bỏ — app dùng thẳng màn chào
-   * gốc của hệ điều hành, nên không còn chỗ nào vẽ trước dòng này nữa.
+   * thì dòng này chưa chạy. Màn chào lấy màu thẳng từ useTheme() — xem ghi
+   * chú trong SplashScreen.tsx.
    */
   useLayoutEffect(() => {
     colorScheme.set(scheme);
