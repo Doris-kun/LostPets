@@ -1,0 +1,737 @@
+/*
+ * Bản đồ dùng chung — hằng số, và trang HTML Leaflet nhúng vào WebView.
+ *
+ * TẠI SAO LÀ WEBVIEW CHỨ KHÔNG PHẢI THƯ VIỆN BẢN ĐỒ THẬT?
+ *
+ * react-native-maps là cách "chuẩn" hơn, nhưng nó gọi tới Google Maps SDK:
+ * phải xin khoá API, khai báo khoá trong app.json, và khoá đó đi kèm thẻ tín
+ * dụng. Với một bài tập ở trường thì vướng cả ba.
+ *
+ * Nhúng Leaflet vào WebView thì KHÔNG cần khoá, không cần tài khoản, không
+ * giới hạn lượt xem. Web của nhóm cũng đang dùng Leaflet nên hai bên giống nhau.
+ *
+ * Đổi lại: phải nói chuyện với bản đồ qua postMessage thay vì gọi hàm trực
+ * tiếp. Đó là lý do file này trả về một CHUỖI HTML chứ không phải component.
+ */
+
+// Leaflet tải từ CDN. Ghim số phiên bản — để trống thì bản mới ra là app đổi
+// theo mà mình không biết, hỏng lúc nào không hay.
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
+import type { Lang } from './word';
+import { darkColors, lightColors } from './theme';
+
+const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4';
+
+/*
+ * NỀN BẢN ĐỒ — dùng OpenStreetMap: không khoá, không tài khoản, không thẻ.
+ *
+ * Tôi đã thử đổi sang nền của CARTO cho đẹp hơn và SAI: nền của họ giờ bắt
+ * phải có khoá API. Ô bản đồ vẫn trả về ảnh thật nhưng đóng dấu chìm
+ * "API KEY REQUIRED" đè lên. Tôi lại đi kiểm tra bằng mã trả về HTTP, thấy 200
+ * nên tưởng chạy được — mã 200 chỉ nói máy chủ CÓ trả lời, không nói thứ trả
+ * về dùng được. Bài học: kiểm tra ảnh thì phải nhìn vào ảnh.
+ *
+ * Google Maps cũng không dùng được, còn vướng hơn: khoá của họ bắt gắn thẻ
+ * tín dụng.
+ *
+ * Đổi lại, OpenStreetMap chỉ có nền SÁNG. Chế độ tối phải tự lo — xem phần
+ * giải thích ở chỗ đặt bộ lọc màu bên dưới.
+ */
+const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+// Mặc định nhìn về TP.HCM, nơi phần lớn tin đang tập trung. Giống web.
+export const DEFAULT_CENTER = [10.776, 106.7];
+export const DEFAULT_ZOOM = 12;
+
+// Mức phóng khi đã biết một điểm cụ thể.
+export const FOCUS_ZOOM = 15;
+
+/*
+ * Bán kính vùng vẽ quanh mỗi điểm, tính bằng mét.
+ *
+ * Back-end làm tròn toạ độ về lưới 0,005 độ trước khi lưu (xem hàm fuzz trong
+ * api/models/petModel.js) — khoảng 550m ở vĩ độ Việt Nam. Nên đây là độ chính
+ * xác THẬT SỰ mà app có, không hơn.
+ *
+ * Lúc XEM một tin thì vẽ vùng tròn này, không vẽ một chấm nhỏ: chấm nhỏ ngụ ý
+ * biết chính xác hơn sự thật. Nhưng lúc ĐANG CHỌN thì không vẽ — người chọn
+ * cần nhìn rõ đường phố để ngắm cho đúng, vòng tròn to che mất bản đồ.
+ */
+export const AREA_RADIUS_M = 550;
+
+/*
+ * Đổi một giá trị sang số, nhưng "chưa có gì" phải ra NaN chứ không ra 0.
+ *
+ * CẨN THẬN VỚI Number(): Number(null) ra 0, Number('') cũng ra 0, mà 0 lại là
+ * một toạ độ hợp lệ — đúng giữa Đại Tây Dương, ngoài khơi châu Phi.
+ *
+ * Đây là lỗi tôi đã mắc thật, và nó rất khó nhìn ra: app không hề báo lỗi,
+ * bản đồ vẫn chạy ngon lành, chỉ là nó hiện một vùng biển xanh nhạt mênh mông.
+ * Nhìn như bản đồ không tải được, nên tôi đi sửa nhầm hai lần — đổ cho bộ lọc
+ * màu, rồi đổ cho nhà cung cấp ô bản đồ.
+ *
+ * Back-end cũng có đúng cái bẫy này và đã chú thích sẵn, xem pickEditable
+ * trong api/controllers/petController.js. Tôi đọc qua rồi vẫn dẫm phải.
+ */
+const toNumber = (v: unknown): number =>
+  v === null || v === undefined || v === '' ? NaN : Number(v);
+
+// Toạ độ chỉ dùng được khi có đủ cả hai. Thiếu một nửa thì coi như chưa có.
+/*
+ * Nhận unknown cho lat/lng chứ không nhận number, vì chính chỗ này là nơi
+ * kiểm tra. Khai là number thì TypeScript tin luôn rồi hàm thành vô dụng —
+ * mà dữ liệu thật từ máy chủ có thể là null, hoặc chuỗi khi đi qua FormData.
+ */
+/*
+ * Kiểu trả về viết là "o is ..." chứ không phải boolean, nên sau khi gọi hàm
+ * này TypeScript TỰ BIẾT lat và lng chắc chắn là số:
+ *
+ *   if (!hasPoint(p)) return null;
+ *   directionsUrl(p.lat, p.lng);   // không phải ép kiểu, không phải kiểm lại
+ *
+ * Viết là boolean thì nơi gọi vẫn thấy "number | null" và phải ép kiểu — mà
+ * ép kiểu là tự tay tắt đúng cái mình vừa bật lên.
+ */
+export function hasPoint<T extends { lat?: unknown; lng?: unknown }>(
+  o: T | null | undefined,
+): o is T & { lat: number; lng: number } {
+  return !!o && Number.isFinite(toNumber(o.lat)) && Number.isFinite(toNumber(o.lng));
+}
+
+/*
+ * Mở app bản đồ của chính điện thoại để chỉ đường.
+ *
+ * Dùng đường liên kết chung của Google Maps: không cần khoá API, và trên điện
+ * thoại hệ điều hành tự bắt lấy link này rồi mở app Maps thay vì trình duyệt.
+ */
+/*
+ * Khoảng cách giữa hai điểm trên mặt đất, tính bằng km.
+ *
+ * Công thức haversine — coi Trái Đất là hình cầu. Sai số dưới 0.5% so với
+ * hình thật, mà mình chỉ cần câu "3 tin trong bán kính 2km" nên thừa chính
+ * xác.
+ *
+ * KHÔNG dùng được phép trừ toạ độ rồi lấy căn: 1 độ kinh tuyến ở xích đạo
+ * dài 111km nhưng ở vĩ độ 60 chỉ còn 55km. Việt Nam nằm gần xích đạo nên
+ * sai số nhỏ, nhưng viết sai vẫn là viết sai.
+ */
+const RADIUS_EARTH_KM = 6371;
+const toRad = (deg: number): number => (deg * Math.PI) / 180;
+
+export function distanceKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * RADIUS_EARTH_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Bán kính coi là "gần tôi", tính bằng km. */
+export const NEAR_ME_KM = 2;
+
+/*
+ * Vị trí người dùng, do bản đồ lưu lại sau khi họ bấm "Gần tôi".
+ *
+ * Để ở đây chứ không để riêng trong PetMapView, vì thẻ tin ở Trang chủ cũng
+ * cần đọc để hiện khoảng cách. Hai nơi cùng gõ chuỗi 'map:me' thì sớm muộn
+ * cũng lệch nhau một chữ, mà lệch kiểu đó không ai nhận ra — chỉ thấy khoảng
+ * cách im lặng biến mất. Bản web làm y vậy, xem front-end PR #71.
+ */
+export const ME_KEY = 'map:me';
+
+export interface Point {
+  lat: number;
+  lng: number;
+}
+
+export async function saveMe(point: Point): Promise<void> {
+  try {
+    await AsyncStorage.setItem(ME_KEY, JSON.stringify([point.lat, point.lng]));
+  } catch {
+    /* không lưu được thì thôi, lần sau bấm "Gần tôi" lại */
+  }
+}
+
+export async function readSavedMe(): Promise<Point | null> {
+  try {
+    const raw: unknown = JSON.parse((await AsyncStorage.getItem(ME_KEY)) || 'null');
+    if (!Array.isArray(raw) || raw.length !== 2) return null;
+    const [lat, lng] = raw;
+    // Kiểm từng số: file lưu có thể hỏng, hoặc do bản app cũ ghi kiểu khác.
+    // Tin bừa thì bản đồ bay ra giữa đại dương, lỗi này đã xảy ra một lần rồi.
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  } catch {
+    return null;
+  }
+}
+
+/*
+ * Xin quyền, lấy toạ độ, lưu lại — ba bước trong một lượt gọi.
+ *
+ * Để ở đây vì CẢ HAI chỗ đều cần: nút "Gần tôi" trên bản đồ, và nút "Hiện
+ * khoảng cách" ở Trang chủ. Chép thủ tục này làm hai bản thì sớm muộn một bên
+ * quên gọi saveMe, và triệu chứng là khoảng cách hiện ở màn này mà không hiện
+ * ở màn kia — thứ rất khó lần ra vì cả hai đều "chạy".
+ *
+ * Trả về null cho MỌI đường hỏng: người dùng từ chối, máy tắt GPS, hết giờ
+ * chờ. Chỗ gọi không cần phân biệt vì câu nói với người dùng là một: không
+ * lấy được vị trí. Gom lại cũng để không chỗ nào quên bọc try.
+ *
+ * KHÔNG tự gọi hàm này lúc mở màn hình. Trang chính sách đã cam kết "chỉ hỏi
+ * vị trí khi bạn tự bấm nút", nên nó phải đi sau một cú bấm thật.
+ */
+/*
+ * Đọc vị trí, ưu tiên bản hệ điều hành đã có sẵn.
+ *
+ * VÌ SAO KHÔNG GỌI THẲNG getCurrentPositionAsync
+ *
+ * Hàm đó bắt máy đi ĐO LẠI từ đầu — ngoài trời mất vài giây, trong nhà có khi
+ * hàng chục giây vì phải chờ bắt được vệ tinh hoặc dò qua Wi-Fi. Người dùng
+ * ngồi nhìn nút "Đang định vị..." mà không biết phải chờ bao lâu. Tài liệu của
+ * chính expo-location cũng khuyên thử bản đã lưu trước.
+ *
+ * Hệ điều hành gần như luôn giữ sẵn một vị trí từ lần gần nhất có app nào đó
+ * hỏi — bản đồ, thời tiết, app giao đồ ăn. Lấy bản đó là TỨC THÌ.
+ *
+ * Nhận sai số tới 1km, và đó không phải nhân nhượng: toạ độ bị làm tròn về
+ * lưới ~550m trước khi lưu, rồi lọc thông báo thì theo bán kính 10km. Đo chính
+ * xác tới từng mét cũng bị làm mờ đi hết.
+ *
+ * Quá 5 phút thì coi như cũ — người ta có thể đã đi chỗ khác.
+ */
+async function readPosition(): Promise<Point | null> {
+  const nhanh = await Location.getLastKnownPositionAsync({
+    maxAge: 5 * 60 * 1000,
+    requiredAccuracy: 1000,
+  });
+  if (nhanh) return { lat: nhanh.coords.latitude, lng: nhanh.coords.longitude };
+
+  // Không có bản nào dùng được thì đành đo lại. Balanced (~100m) chứ không
+  // High: High bắt bật GPS thật, trong nhà có khi không ra kết quả.
+  const pos = await Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.Balanced,
+  });
+  return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+}
+
+export async function locateMe(): Promise<Point | null> {
+  try {
+    const { granted } = await Location.requestForegroundPermissionsAsync();
+    if (!granted) return null;
+
+    const point = await readPosition();
+    if (!point) return null;
+
+    await saveMe(point);
+    return point;
+  } catch {
+    return null;
+  }
+}
+
+/*
+ * Như locateMe nhưng KHÔNG lưu lại, và trả toạ độ đã cắt còn 6 chữ số.
+ *
+ * Dùng cho ô chọn vị trí lúc đăng tin: ở đó điểm ghim là "chỗ con vật mất",
+ * không phải "chỗ người xem đang đứng" — người dùng bấm nút này rồi kéo pin đi
+ * chỗ khác là chuyện thường. Lưu lại thì thẻ tin ở Trang chủ sẽ đo khoảng cách
+ * từ một chỗ người dùng không hề đứng.
+ */
+export async function pickPosition(): Promise<Point | null> {
+  const point = await readPosition();
+  if (!point) return null;
+
+  // 6 chữ số ~ 10cm. Dài hơn là vô ích.
+  return { lat: Number(point.lat.toFixed(6)), lng: Number(point.lng.toFixed(6)) };
+}
+
+/*
+ * ----------------------------------------------------------------------
+ * Tra tên khu vực từ toạ độ, để ô "Khu vực" tự điền khi người dùng ghim
+ * điểm lên bản đồ. Bản web làm y vậy ở PR #89.
+ *
+ * Dùng Nominatim của OpenStreetMap: miễn phí, không cần khoá, và app đã dùng
+ * ảnh nền bản đồ của họ rồi nên không thêm bên thứ ba nào mới.
+ * ----------------------------------------------------------------------
+ */
+
+const NOMINATIM = 'https://nominatim.openstreetmap.org/reverse';
+
+/*
+ * CÙNG lưới làm nhiễu với tầng schema ở back-end.
+ *
+ * Toạ độ phải được làm tròn TRƯỚC khi rời khỏi máy. Nút "dùng vị trí của tôi"
+ * trả về toạ độ chính xác tới từng mét; gửi nguyên như vậy ra một dịch vụ
+ * ngoài là tự phá nguyên tắc mà cả dự án đang giữ — database còn không lưu
+ * bản chính xác, thì không có lý do gì để một bên thứ ba thấy nó.
+ *
+ * Lưới 500m vẫn thừa sức cho ra đúng tên quận.
+ */
+const FUZZ_GRID = 0.005;
+const fuzz = (n: number) => Number((Math.round(n / FUZZ_GRID) * FUZZ_GRID).toFixed(6));
+
+interface NominatimAddress {
+  city_district?: string;
+  district?: string;
+  suburb?: string;
+  quarter?: string;
+  town?: string;
+  village?: string;
+  city?: string;
+  state?: string;
+}
+
+/*
+ * Rút gọn tên tỉnh/thành cho khớp cách người ta viết, và cho khớp dữ liệu đã
+ * có trong database ("Quận 3, TP.HCM").
+ *
+ * Đây KHÔNG phải chuyện cho đẹp. Ô "Khu vực" được lọc bằng so chuỗi, nên
+ * "Thành phố Hồ Chí Minh" và "TP.HCM" là hai thứ không tìm thấy nhau. Một bên
+ * tự điền dạng dài còn người dùng gõ dạng ngắn thì bộ lọc hỏng mà không ai
+ * hiểu vì sao — tin vẫn nằm đó nhưng lọc ra rỗng.
+ *
+ * Phải khớp từng chữ với rutGonTinh trong front-end/src/geocode.js, không thì
+ * web và app tự điền ra hai chuỗi khác nhau cho cùng một chỗ.
+ */
+function rutGonTinh(ten: string): string {
+  if (/hồ chí minh/i.test(ten)) return 'TP.HCM';
+  return ten.replace(/^(Thành phố|Tỉnh)\s+/i, '');
+}
+
+/*
+ * Ghép tên khu vực từ các mảnh Nominatim trả về.
+ *
+ * Thứ tự ưu tiên đi từ đơn vị hành chính cấp dưới tỉnh xuống, vì ô "Khu vực"
+ * là để người khác ước lượng chỗ nào — "Quận 3, TP.HCM" hữu ích hơn "Phường
+ * Võ Thị Sáu", mà cũng ít lộ hơn.
+ *
+ * Từ 1/7/2025 Việt Nam bỏ cấp quận huyện, chạy chính quyền hai cấp: tỉnh và
+ * phường/xã. Nominatim đã cập nhật theo, nên với địa chỉ ở Việt Nam nó chỉ
+ * trả về phường (suburb) và thành phố — không còn trường quận nào cả. Giữ
+ * city_district và district làm đường lui cho dữ liệu cũ hoặc nước khác.
+ */
+function ghepTen(address: NominatimAddress = {}): string {
+  const cap2 =
+    address.city_district ||
+    address.district ||
+    address.suburb ||
+    address.quarter ||
+    address.town ||
+    address.village;
+  const tinh = address.city || address.state;
+  return [cap2, tinh && rutGonTinh(tinh)].filter(Boolean).join(', ');
+}
+
+/**
+ * Trả về tên khu vực, hoặc chuỗi rỗng nếu không tra được.
+ *
+ * KHÔNG ném lỗi. Chỗ gọi là lúc người dùng đang điền tin đăng — dịch vụ bản
+ * đồ hỏng thì họ tự gõ khu vực như trước, chứ không được chặn họ đăng tin.
+ */
+export async function areaFromCoords(lat: number, lng: number, lang: Lang): Promise<string> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return '';
+
+  const params = new URLSearchParams({
+    format: 'jsonv2',
+    lat: String(fuzz(lat)),
+    lon: String(fuzz(lng)),
+    // zoom 14 ra mức quận/huyện. Để mặc định thì ra cả số nhà.
+    zoom: '14',
+    'accept-language': lang === 'en' ? 'en' : 'vi',
+  });
+
+  try {
+    /*
+     * fetch chứ KHÔNG dùng api.ts.
+     *
+     * Thực thể axios trong api.ts tự gắn "Authorization: Bearer <token>" vào
+     * mọi lượt gọi. Token đăng nhập thì tuyệt đối không được gửi sang máy chủ
+     * của người khác — Nominatim không cần nó, và gửi đi là cho không một thứ
+     * mở được tài khoản.
+     */
+    const res = await fetch(`${NOMINATIM}?${params}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return '';
+
+    const data: unknown = await res.json();
+    if (!data || typeof data !== 'object') return '';
+
+    return ghepTen((data as { address?: NominatimAddress }).address);
+  } catch {
+    return '';
+  }
+}
+
+/*
+ * Khoảng cách thành chữ cho người đọc.
+ *
+ * LUÔN kèm dấu ngã. Toạ độ đã bị làm tròn về lưới 500m ngay lúc lưu vào
+ * database, nên in "2,34 km" là nói quá độ chính xác mình thực sự có.
+ *
+ * Dưới 1km thì làm tròn về trăm mét, và sàn ở 100m: con số nhỏ hơn thế là
+ * vô nghĩa khi dữ liệu gốc đã nhiễu 500m.
+ */
+export function formatDistanceKm(km: number): string {
+  if (!Number.isFinite(km)) return '';
+  if (km < 1) return `~${Math.max(100, Math.round((km * 1000) / 100) * 100)} m`;
+  if (km < 10) return `~${km.toFixed(1)} km`;
+  return `~${Math.round(km)} km`;
+}
+
+export const directionsUrl = (lat: number, lng: number): string =>
+  `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+/*
+ * Trang HTML chứa bản đồ.
+ *
+ *   pick        — true: chọn một điểm (màn đăng / sửa bài)
+ *                 false: chỉ hiện các pin có sẵn (màn chi tiết)
+ *   interactive — false thì khoá hết thao tác, bản đồ thành một tấm ảnh.
+ *                 CẦN THIẾT khi bản đồ nằm trong màn hình cuộn được: nếu để
+ *                 bản đồ bắt cử chỉ kéo, người dùng muốn cuộn trang mà ngón tay
+ *                 chạm vào bản đồ thì trang đứng im.
+ *   isDark      — chế độ tối
+ */
+export interface MapHtmlOptions {
+  /** true: chạm để chọn một điểm. false: chỉ hiện pin có sẵn. */
+  pick?: boolean;
+  /** false thì khoá hết thao tác, bản đồ thành một tấm ảnh. */
+  interactive?: boolean;
+  isDark?: boolean;
+}
+
+export function mapHtml({ pick = false, interactive = false, isDark = false }: MapHtmlOptions = {}): string {
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<link rel="stylesheet" href="${LEAFLET}/leaflet.min.css" />
+<style>
+  html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
+
+  /*
+   * Nền lúc ô bản đồ chưa tải xong, để không loé một khung trắng ở chế độ tối.
+   *
+   * Lấy từ src/theme.ts chứ KHÔNG chép mã màu vào đây. Trước đó hai mã này
+   * viết cứng — đúng bằng darkColors.surface và lightColors.surfaceTint — nên
+   * đổi bảng màu là nền bản đồ lệch khỏi phần còn lại của app mà không ai
+   * thấy, vì nó chỉ loé lên đúng lúc ô bản đồ đang tải.
+   *
+   * Trang này là HTML chạy trong WebView nên lớp tiện ích của NativeWind
+   * không với tới được. Nhưng MÀU thì vẫn chung một nguồn được, và đó mới là
+   * thứ đáng giữ cho khớp.
+   */
+  body { background: ${isDark ? darkColors.surface : lightColors.surfaceTint}; }
+
+  /*
+   * Chấm chỉ điểm ĐỨNG YÊN GIỮA MÀN HÌNH, không nằm trong bản đồ.
+   *
+   * Kiểu của Google Maps: kéo bản đồ cho tới khi chỗ cần chọn nằm dưới chấm,
+   * chứ không phải tìm đúng chấm rồi kéo nó đi. Trên điện thoại khác nhau rất
+   * nhiều: ngón tay to hơn cái chấm, kéo trúng nó rất khó, mà lúc kéo thì
+   * chính ngón tay che mất chỗ đang ngắm.
+   *
+   * pointer-events: none để nó không chắn cử chỉ kéo bản đồ ở dưới.
+   * z-index 700 để nằm trên các lớp của bản đồ (cao nhất 650) nhưng vẫn dưới
+   * nút phóng to (800).
+   */
+  #pin {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 9999px;
+    border: 3px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+    pointer-events: none;
+    z-index: 700;
+    display: none;
+  }
+
+${
+    isDark
+      ? `  /*
+   * CHẾ ĐỘ TỐI. OpenStreetMap chỉ có nền sáng nên phải tự đảo màu.
+   *
+   * Đặt bộ lọc lên .leaflet-tile — tức từng ảnh ô bản đồ — chứ không phải lên
+   * .leaflet-tile-pane là cái khung chứa tất cả. Lọc cả khung thì trình duyệt
+   * phải gộp mọi ô thành một lớp vẽ chung rồi lọc một lượt, nặng hơn và vẽ lại
+   * nhiều hơn mức cần.
+   *
+   * hue-rotate đi kèm invert để màu không bị lộn ngược: đảo màu đơn thuần thì
+   * biển xanh thành cam, cây xanh lá thành hồng.
+   */
+  .leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(0.95); }
+
+`
+      : ''
+  }  /* Dòng ghi nguồn — BẮT BUỘC theo điều khoản của OpenStreetMap, không được
+     bỏ. Chỉ thu nhỏ lại cho vừa màn hình điện thoại. */
+  .leaflet-control-attribution { font-size: 9px; background: rgba(255, 255, 255, 0.75); }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="pin"></div>
+<script src="${LEAFLET}/leaflet.min.js"></script>
+<script>
+  var INTERACTIVE = ${interactive ? 'true' : 'false'};
+  var PICK = ${pick ? 'true' : 'false'};
+
+  // Gửi tin về phía React Native. postMessage chỉ nhận chuỗi, nên gói bằng JSON.
+  function send(msg) {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify(msg));
+    }
+  }
+
+  var map = L.map('map', {
+    // Khoá từng thao tác một thay vì đặt interactive: false lúc tạo map.
+    dragging: INTERACTIVE,
+    touchZoom: INTERACTIVE,
+    doubleClickZoom: INTERACTIVE,
+    scrollWheelZoom: INTERACTIVE,
+    boxZoom: false,
+    keyboard: false,
+    zoomControl: INTERACTIVE,
+    attributionControl: true,
+  }).setView([${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}], ${DEFAULT_ZOOM});
+
+  var tiles = L.tileLayer('${TILE_URL}', {
+    maxZoom: 19,
+    attribution: '${TILE_ATTRIBUTION}',
+    /*
+     * Màn hình điện thoại có mật độ điểm ảnh gấp 2-3 lần màn máy tính, nên ô
+     * bản đồ 256 điểm bị kéo giãn ra, nhìn mờ. Bật cái này thì Leaflet xin ô
+     * của mức phóng sâu hơn một bậc rồi vẽ nhỏ lại — nét gấp đôi.
+     *
+     * Cái giá: số ô phải tải tăng gấp bốn. Chấp nhận được với một app ít
+     * người dùng, nhưng đây là chỗ cần xem lại đầu tiên nếu bản đồ tải chậm.
+     */
+    detectRetina: true,
+  }).addTo(map);
+
+  // Pin tự vẽ bằng HTML. Ảnh pin mặc định của Leaflet hỏng đường dẫn khi nhúng
+  // kiểu này, mà vẽ tay thì còn đổi được màu theo loại tin.
+  function pin(color) {
+    return L.divIcon({
+      className: '',
+      html: '<span style="display:block;width:14px;height:14px;border-radius:9999px;' +
+            'background:' + color + ';border:3px solid #fff;' +
+            'box-shadow:0 1px 4px rgba(0,0,0,.45)"></span>',
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+    });
+  }
+
+  // Làm tròn 6 chữ số ~ 10cm. Gửi số dài hơn là vô ích, back-end còn làm mờ nữa.
+  function round(n) {
+    return Number(n.toFixed(6));
+  }
+
+  var layer = L.layerGroup().addTo(map);
+  var pinEl = document.getElementById('pin');
+
+  /*
+   * Dời khung nhìn mà KHÔNG báo ngược về React Native.
+   *
+   * Cần phân biệt vì ở chế độ chọn điểm, mỗi lần bản đồ dừng lại là một lần
+   * chọn điểm mới. Nếu chính mình dời khung nhìn theo lệnh của React Native mà
+   * cũng báo về, sẽ thành vòng lặp: báo về -> React Native gửi lệnh -> dời ->
+   * lại báo về.
+   *
+   * animate: false để setView chạy XONG NGAY, nhờ vậy cờ silent tắt đúng lúc.
+   * Để Leaflet chạy hoạt ảnh thì moveend nổ muộn hơn, lúc đó cờ đã tắt rồi.
+   */
+  var silent = false;
+  function moveTo(lat, lng, zoom) {
+    silent = true;
+    map.setView([lat, lng], zoom, { animate: false });
+    silent = false;
+  }
+
+  // Bản đồ dừng lại = chọn xong một điểm. Chỉ ở chế độ chọn và chỉ khi người
+  // dùng tự kéo.
+  map.on('moveend', function () {
+    if (!PICK || !INTERACTIVE || silent) return;
+    var c = map.getCenter();
+    send({ type: 'pick', lat: round(c.lat), lng: round(c.lng) });
+  });
+
+  /*
+   * window.lp — những hàm React Native gọi vào được qua injectJavaScript.
+   *
+   * Phía React Native phải chờ tin 'ready' mới gọi, vì Leaflet tải từ mạng,
+   * không biết xong lúc nào.
+   */
+  // Lớp riêng cho chấm "bạn đang ở đây", để xoá nó không đụng tới pin tin đăng.
+  var meLayer = L.layerGroup().addTo(map);
+
+  window.lp = {
+    /*
+     * Vẽ lại toàn bộ pin. Nhận mảng { id, lat, lng, color } — cố ý KHÔNG nhận
+     * tên hay mô tả con vật: chữ nghĩa để React Native lo, chỉ nó mới biết
+     * người dùng đang xem tiếng gì và đang ở chế độ sáng hay tối.
+     */
+    setPets: function (pets, fit) {
+      layer.clearLayers();
+      if (!pets || pets.length === 0) return;
+
+      pets.forEach(function (p) {
+        function open() {
+          send({ type: 'open', id: p.id });
+        }
+
+        /*
+         * Tin xếp hạng thấp khi đang tìm kiếm: vẽ một chấm nhỏ mờ, không có
+         * vòng tròn, không có pin.
+         *
+         * Vẫn VẼ RA chứ không giấu đi. Back-end cố ý không loại tin nào khi
+         * tìm kiếm — đo thật trên tiếng Việt thì không có ngưỡng điểm nào
+         * dùng được, mà với web tìm thú cưng thì giấu nhầm nguy hiểm hơn
+         * thừa. Nhưng trên bản đồ mọi chấm hiện cùng lúc nên thứ hạng trở
+         * thành vô hình; làm mờ là cách cho nó hiện ra mà không giấu gì.
+         */
+        if (p.dim) {
+          L.circleMarker([p.lat, p.lng], {
+            radius: 5,
+            color: p.color,
+            weight: 1.5,
+            opacity: 0.45,
+            fillColor: p.color,
+            fillOpacity: 0.3,
+          })
+            .addTo(layer)
+            .on('click', open);
+          return;
+        }
+
+        // Vùng tròn thể hiện độ chính xác thật (xem AREA_RADIUS_M trong src/map.js)
+        var ring = L.circle([p.lat, p.lng], {
+          radius: ${AREA_RADIUS_M},
+          color: p.color,
+          weight: 1,
+          opacity: 0.5,
+          fillColor: p.color,
+          fillOpacity: 0.12,
+        }).addTo(layer);
+
+        var marker = L.marker([p.lat, p.lng], { icon: pin(p.color) }).addTo(layer);
+
+        /*
+         * Bắt chạm trên CẢ vòng tròn lẫn cái pin.
+         *
+         * Pin chỉ rộng chừng 14 điểm ảnh — dưới xa mức 44 điểm tối thiểu cho
+         * một vùng chạm trên điện thoại. Vòng tròn 550m thì lúc nào cũng to
+         * hơn pin, nên chạm hụt pin vẫn trúng vòng.
+         */
+        marker.on('click', open);
+        ring.on('click', open);
+      });
+
+      /*
+       * Chỉ ôm khung nhìn khi được yêu cầu.
+       *
+       * Người dùng vừa kéo bản đồ tới chỗ mình muốn xem, mà danh sách tin
+       * đổi (do lọc, do tìm kiếm) rồi mình tự kéo về chỗ khác thì công kéo
+       * của họ mất sạch. Chỉ ôm lúc mới mở, hoặc khi bộ lọc đổi.
+       */
+      if (!fit) return;
+
+      /*
+       * Khung nhìn ôm quanh những tin ĐANG TÔ ĐẬM thôi.
+       *
+       * Đang tìm kiếm mà ôm cả những chấm mờ thì bản đồ lùi ra xa tới mức
+       * thấy cả thành phố, đúng lúc người dùng muốn nhìn kỹ mấy tin khớp
+       * nhất. Không có chấm đậm nào thì ôm tất, cho khỏi trống.
+       */
+      var dam = pets.filter(function (p) { return !p.dim; });
+      var dung = dam.length > 0 ? dam : pets;
+      var bounds = L.latLngBounds(dung.map(function (p) { return [p.lat, p.lng]; }));
+      map.fitBounds(bounds, { padding: [36, 36], maxZoom: 14 });
+    },
+
+    /*
+     * Chấm "bạn đang ở đây" và dời khung nhìn về đó.
+     *
+     * Vẽ bằng circleMarker chứ không dùng pin: pin nghĩa là một tin đăng,
+     * dùng lại cho vị trí người xem thì nhìn như có thêm một con vật nữa.
+     */
+    setMe: function (lat, lng, color) {
+      meLayer.clearLayers();
+      if (lat === null || lat === undefined) return;
+
+      L.circleMarker([lat, lng], {
+        radius: 7,
+        color: '#FFFFFF',
+        weight: 3,
+        fillColor: color,
+        fillOpacity: 1,
+      }).addTo(meLayer);
+
+      map.setView([lat, lng], ${FOCUS_ZOOM});
+    },
+
+    /*
+     * Điểm đang chọn. Gọi với lat = null nghĩa là chưa chọn gì.
+     *
+     * Không vẽ gì lên bản đồ cả — chấm chỉ điểm đứng yên giữa màn hình, nên
+     * "đặt điểm" thực chất là dời bản đồ sao cho điểm đó nằm dưới chấm.
+     */
+    setPoint: function (lat, lng, color, focus) {
+      pinEl.style.background = color;
+
+      if (lat === null || lng === null) {
+        /*
+         * Chưa chọn gì. Bản đồ xem trước thì giấu chấm đi cho khỏi hiểu nhầm
+         * là đã chọn; còn đang mở ra để chọn thì vẫn hiện chấm, vì người dùng
+         * cần thấy mình đang ngắm vào đâu.
+         *
+         * Cố ý KHÔNG tự lấy giữa màn hình làm điểm chọn ở đây. Làm vậy thì chỉ
+         * mở ra xem rồi đóng lại cũng đã gán một vị trí — mà lúc đó bản đồ
+         * đang ở giữa TP.HCM, hoàn toàn không liên quan tới tin đang đăng.
+         */
+        pinEl.style.display = INTERACTIVE && PICK ? 'block' : 'none';
+        return;
+      }
+
+      pinEl.style.display = 'block';
+      if (focus) moveTo(lat, lng, ${FOCUS_ZOOM});
+    },
+
+    /*
+     * Chốt chỗ đang ngắm làm điểm chọn. React Native gọi khi bấm "Xong".
+     *
+     * Cần hàm riêng vì có một trường hợp không qua moveend: mở ra, chưa chọn
+     * gì, không kéo gì cả, bấm Xong luôn. Ý người dùng rõ ràng là lấy chỗ đang
+     * hiện, nhưng bản đồ chưa hề dừng lại lần nào nên moveend không nổ.
+     */
+    commit: function () {
+      if (!PICK || !INTERACTIVE) return;
+      var c = map.getCenter();
+      send({ type: 'pick', lat: round(c.lat), lng: round(c.lng) });
+    },
+  };
+
+  /*
+   * Bản đồ hay được dựng lúc khung chứa nó chưa có kích thước thật, nhất là khi
+   * nằm trong hộp thoại đang mở ra. Leaflet đo sai thì chỉ hiện một góc nhỏ.
+   * Gọi invalidateSize để nó đo lại.
+   */
+  setTimeout(function () { map.invalidateSize(); }, 0);
+  send({ type: 'ready' });
+</script>
+</body>
+</html>`;
+}

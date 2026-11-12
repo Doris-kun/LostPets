@@ -1,0 +1,50 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    /*
+     * strict: true là lý do chính để dùng TypeScript.
+     *
+     * Tắt nó đi thì TypeScript chỉ còn là JavaScript có thêm vài dòng chú
+     * thích — không bắt được hai lỗi đã mất công tìm trong dự án này:
+     *   - đọc image.uri khi image còn là null (AI không quét ảnh)
+     *   - dùng removeImage trước dòng khai báo nó (nút Xoá ảnh không ăn)
+     * Cả hai chỉ bị chặn khi strict đang bật.
+     */
+    "strict": true,
+    
+    /*
+     * Đã chuyển xong cả 23 file nên tắt hẳn. Từ giờ thêm một file .js mới vào
+     * src/ là TypeScript không nhìn tới nó nữa — coi như file đó nằm ngoài
+     * vòng kiểm tra, mà đó đúng là thứ cần chặn.
+     */
+    "allowJs": false,
+    
+    // Import ảnh PNG trong require() — RN cho phép, TypeScript cần biết
+    "resolveJsonModule": true,
+    
+    /*
+     * jest  — describe / it / expect trong src/__tests__/
+     * node  — fs và path cho source.test.ts, bài test đọc mã nguồn thay vì
+     *         chạy mã nên phải đọc file thật
+     */
+    "types": [
+      "jest",
+      "node"
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "nativewind-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".expo"
+  ]
+}
