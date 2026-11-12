@@ -31,8 +31,21 @@ import api from './api';
  * extra.eas.projectId, và hai chỗ cùng ghi một giá trị thì sớm muộn lệch nhau.
  * Lệch là mã thiết bị trỏ sang một dự án Expo khác, thông báo gửi đi không bao
  * giờ tới.
+ *
+ * PHẢI HỎI CẢ HAI NGUỒN, và đây là chỗ đã làm hỏng cả chuỗi thông báo đẩy.
+ *
+ * expoConfig là cấu hình đọc từ app.json — luôn có khi chạy bằng Expo Go hay
+ * máy chủ phát triển. Nhưng trong bản build thật đóng gói sẵn, nó CÓ THỂ là
+ * null, và lúc đó PROJECT_ID thành undefined.
+ *
+ * Hậu quả nhìn thấy được: getPushToken() thoát ngay ở dòng kiểm PROJECT_ID,
+ * tức là TRƯỚC bước xin quyền — nên Android không bao giờ hiện hộp xin quyền
+ * thông báo, và không ai biết vì sao. easConfig là nguồn do chính EAS nhúng
+ * vào lúc build, luôn có trong bản build thật.
  */
-const PROJECT_ID = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
+const PROJECT_ID =
+  (Constants.expoConfig?.extra?.eas?.projectId as string | undefined) ??
+  Constants.easConfig?.projectId;
 
 /*
  * Tên kênh thông báo trên Android.
@@ -83,11 +96,11 @@ export const isExpoGo = (): boolean => Constants.appOwnership === 'expo';
 /** Lý do không lấy được mã thiết bị, để chỗ gọi biết nên nói gì với người dùng. */
 export type PushBlockedReason =
   /** Expo Go không mang khoá đẩy của dự án */
-  | 'expo-go'
+  | 'expoGo'
   /** Máy ảo không có dịch vụ đẩy của Google/Apple */
   | 'simulator'
   /** Thiếu extra.eas.projectId trong app.json */
-  | 'no-project-id'
+  | 'noProjectId'
   /** Người dùng bấm Không cho phép */
   | 'denied'
   /** Máy chủ Expo không trả lời, thường là do mất mạng */
@@ -127,13 +140,32 @@ export async function prepareAndroidChannel(): Promise<void> {
  * một lần là hộp thoại không bao giờ hiện lại, phải tự vào Cài đặt bật. Gọi
  * sau khi đăng nhập xong, lúc đó đã có lý do rõ ràng để gửi thông báo.
  */
+/*
+ * Lý do lần đăng ký gần nhất thất bại, hoặc chuỗi rỗng nếu xong xuôi.
+ *
+ * Giữ lại vì TOÀN BỘ các đường hỏng ở dưới đều im lặng — cố ý im lặng, để mất
+ * mạng không làm sập app. Nhưng im lặng với người dùng là một chuyện, im lặng
+ * với cả người làm app lại là chuyện khác: chuỗi thông báo đẩy đã chết suốt
+ * nhiều ngày mà không ai biết, vì không có chỗ nào nói ra.
+ *
+ * Màn Cài đặt đọc giá trị này để hiện lý do.
+ */
+let lastReason: PushBlockedReason | '' = '';
+
+export const getLastPushReason = (): PushBlockedReason | '' => lastReason;
+
 export async function getPushToken(): Promise<PushTokenResult> {
-  if (isExpoGo()) return { ok: false, reason: 'expo-go' };
+  const hong = (reason: PushBlockedReason): PushTokenResult => {
+    lastReason = reason;
+    return { ok: false, reason };
+  };
+
+  if (isExpoGo()) return hong('expoGo');
 
   // Máy ảo không có FCM/APNs nên không có gì để đẩy tới.
-  if (!Device.isDevice) return { ok: false, reason: 'simulator' };
+  if (!Device.isDevice) return hong('simulator');
 
-  if (!PROJECT_ID) return { ok: false, reason: 'no-project-id' };
+  if (!PROJECT_ID) return hong('noProjectId');
 
   /*
    * Hỏi trạng thái TRƯỚC khi xin.
@@ -150,7 +182,7 @@ export async function getPushToken(): Promise<PushTokenResult> {
     status = asked.status;
   }
 
-  if (status !== 'granted') return { ok: false, reason: 'denied' };
+  if (status !== 'granted') return hong('denied');
 
   await prepareAndroidChannel();
 
@@ -161,9 +193,10 @@ export async function getPushToken(): Promise<PushTokenResult> {
    */
   try {
     const { data } = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
+    lastReason = '';
     return { ok: true, token: data };
   } catch {
-    return { ok: false, reason: 'failed' };
+    return hong('failed');
   }
 }
 

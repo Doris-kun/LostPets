@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +8,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/auth';
 import api from '../api';
 import { clearPets } from '../cache';
-import { forgetPushToken } from '../notify';
+import { forgetPushToken, getLastPushReason } from '../notify';
 import type { MainTabParamList, RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
@@ -45,6 +46,25 @@ export default function SettingsScreen({ navigation }: Props) {
    * chặn gửi quá nhiều, nên bấm liên tục là bị khoá một lúc.
    */
   const [resending, setResending] = useState(false);
+
+  /*
+   * Vì sao thông báo đẩy chưa chạy. Chuỗi rỗng = không có gì để báo.
+   *
+   * Có mục này vì MỌI đường hỏng trong notify.ts đều im lặng — cố ý im lặng,
+   * để mất mạng không làm sập app. Nhưng hậu quả là chuỗi thông báo đẩy chết
+   * suốt nhiều ngày mà không ai biết: người dùng bật quyền, thấy app không
+   * báo gì, rồi tưởng mọi thứ đang chạy.
+   *
+   * Đọc lại mỗi lần quay về màn này chứ không chỉ lần đầu: lúc mở app lần đầu
+   * có thể chưa đăng nhập, mà đăng ký mã thiết bị chỉ chạy sau khi đăng nhập.
+   */
+  const [pushReason, setPushReason] = useState<ReturnType<typeof getLastPushReason>>('');
+
+  useFocusEffect(
+    useCallback(() => {
+      setPushReason(getLastPushReason());
+    }, []),
+  );
 
   const resendVerify = async () => {
     if (!user?.email) return;
@@ -199,6 +219,21 @@ export default function SettingsScreen({ navigation }: Props) {
                   {t(resending ? 'verify.sending' : 'verify.resend')}
                 </Text>
               </TouchableOpacity>
+            </View>
+          )}
+
+          {/*
+            Vì sao thông báo chưa tới. Chỉ hiện khi THẬT SỰ có lý do — chạy
+            trơn tru thì không bày thêm một dòng chữ không ai cần đọc.
+          */}
+          {!!pushReason && (
+            <View className="mt-lg rounded-md border border-border-light bg-surface-tint p-md">
+              <Text className="text-[12px] font-extrabold text-text-muted">
+                {t('push.offTitle')}
+              </Text>
+              <Text className="mt-sm text-[12px] leading-[18px] text-text-soft">
+                {t(`push.${pushReason}`)}
+              </Text>
             </View>
           )}
 

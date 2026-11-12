@@ -77,6 +77,12 @@ const vi = {
   'auth.expiredTitle': 'Phiên đăng nhập đã hết',
   'auth.expiredText':
     'Bạn vừa bị đăng xuất. Thường là do mật khẩu đã đổi ở nơi khác. Hãy đăng nhập lại.',
+  'push.offTitle': 'Chưa nhận được thông báo',
+  'push.expoGo': 'Đang chạy trong Expo Go. Thông báo đẩy chỉ hoạt động ở bản cài đặt thật.',
+  'push.simulator': 'Đang chạy trên máy ảo. Máy ảo không nhận được thông báo đẩy.',
+  'push.noProjectId': 'Thiếu mã dự án trong bản dựng. Báo cho người làm app.',
+  'push.denied': 'Bạn chưa cho phép hiện thông báo. Bật trong Cài đặt máy, mục Ứng dụng.',
+  'push.failed': 'Không lấy được mã thiết bị. Kiểm tra mạng rồi mở lại app.',
   'verify.blockTitle': 'Cần xác minh email trước',
   'verify.blockText':
     'Thư xác minh đã gửi tới {email}. Bấm đường dẫn trong thư rồi quay lại đăng nhập. Nhớ kiểm cả hộp thư rác.',
@@ -502,6 +508,12 @@ const en: Record<WordKey, string> = {
   'auth.expiredTitle': 'Session expired',
   'auth.expiredText':
     'You have been signed out. This usually means the password was changed elsewhere. Please sign in again.',
+  'push.offTitle': 'Notifications are not arriving',
+  'push.expoGo': 'Running in Expo Go. Push notifications only work in a real build.',
+  'push.simulator': 'Running on an emulator. Emulators cannot receive push notifications.',
+  'push.noProjectId': 'The build is missing its project id. Tell whoever builds the app.',
+  'push.denied': 'You have not allowed notifications. Turn them on in the system settings.',
+  'push.failed': 'Could not get a device token. Check your connection and reopen the app.',
   'verify.blockTitle': 'Verify your email first',
   'verify.blockText':
     'A verification email was sent to {email}. Tap the link in it, then come back and sign in. Check your spam folder too.',
