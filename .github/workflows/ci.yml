@@ -63,6 +63,7 @@ jobs:
             if [ -f "$dir/package.json" ]; then
               echo "::group::build $dir"
               npm ci --prefix "$dir"
+              npm run test --prefix "$dir" --if-present
               npm run build --prefix "$dir"
               echo "::endgroup::"
               built=1
