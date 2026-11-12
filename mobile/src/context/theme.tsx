@@ -126,10 +126,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
    * ĐIỆN THOẠI rồi mới nhảy sang chế độ của app — máy để tối mà app để sáng
    * thì thấy một nháy tối rồi mới sáng.
    *
-   * Vẫn còn đúng một chỗ không cứu được: màn chào. Nó nằm trong Modal, mà
+   * Chỗ khó nhất trước đây là màn chào riêng của app: nó nằm trong Modal, mà
    * hiệu ứng của component con chạy TRƯỚC của component cha, nên lúc nó gắn
-   * thì dòng này chưa chạy. Màn chào lấy màu thẳng từ useTheme() — xem ghi
-   * chú trong SplashScreen.tsx.
+   * thì dòng này chưa chạy. Màn chào đó nay đã bỏ — app dùng thẳng màn chào
+   * gốc của hệ điều hành, nên không còn chỗ nào vẽ trước dòng này nữa.
    */
   useLayoutEffect(() => {
     colorScheme.set(scheme);

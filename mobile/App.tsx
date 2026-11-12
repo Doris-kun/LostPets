@@ -6,7 +6,7 @@
  */
 import './global.css';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Alert, Linking, View } from 'react-native';
 import {
   DarkTheme,
@@ -36,7 +36,6 @@ import AdminScreen from './src/screens/AdminScreen';
 import ContactScreen from './src/screens/ContactScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import PrivacyScreen from './src/screens/PrivacyScreen';
-import SplashScreen from './src/screens/SplashScreen';
 import {
   onNotificationTap,
   readTapThatOpenedApp,
@@ -133,12 +132,6 @@ const linking = {
 };
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
-
-  // useCallback để SplashScreen không nhận hàm mới sau mỗi lần render,
-  // tránh việc useEffect bên đó chạy lại giữa chừng animation.
-  const finishSplash = useCallback(() => setShowSplash(false), []);
-
   return (
     /*
      * SafeAreaProvider đo phần màn hình bị che: tai thỏ, Dynamic Island, thanh
@@ -153,7 +146,7 @@ export default function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
-            <Root showSplash={showSplash} onSplashFinish={finishSplash} />
+            <Root />
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
@@ -165,13 +158,7 @@ export default function App() {
  * Khung gốc. Tách ra khỏi App vì useTheme() chỉ gọi được BÊN TRONG
  * ThemeProvider — viết thẳng trong App thì nó nằm ngoài, React báo lỗi ngay.
  */
-function Root({
-  showSplash,
-  onSplashFinish,
-}: {
-  showSplash: boolean;
-  onSplashFinish: () => void;
-}) {
+function Root() {
   const { colors, isDark } = useTheme();
   const { isLoggedIn, login, token } = useAuth();
 
@@ -453,12 +440,6 @@ function Root({
             <RootStack />
           </NavigationContainer>
 
-          {/*
-            Đặt SAU NavigationContainer và cùng cấp với nó, nên nó phủ lên trên.
-            Danh sách vẫn gọi API chạy ngầm phía dưới trong lúc hiệu ứng chạy —
-            nhờ vậy tắt màn chào là có dữ liệu sẵn, không phải chờ thêm.
-          */}
-      {showSplash && <SplashScreen onFinish={onSplashFinish} />}
     </View>
   );
 }
