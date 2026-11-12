@@ -100,6 +100,39 @@ type PetPayload = FormData | Record<string, unknown>;
 export const errorStatus = (err: unknown): number | undefined =>
   axios.isAxiosError(err) ? err.response?.status : undefined;
 
+/*
+ * Phản hồi này có dựng được phiên đăng nhập không?
+ *
+ * Từ back-end PR #104, đăng ký thành công KHÔNG còn chắc chắn trả token: máy
+ * chủ gửi thư xác minh rồi trả { verifyRequired, email, message }. Chỉ khi
+ * chưa khai thiết lập gửi thư nó mới trả token như cũ.
+ *
+ * Tách thành hàm riêng thay vì viết thẳng trong màn hình, vì đây chính là
+ * chỗ đã vỡ: code cũ gọi login(data.token, data.user) mà không hỏi câu này,
+ * nên login(undefined, undefined) chạy êm, phiên không dựng được, và nút gửi
+ * quay mãi. Tách ra thì test được mà không phải dựng cả màn hình.
+ *
+ * Kiểm CẢ BA thứ chứ không chỉ verifyRequired: thiếu token hay thiếu user thì
+ * cũng không dựng được phiên, dù máy chủ có nói gì đi nữa.
+ */
+export const needsVerification = (data: AuthResult): boolean =>
+  Boolean(data.verifyRequired) || !data.token || !data.user;
+
+/*
+ * Địa chỉ email mà máy chủ gửi kèm trong thân lỗi.
+ *
+ * Dùng cho 403 "chưa xác minh email": thân lỗi có sẵn email, nên nút gửi lại
+ * thư không phải đoán. Lấy từ máy chủ thay vì lấy từ ô nhập cũng chắc hơn —
+ * máy chủ đã chuẩn hoá về chữ thường và cắt khoảng trắng.
+ */
+export const errorEmail = (err: unknown): string => {
+  if (!axios.isAxiosError(err)) return '';
+  const data: unknown = err.response?.data;
+  if (!data || typeof data !== 'object') return '';
+  const { email } = data as { email?: unknown };
+  return typeof email === 'string' ? email : '';
+};
+
 export default {
   getPets: (params?: PetQuery) => http.get<PetPage>('/pets', { params }),
 

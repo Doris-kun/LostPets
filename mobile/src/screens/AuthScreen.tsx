@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 import type { ComponentProps } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import api, { errorStatus } from '../api';
+import api, { errorEmail, errorStatus, needsVerification } from '../api';
 import SocialLogin from '../components/SocialLogin';
 import type { RootStackParamList } from '../types';
 import { useAuth } from '../context/auth';
@@ -77,6 +78,30 @@ export default function AuthScreen({ navigation }: Props) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
+  /*
+   * Địa chỉ đang chờ xác minh. Chuỗi rỗng = không có gì chờ.
+   *
+   * Giữ địa chỉ chứ không giữ một cờ true/false, vì nút "Gửi lại thư" cần
+   * đúng địa chỉ đó — và nó đến từ MÁY CHỦ, nơi đã chuẩn hoá chữ thường và
+   * cắt khoảng trắng, chứ không phải từ ô nhập.
+   */
+  const [needVerify, setNeedVerify] = useState('');
+  const [resending, setResending] = useState(false);
+
+  const resendVerify = async () => {
+    setResending(true);
+    try {
+      await api.resendVerification({ email: needVerify });
+    } catch {
+      // Nuốt lỗi và vẫn báo "đã gửi": back-end cố ý trả cùng một câu dù email
+      // có tài khoản hay không, để chỗ này không thành công cụ dò. Báo khác đi
+      // lúc hỏng là tự phá mất điều đó.
+    } finally {
+      setResending(false);
+      Alert.alert(t('verify.resentTitle'), t('verify.resentText'));
+    }
+  };
+
   const update = (key: 'name' | 'email' | 'password', value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
 
@@ -122,17 +147,54 @@ export default function AuthScreen({ navigation }: Props) {
 
     setSending(true);
     setError('');
+    setNeedVerify('');
 
     try {
       const { data } = isRegister
         ? await api.register({ name, email, password })
         : await api.login({ email, password });
 
-      // data = { token, user }. Cất vào phiên là xong — useEffect ở trên
-      // thấy phiên đổi sẽ lo phần quay lại màn trước.
-      login(data.token, data.user);
+      /*
+       * Đăng ký KHÔNG còn chắc chắn trả token.
+       *
+       * Từ back-end PR #104, đăng ký thành công sẽ gửi thư xác minh rồi trả
+       * { verifyRequired, email, message } — không có phiên nào cả. Chỉ khi
+       * máy chủ chưa khai thiết lập gửi thư nó mới trả token như cũ.
+       *
+       * Trước đây chỗ này gọi thẳng login(data.token, data.user). Hậu quả:
+       * login(undefined, undefined) -> isLoggedIn thành false -> không điều
+       * hướng đi đâu, và người dùng ngồi nhìn nút quay mãi trong khi tài
+       * khoản đã được tạo thật.
+       *
+       * Kiểm cả ba thứ chứ không chỉ verifyRequired: thiếu token hay thiếu
+       * user thì cũng không dựng được phiên, dù máy chủ có nói gì đi nữa.
+       */
+      if (needsVerification(data)) {
+        setNeedVerify(data.email || email.trim());
+        return;
+      }
+
+      // Có đủ phiên — useEffect ở trên thấy phiên đổi sẽ lo phần quay lại.
+      // needsVerification đã loại hết trường hợp thiếu, nên hai dấu ! ở đây
+      // là nói với TypeScript điều nó không tự suy ra qua lời gọi hàm.
+      login(data.token!, data.user!);
     } catch (err) {
       const status = errorStatus(err);
+
+      /*
+       * 403 = mật khẩu ĐÚNG nhưng chưa xác minh email.
+       *
+       * Phải tách hẳn khỏi 401. Trước đây bảng dưới không có 403 nên nó rơi
+       * xuống câu mặc định "Không gọi được máy chủ, kiểm tra kết nối" —
+       * người dùng gõ đúng mật khẩu mà app bảo họ đi kiểm wifi. Họ sẽ tắt
+       * bật mạng chứ không đời nào đoán ra là phải đi mở hộp thư.
+       *
+       * Thân lỗi có sẵn email nên nút gửi lại không phải đoán.
+       */
+      if (status === 403) {
+        setNeedVerify(errorEmail(err) || email.trim());
+        return;
+      }
 
       const byStatus: Record<number, Parameters<typeof t>[0]> = {
         400: isRegister ? 'auth.err.short' : 'auth.err.missing',
@@ -145,6 +207,15 @@ export default function AuthScreen({ navigation }: Props) {
       // status có thể là undefined khi không gọi tới được máy chủ, nên tra
       // bằng ?? 0 — không mã HTTP nào là 0 cả, luôn rơi về câu lỗi mạng.
       setError(t(byStatus[status ?? 0] ?? 'auth.err.network'));
+    } finally {
+      /*
+       * finally chứ không phải đặt trong từng nhánh.
+       *
+       * Trước đây setSending(false) chỉ nằm trong catch, nên bất kỳ đường nào
+       * thoát khỏi try mà không ném lỗi đều để nút quay vĩnh viễn. Đó chính
+       * là cách lỗi đăng ký ở trên biểu hiện ra. finally chặn cả lớp lỗi này,
+       * không riêng lần này.
+       */
       setSending(false);
     }
   };
@@ -199,6 +270,38 @@ export default function AuthScreen({ navigation }: Props) {
           secureTextEntry
           autoCapitalize="none"
         />
+
+        {/*
+          Khối "cần xác minh email" — THAY CHỖ của câu lỗi đỏ, không phải thêm
+          vào bên cạnh.
+
+          Đây không phải lỗi của người dùng: họ gõ đúng hết, chỉ là còn một
+          bước chưa làm. Tô đỏ như lỗi thì họ đi dò lại mật khẩu. Dùng bộ màu
+          secret (vàng cam) vì nó mang nghĩa "đọc kỹ chỗ này", đúng vai.
+        */}
+        {!!needVerify && (
+          <View className="mt-md rounded-md border-[1.5px] border-secret-border bg-secret-bg p-md">
+            <Text className="text-[13px] font-extrabold text-secret-text">
+              {t('verify.blockTitle')}
+            </Text>
+            <Text className="mt-sm text-[12px] leading-[18px] text-text-soft">
+              {t('verify.blockText', { email: needVerify })}
+            </Text>
+
+            <TouchableOpacity
+              className={`mt-md min-h-11 items-center justify-center rounded-md bg-primary ${
+                resending ? 'opacity-50' : ''
+              }`}
+              onPress={resendVerify}
+              disabled={resending}
+              activeOpacity={0.85}
+            >
+              <Text className="text-[13px] font-bold text-on-primary">
+                {t(resending ? 'verify.sending' : 'verify.resend')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {!!error && (
           <Text className="mb-md text-[13px] leading-[19px] text-danger">{error}</Text>

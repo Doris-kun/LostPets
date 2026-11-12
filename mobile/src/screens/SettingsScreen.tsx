@@ -163,6 +163,12 @@ export default function SettingsScreen({ navigation }: Props) {
           {/*
             Dải nhắc xác minh, chỉ hiện khi back-end nói RÕ là chưa xác minh.
 
+            Từ back-end PR #104 đây là đường HIẾM: chưa xác minh thì không đăng
+            nhập được, nên gần như không phiên nào rơi vào đây. Vẫn giữ vì còn
+            hai trường hợp thật — phiên đăng nhập từ trước PR đó, và máy chủ
+            chưa khai thiết lập gửi thư (lúc đó đăng ký vẫn trả token như cũ).
+            Chỗ xin gửi lại thư CHÍNH là ở màn đăng nhập, xem AuthScreen.
+
             Kiểm === false chứ không phải !emailVerified: bản app cũ lưu user
             vào ổ đĩa khi back-end chưa có trường này, nên người đang đăng nhập
             sẵn đọc lên undefined. Kiểm lỏng thì họ bị nhắc xác minh dù đã xác
@@ -180,14 +186,6 @@ export default function SettingsScreen({ navigation }: Props) {
               <Text className="mt-sm text-[12px] leading-[18px] text-text-soft">
                 {t('verify.needText')}
               </Text>
-
-              {/* Nói thêm vì sao tab Quản trị biến mất — không nói thì người
-                  dùng tưởng app lỗi hoặc tưởng mình bị tước quyền. */}
-              {user?.adminPending && (
-                <Text className="mt-sm text-[12px] leading-[18px] text-secret-text">
-                  {t('verify.needAdmin')}
-                </Text>
-              )}
 
               <TouchableOpacity
                 className={`mt-md min-h-11 items-center justify-center rounded-md bg-primary ${

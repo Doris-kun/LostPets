@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import { errorStatus } from '../api';
+import { errorEmail, errorStatus, needsVerification } from '../api';
 import { timeAgo } from '../components/PetCard';
 import { countActiveFilters, EMPTY_FILTERS } from '../components/PetFilters';
 import { buildParams } from '../screens/HomeScreen';
@@ -569,5 +569,78 @@ describe('nhớ tạm danh sách tin', () => {
     await savePets([petGia('a')], 1);
     await clearPets();
     await expect(readPets()).resolves.toBeNull();
+  });
+});
+
+/*
+ * Hợp đồng đăng ký / đăng nhập, sau khi back-end PR #104 đổi luồng.
+ *
+ * Đây là chỗ ĐÃ VỠ THẬT: code cũ gọi login(data.token, data.user) mà không
+ * hỏi phản hồi có phiên hay không. Đăng ký thành công thôi trả token, nên
+ * login(undefined, undefined) chạy êm, phiên không dựng được, không điều
+ * hướng đi đâu, và nút gửi quay mãi mãi — người dùng không nhận được một
+ * lời nào trong khi tài khoản đã tạo xong.
+ */
+describe('phản hồi đăng ký / đăng nhập có dựng được phiên không', () => {
+  /*
+   * Dạng MỚI của đăng ký: máy chủ gửi thư xác minh rồi trả lời nhắn, không
+   * kèm phiên nào. Đây chính là phản hồi làm vỡ bản cũ.
+   */
+  it('đăng ký có gửi thư xác minh: phải nhận ra là chưa có phiên', () => {
+    expect(
+      needsVerification({
+        verifyRequired: true,
+        email: 'a@example.com',
+        message: 'Đã gửi thư xác minh.',
+      }),
+    ).toBe(true);
+  });
+
+  // Máy chủ chưa khai thiết lập gửi thư (chạy ở máy, chạy test) thì vẫn trả
+  // token như cũ — đường này phải tiếp tục vào thẳng app.
+  it('máy chủ chưa bật gửi thư: có token thì vào thẳng', () => {
+    expect(needsVerification({ token: 'abc', user: { _id: '1' } as never })).toBe(false);
+  });
+
+  /*
+   * Ba dạng thiếu. Không dạng nào có verifyRequired, nên nếu chỉ kiểm mỗi
+   * cờ đó thì cả ba lọt qua và dựng một phiên rỗng — đúng kiểu hỏng cũ.
+   */
+  it('thiếu token, thiếu user, hoặc rỗng hẳn: đều là chưa có phiên', () => {
+    expect(needsVerification({ user: { _id: '1' } as never })).toBe(true);
+    expect(needsVerification({ token: 'abc' })).toBe(true);
+    expect(needsVerification({})).toBe(true);
+  });
+});
+
+/*
+ * Đọc email từ thân lỗi 403.
+ *
+ * Back-end gửi kèm địa chỉ trong thân lỗi "chưa xác minh email", nên nút gửi
+ * lại thư không phải đoán. Lấy từ máy chủ chắc hơn lấy từ ô nhập: máy chủ đã
+ * chuẩn hoá về chữ thường và cắt khoảng trắng.
+ */
+describe('đọc email từ thân lỗi', () => {
+  const loi = (data: unknown, status = 403) =>
+    new AxiosError('loi', 'ERR', undefined, undefined, {
+      status,
+      data,
+    } as never);
+
+  it('lấy được địa chỉ máy chủ gửi kèm', () => {
+    expect(errorEmail(loi({ verifyRequired: true, email: 'a@example.com' }))).toBe(
+      'a@example.com',
+    );
+  });
+
+  // Mấy dạng dưới đây đều phải ra chuỗi rỗng, để chỗ gọi rơi về địa chỉ
+  // người dùng vừa gõ chứ không hiện ra "undefined".
+  it('không có email, hoặc thân lỗi méo: ra chuỗi rỗng', () => {
+    expect(errorEmail(loi({ message: 'khong co email' }))).toBe('');
+    expect(errorEmail(loi({ email: 123 }))).toBe('');
+    expect(errorEmail(loi('khong phai object'))).toBe('');
+    expect(errorEmail(loi(null))).toBe('');
+    expect(errorEmail(new Error('loi thuong'))).toBe('');
+    expect(errorEmail(undefined)).toBe('');
   });
 });

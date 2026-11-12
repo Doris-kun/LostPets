@@ -132,18 +132,31 @@ export interface User {
    * người dùng cũ bị nhắc xác minh dù họ đã xác minh từ lâu.
    */
   emailVerified?: boolean;
-  /*
-   * Tài khoản này SẼ thành quản trị viên nếu xác minh hộp thư.
-   *
-   * Không thể dùng role để đoán: role đang là 'user' chính VÌ chưa xác minh.
-   * Back-end chỉ trả trường này cho chính chủ qua /auth/me.
-   */
-  adminPending?: boolean;
 }
 
+/*
+ * Kết quả của /auth/register và /auth/login.
+ *
+ * token KHÔNG BẮT BUỘC, và đó là điểm quan trọng nhất của kiểu này.
+ *
+ * Từ back-end PR #104, đăng ký thành công KHÔNG còn trả token: máy chủ gửi
+ * thư xác minh rồi trả { verifyRequired, email, message }. Chỉ khi máy chủ
+ * chưa khai thiết lập gửi thư — chạy ở máy, chạy test — nó mới trả token như
+ * cũ. Giao diện phải xử lý CẢ HAI dạng.
+ *
+ * Khai token là bắt buộc thì TypeScript không cảnh báo gì khi mình viết
+ * login(data.token, data.user), và lỗi chỉ lộ ra lúc người dùng bấm Đăng ký
+ * rồi ngồi nhìn nút quay mãi. Khai không bắt buộc thì nó bắt ngay lúc biên
+ * dịch — đó là cách lỗi đó lẽ ra phải bị chặn.
+ */
 export interface AuthResult {
-  token: string;
-  user: User;
+  token?: string;
+  user?: User;
+  /** true = đã gửi thư xác minh, chưa có phiên đăng nhập nào cả. */
+  verifyRequired?: boolean;
+  /** Địa chỉ vừa đăng ký, dùng luôn cho nút gửi lại thư. */
+  email?: string;
+  message?: string;
 }
 
 // ---- AI ----

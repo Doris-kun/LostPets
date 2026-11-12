@@ -73,6 +73,9 @@ const vi = {
   'auth.expiredTitle': 'Phiên đăng nhập đã hết',
   'auth.expiredText':
     'Bạn vừa bị đăng xuất. Thường là do mật khẩu đã đổi ở nơi khác. Hãy đăng nhập lại.',
+  'verify.blockTitle': 'Cần xác minh email trước',
+  'verify.blockText':
+    'Thư xác minh đã gửi tới {email}. Bấm đường dẫn trong thư rồi quay lại đăng nhập. Nhớ kiểm cả hộp thư rác.',
   'verify.needTitle': 'Chưa xác minh email',
   'verify.needText':
     'Bấm đường dẫn trong thư đã gửi tới hộp thư của bạn. Không thấy thư thì kiểm cả hộp thư rác.',
@@ -489,6 +492,9 @@ const en: Record<WordKey, string> = {
   'auth.expiredTitle': 'Session expired',
   'auth.expiredText':
     'You have been signed out. This usually means the password was changed elsewhere. Please sign in again.',
+  'verify.blockTitle': 'Verify your email first',
+  'verify.blockText':
+    'A verification email was sent to {email}. Tap the link in it, then come back and sign in. Check your spam folder too.',
   'verify.needTitle': 'Email not verified',
   'verify.needText':
     'Tap the link in the email we sent you. If it is not there, check your spam folder.',

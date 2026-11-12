@@ -176,7 +176,19 @@ export default function SocialLogin() {
         if (!credential) throw new Error('Google doi ma xong nhung khong tra ve id_token');
         return api.googleLogin({ credential });
       })
-      .then(({ data }) => login(data.token, data.user))
+      /*
+       * Kiểm token trước khi dựng phiên.
+       *
+       * Đăng nhập bằng nhà cung cấp luôn trả token — chính Google/Facebook đã
+       * xác minh hộp thư nên không có bước chờ nào. Nhưng AuthResult khai
+       * token KHÔNG bắt buộc kể từ back-end PR #104, nên cứ kiểm: ném lỗi ở
+       * đây thì rơi xuống .catch ngay dưới và người dùng thấy đúng câu "không
+       * đăng nhập được", thay vì một phiên rỗng im lặng.
+       */
+      .then(({ data }) => {
+        if (!data.token || !data.user) throw new Error('May chu khong tra ve phien');
+        login(data.token, data.user);
+      })
       .catch((err) => {
         setError(t(errorStatus(err) === 503 ? 'social.notSetUp' : 'social.failed'));
         setDetail(moTaLoi(err));
@@ -210,7 +222,19 @@ export default function SocialLogin() {
 
     api
       .facebookLogin({ accessToken })
-      .then(({ data }) => login(data.token, data.user))
+      /*
+       * Kiểm token trước khi dựng phiên.
+       *
+       * Đăng nhập bằng nhà cung cấp luôn trả token — chính Google/Facebook đã
+       * xác minh hộp thư nên không có bước chờ nào. Nhưng AuthResult khai
+       * token KHÔNG bắt buộc kể từ back-end PR #104, nên cứ kiểm: ném lỗi ở
+       * đây thì rơi xuống .catch ngay dưới và người dùng thấy đúng câu "không
+       * đăng nhập được", thay vì một phiên rỗng im lặng.
+       */
+      .then(({ data }) => {
+        if (!data.token || !data.user) throw new Error('May chu khong tra ve phien');
+        login(data.token, data.user);
+      })
       .catch((err) => {
         setError(t(errorStatus(err) === 503 ? 'social.notSetUp' : 'social.failed'));
         setDetail(moTaLoi(err));

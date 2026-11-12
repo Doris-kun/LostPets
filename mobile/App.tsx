@@ -283,6 +283,19 @@ function Root({
         const { data } = await api.verifyEmail({ token });
         if (bo) return;
 
+        /*
+         * Đường này LUÔN trả token, nhưng vẫn kiểm.
+         *
+         * AuthResult khai token không bắt buộc kể từ khi đăng ký thôi trả
+         * token (back-end PR #104). Ép kiểu cho qua ở đây thì khi nào máy chủ
+         * đổi tiếp, TypeScript lại im lặng — đúng cách lỗi đăng ký đã lọt.
+         * Thiếu token thì coi như xác minh hỏng, báo đúng câu đó.
+         */
+        if (!data.token || !data.user) {
+          Alert.alert(t('verify.failTitle'), t('verify.failText'));
+          return;
+        }
+
         login(data.token, data.user);
         Alert.alert(t('verify.doneTitle'), t('verify.doneText'));
       } catch {
