@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -48,6 +48,7 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -60,6 +61,28 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
    * thư đầu tiên vẫn đang trên đường tới.
    */
   const [sent, setSent] = useState(false);
+
+  /*
+   * Đổi chế độ thì dọn sạch trạng thái cũ.
+   *
+   * ĐÂY LÀ MỘT LỖI THẬT đã xảy ra, không phải phòng xa. React Navigation DÙNG
+   * LẠI cùng một màn khi đường dẫn sâu trỏ về đúng route đang mở — nó chỉ đổi
+   * tham số chứ không dựng lại component. Nên:
+   *
+   *   1. Người dùng bấm "Quên mật khẩu", nhập email -> sent = true
+   *   2. Bấm đường dẫn trong thư -> cùng màn đó, giờ CÓ token
+   *   3. sent vẫn còn true từ bước 1, mà giờ là chế độ đặt lại
+   *   4. -> hiện thẳng "Đã đổi mật khẩu" dù người dùng chưa gõ gì
+   *
+   * Họ tưởng xong rồi, đi đăng nhập bằng mật khẩu mới — mật khẩu chưa bao giờ
+   * được đặt, nên không vào được, và không hiểu vì sao.
+   */
+  useEffect(() => {
+    setSent(false);
+    setError('');
+    setPassword('');
+    setConfirm('');
+  }, [token]);
 
   const askLink = async () => {
     const value = email.trim();
@@ -90,6 +113,18 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
   const savePassword = async () => {
     if (password.length < MIN_PASSWORD) {
       setError(t('auth.err.short'));
+      return;
+    }
+
+    /*
+     * Kiểm độ dài TRƯỚC rồi mới kiểm khớp nhau.
+     *
+     * Gõ "123" vào cả hai ô thì hai lỗi cùng đúng, nhưng chỉ nên báo một.
+     * Báo "quá ngắn" hữu ích hơn — người dùng sửa xong là qua được, còn báo
+     * "không giống nhau" thì họ gõ lại y hệt và vẫn bị chặn.
+     */
+    if (password !== confirm) {
+      setError(t('forgot.err.mismatch'));
       return;
     }
 
@@ -146,20 +181,47 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
         </Text>
 
         <Text className="mb-1.5 mt-lg text-[13px] font-semibold text-text">
-          {t(isReset ? 'auth.password' : 'auth.email')}
+          {t(isReset ? 'forgot.newLabel' : 'auth.email')}
         </Text>
 
         {isReset ? (
-          <TextInput
-            className="rounded-md border border-border-strong px-md py-[11px] text-[14px] text-text"
-            value={password}
-            onChangeText={setPassword}
-            placeholder={t('auth.passwordPh')}
-            accessibilityLabel={t('auth.password')}
-            placeholderTextColor={colors.textMuted}
-            secureTextEntry
-            autoCapitalize="none"
-          />
+          <>
+            <TextInput
+              className="rounded-md border border-border-strong px-md py-[11px] text-[14px] text-text"
+              value={password}
+              onChangeText={setPassword}
+              placeholder={t('auth.passwordPh')}
+              accessibilityLabel={t('auth.password')}
+              placeholderTextColor={colors.textMuted}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+
+            {/*
+              Ô nhập lại. Mật khẩu bị che nên người dùng không đọc lại được
+              thứ mình vừa gõ — gõ nhầm một ký tự là họ đặt phải một mật khẩu
+              không hề biết, rồi không đăng nhập được và phải làm lại từ đầu.
+
+              Khác với màn Đăng nhập: ở đó gõ sai thì chỉ việc gõ lại, không
+              mất gì. Ở đây gõ sai là HỎNG THẬT, vì mật khẩu sai đó đã được
+              lưu và đường dẫn trong thư thì dùng một lần rồi hết hạn.
+            */}
+            <Text className="mb-1.5 mt-md text-[13px] font-semibold text-text">
+              {t('forgot.confirmLabel')}
+            </Text>
+            <TextInput
+              className="rounded-md border border-border-strong px-md py-[11px] text-[14px] text-text"
+              value={confirm}
+              onChangeText={setConfirm}
+              placeholder={t('forgot.confirmPh')}
+              accessibilityLabel={t('forgot.confirmLabel')}
+              placeholderTextColor={colors.textMuted}
+              secureTextEntry
+              autoCapitalize="none"
+              returnKeyType="done"
+              onSubmitEditing={savePassword}
+            />
+          </>
         ) : (
           <TextInput
             className="rounded-md border border-border-strong px-md py-[11px] text-[14px] text-text"
