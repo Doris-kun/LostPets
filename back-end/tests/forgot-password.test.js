@@ -53,6 +53,10 @@ const seedWithPassword = () => User.create({
   name: 'Người Dùng',
   email: 'nguoidung@example.com',
   passwordHash: bcrypt.hashSync('matkhaucu', 10),
+  // Đánh dấu sẵn đã xác minh: từ khi đăng ký bắt buộc xác minh, tài khoản
+  // chưa xác minh không đăng nhập được. Bộ test này nói về quên mật khẩu,
+  // không nói về xác minh — để false thì nó đỏ vì một lý do chẳng liên quan.
+  emailVerified: true,
 });
 
 const seedGoogleOnly = () => User.create({
