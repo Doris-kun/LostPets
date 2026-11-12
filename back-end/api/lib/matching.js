@@ -27,7 +27,8 @@ const oppositeType = (type) => (type === 'lost' ? 'found' : 'lost');
 //
 // 50km phủ hết một vùng đô thị kể cả ngoại ô, nhưng vẫn loại được tin ở tỉnh
 // khác. Trước khi có mốc này, một con mèo mất ở Quận 3 được gợi ý khớp với
-// tin nhặt được ở Cần Thơ, cách 170km.
+// tin nhặt được ở Cần Thơ, cách 129km đường chim bay.
+// (Đường bộ là khoảng 170km, nhưng haversine đo đường thẳng.)
 const MATCH_RADIUS_KM = 50;
 
 const candidateFilter = (source, windowDays = CANDIDATE_WINDOW_DAYS) => {
