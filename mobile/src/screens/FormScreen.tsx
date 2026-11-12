@@ -234,15 +234,36 @@ export default function FormScreen({ route, navigation }: Props) {
    * tới máy chủ của người khác, hỏng được và chậm được. Vị trí thì đã ghim
    * rồi, không có lý do gì để nó đứng chờ.
    */
+  /*
+   * Tên khu vực tra được từ điểm vừa ghim, giữ lại để GỢI Ý.
+   *
+   * Chuỗi rỗng = không có gì để gợi ý. Chỉ hiện ra khi ô Khu vực đã có chữ và
+   * chữ đó khác với nơi bản đồ đang chỉ.
+   */
+  const [areaGoiY, setAreaGoiY] = useState('');
+
   const pickPoint = (lat: number | null, lng: number | null) => {
     setForm((current) => ({ ...current, lat, lng }));
+    setAreaGoiY('');
 
     if (lat === null || lng === null) return;
 
     areaFromCoords(lat, lng, lang).then((area) => {
       if (!area) return;
-      // Kiểm lại trong setForm chứ không kiểm bên ngoài: giữa lúc chờ mạng
-      // người dùng có thể đã tự gõ khu vực rồi.
+
+      setAreaGoiY(area);
+
+      /*
+       * Ô còn trống thì điền thẳng, khỏi bắt bấm thêm một cái.
+       *
+       * Ô đã có chữ thì KHÔNG đè: ai đã gõ "Gần chợ Bến Thành, hẻm 25" thì đó
+       * là thứ họ cố ý viết, chi tiết hơn hẳn tên phường — đè lên là xoá công
+       * của họ. Nhưng im lặng không làm gì cũng tệ, nên để lại một lời gợi ý
+       * bấm được ở dưới ô.
+       *
+       * Kiểm lại trong setForm chứ không kiểm bên ngoài: giữa lúc chờ mạng
+       * người dùng có thể đã tự gõ khu vực rồi.
+       */
       setForm((current) => (current.area.trim() ? current : { ...current, area }));
     });
   };
@@ -633,6 +654,40 @@ export default function FormScreen({ route, navigation }: Props) {
           onChangeText={(v) => update('area', v)}
           placeholder={t('form.areaPh')}
         />
+
+        {/*
+          Gợi ý khu vực từ bản đồ.
+
+          Chỉ hiện khi CẢ BA điều cùng đúng:
+            - bản đồ đã tra được tên khu vực
+            - ô Khu vực đang có chữ (ô trống thì đã tự điền rồi)
+            - chữ trong ô KHÁC với tên tra được
+
+          Điều thứ ba quan trọng: không có nó thì vừa tự điền xong là lời gợi ý
+          hiện ra ngay bên dưới, mời người dùng điền lại đúng thứ vừa điền.
+
+          So bằng chữ thường và cắt khoảng trắng, vì "quận 1, tp.hcm" và
+          "Quận 1, TP.HCM" là cùng một chỗ — hiện gợi ý lúc đó chỉ gây hoang
+          mang.
+        */}
+        {!!areaGoiY &&
+          !!form.area.trim() &&
+          areaGoiY.trim().toLowerCase() !== form.area.trim().toLowerCase() && (
+            <View className="mt-sm">
+              <Text className="text-[12px] leading-[17px] text-text-muted">
+                {t('form.areaFromMap', { area: areaGoiY })}
+              </Text>
+
+              <TouchableOpacity
+                // min-h-11 = 44pt, mức tối thiểu cho một vùng chạm trên iOS
+                className="min-h-11 justify-center"
+                onPress={() => update('area', areaGoiY)}
+                activeOpacity={0.7}
+              >
+                <Text className="text-[13px] font-bold text-primary">{t('form.areaUse')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
         {/*
          * Bản đồ đặt ngay dưới ô "Khu vực" vì hai thứ nói cùng một chuyện: ô
