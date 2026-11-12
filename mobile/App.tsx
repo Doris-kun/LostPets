@@ -135,11 +135,6 @@ const linking = {
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
-  // App đã dựng xong -> tắt splash gốc, nhường chỗ cho màn chào có hiệu ứng.
-  useEffect(() => {
-    ExpoSplashScreen.hideAsync().catch(() => {});
-  }, []);
-
   // useCallback để SplashScreen không nhận hàm mới sau mỗi lần render,
   // tránh việc useEffect bên đó chạy lại giữa chừng animation.
   const finishSplash = useCallback(() => setShowSplash(false), []);
@@ -179,6 +174,22 @@ function Root({
 }) {
   const { colors, isDark } = useTheme();
   const { isLoggedIn, login, token } = useAuth();
+
+  /*
+   * Tắt màn chào gốc của hệ điều hành, nhường chỗ cho màn chào có hiệu ứng.
+   *
+   * Đặt ở ĐÂY chứ không trong App: Root chỉ dựng sau khi ThemeProvider đã đọc
+   * xong lựa chọn sáng/tối trong ổ đĩa (xem context/theme.tsx). Tắt sớm hơn
+   * thì màn chào của mình vẽ lần đầu bằng cài đặt của MÁY, rồi vài mili giây
+   * sau đổi sang lựa chọn thật — người dùng thấy một màn đen chớp lên rồi
+   * biến mất, tưởng app lỗi.
+   *
+   * Giữ màn chào gốc thêm vài mili giây thì không ai nhận ra, còn chớp màu
+   * thì ai cũng thấy.
+   */
+  useEffect(() => {
+    ExpoSplashScreen.hideAsync().catch(() => {});
+  }, []);
   const { t } = useLanguage();
 
   /*

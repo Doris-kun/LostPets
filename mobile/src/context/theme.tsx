@@ -56,6 +56,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // null = chưa đọc xong ổ đĩa, đang tạm theo máy.
   const [savedScheme, setSavedScheme] = useState<Scheme | null>(null);
 
+  /*
+   * Đã đọc xong lựa chọn trong ổ đĩa chưa.
+   *
+   * Cần vì đọc ổ đĩa mất một nhịp, và trong nhịp đó app ĐÃ VẼ RỒI — vẽ bằng
+   * cài đặt của máy, vì chưa biết người dùng đã chọn gì. Đọc xong mới đổi
+   * sang lựa chọn thật.
+   *
+   * Hậu quả thấy được: máy để tối mà app để sáng thì màn chào hiện ra TỐI
+   * một nhịp rồi mới chuyển sang sáng. Người dùng thấy một màn đen chớp lên
+   * rồi biến mất — tưởng app lỗi.
+   *
+   * Chặn không vẽ gì cho tới khi biết chắc. Màn chào gốc của hệ điều hành
+   * vẫn đang che màn hình trong lúc đó, nên không ai thấy khoảng trống này.
+   */
+  const [ready, setReady] = useState(false);
+
   // Lựa chọn riêng trong app luôn thắng cài đặt máy. Chưa chọn gì thì theo máy.
   const scheme = savedScheme ?? systemScheme ?? 'light';
 
@@ -71,6 +87,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         // Không đọc được thì theo máy, không cần báo gì.
+      })
+      .finally(() => {
+        // finally chứ không phải chỉ trong then: ổ đĩa hỏng thì vẫn phải cho
+        // app chạy tiếp bằng cài đặt của máy, không được treo màn chào mãi.
+        if (!ignore) setReady(true);
       });
 
     return () => {
@@ -125,6 +146,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }),
     [scheme, setScheme, toggleScheme],
   );
+
+  /*
+   * Chưa biết chế độ thì chưa vẽ gì.
+   *
+   * Trả null chứ không trả một khung tạm: khung tạm cũng phải chọn một màu,
+   * mà chọn màu chính là thứ đang chưa biết. Màn chào gốc của hệ điều hành
+   * vẫn che kín màn hình trong vài mili giây này — App.tsx chỉ tắt nó sau khi
+   * ThemeProvider đã sẵn sàng, nên người dùng không thấy khoảng trống nào.
+   */
+  if (!ready) return null;
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
