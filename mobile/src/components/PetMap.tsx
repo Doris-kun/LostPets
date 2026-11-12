@@ -16,7 +16,7 @@ import * as Location from 'expo-location';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
 import { spacing, statusStyle } from '../theme';
-import { directionsUrl, hasPoint, mapHtml } from '../map';
+import { directionsUrl, hasPoint, mapHtml, pickPosition } from '../map';
 import type { MapPet } from '../types';
 
 /*
@@ -340,25 +340,17 @@ export default function PetMap({
       }
 
       /*
-       * Độ chính xác Balanced ~100m là đủ, không cần High.
-       *
-       * Back-end làm tròn toạ độ về lưới ~550m trước khi lưu, nên đo chính xác
-       * tới từng mét cũng bị làm mờ đi hết. Đổi lại Balanced lấy được vị trí
-       * nhanh hơn nhiều và đỡ tốn pin — High bắt bật GPS thật, ngoài trời mất
-       * vài giây, trong nhà có khi không ra.
+       * pickPosition ưu tiên vị trí hệ điều hành đã có sẵn, chỉ đo lại khi
+       * không có — xem giải thích trong src/map.ts. Gọi thẳng
+       * getCurrentPositionAsync thì trong nhà có khi chờ hàng chục giây.
        */
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      const point = await pickPosition();
+      if (!point) {
+        setError(t('map.denied'));
+        return;
+      }
 
-      emit(
-        {
-          // 6 chữ số ~ 10cm. Dài hơn là vô ích.
-          lat: Number(pos.coords.latitude.toFixed(6)),
-          lng: Number(pos.coords.longitude.toFixed(6)),
-        },
-        false,
-      );
+      emit(point, false);
     } catch {
       setError(t('map.denied'));
     } finally {

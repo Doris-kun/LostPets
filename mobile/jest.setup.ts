@@ -20,6 +20,13 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('expo-location', () => ({
   Accuracy: { Balanced: 3 },
   requestForegroundPermissionsAsync: jest.fn(async () => ({ granted: true })),
+  /*
+   * Trả null = "hệ điều hành không giữ sẵn vị trí nào dùng được", nên mã
+   * nguồn rơi xuống getCurrentPositionAsync ngay dưới. Giữ nguyên đường đi
+   * mà các bài test cũ vẫn dựa vào; bài nào muốn thử đường nhanh thì tự ghi
+   * đè. Thiếu hẳn hàm này thì mã gọi vào undefined và nổ.
+   */
+  getLastKnownPositionAsync: jest.fn(async () => null),
   getCurrentPositionAsync: jest.fn(async () => ({
     coords: { latitude: 10.776, longitude: 106.7 },
   })),

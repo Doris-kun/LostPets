@@ -187,21 +187,69 @@ export async function readSavedMe(): Promise<Point | null> {
  * KHÔNG tự gọi hàm này lúc mở màn hình. Trang chính sách đã cam kết "chỉ hỏi
  * vị trí khi bạn tự bấm nút", nên nó phải đi sau một cú bấm thật.
  */
+/*
+ * Đọc vị trí, ưu tiên bản hệ điều hành đã có sẵn.
+ *
+ * VÌ SAO KHÔNG GỌI THẲNG getCurrentPositionAsync
+ *
+ * Hàm đó bắt máy đi ĐO LẠI từ đầu — ngoài trời mất vài giây, trong nhà có khi
+ * hàng chục giây vì phải chờ bắt được vệ tinh hoặc dò qua Wi-Fi. Người dùng
+ * ngồi nhìn nút "Đang định vị..." mà không biết phải chờ bao lâu. Tài liệu của
+ * chính expo-location cũng khuyên thử bản đã lưu trước.
+ *
+ * Hệ điều hành gần như luôn giữ sẵn một vị trí từ lần gần nhất có app nào đó
+ * hỏi — bản đồ, thời tiết, app giao đồ ăn. Lấy bản đó là TỨC THÌ.
+ *
+ * Nhận sai số tới 1km, và đó không phải nhân nhượng: toạ độ bị làm tròn về
+ * lưới ~550m trước khi lưu, rồi lọc thông báo thì theo bán kính 10km. Đo chính
+ * xác tới từng mét cũng bị làm mờ đi hết.
+ *
+ * Quá 5 phút thì coi như cũ — người ta có thể đã đi chỗ khác.
+ */
+async function readPosition(): Promise<Point | null> {
+  const nhanh = await Location.getLastKnownPositionAsync({
+    maxAge: 5 * 60 * 1000,
+    requiredAccuracy: 1000,
+  });
+  if (nhanh) return { lat: nhanh.coords.latitude, lng: nhanh.coords.longitude };
+
+  // Không có bản nào dùng được thì đành đo lại. Balanced (~100m) chứ không
+  // High: High bắt bật GPS thật, trong nhà có khi không ra kết quả.
+  const pos = await Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.Balanced,
+  });
+  return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+}
+
 export async function locateMe(): Promise<Point | null> {
   try {
     const { granted } = await Location.requestForegroundPermissionsAsync();
     if (!granted) return null;
 
-    const pos = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    const point = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    const point = await readPosition();
+    if (!point) return null;
 
     await saveMe(point);
     return point;
   } catch {
     return null;
   }
+}
+
+/*
+ * Như locateMe nhưng KHÔNG lưu lại, và trả toạ độ đã cắt còn 6 chữ số.
+ *
+ * Dùng cho ô chọn vị trí lúc đăng tin: ở đó điểm ghim là "chỗ con vật mất",
+ * không phải "chỗ người xem đang đứng" — người dùng bấm nút này rồi kéo pin đi
+ * chỗ khác là chuyện thường. Lưu lại thì thẻ tin ở Trang chủ sẽ đo khoảng cách
+ * từ một chỗ người dùng không hề đứng.
+ */
+export async function pickPosition(): Promise<Point | null> {
+  const point = await readPosition();
+  if (!point) return null;
+
+  // 6 chữ số ~ 10cm. Dài hơn là vô ích.
+  return { lat: Number(point.lat.toFixed(6)), lng: Number(point.lng.toFixed(6)) };
 }
 
 /*
