@@ -51,7 +51,10 @@ export default {
       // Không có mã thì khỏi gọi máy chủ, vào thẳng trạng thái hỏng kèm ô gửi lại.
       trangThai: this.$route.query.token ? 'dangChay' : 'hong',
       loi: '',
-      email: '',
+      // Điền sẵn địa chỉ nếu nơi đưa tới đây biết nó — trang đăng ký và
+      // trang đăng nhập đều biết. Bắt gõ lại một thứ vừa gõ xong là thêm
+      // một chỗ để gõ sai.
+      email: this.$route.query.email || '',
       dangGui: false,
     };
   },

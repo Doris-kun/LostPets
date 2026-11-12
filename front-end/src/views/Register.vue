@@ -63,6 +63,18 @@ export default {
       this.loading = true;
       try {
         const { data } = await api.register(this.form);
+
+        // Máy chủ gửi được thư xác minh thì KHÔNG trả token: tài khoản chỉ
+        // dùng được sau khi bấm đường dẫn trong thư. Đưa thẳng sang trang xác
+        // minh, chỗ đó có sẵn ô gửi lại nếu thư không tới.
+        if (data.verifyRequired) {
+          this.$toast(data.message);
+          this.$router.push({ path: '/verify-email', query: { email: data.email } });
+          return;
+        }
+
+        // Máy chủ chưa cấu hình gửi thư thì vẫn cấp token như trước — không
+        // thể bắt xác minh khi không gửi nổi thư nào.
         auth.login(data.token, data.user);
         this.$toast(`${this.$t('auth.welcome')} ${data.user.name}`);
         this.$router.push('/');

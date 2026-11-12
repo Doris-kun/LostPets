@@ -12,7 +12,8 @@
     "fix-providers": "node scripts/fix-null-providers.js",
     "eval:matching": "node scripts/eval-matching.js",
     "test:report": "node scripts/test-report.js",
-    "check:mail": "node scripts/check-mail.js"
+    "check:mail": "node scripts/check-mail.js",
+    "verify-existing": "node scripts/verify-existing-users.js"
   },
   "jest": {
     "maxWorkers": 3,

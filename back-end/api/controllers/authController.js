@@ -14,18 +14,9 @@ const MIN_PASSWORD_LENGTH = 6;
 
 const publicUser = (user) => ({
   _id: user._id, name: user.name, email: user.email, role: user.role,
+  // Giữ lại để giao diện biết trạng thái, dù từ khi bắt buộc xác minh thì
+  // mọi phiên đăng nhập đều đã xác minh rồi.
   emailVerified: Boolean(user.emailVerified),
-  // Tài khoản này SẼ thành quản trị viên nếu xác minh hộp thư.
-  //
-  // Có trường này thì front-end mới hiện lối vào trang xác minh đúng cho
-  // người cần. Không thể dùng role để quyết định: role đang là 'user' chính
-  // VÌ chưa xác minh, nên hỏi "có phải quản trị viên không" thì câu trả lời
-  // luôn là không, và mục đó không bao giờ hiện ra.
-  //
-  // Chỉ trả cho chính chủ tài khoản qua /auth/me. Muốn biết một địa chỉ có
-  // nằm trong ADMIN_EMAILS hay không thì phải đăng ký và đăng nhập được bằng
-  // chính địa chỉ đó — mà địa chỉ quản trị thì đã có chủ đăng ký rồi.
-  adminPending: Boolean(!user.emailVerified && isAdminEmail(user.email)),
 });
 
 const secretMissing = (res) => {
@@ -65,8 +56,27 @@ exports.register = async (req, res) => {
     // chỉ là đợi một lượt ghi database; việc gửi thư vẫn bắn-rồi-quên bên
     // trong hàm. Đổi lại được tính xác định: mã xác minh chắc chắn đã lưu
     // xong trước khi người dùng cầm token trong tay.
-    await guiThuXacMinh(user);
+    const daGui = await guiThuXacMinh(user);
 
+    // Gửi được thư thì KHÔNG cấp token: tài khoản chỉ dùng được sau khi xác
+    // minh. Người đăng ký nhận một lời nhắn, không phải một phiên đăng nhập.
+    if (daGui) {
+      return res.status(201).json({
+        verifyRequired: true,
+        email: normalisedEmail,
+        message: 'Đã gửi thư xác minh. Bấm đường dẫn trong thư rồi đăng nhập.',
+      });
+    }
+
+    // Không gửi được thư thì KHÔNG khoá tài khoản lại.
+    //
+    // guiThuXacMinh trả false khi chưa khai thiết lập gửi thư — chạy ở máy,
+    // chạy test, hoặc quên đặt biến trên máy chủ. Bắt xác minh trong hoàn
+    // cảnh không gửi nổi thư nào là tạo ra tài khoản vĩnh viễn không ai vào
+    // được. Đánh dấu đã xác minh và cho vào luôn, như trước đây.
+    user.emailVerified = true;
+    user.role = vaiTro(user);
+    await user.save();
     res.status(201).json({ token: signToken(user), user: publicUser(user) });
   } catch (err) {
     if (err.name === 'ValidationError') {
@@ -93,6 +103,22 @@ exports.login = async (req, res) => {
       && (await bcrypt.compare(String(password), user.passwordHash));
     if (!ok) {
       return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
+    }
+
+    // Chưa xác minh hộp thư thì chưa vào được.
+    //
+    // Chỉ chặn ở ĐĂNG NHẬP, không chặn ở chỗ đăng tin: khách vãng lai vốn
+    // đăng tin được mà không cần tài khoản nào, nên chặn người chưa xác minh
+    // đăng tin chẳng ngăn được gì — họ chỉ việc không đăng nhập.
+    //
+    // Kèm verifyRequired để giao diện biết đây không phải sai mật khẩu, mà
+    // chỉ ra đúng chỗ xin gửi lại thư.
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        verifyRequired: true,
+        email: user.email,
+        message: 'Tài khoản chưa xác minh email. Kiểm tra hộp thư, hoặc yêu cầu gửi lại.',
+      });
     }
 
     // Đồng bộ lại vai trò mỗi lần đăng nhập, để thêm hoặc bỏ quản trị viên
