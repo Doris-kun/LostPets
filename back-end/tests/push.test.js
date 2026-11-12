@@ -21,7 +21,8 @@ let mongoServer;
 const TOKEN_A = 'ExponentPushToken[aaaaaaaaaaaaaaaaaaaaaa]';
 const TOKEN_B = 'ExponentPushToken[bbbbbbbbbbbbbbbbbbbbbb]';
 
-// Quận 1 và một điểm cách đó khoảng 2km, với một điểm ở Cần Thơ cách 170km.
+// Quận 1 và một điểm cách đó khoảng 2km, với một điểm ở Cần Thơ cách 129km
+// đường chim bay.
 const Q1 = { lat: 10.78, lng: 106.70 };
 const GAN = { lat: 10.79, lng: 106.71 };
 const XA = { lat: 10.03, lng: 105.78 };

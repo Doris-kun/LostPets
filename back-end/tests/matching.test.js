@@ -114,7 +114,8 @@ describe('findCandidates', () => {
   });
 });
 describe('lọc theo khoảng cách', () => {
-  // Quận 3 TP.HCM, một điểm cách đó vài km, và Cần Thơ cách khoảng 170km.
+  // Quận 3 TP.HCM, một điểm cách đó vài km, và Cần Thơ cách 129km đường
+  // chim bay — haversine đo đường thẳng, không phải đường bộ 170km.
   const Q3 = { lat: 10.78, lng: 106.68 };
   const GAN = { lat: 10.82, lng: 106.72 };
   const CAN_THO = { lat: 10.03, lng: 105.78 };
@@ -138,7 +139,7 @@ describe('lọc theo khoảng cách', () => {
   it('LOẠI tin ở tỉnh khác', async () => {
     await Pet.create(make({ breed: 'Cần Thơ', ...CAN_THO }));
     // Đây là trường hợp đã gặp thật: mèo mất ở Quận 3 được gợi ý khớp
-    // với tin nhặt được cách 170km.
+    // với tin nhặt được cách 129km.
     const out = await findCandidates(nguon());
     expect(out).toHaveLength(0);
   });

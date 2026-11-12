@@ -67,6 +67,16 @@ export default {
         this.$router.push(this.$route.query.next || '/');
       } catch (err) {
         const status = err.response && err.response.status;
+        const data = (err.response && err.response.data) || {};
+
+        // Chưa xác minh là chuyện khác hẳn sai mật khẩu. Gộp vào "sai thông
+        // tin đăng nhập" thì người dùng gõ lại mật khẩu đúng mười lần vẫn
+        // không vào được mà không hiểu vì sao.
+        if (status === 403 && data.verifyRequired) {
+          this.$toast(data.message, 'error');
+          this.$router.push({ path: '/verify-email', query: { email: data.email } });
+          return;
+        }
         if (status === 401) this.error = this.$t('auth.wrongCredentials');
         else if (status === 429) this.error = this.$t('auth.tooMany');
         else if (status === 503) this.error = this.$t('auth.disabled');

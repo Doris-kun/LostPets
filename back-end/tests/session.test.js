@@ -4,8 +4,10 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 
 // Chặn hẳn đường ra mạng và giữ lại thư để moi mã đặt lại.
 const mockSent = [];
+// Công tắc để thử cảnh máy chủ chưa cấu hình gửi thư.
+let mockMailerOn = true;
 jest.mock('../api/lib/mailer', () => ({
-  mailerConfigured: () => true,
+  mailerConfigured: () => mockMailerOn,
   sendMail: (mail) => { mockSent.push(mail); return Promise.resolve(true); },
 }));
 
@@ -29,6 +31,7 @@ afterAll(async () => {
 });
 
 beforeEach(() => {
+  mockMailerOn = true;
   mockSent.length = 0;
   delete process.env.ADMIN_EMAILS;
   if (rateLimit.reset) rateLimit.reset();
@@ -38,9 +41,19 @@ afterEach(async () => {
   await User.deleteMany({});
 });
 
-const dangKy = async (email = 'nguoidung@example.com') => {
-  const { body } = await request(app).post('/auth/register')
+// Đăng ký THÔI, chưa xác minh gì cả. Không trả token vì tài khoản chưa dùng
+// được — đó là cả điểm của việc bắt xác minh.
+const dangKyThoi = (email = 'nguoidung@example.com') =>
+  request(app).post('/auth/register')
     .send({ name: 'Người Dùng', email, password: 'matkhaucu' });
+
+// Đi trọn vòng đời thật: đăng ký, bấm đường dẫn trong thư, rồi đăng nhập.
+const dangKy = async (email = 'nguoidung@example.com') => {
+  await dangKyThoi(email);
+  await request(app).post('/auth/verify-email')
+    .send({ token: maTrongThu(/verify-email\?token=([a-f0-9]+)/) });
+  const { body } = await request(app).post('/auth/login')
+    .send({ email, password: 'matkhaucu' });
   return body.token;
 };
 
@@ -114,11 +127,8 @@ describe('quyền quản trị lấy từ database, không lấy từ token', ()
   // Đăng ký xong PHẢI xác minh hộp thư thì mới được cấp quyền quản trị.
   const dangKyAdmin = async () => {
     process.env.ADMIN_EMAILS = 'sep@example.com';
-    await dangKy('sep@example.com');
-    await User.updateOne({ email: 'sep@example.com' }, { emailVerified: true });
-    const { body } = await request(app).post('/auth/login')
-      .send({ email: 'sep@example.com', password: 'matkhaucu' });
-    return body.token;
+    // dangKy đã đi qua bước xác minh, nên quyền quản trị được cấp luôn.
+    return dangKy('sep@example.com');
   };
 
   it('quản trị viên vào được trang quản trị', async () => {
@@ -149,45 +159,36 @@ describe('quyền quản trị lấy từ database, không lấy từ token', ()
 });
 
 describe('trả trạng thái xác minh ra API', () => {
-  it('báo tài khoản nào SẮP thành quản trị viên nếu xác minh', async () => {
+  it('xác minh xong thì được cấp quyền quản trị', async () => {
     process.env.ADMIN_EMAILS = 'sep@example.com';
-    const tokenSep = await dangKy('sep@example.com');
-    const tokenThuong = await dangKy('thuong@example.com');
-
-    // Không thể dùng role để quyết định có hiện lối vào trang xác minh hay
-    // không: role đang là 'user' chính VÌ chưa xác minh.
-    expect((await goiMe(tokenSep)).body.adminPending).toBe(true);
-    expect((await goiMe(tokenThuong)).body.adminPending).toBe(false);
-  });
-
-  it('xác minh xong thì thôi báo sắp thành quản trị viên', async () => {
-    process.env.ADMIN_EMAILS = 'sep@example.com';
-    await dangKy('sep@example.com');
+    await dangKyThoi('sep@example.com');
     await request(app).post('/auth/verify-email')
       .send({ token: maTrongThu(/verify-email\?token=([a-f0-9]+)/) });
 
     const { body } = await request(app).post('/auth/login')
       .send({ email: 'sep@example.com', password: 'matkhaucu' });
 
-    expect(body.user.adminPending).toBe(false);
+    expect(body.user.emailVerified).toBe(true);
     expect(body.user.role).toBe('admin');
   });
 
-  it('/auth/me nói rõ đã xác minh hay chưa', async () => {
-    const token = await dangKy();
-    const chua = await goiMe(token);
+  it('/auth/me báo đã xác minh', async () => {
+    await dangKyThoi();
 
-    // Front-end cần biết để hiện lối vào trang xác minh. Không trả ra thì
-    // trang /verify-email không được liên kết từ đâu cả, chỉ tới được bằng
-    // đường dẫn trong thư — thư lạc là hết đường.
-    expect(chua.body.emailVerified).toBe(false);
+    // Chưa xác minh thì không quan sát được qua /auth/me, vì chưa đăng nhập
+    // được. Trạng thái đó chỉ thấy trong database.
+    const chua = await User.findOne({ email: 'nguoidung@example.com' });
+    expect(chua.emailVerified).toBe(false);
 
-    await request(app).post('/auth/verify-email')
-      .send({ token: maTrongThu(/verify-email\?token=([a-f0-9]+)/) });
+    const token = await (async () => {
+      await request(app).post('/auth/verify-email')
+        .send({ token: maTrongThu(/verify-email\?token=([a-f0-9]+)/) });
+      const { body } = await request(app).post('/auth/login')
+        .send({ email: 'nguoidung@example.com', password: 'matkhaucu' });
+      return body.token;
+    })();
 
-    const { body } = await request(app).post('/auth/login')
-      .send({ email: 'nguoidung@example.com', password: 'matkhaucu' });
-    expect(body.user.emailVerified).toBe(true);
+    expect((await goiMe(token)).body.emailVerified).toBe(true);
   });
 });
 
@@ -199,37 +200,89 @@ describe('tài khoản không còn thì token cũng không còn', () => {
     expect((await goiMe(token)).status).toBe(401);
   });
 });
+describe('đăng ký bắt buộc xác minh', () => {
+  it('đăng ký KHÔNG cấp token khi gửi được thư', async () => {
+    const res = await dangKyThoi();
+
+    expect(res.status).toBe(201);
+    expect(res.body.verifyRequired).toBe(true);
+    expect(res.body.token).toBeUndefined();
+    expect(res.body.email).toBe('nguoidung@example.com');
+  });
+
+  it('không gửi được thư thì KHÔNG khoá tài khoản lại', async () => {
+    mockMailerOn = false;
+    const res = await dangKyThoi('khong-co-thu@example.com');
+
+    // Bắt xác minh trong hoàn cảnh không gửi nổi thư nào là tạo ra tài
+    // khoản vĩnh viễn không ai vào được.
+    expect(res.body.token).toBeTruthy();
+    expect(res.body.verifyRequired).toBeUndefined();
+
+    const u = await User.findOne({ email: 'khong-co-thu@example.com' });
+    expect(u.emailVerified).toBe(true);
+  });
+
+  it('tài khoản Google không bị chặn, vì nhà cung cấp đã xác minh hộ', async () => {
+    // Tạo thẳng một tài khoản Google chưa đánh dấu xác minh, giống dữ liệu cũ.
+    await User.create({ name: 'Người Google', email: 'g@example.com', google: 'gg-1' });
+
+    // Luồng OAuth tự đánh dấu xác minh, nên không đi qua cửa chặn này. Ở đây
+    // chỉ khẳng định cửa chặn nằm ở đường mật khẩu, không chặn nhầm đường khác.
+    const res = await request(app).post('/auth/login')
+      .send({ email: 'g@example.com', password: 'bat-ky' });
+    expect(res.status).toBe(401);
+    expect(res.body.verifyRequired).toBeUndefined();
+  });
+});
+
 describe('xác minh địa chỉ email', () => {
   const maXacMinh = () => maTrongThu(/verify-email\?token=([a-f0-9]+)/);
 
-  it('chỉ BIẾT một địa chỉ trong ADMIN_EMAILS thì KHÔNG thành quản trị viên', async () => {
+  it('chỉ BIẾT một địa chỉ trong ADMIN_EMAILS thì KHÔNG vào được gì', async () => {
     process.env.ADMIN_EMAILS = 'sep@example.com';
-    const token = await dangKy('sep@example.com');
+    const res = await dangKyThoi('sep@example.com');
 
     // Đây là đường leo thang quyền rẻ nhất có thể có: trước đây ai đoán
     // được địa chỉ quản trị là đăng ký bằng địa chỉ đó và thành admin ngay,
-    // không cần mở được hộp thư.
-    expect((await request(app).get('/admin/stats')
-      .set('Authorization', `Bearer ${token}`)).status).toBe(403);
+    // không cần mở được hộp thư. Giờ đăng ký không cấp cả token lẫn vai trò.
+    expect(res.body.token).toBeUndefined();
+    expect(res.body.verifyRequired).toBe(true);
+
+    const u = await User.findOne({ email: 'sep@example.com' });
+    expect(u.role).toBe('user');
+    expect(u.emailVerified).toBe(false);
   });
 
-  it('chưa xác minh thì ĐĂNG NHẬP LẠI cũng không được cấp quyền', async () => {
-    process.env.ADMIN_EMAILS = 'sep@example.com';
-    await dangKy('sep@example.com');
+  it('chưa xác minh thì KHÔNG đăng nhập được', async () => {
+    await dangKyThoi();
 
-    // Đăng nhập là chỗ vai trò được tính lại. Không chặn ở đây thì việc
-    // đăng ký không cấp quyền chỉ là chậm một nhịp: đăng nhập lại là có ngay.
-    const { body } = await request(app).post('/auth/login')
-      .send({ email: 'sep@example.com', password: 'matkhaucu' });
+    const res = await request(app).post('/auth/login')
+      .send({ email: 'nguoidung@example.com', password: 'matkhaucu' });
 
-    expect(body.user.role).toBe('user');
-    expect((await request(app).get('/admin/stats')
-      .set('Authorization', `Bearer ${body.token}`)).status).toBe(403);
+    // Chặn ở đăng nhập chứ không chặn ở chỗ đăng tin: khách vãng lai vốn
+    // đăng tin được mà không cần tài khoản, nên chặn chỗ đó không ngăn được gì.
+    expect(res.status).toBe(403);
+    expect(res.body.verifyRequired).toBe(true);
+    expect(res.body.token).toBeUndefined();
+  });
+
+  it('xác minh xong thì đăng nhập được, và mật khẩu vẫn phải đúng', async () => {
+    await dangKyThoi();
+    await request(app).post('/auth/verify-email')
+      .send({ token: maTrongThu(/verify-email\?token=([a-f0-9]+)/) });
+
+    expect((await request(app).post('/auth/login')
+      .send({ email: 'nguoidung@example.com', password: 'matkhaucu' })).status).toBe(200);
+
+    // Xác minh không được phép thay thế mật khẩu.
+    expect((await request(app).post('/auth/login')
+      .send({ email: 'nguoidung@example.com', password: 'sai-mat-khau' })).status).toBe(401);
   });
 
   it('xác minh xong thì mới được cấp quyền', async () => {
     process.env.ADMIN_EMAILS = 'sep@example.com';
-    await dangKy('sep@example.com');
+    await dangKyThoi('sep@example.com');
 
     const res = await request(app).post('/auth/verify-email').send({ token: maXacMinh() });
     expect(res.status).toBe(200);
@@ -240,7 +293,7 @@ describe('xác minh địa chỉ email', () => {
   });
 
   it('mã xác minh chỉ dùng được một lần', async () => {
-    await dangKy();
+    await dangKyThoi();
     const ma = maXacMinh();
 
     expect((await request(app).post('/auth/verify-email').send({ token: ma })).status).toBe(200);
