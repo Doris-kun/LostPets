@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colorScheme } from 'nativewind';
 import { darkColors, darkShadow, lightColors, lightShadow, type Colors } from '../theme';
@@ -126,11 +127,29 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
    *
    * Vẫn còn đúng một chỗ không cứu được: màn chào. Nó nằm trong Modal, mà
    * hiệu ứng của component con chạy TRƯỚC của component cha, nên lúc nó gắn
-   * thì dòng này chưa chạy. Màn chào lấy màu thẳng từ useTheme() — xem ghi
+   * thì dòng này chưa chạy. Màn chào lấy màu thẳng từ bảng màu tối — xem ghi
    * chú trong SplashScreen.tsx.
+   *
+   * ----------------------------------------------------------------------
+   * Dòng Appearance.setColorScheme là cho những thứ KHÔNG phải do React vẽ.
+   *
+   * NativeWind chỉ cai quản được giao diện của app. Hộp thoại Alert.alert —
+   * app đang dùng 23 chỗ — là do Android tự vẽ, nên nó không nghe NativeWind
+   * mà đọc cài đặt sáng/tối của ĐIỆN THOẠI. Máy để tối, app để sáng, thế là
+   * bấm Xoá tin ra một hộp ĐEN nằm giữa màn hình trắng. Đúng họ với lỗi màn
+   * chào: lại một thứ chạy ngoài tầm với của React, lại đọc nhầm nguồn.
+   *
+   * setColorScheme gọi xuống AppCompatDelegate.setDefaultNightMode (xem
+   * AppearanceModule.kt:89), tức là đổi chế độ tối ở tầng hệ điều hành cho
+   * riêng app này. Từ đó hộp thoại native đi theo lựa chọn trong app.
+   *
+   * Không sợ màn hình bị dựng lại: AndroidManifest khai uiMode trong
+   * configChanges, nên đổi chế độ là activity tự xử lý chứ không khởi tạo
+   * lại. Thiếu uiMode ở đó thì dòng này sẽ làm app nháy trắng mỗi lần đổi.
    */
   useLayoutEffect(() => {
     colorScheme.set(scheme);
+    Appearance.setColorScheme(scheme);
   }, [scheme]);
 
   const value = useMemo(
