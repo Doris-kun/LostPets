@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Modal, Text, View } from 'react-native';
 import { useLanguage } from '../context/language';
-import { useTheme } from '../context/theme';
+import { darkColors } from '../theme';
 
 /*
  * Màn chào khi mở app.
@@ -18,17 +18,26 @@ import { useTheme } from '../context/theme';
  * Hai lớp dùng chung ảnh và chung nền nên lúc chuyển từ lớp 1 sang lớp 2,
  * logo đứng y nguyên một chỗ — người dùng không thấy giật.
  *
- * Giữ được điều đó phải trả giá bằng hai luật, phá luật nào cũng ra đúng cái
+ * Giữ được điều đó phải trả giá bằng ba luật, phá luật nào cũng ra đúng cái
  * lỗi "logo hiện hai lần":
  *
- *   a. Cùng MÀU NỀN. Lớp 1 chạy trước cả JavaScript nên nó không đọc được
- *      lựa chọn sáng/tối trong app. Vì vậy app.json nay chỉ khai một bản nền
- *      sáng, và context/theme.tsx cũng không đọc cài đặt máy nữa.
+ *   a. Cùng MÀU NỀN, và màu đó phải là MỘT màu cố định. Lớp 1 chạy trước cả
+ *      JavaScript nên nó không đọc được lựa chọn sáng/tối trong app — nó chỉ
+ *      đọc được một màu viết sẵn trong app.json. Vì vậy màn này KHÔNG dùng
+ *      useTheme() nữa mà lấy thẳng bảng màu tối, khớp với nền navy khai ở
+ *      app.json. Đổi màu theo chế độ app là lớp 1 và lớp 2 lệch nhau ngay.
  *
  *   b. Logo ở lớp 2 phải hiện SẴN, không được mờ dần hay nở ra. Trước đây nó
  *      bắt đầu từ opacity 0 và scale 0.88: lớp 1 tắt là logo biến mất một
  *      nhịp rồi mới bung trở lại — người dùng đọc ra thành hai lần hiện.
  *      Giờ chỉ slogan và hai gạch màu là hiện dần.
+ *
+ *   c. Ảnh của lớp 1 phải là ảnh CHỈ CÓ VÒNG TRÒN (logo-mark-dark.png), không
+ *      có chữ. Từ Android 12, màn chào của hệ điều hành cắt ảnh theo một mặt
+ *      nạ HÌNH TRÒN — expo-splash-screen 58 dựng theme kế thừa
+ *      Theme.SplashScreen, đúng API đó. Đưa logo-full.png vào thì vòng tròn
+ *      sống sót còn chữ "LostPets" bên dưới bị cắt cụt, nhìn như ảnh hỏng.
+ *      Ảnh chỉ có vòng tròn thì mặt nạ không còn gì để cắt.
  *
  * ----------------------------------------------------------------------
  * Vì sao chế độ tối dùng ảnh KHÁC
@@ -66,17 +75,21 @@ import { useTheme } from '../context/theme';
  */
 const HOLD_MS = 450;
 
-// logo-full.png gốc 471x590.
-// Giữ đúng tỉ lệ để chữ và hình không bị bóp méo.
-const FULL_WIDTH = 220;
-const FULL_HEIGHT = Math.round((FULL_WIDTH * 590) / 471);
-// logo-dark.png gốc 471x591 — cùng tỉ lệ với bản sáng nên dùng chung bề ngang
+// logo-dark.png gốc 471x591. Giữ đúng tỉ lệ để chữ và hình không bị bóp méo.
+// Chỉ còn bản tối: màn chào nay luôn nền navy, xem luật (a) ở đầu file.
 const DARK_WIDTH = 220;
 const DARK_HEIGHT = Math.round((DARK_WIDTH * 591) / 471);
 
 export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const { t } = useLanguage();
-  const { isDark, colors } = useTheme();
+
+  /*
+   * Bảng màu CỐ ĐỊNH, không theo chế độ của app — xem luật (a) ở đầu file.
+   * Màn chào là một tấm biển thương hiệu, không phải một màn hình của app:
+   * nó phải trùng khít với nền navy mà app.json khai cho lớp 1, mà app.json
+   * thì chỉ nhận được đúng một màu.
+   */
+  const colors = darkColors;
 
   /*
    * useRef chứ không useState: giá trị animation đổi 60 lần mỗi giây.
@@ -145,16 +158,17 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
         bất cứ đâu. Đơn giản thì không có chỗ cho lỗi vị trí chen vào.
       */}
       {/*
-        MÀU Ở ĐÂY LẤY THẲNG TỪ useTheme(), KHÔNG QUA LỚP TIỆN ÍCH.
+        MÀU Ở ĐÂY LẤY THẲNG TỪ BẢNG MÀU TỐI, KHÔNG QUA useTheme() VÀ KHÔNG QUA
+        LỚP TIỆN ÍCH.
 
-        Màn chào vẽ ra ở khoảnh khắc đầu tiên của app, trước khi ThemeProvider
-        kịp báo cho NativeWind biết người dùng đang để chế độ nào — lựa chọn
-        đó nằm trong bộ nhớ máy nên phải đọc bất đồng bộ. Lúc đó NativeWind
-        còn lấy mặc định từ cài đặt của ĐIỆN THOẠI.
+        Không qua useTheme(): màn chào phải trùng màu với lớp 1, mà lớp 1 chỉ
+        nhận đúng một màu viết sẵn trong app.json — xem luật (a) ở đầu file.
 
-        Máy để tối mà app để sáng thì màn chào ra nền tối, và vì nó nằm trong
-        Modal — một cây giao diện riêng ở tầng hệ điều hành — nên đã gắn rồi
-        thì không nhận lại giá trị mới nữa. Kẹt màu sai suốt thời gian hiện.
+        Không qua lớp tiện ích: màn chào vẽ ra ở khoảnh khắc đầu tiên của app,
+        trước khi ThemeProvider kịp báo cho NativeWind biết chế độ nào. Mà nó
+        lại nằm trong Modal — một cây giao diện riêng ở tầng hệ điều hành —
+        nên đã gắn rồi thì không nhận lại giá trị mới nữa, kẹt màu sai suốt
+        thời gian hiện.
 
         Các màn khác không dính vì chúng vẽ sau khi mọi thứ đã yên vị. Bảng
         lọc cũng là Modal và vẫn đúng, vì nó chỉ mở khi người dùng bấm.
@@ -166,19 +180,15 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
         {/* opacity do Animated giữ, đổi từng khung hình -> phải ở style */}
         <Animated.View className="items-center" style={{ opacity: contentOpacity }}>
           <Animated.Image
-            source={
-              isDark
-                ? require('../../assets/logo-dark.png')
-                : require('../../assets/logo-full.png')
-            }
+            source={require('../../assets/logo-dark.png')}
             /*
               Kích thước logo là hằng số tính sẵn ở đầu file, không phải lớp
-              tiện ích cố định — bản tối có vầng sáng toả ra nên chiếm ít chỗ
-              hơn, phải phóng to bù lại.
+              tiện ích cố định. Bề ngang 220 khớp với imageWidth 220 khai cho
+              lớp 1 trong app.json, nên vòng tròn hai lớp ra cùng cỡ.
             */
             style={{
-              width: isDark ? DARK_WIDTH : FULL_WIDTH,
-              height: isDark ? DARK_HEIGHT : FULL_HEIGHT,
+              width: DARK_WIDTH,
+              height: DARK_HEIGHT,
               resizeMode: 'contain',
               transform: [{ scale: logoScale }],
             }}
