@@ -1,7 +1,28 @@
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate, useLocation, useRouteError } from 'react-router-dom';
 import App from './App.jsx';
 import NotFound from './pages/NotFound.jsx';
 import auth from './auth';
+
+/*
+ * Mỗi trang là một TỆP RỜI, chỉ tải khi người dùng bấm sang.
+ *
+ * Bản Vue dùng `component: () => import('./views/Home.vue')`. Giữ đúng lối đó
+ * chứ không nhập thẳng, vì hai lý do:
+ *
+ *   1. Người vào xem một tin không phải tải cả trang Quản trị và trang Đăng
+ *      tin. Gộp hết vào một tệp thì mở trang chủ cũng tải luôn mọi thứ —
+ *      Vite đã cảnh báo đúng chỗ này khi thử gộp.
+ *
+ *   2. Cả đoạn tự tải lại khi thiếu tệp ở dưới CHỈ có nghĩa khi tệp bị tách
+ *      rời. Nhập thẳng thì đoạn đó thành mã chết, và tới lúc ai đó tách lại
+ *      thì không còn ai nhớ vì sao cần nó.
+ *
+ * NotFound thì nhập thẳng: nó vừa là một tuyến đường, vừa là thứ hiện ra khi
+ * tải tệp hỏng. Để nó nằm trong một tệp rời thì lúc mạng hỏng, chính trang
+ * báo lỗi cũng không tải được.
+ */
+const Home = lazy(() => import('./pages/Home.jsx'));
 
 /*
  * Vào trang cần đăng nhập mà chưa đăng nhập thì đẩy sang /login, NHỚ đường cũ
@@ -93,7 +114,6 @@ function LoiTuyenDuong() {
  *
  * CHƯA CÓ, theo thứ tự dự định làm:
  *
- *   /                    Home
  *   /pet/:id             PetDetail
  *   /new                 NewPet
  *   /pet/:id/edit        EditPet
@@ -118,6 +138,7 @@ const router = createBrowserRouter(
       element: <App />,
       errorElement: <LoiTuyenDuong />,
       children: [
+        { index: true, element: <Home /> },
         // Mọi đường dẫn chưa chuyển đều rơi vào đây.
         { path: '*', element: <NotFound /> },
       ],

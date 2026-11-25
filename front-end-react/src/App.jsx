@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Toast from './components/Toast.jsx';
 import { useI18n } from './i18n';
@@ -281,8 +281,19 @@ export default function App() {
         ChatWidget — xem danh sách còn thiếu trong router.jsx.
       */}
 
+      {/*
+        Suspense là BẮT BUỘC vì router nạp từng trang thành tệp rời. Thiếu nó
+        thì React ném lỗi ngay lần chuyển trang đầu tiên.
+
+        Để trống chứ không hiện vòng xoay: mỗi trang đã có khung xương riêng
+        của nó, mà tệp trang thì tải trong vài chục mili giây. Chèn thêm một
+        vòng xoay ở đây là người dùng thấy hai lớp chờ nối nhau, nhìn chậm hơn
+        thực tế.
+      */}
       <main>
-        <Outlet />
+        <Suspense fallback={null}>
+          <Outlet />
+        </Suspense>
       </main>
 
       {/*
