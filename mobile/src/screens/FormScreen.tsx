@@ -141,6 +141,35 @@ async function shrink(asset: PickedImage): Promise<PickedImage> {
   }
 }
 
+/**
+ * Có được phép ghi đè ô Khu vực bằng tên vừa tra từ bản đồ không?
+ *
+ * Câu hỏi thật sự là: chữ đang nằm trong ô là của ai?
+ *
+ *   @param dangCo       chữ đang có trong ô Khu vực
+ *   @param banDoDaDien  chữ mà CHÍNH BẢN ĐỒ đã điền vào lần gần nhất
+ *
+ * Ba trường hợp:
+ *
+ *   ô trống              -> điền, không có gì để mất
+ *   chữ của bản đồ       -> ĐÈ. Chữ cũ chỉ là tên của chỗ cũ; chấm đã dời đi
+ *                           nơi khác thì giữ nó lại là nói sai nơi thất lạc
+ *   chữ người dùng gõ    -> KHÔNG đè. "Gần chợ Bến Thành, hẻm 25" là thứ họ
+ *                           cố ý viết, chi tiết hơn hẳn tên phường
+ *
+ * Trước đây chỉ kiểm ô trống hay không, nên từ lần chọn vị trí THỨ HAI trở đi
+ * ô không còn trống nữa — tên khu vực đứng nguyên ở chỗ cũ dù chấm đã dời.
+ * Tin đăng ra mang toạ độ một nơi, chữ một nơi, mà không ai thấy gì sai.
+ *
+ * Tách ra khỏi component để test được: đây là một quy tắc, không phải một
+ * đoạn giao diện.
+ */
+export function deDuocKhuVuc(dangCo: string, banDoDaDien: string): boolean {
+  const chu = dangCo.trim();
+  if (!chu) return true;
+  return chu === banDoDaDien.trim();
+}
+
 type Props = NativeStackScreenProps<RootStackParamList, 'Form'>;
 
 export default function FormScreen({ route, navigation }: Props) {
@@ -242,6 +271,29 @@ export default function FormScreen({ route, navigation }: Props) {
    */
   const [areaGoiY, setAreaGoiY] = useState('');
 
+  /*
+   * Chuỗi Khu vực gần nhất do CHÍNH BẢN ĐỒ điền vào. Rỗng = chữ đang trong ô
+   * là của người dùng, hoặc chưa có chữ nào.
+   *
+   * Có nó để trả lời đúng một câu: chữ đang nằm trong ô Khu vực là của ai?
+   *
+   *   của bản đồ  -> chọn lại vị trí thì ĐÈ, vì chữ cũ chỉ là tên của chỗ cũ,
+   *                  giữ lại là nói sai nơi con vật thất lạc
+   *   của người   -> KHÔNG đè, chỉ gợi ý. "Gần chợ Bến Thành, hẻm 25" là thứ
+   *                  họ cố ý viết, chi tiết hơn hẳn tên phường
+   *
+   * Trước đây chỉ kiểm ô có trống hay không, nên lần chọn vị trí THỨ HAI trở
+   * đi là ô không còn trống nữa — và tên khu vực đứng nguyên ở chỗ cũ dù chấm
+   * trên bản đồ đã dời đi nơi khác. Tin đăng ra mang toạ độ một nơi, chữ một
+   * nơi.
+   *
+   * useRef chứ không useState: giá trị này chỉ được đọc bên trong callback
+   * của setForm, không có gì trên màn hình phụ thuộc vào nó. Dùng state thì
+   * mỗi lần ghi là một lần vẽ lại thừa, mà callback chạy sau khi chờ mạng
+   * nên còn đọc phải bản cũ.
+   */
+  const areaBanDoDien = useRef('');
+
   const pickPoint = (lat: number | null, lng: number | null) => {
     setForm((current) => ({ ...current, lat, lng }));
     setAreaGoiY('');
@@ -254,17 +306,23 @@ export default function FormScreen({ route, navigation }: Props) {
       setAreaGoiY(area);
 
       /*
-       * Ô còn trống thì điền thẳng, khỏi bắt bấm thêm một cái.
+       * Điền khi ô còn trống, HOẶC khi chữ trong ô là do bản đồ điền lần
+       * trước. Cả hai trường hợp đều không có công sức nào của người dùng để
+       * mà xoá.
        *
-       * Ô đã có chữ thì KHÔNG đè: ai đã gõ "Gần chợ Bến Thành, hẻm 25" thì đó
-       * là thứ họ cố ý viết, chi tiết hơn hẳn tên phường — đè lên là xoá công
-       * của họ. Nhưng im lặng không làm gì cũng tệ, nên để lại một lời gợi ý
-       * bấm được ở dưới ô.
+       * Chỉ chừa lại đúng một trường hợp: người dùng tự gõ. Lúc đó không đè,
+       * mà để lại một lời gợi ý bấm được ở dưới ô — im lặng bỏ qua cũng tệ
+       * như đè lên.
        *
        * Kiểm lại trong setForm chứ không kiểm bên ngoài: giữa lúc chờ mạng
        * người dùng có thể đã tự gõ khu vực rồi.
        */
-      setForm((current) => (current.area.trim() ? current : { ...current, area }));
+      setForm((current) => {
+        if (!deDuocKhuVuc(current.area, areaBanDoDien.current)) return current;
+
+        areaBanDoDien.current = area;
+        return { ...current, area };
+      });
     });
   };
 
@@ -651,7 +709,17 @@ export default function FormScreen({ route, navigation }: Props) {
         <Field
           label={t('form.area')}
           value={form.area}
-          onChangeText={(v) => update('area', v)}
+          /*
+            Người dùng vừa gõ thì chữ trong ô thành của HỌ, không phải của bản
+            đồ nữa — xoá dấu đi để lần chọn vị trí sau không đè lên.
+
+            Xoá cả khi họ xoá sạch ô: ô trống thì vốn đã điền được rồi, không
+            cần dấu nào.
+          */
+          onChangeText={(v) => {
+            areaBanDoDien.current = '';
+            update('area', v);
+          }}
           placeholder={t('form.areaPh')}
         />
 
@@ -681,7 +749,15 @@ export default function FormScreen({ route, navigation }: Props) {
               <TouchableOpacity
                 // min-h-11 = 44pt, mức tối thiểu cho một vùng chạm trên iOS
                 className="min-h-11 justify-center"
-                onPress={() => update('area', areaGoiY)}
+                /*
+                  Bấm nhận gợi ý là chữ đó đến TỪ BẢN ĐỒ, nên đánh dấu lại —
+                  không thì lần dời chấm sau sẽ tưởng người dùng tự gõ rồi
+                  không dám đè, và ô kẹt ở tên của chỗ cũ.
+                */
+                onPress={() => {
+                  areaBanDoDien.current = areaGoiY;
+                  update('area', areaGoiY);
+                }}
                 activeOpacity={0.7}
               >
                 <Text className="text-[13px] font-bold text-primary">{t('form.areaUse')}</Text>

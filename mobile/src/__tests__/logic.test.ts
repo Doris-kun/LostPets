@@ -3,6 +3,7 @@ import { errorEmail, errorStatus, needsVerification } from '../api';
 import { timeAgo } from '../components/PetCard';
 import { countActiveFilters, EMPTY_FILTERS } from '../components/PetFilters';
 import { buildParams } from '../screens/HomeScreen';
+import { deDuocKhuVuc } from '../screens/FormScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import report from '../report';
 import nudge from '../nudge';
@@ -642,5 +643,48 @@ describe('đọc email từ thân lỗi', () => {
     expect(errorEmail(loi(null))).toBe('');
     expect(errorEmail(new Error('loi thuong'))).toBe('');
     expect(errorEmail(undefined)).toBe('');
+  });
+});
+
+describe('đè ô Khu vực hay không khi chọn lại vị trí', () => {
+  /*
+   * Quy tắc này đã sai một lần, và sai theo kiểu không ai thấy.
+   *
+   * Bản cũ chỉ hỏi "ô có trống không". Lần chọn vị trí đầu thì đúng — ô
+   * trống, điền vào. Nhưng từ lần THỨ HAI trở đi ô không còn trống nữa, nên
+   * tên khu vực đứng nguyên ở chỗ cũ dù chấm trên bản đồ đã dời đi nơi khác.
+   *
+   * Tin đăng ra mang toạ độ một nơi và chữ một nơi. Không có lỗi nào nổ,
+   * không có gì đỏ lên — người đăng tin thất lạc chó ở Tân Bình mà tin ghi
+   * Quận 1, và họ không hiểu vì sao không ai ở gần nhìn thấy.
+   */
+
+  it('ô trống thì điền', () => {
+    expect(deDuocKhuVuc('', '')).toBe(true);
+    expect(deDuocKhuVuc('   ', '')).toBe(true);
+  });
+
+  it('chữ do chính bản đồ điền lần trước thì ĐÈ', () => {
+    // Đây là bài quan trọng nhất: chọn lại vị trí phải cập nhật tên khu vực.
+    expect(deDuocKhuVuc('Quận 1, TP.HCM', 'Quận 1, TP.HCM')).toBe(true);
+  });
+
+  it('chữ người dùng tự gõ thì KHÔNG đè', () => {
+    expect(deDuocKhuVuc('Gần chợ Bến Thành, hẻm 25', '')).toBe(false);
+    // Đã từng để bản đồ điền, nhưng sau đó người dùng gõ đè lên bằng chữ khác
+    expect(deDuocKhuVuc('Gần chợ Bến Thành, hẻm 25', 'Quận 1, TP.HCM')).toBe(false);
+  });
+
+  it('khoảng trắng thừa hai bên không làm lệch kết quả', () => {
+    expect(deDuocKhuVuc('  Quận 1, TP.HCM  ', 'Quận 1, TP.HCM')).toBe(true);
+    expect(deDuocKhuVuc('Quận 1, TP.HCM', '  Quận 1, TP.HCM  ')).toBe(true);
+  });
+
+  /*
+   * Chưa có lần điền nào mà ô lại có chữ thì chữ đó chắc chắn của người dùng,
+   * hoặc của tin cũ đang sửa. Cả hai đều phải giữ.
+   */
+  it('đang sửa tin cũ: khu vực lấy từ máy chủ, không được đè', () => {
+    expect(deDuocKhuVuc('Phường Bảy Hiền, TP.HCM', '')).toBe(false);
   });
 });
