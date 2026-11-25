@@ -252,9 +252,13 @@ describe('màu nền bản đồ lấy từ bảng màu, không chép tay', () =
  */
 describe('tra tên khu vực từ toạ độ', () => {
   const goi = (body: unknown, ok = true) => {
-    // Khai rõ tham số url: không khai thì TypeScript hiểu bản giả là hàm không
-    // nhận gì, và gia.mock.calls[0][0] thành "phần tử không tồn tại".
-    const gia = jest.fn(async (_url: string) => ({ ok, json: async () => body }));
+    // Khai rõ CẢ HAI tham số: không khai thì TypeScript hiểu bản giả là hàm
+    // không nhận gì, và gia.mock.calls[0][0] thành "phần tử không tồn tại".
+    // Tham số thứ hai cần cho bài kiểm User-Agent ở dưới.
+    const gia = jest.fn(async (_url: string, _tuyChon?: { headers?: Record<string, string> }) => ({
+      ok,
+      json: async () => body,
+    }));
     (globalThis as { fetch?: unknown }).fetch = gia;
     return gia;
   };
@@ -282,6 +286,27 @@ describe('tra tên khu vực từ toạ độ', () => {
     // Toạ độ chính xác KHÔNG được xuất hiện ở bất cứ đâu trong đường dẫn
     expect(url).not.toContain('10.7769');
     expect(url).not.toContain('106.7009');
+  });
+
+  /*
+   * Nominatim chặn User-Agent chung chung bằng 403, và React Native trên
+   * Android mặc định gửi "okhttp/4.x" — đúng loại bị chặn. Đã hỏng thật:
+   * bấm định vị thì chấm hiện đúng chỗ trên bản đồ mà ô Khu vực không được
+   * điền, không một dòng lỗi nào, vì hàm này nuốt lỗi rồi trả chuỗi rỗng.
+   *
+   * Test canh đúng thứ không nhìn ra được: cái header đó còn hay mất.
+   */
+  it('tự xưng tên app trong User-Agent, không để React Native gửi okhttp', async () => {
+    const gia = goi({ address: { city_district: 'Quận 3', city: 'TP.HCM' } });
+
+    await areaFromCoords(10.77, 106.7, 'vi');
+
+    const tuyChon = gia.mock.calls[0][1] as { headers?: Record<string, string> } | undefined;
+    const ua = tuyChon?.headers?.['User-Agent'] ?? '';
+
+    expect(ua).toMatch(/^LostPets\//);
+    // "LostPets/undefined" vẫn khớp biểu thức trên mà Nominatim vẫn chặn.
+    expect(ua).not.toContain('undefined');
   });
 
   it('ghép quận và tỉnh thành một chuỗi', async () => {

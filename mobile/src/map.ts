@@ -265,6 +265,19 @@ export async function pickPosition(): Promise<Point | null> {
 const NOMINATIM = 'https://nominatim.openstreetmap.org/reverse';
 
 /*
+ * Tên app tự xưng với Nominatim. Xem giải thích dài ở chỗ gọi fetch bên dưới.
+ *
+ * Viết thẳng chuỗi chứ không đọc từ Constants.expoConfig.version: cấu hình đó
+ * CÓ THỂ null trong bản build thật — đúng lỗi đã làm chết cả chuỗi thông báo
+ * đẩy. Ở đây null còn tệ hơn, vì "LostPets/undefined" vẫn là một User-Agent
+ * hợp lệ về mặt cú pháp nên không ai thấy gì sai, mà Nominatim thì vẫn chặn.
+ *
+ * Số này khớp với expo.version trong app.json. Lệch cũng không hỏng gì — nó
+ * chỉ để Nominatim biết ai đang gọi.
+ */
+const NOMINATIM_UA = 'LostPets/1.0.0';
+
+/*
  * CÙNG lưới làm nhiễu với tầng schema ở back-end.
  *
  * Toạ độ phải được làm tròn TRƯỚC khi rời khỏi máy. Nút "dùng vị trí của tôi"
@@ -357,7 +370,35 @@ export async function areaFromCoords(lat: number, lng: number, lang: Lang): Prom
      * mở được tài khoản.
      */
     const res = await fetch(`${NOMINATIM}?${params}`, {
-      headers: { Accept: 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        /*
+         * User-Agent là BẮT BUỘC, không phải lịch sự.
+         *
+         * Điều khoản của Nominatim đòi mỗi ứng dụng phải tự xưng tên. Ai gửi
+         * một User-Agent chung chung thì bị chặn thẳng bằng 403 — và React
+         * Native trên Android mặc định gửi "okhttp/4.x", đúng loại bị chặn.
+         *
+         * Đo thật, cùng một toạ độ, cùng mọi tham số khác:
+         *
+         *   không đặt gì   -> 403 Access denied
+         *   okhttp/4.12.0  -> 403 Access denied
+         *   LostPets/1.0   -> 200, trả về "Phường Bảy Hiền, Thành phố Hồ Chí Minh"
+         *
+         * Hỏng theo kiểu IM LẶNG, nên nó sống được lâu: hàm này nuốt mọi lỗi
+         * rồi trả chuỗi rỗng, chỗ gọi thấy rỗng thì bỏ qua. Người dùng bấm
+         * định vị, chấm hiện lên bản đồ đúng chỗ, mà ô Khu vực không được
+         * điền và không một dòng lỗi nào — nhìn ra y như tính năng bị bỏ đi.
+         *
+         * Web không dính vì trình duyệt tự gắn User-Agent thật của nó, mà
+         * trang web cũng không được phép sửa header này.
+         *
+         * CHỈ có tên và số hiệu bản app, không kèm email hay địa chỉ nào:
+         * tên app thì ai cài cũng đọc được, còn địa chỉ liên hệ thì không có
+         * lý do gì để một dịch vụ bản đồ biết.
+         */
+        'User-Agent': NOMINATIM_UA,
+      },
     });
     if (!res.ok) return '';
 
