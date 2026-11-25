@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Modal, Text, View } from 'react-native';
 import { useLanguage } from '../context/language';
-import { darkColors } from '../theme';
+import { lightColors } from '../theme';
 
 /*
  * Màn chào khi mở app.
@@ -24,32 +24,44 @@ import { darkColors } from '../theme';
  *   a. Cùng MÀU NỀN, và màu đó phải là MỘT màu cố định. Lớp 1 chạy trước cả
  *      JavaScript nên nó không đọc được lựa chọn sáng/tối trong app — nó chỉ
  *      đọc được một màu viết sẵn trong app.json. Vì vậy màn này KHÔNG dùng
- *      useTheme() nữa mà lấy thẳng bảng màu tối, khớp với nền navy khai ở
+ *      useTheme() nữa mà lấy thẳng bảng màu SÁNG, khớp với nền trắng khai ở
  *      app.json. Đổi màu theo chế độ app là lớp 1 và lớp 2 lệch nhau ngay.
+ *
+ *      Vì sao sáng chứ không phải tối: màu mặc định của app là sáng, và
+ *      context/theme.tsx đã bỏ hẳn việc đọc cài đặt của điện thoại. Chọn navy
+ *      là lại để lớp của Android quyết định màu của app — đúng thứ cần bỏ.
  *
  *   b. Logo ở lớp 2 phải hiện SẴN, không được mờ dần hay nở ra. Trước đây nó
  *      bắt đầu từ opacity 0 và scale 0.88: lớp 1 tắt là logo biến mất một
  *      nhịp rồi mới bung trở lại — người dùng đọc ra thành hai lần hiện.
  *      Giờ chỉ slogan và hai gạch màu là hiện dần.
  *
- *   c. Ảnh của lớp 1 phải là ảnh CHỈ CÓ VÒNG TRÒN (logo-mark-dark.png), không
- *      có chữ. Từ Android 12, màn chào của hệ điều hành cắt ảnh theo một mặt
- *      nạ HÌNH TRÒN — expo-splash-screen 58 dựng theme kế thừa
+ *   c. Ảnh của lớp 1 phải là ảnh CHỈ CÓ VÒNG TRÒN (logo-mark.png), không có
+ *      chữ. Từ Android 12, màn chào của hệ điều hành cắt ảnh theo một mặt nạ
+ *      HÌNH TRÒN — expo-splash-screen 58 dựng theme kế thừa
  *      Theme.SplashScreen, đúng API đó. Đưa logo-full.png vào thì vòng tròn
  *      sống sót còn chữ "LostPets" bên dưới bị cắt cụt, nhìn như ảnh hỏng.
  *      Ảnh chỉ có vòng tròn thì mặt nạ không còn gì để cắt.
  *
+ *   d. Vòng tròn của lớp 2 phải CHẠY TỪ chỗ lớp 1 để nó về. Android tự quyết
+ *      cỡ icon màn chào, không cho đặt, nên hai vòng tròn không thể bằng nhau
+ *      sẵn — lớp 1 nhỏ hơn và nằm giữa màn hình, lớp 2 to hơn và nằm cao hơn
+ *      vì còn chừa chỗ cho chữ với slogan bên dưới. Cắt phụt một cái là mắt
+ *      đọc ra "hai tấm ảnh". Cho nó phóng và trượt lên trong 320ms thì mắt
+ *      đọc ra "một vòng tròn đang nở" — vẫn một vật, không phải hai.
+ *
  * ----------------------------------------------------------------------
- * Vì sao chế độ tối dùng ảnh KHÁC
+ * Vì sao luôn dùng logo-full.png, không bao giờ dùng logo-dark.png
  *
- * logo-full.png đã nướng sẵn chữ LostPets màu navy đậm vào ảnh. Màu đó nằm
- * trên nền trắng thì đẹp, nhưng đặt lên nền tối gần như không đọc được, mà
- * chữ trong ảnh thì không đổi màu được.
+ * logo-full.png đã nướng sẵn chữ LostPets màu navy đậm vào ảnh, đẹp trên nền
+ * trắng nhưng gần như không đọc được trên nền tối — mà chữ trong ảnh thì
+ * không đổi màu được. Dự án vì vậy có thêm logo-dark.png, bản chữ màu kem
+ * dành cho nền tối.
  *
- * Nên chế độ tối dùng logo-dark.png — bản riêng do chính chủ dự án vẽ, chữ
- * màu kem nổi rõ trên nền tối. Nền xám than của ảnh gốc đã được tách thành
- * trong suốt, nên nó ăn theo nền của màn hình, không để lại khối chữ nhật.
-  *
+ * Màn chào không dùng tới bản đó nữa: nền của nó nay luôn trắng, cố định,
+ * không theo chế độ sáng/tối của app — xem luật (a) ở trên. logo-dark.png
+ * vẫn còn và vẫn đúng chỗ của nó ở những màn khác.
+ *
  * -----------------------------------------------------------------------
  * Vì sao bọc trong Modal?
  *
@@ -75,10 +87,32 @@ import { darkColors } from '../theme';
  */
 const HOLD_MS = 450;
 
-// logo-dark.png gốc 471x591. Giữ đúng tỉ lệ để chữ và hình không bị bóp méo.
-// Chỉ còn bản tối: màn chào nay luôn nền navy, xem luật (a) ở đầu file.
-const DARK_WIDTH = 220;
-const DARK_HEIGHT = Math.round((DARK_WIDTH * 591) / 471);
+// logo-full.png gốc 471x590. Giữ đúng tỉ lệ để chữ và hình không bị bóp méo.
+// Chỉ còn bản sáng: màn chào nay luôn nền trắng, xem luật (a) ở đầu file.
+const LOGO_WIDTH = 220;
+const LOGO_HEIGHT = Math.round((LOGO_WIDTH * 590) / 471);
+
+/*
+ * Hai số để nối liền lớp 1 với lớp 2 — xem luật (d) ở đầu file.
+ *
+ * START_SCALE: vòng tròn của lớp 1 nhỏ hơn. Android vẽ icon màn chào trong
+ * một ô 192dp cố định, còn ở đây vòng tròn rộng đúng LOGO_WIDTH = 220dp.
+ * 192/220 = 0.87. Android không hứa con số này giống nhau trên mọi máy, nên
+ * đây là ước lượng — nhưng vì nó chạy thành một hiệu ứng phóng mượt chứ không
+ * phải cắt phụt, lệch vài phần trăm cũng không ai nhận ra.
+ *
+ * START_SHIFT: lớp 1 đặt vòng tròn ngay giữa màn hình. Lớp 2 thì xếp cả cụm
+ * (logo + hai gạch + slogan) vào giữa, nên riêng vòng tròn bị đẩy lên cao hơn.
+ * Tính ra khoảng cách đó:
+ *
+ *   vòng tròn chiếm 479/590 chiều cao ảnh -> tâm vòng tròn cách đỉnh ảnh
+ *     LOGO_HEIGHT * 479/590 / 2 ~ 112dp
+ *   cả cụm cao  = 276 (ảnh) + 16 (mt-lg) + 4 (gạch) + 12 (mt-md) + 20 (slogan)
+ *               = 328dp, đặt giữa nên nửa trên là 164dp
+ *   lệch = 164 - 112 = 52dp  -> bắt đầu thấp hơn 52dp rồi trượt lên 0
+ */
+const START_SCALE = 0.87;
+const START_SHIFT = 52;
 
 export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const { t } = useLanguage();
@@ -86,19 +120,25 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   /*
    * Bảng màu CỐ ĐỊNH, không theo chế độ của app — xem luật (a) ở đầu file.
    * Màn chào là một tấm biển thương hiệu, không phải một màn hình của app:
-   * nó phải trùng khít với nền navy mà app.json khai cho lớp 1, mà app.json
+   * nó phải trùng khít với nền trắng mà app.json khai cho lớp 1, mà app.json
    * thì chỉ nhận được đúng một màu.
    */
-  const colors = darkColors;
+  const colors = lightColors;
 
   /*
    * useRef chứ không useState: giá trị animation đổi 60 lần mỗi giây.
    * Dùng state thì mỗi khung hình là một lần render lại — giật ngay.
    * Animated.Value đổi thẳng ở tầng native, không đụng tới React.
    */
-  // Bắt đầu ở đúng trạng thái cuối của màn chào gốc: hiện đủ, đúng cỡ.
-  // Xem luật (b) ở đầu file — đổi hai số này là lỗi "logo hiện hai lần" quay lại.
-  const logoScale = useRef(new Animated.Value(1)).current;
+  /*
+   * Bắt đầu ở đúng chỗ màn chào gốc để nó lại: cùng cỡ, cùng vị trí, HIỆN ĐỦ.
+   *
+   * Không có opacity ở đây là cố ý — xem luật (b) ở đầu file. Logo chỉ được
+   * phóng và trượt, không được mờ đi rồi hiện lại, vì mờ là mắt đọc ra thành
+   * hai lần xuất hiện.
+   */
+  const logoScale = useRef(new Animated.Value(START_SCALE)).current;
+  const logoShift = useRef(new Animated.Value(START_SHIFT)).current;
   const tailOpacity = useRef(new Animated.Value(0)).current;
 
   // Độ mờ của TOÀN BỘ nội dung, dùng ở bước cuối để rút đi.
@@ -107,8 +147,27 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
 
   useEffect(() => {
     Animated.sequence([
-      // Logo đã nằm sẵn đó từ màn chào gốc, không diễn lại. Chỉ hai gạch màu
-      // và slogan là hiện ra thêm — đó là phần lớp 1 không vẽ được.
+      /*
+        Nối liền từ màn chào gốc: vòng tròn phóng và trượt lên đúng chỗ của
+        nó. Logo KHÔNG mờ đi rồi hiện lại — nó đã nằm sẵn đó, chỉ di chuyển.
+        Xem luật (d) ở đầu file.
+      */
+      Animated.parallel([
+        Animated.timing(logoScale, {
+          toValue: 1,
+          duration: 320,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoShift, {
+          toValue: 0,
+          duration: 320,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+
+      // Hai gạch màu và slogan theo sau, trễ một nhịp cho có lớp lang.
       Animated.timing(tailOpacity, {
         toValue: 1,
         duration: 360,
@@ -137,7 +196,7 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
       // Chỉ gọi khi chạy hết. Bị ngắt giữa chừng (app xuống nền) thì bỏ qua.
       if (finished) onFinish();
     });
-  }, [logoScale, tailOpacity, contentOpacity, onFinish]);
+  }, [logoScale, logoShift, tailOpacity, contentOpacity, onFinish]);
 
   return (
     <Modal
@@ -158,8 +217,8 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
         bất cứ đâu. Đơn giản thì không có chỗ cho lỗi vị trí chen vào.
       */}
       {/*
-        MÀU Ở ĐÂY LẤY THẲNG TỪ BẢNG MÀU TỐI, KHÔNG QUA useTheme() VÀ KHÔNG QUA
-        LỚP TIỆN ÍCH.
+        MÀU Ở ĐÂY LẤY THẲNG TỪ BẢNG MÀU SÁNG, KHÔNG QUA useTheme() VÀ KHÔNG
+        QUA LỚP TIỆN ÍCH.
 
         Không qua useTheme(): màn chào phải trùng màu với lớp 1, mà lớp 1 chỉ
         nhận đúng một màu viết sẵn trong app.json — xem luật (a) ở đầu file.
@@ -180,17 +239,20 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
         {/* opacity do Animated giữ, đổi từng khung hình -> phải ở style */}
         <Animated.View className="items-center" style={{ opacity: contentOpacity }}>
           <Animated.Image
-            source={require('../../assets/logo-dark.png')}
+            source={require('../../assets/logo-full.png')}
             /*
               Kích thước logo là hằng số tính sẵn ở đầu file, không phải lớp
-              tiện ích cố định. Bề ngang 220 khớp với imageWidth 220 khai cho
-              lớp 1 trong app.json, nên vòng tròn hai lớp ra cùng cỡ.
+              tiện ích cố định.
+
+              translateY đứng TRƯỚC scale trong mảng: React Native nhân ma
+              trận theo đúng thứ tự này, nên phóng trước rồi mới dời. Nhờ vậy
+              START_SHIFT là 52dp thật, không bị nhân với tỉ lệ phóng.
             */
             style={{
-              width: DARK_WIDTH,
-              height: DARK_HEIGHT,
+              width: LOGO_WIDTH,
+              height: LOGO_HEIGHT,
               resizeMode: 'contain',
-              transform: [{ scale: logoScale }],
+              transform: [{ translateY: logoShift }, { scale: logoScale }],
             }}
           />
 
