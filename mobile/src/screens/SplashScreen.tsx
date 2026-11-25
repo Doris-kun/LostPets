@@ -95,11 +95,23 @@ const LOGO_HEIGHT = Math.round((LOGO_WIDTH * 590) / 471);
 /*
  * Hai số để nối liền lớp 1 với lớp 2 — xem luật (d) ở đầu file.
  *
- * START_SCALE: vòng tròn của lớp 1 nhỏ hơn. Android vẽ icon màn chào trong
- * một ô 192dp cố định, còn ở đây vòng tròn rộng đúng LOGO_WIDTH = 220dp.
- * 192/220 = 0.87. Android không hứa con số này giống nhau trên mọi máy, nên
- * đây là ước lượng — nhưng vì nó chạy thành một hiệu ứng phóng mượt chứ không
- * phải cắt phụt, lệch vài phần trăm cũng không ai nhận ra.
+ * START_SCALE: vòng tròn của lớp 1 nhỏ hơn, và nhỏ hơn đúng HAI PHẦN BA.
+ *
+ * Con số này ĐO ĐƯỢC chứ không phỏng đoán. expo-splash-screen dựng ảnh cho
+ * lớp 1 trong một tấm 288x288dp rồi đặt logo 220dp vào giữa — xem
+ * android/app/src/main/res/drawable-mdpi/splashscreen_logo.png sau khi
+ * prebuild, khung bao của phần không trong suốt là 216x220dp.
+ *
+ * Nhưng Android chỉ để lộ ra VÒNG TRÒN GIỮA bằng 2/3 tấm ảnh, tức 192dp;
+ * phần ngoài bị mặt nạ cắt. Nên logo hiện ra trên màn hình chỉ còn
+ *
+ *     216 * 192/288 = 144dp,  so với 220dp của lớp 2 là 0.655
+ *
+ * Lần đầu tôi đặt 0.87 vì tưởng cả tấm ảnh hiện ra. Lệch 30% — đủ để mắt
+ * thấy logo nhảy một cái, đúng thứ đang cố bỏ. Đo rồi mới đúng.
+ *
+ * Tỉ lệ 2/3 là hằng số trong đặc tả màn chào Android 12, không phải thứ
+ * riêng của máy nào, nên nó đúng trên mọi máy Android 12 trở lên.
  *
  * START_SHIFT: lớp 1 đặt vòng tròn ngay giữa màn hình. Lớp 2 thì xếp cả cụm
  * (logo + hai gạch + slogan) vào giữa, nên riêng vòng tròn bị đẩy lên cao hơn.
@@ -111,7 +123,7 @@ const LOGO_HEIGHT = Math.round((LOGO_WIDTH * 590) / 471);
  *               = 328dp, đặt giữa nên nửa trên là 164dp
  *   lệch = 164 - 112 = 52dp  -> bắt đầu thấp hơn 52dp rồi trượt lên 0
  */
-const START_SCALE = 0.87;
+const START_SCALE = 0.655;
 const START_SHIFT = 52;
 
 export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
