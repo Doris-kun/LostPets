@@ -450,12 +450,11 @@ function Root({
           >
             {/* Giờ đồng hồ và cột sóng: nền tối thì phải chữ sáng, và ngược lại */}
             {/*
-              Lúc màn chào còn hiện thì nền luôn TRẮNG, nên chữ và biểu tượng
-              trên thanh trạng thái phải màu tối — kể cả khi app đang để chế
-              độ tối. Bỏ showSplash ra khỏi đây thì người để chế độ tối thấy
-              giờ và cột sóng màu trắng biến mất trong nền trắng.
+              Màn chào nay đi theo đúng chế độ của app, nên thanh trạng thái
+              không cần biệt đãi gì cho nó: một quy tắc cho cả màn chào lẫn
+              mọi màn còn lại.
             */}
-            <StatusBar style={!showSplash && isDark ? 'light' : 'dark'} />
+            <StatusBar style={isDark ? 'light' : 'dark'} />
             <RootStack />
           </NavigationContainer>
 

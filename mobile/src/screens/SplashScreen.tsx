@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, Modal, Text, View } from 'react-native';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
-import { lightColors } from '../theme';
 
 /*
  * Màn chào khi mở app.
@@ -22,15 +21,30 @@ import { lightColors } from '../theme';
  * Giữ được điều đó phải trả giá bằng ba luật, phá luật nào cũng ra đúng cái
  * lỗi "logo hiện hai lần":
  *
- *   a. Cùng MÀU NỀN, và màu đó phải là MỘT màu cố định. Lớp 1 chạy trước cả
- *      JavaScript nên nó không đọc được lựa chọn sáng/tối trong app — nó chỉ
- *      đọc được một màu viết sẵn trong app.json. Vì vậy màn này KHÔNG dùng
- *      useTheme() nữa mà lấy thẳng bảng màu SÁNG, khớp với nền trắng khai ở
- *      app.json. Đổi màu theo chế độ app là lớp 1 và lớp 2 lệch nhau ngay.
+ *   a. Cùng MÀU NỀN. Đây là luật khó nhất, vì hai lớp đọc được hai thứ
+ *      KHÁC NHAU và không lớp nào đọc được thứ của lớp kia:
  *
- *      Vì sao sáng chứ không phải tối: màu mặc định của app là sáng, và
- *      context/theme.tsx đã bỏ hẳn việc đọc cài đặt của điện thoại. Chọn navy
- *      là lại để lớp của Android quyết định màu của app — đúng thứ cần bỏ.
+ *        lớp 1  chạy trước cả JavaScript, trước cả khi app kịp sống. Nó chỉ
+ *               đọc được tài nguyên của hệ điều hành, tức là cài đặt sáng/tối
+ *               của ĐIỆN THOẠI. app.json khai cả bản sáng lẫn bản dark, hệ
+ *               điều hành tự chọn.
+ *
+ *        lớp 2  là React, đọc được lựa chọn trong app — thứ lớp 1 không với
+ *               tới, vì nó nằm trong ổ đĩa của app mà lúc đó app chưa chạy.
+ *
+ *      Từng thử ép lớp 2 theo một màu cố định cho khớp lớp 1. Hỏng cả hai
+ *      chiều: cố định navy thì người để app sáng bị chào bằng màn tối, cố
+ *      định trắng thì người để app TỐI bị chào bằng màn trắng — chói mắt, và
+ *      đó chính là lỗi vừa báo.
+ *
+ *      Nên lớp 2 đi theo lựa chọn trong app, đúng thứ nó đọc được. Hai lớp
+ *      khớp nhau khi cài đặt máy và lựa chọn trong app cùng chiều — là trường
+ *      hợp của gần như mọi người, vì ai để máy tối thường cũng để app tối.
+ *
+ *      Ai cố ý để ngược chiều nhau thì thấy một bước đổi màu ở chỗ giao giữa
+ *      hai lớp. Không xoá được bước đó bằng mã JavaScript: muốn xoá phải viết
+ *      mã native đọc ổ đĩa của app trước khi cửa sổ mở, mà cửa sổ thì do hệ
+ *      điều hành dựng lúc app còn chưa khởi động.
  *
  *   b. Logo ở lớp 2 phải hiện SẴN, không được mờ dần hay nở ra. Trước đây nó
  *      bắt đầu từ opacity 0 và scale 0.88: lớp 1 tắt là logo biến mất một
@@ -52,16 +66,18 @@ import { lightColors } from '../theme';
  *      đọc ra "một vòng tròn đang nở" — vẫn một vật, không phải hai.
  *
  * ----------------------------------------------------------------------
- * Vì sao luôn dùng logo-full.png, không bao giờ dùng logo-dark.png
+ * Vì sao chế độ tối dùng ẢNH KHÁC
  *
- * logo-full.png đã nướng sẵn chữ LostPets màu navy đậm vào ảnh, đẹp trên nền
- * trắng nhưng gần như không đọc được trên nền tối — mà chữ trong ảnh thì
- * không đổi màu được. Dự án vì vậy có thêm logo-dark.png, bản chữ màu kem
- * dành cho nền tối.
+ * logo-full.png đã nướng sẵn chữ LostPets màu navy đậm vào ảnh. Màu đó đẹp
+ * trên nền trắng nhưng gần như không đọc được trên nền tối, mà chữ nằm trong
+ * ảnh thì không đổi màu được.
  *
- * Màn chào không dùng tới bản đó nữa: nền của nó nay luôn trắng, cố định,
- * không theo chế độ sáng/tối của app — xem luật (a) ở trên. logo-dark.png
- * vẫn còn và vẫn đúng chỗ của nó ở những màn khác.
+ * Nên chế độ tối dùng logo-dark.png — bản riêng, chữ màu kem nổi rõ trên nền
+ * tối. Nền xám than của ảnh gốc đã được tách thành trong suốt nên nó ăn theo
+ * nền màn hình, không để lại khối chữ nhật.
+ *
+ * Lớp 1 cũng vậy: app.json khai logo-mark.png cho nền sáng và
+ * logo-mark-dark.png cho nền tối.
  *
  * -----------------------------------------------------------------------
  * Vì sao bọc trong Modal?
@@ -88,8 +104,8 @@ import { lightColors } from '../theme';
  */
 const HOLD_MS = 450;
 
-// logo-full.png gốc 471x590. Giữ đúng tỉ lệ để chữ và hình không bị bóp méo.
-// Chỉ còn bản sáng: màn chào nay luôn nền trắng, xem luật (a) ở đầu file.
+// logo-full.png gốc 471x590, logo-dark.png gốc 471x591 — cùng tỉ lệ nên dùng
+// chung một bề ngang. Giữ đúng tỉ lệ để chữ và hình không bị bóp méo.
 const LOGO_WIDTH = 220;
 const LOGO_HEIGHT = Math.round((LOGO_WIDTH * 590) / 471);
 
@@ -131,24 +147,18 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const { t } = useLanguage();
 
   /*
-   * CHỈ lấy mỗi reduceMotion từ useTheme, KHÔNG lấy màu.
+   * Lấy cả màu lẫn cờ giảm chuyển động từ useTheme.
    *
-   * Màu phải là bảng sáng cố định — xem luật (a) ở đầu file. Nhưng giảm
-   * chuyển động thì khác hẳn: nó không phải lựa chọn sáng/tối của app mà là
-   * cài đặt trợ năng của máy, không có lớp 1 lớp 2 nào để lệch nhau.
+   * Lấy màu ở đây AN TOÀN, dù màn này nằm trong Modal — một cây giao diện
+   * riêng ở tầng hệ điều hành, gắn rồi thì không nhận giá trị mới nữa. An
+   * toàn vì ThemeProvider chặn không vẽ gì cho tới khi đọc xong ổ đĩa, nên
+   * lúc màn chào gắn vào thì chế độ sáng/tối đã biết chắc, không còn đổi.
    *
-   * Đọc được ở đây vì ThemeProvider chặn không vẽ gì cho tới khi sẵn sàng,
-   * nên lúc màn chào gắn vào thì giá trị đã có.
+   * Trước khi có cái chặn đó thì đúng là không lấy được: màn chào vẽ ra ở
+   * khoảnh khắc đầu tiên, lúc chưa đọc xong lựa chọn của người dùng, nên nó
+   * lấy nhầm mặc định rồi kẹt màu sai suốt thời gian hiện.
    */
-  const { reduceMotion } = useTheme();
-
-  /*
-   * Bảng màu CỐ ĐỊNH, không theo chế độ của app — xem luật (a) ở đầu file.
-   * Màn chào là một tấm biển thương hiệu, không phải một màn hình của app:
-   * nó phải trùng khít với nền trắng mà app.json khai cho lớp 1, mà app.json
-   * thì chỉ nhận được đúng một màu.
-   */
-  const colors = lightColors;
+  const { colors, isDark, reduceMotion } = useTheme();
 
   /*
    * useRef chứ không useState: giá trị animation đổi 60 lần mỗi giây.
@@ -265,11 +275,7 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
         bất cứ đâu. Đơn giản thì không có chỗ cho lỗi vị trí chen vào.
       */}
       {/*
-        MÀU Ở ĐÂY LẤY THẲNG TỪ BẢNG MÀU SÁNG, KHÔNG QUA useTheme() VÀ KHÔNG
-        QUA LỚP TIỆN ÍCH.
-
-        Không qua useTheme(): màn chào phải trùng màu với lớp 1, mà lớp 1 chỉ
-        nhận đúng một màu viết sẵn trong app.json — xem luật (a) ở đầu file.
+        MÀU Ở ĐÂY LẤY THẲNG TỪ useTheme(), KHÔNG QUA LỚP TIỆN ÍCH.
 
         Không qua lớp tiện ích: màn chào vẽ ra ở khoảnh khắc đầu tiên của app,
         trước khi ThemeProvider kịp báo cho NativeWind biết chế độ nào. Mà nó
@@ -287,7 +293,11 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
         {/* opacity do Animated giữ, đổi từng khung hình -> phải ở style */}
         <Animated.View className="items-center" style={{ opacity: contentOpacity }}>
           <Animated.Image
-            source={require('../../assets/logo-full.png')}
+            source={
+              isDark
+                ? require('../../assets/logo-dark.png')
+                : require('../../assets/logo-full.png')
+            }
             /*
               Kích thước logo là hằng số tính sẵn ở đầu file, không phải lớp
               tiện ích cố định.

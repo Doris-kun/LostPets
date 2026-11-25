@@ -61,7 +61,13 @@
           "image": "./assets/logo-mark.png",
           "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "image": "./assets/logo-mark-dark.png",
+            "imageWidth": 220,
+            "resizeMode": "contain",
+            "backgroundColor": "#0E1A23"
+          }
         }
       ],
       [
