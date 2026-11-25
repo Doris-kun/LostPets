@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ReportReason } from '../types';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
+import { iconSize } from '../theme';
 
 /*
  * Hộp thoại báo cáo tin đăng. Tương đương ReportDialog.vue bên web.
@@ -119,7 +120,7 @@ export default function ReportModal({
             <>
               <Ionicons
                 name="checkmark-circle"
-                size={44}
+                size={iconSize.successLg}
                 color={colors.found}
                 // style chứ không className: Ionicons là component của thư viện
                 // ngoài, không chắc nó chuyển className thành style. Dùng style thì
@@ -182,7 +183,7 @@ export default function ReportModal({
                       */}
                       <Ionicons
                         name={chon ? 'radio-button-on' : 'radio-button-off'}
-                        size={19}
+                        size={iconSize.xl}
                         color={chon ? colors.primary : colors.textMuted}
                       />
                       <Text

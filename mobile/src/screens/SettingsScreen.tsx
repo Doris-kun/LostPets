@@ -12,7 +12,7 @@ import { forgetPushToken, getLastPushReason } from '../notify';
 import type { MainTabParamList, RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
-import { spacing } from '../theme';
+import { iconSize, spacing } from '../theme';
 
 /*
  * Cài đặt — nơi gom mọi thứ "chỉnh một lần rồi thôi".
@@ -313,14 +313,14 @@ export default function SettingsScreen({ navigation }: Props) {
         onPress={() => navigation.navigate('Contact')}
         activeOpacity={0.7}
       >
-        <Ionicons name="headset-outline" size={20} color={colors.primary} />
+        <Ionicons name="headset-outline" size={iconSize.xl} color={colors.primary} />
 
         <View className="flex-1">
           <Text className="text-[14px] font-bold text-text">{t('settings.contact')}</Text>
           <Text className="mt-px text-[12px] text-text-muted">{t('settings.contactSub')}</Text>
         </View>
 
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        <Ionicons name="chevron-forward" size={iconSize.lg} color={colors.textMuted} />
       </TouchableOpacity>
 
       {/* ---- Giới thiệu ---- */}
@@ -340,10 +340,10 @@ export default function SettingsScreen({ navigation }: Props) {
         onPress={() => navigation.navigate('Privacy')}
         activeOpacity={0.7}
       >
-        <Ionicons name="shield-checkmark-outline" size={20} color={colors.tealText} />
+        <Ionicons name="shield-checkmark-outline" size={iconSize.xl} color={colors.tealText} />
         {/* flex-1 ở chính dòng chữ, không thì mũi tên nằm sát chữ */}
         <Text className="flex-1 text-[14px] font-bold text-text">{t('settings.privacy')}</Text>
-        <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+        <Ionicons name="chevron-forward" size={iconSize.md} color={colors.textMuted} />
       </TouchableOpacity>
 
       <View className="items-center rounded-lg bg-background px-lg py-xl">

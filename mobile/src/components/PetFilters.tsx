@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLanguage, type LanguageValue } from '../context/language';
 import type { Filters } from '../types';
-import { spacing } from '../theme';
+import { iconSize, spacing } from '../theme';
 import { useTheme } from '../context/theme';
 
 /*
@@ -116,7 +116,7 @@ export default function PetFilters({
 }: PetFiltersProps) {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, reduceMotion } = useTheme();
 
   /*
    * Bản nháp riêng, tách khỏi bộ lọc đang chạy.
@@ -138,6 +138,19 @@ export default function PetFilters({
     if (!visible) return;
 
     setDraft(value);
+
+    /*
+     * Bật "giảm chuyển động" thì bảng hiện ra ngay tại chỗ, không trượt.
+     *
+     * Đặt thẳng về 0 chứ không chạy hiệu ứng thật nhanh: nhanh vẫn là chuyển
+     * động, mà người bật tuỳ chọn này là người chóng mặt vì chuyển động.
+     * Bảng vẫn mở, vẫn đóng, vẫn dùng được y hệt — chỉ bỏ phần trượt.
+     */
+    if (reduceMotion) {
+      translateY.setValue(0);
+      return;
+    }
+
     translateY.setValue(sheetHeight.current);
 
     Animated.spring(translateY, {
@@ -148,7 +161,7 @@ export default function PetFilters({
       bounciness: 0,
       speed: 14,
     }).start();
-  }, [visible, value, translateY]);
+  }, [visible, value, translateY, reduceMotion]);
 
   /*
    * Trượt bảng xuống rồi mới báo ra ngoài.
@@ -157,6 +170,12 @@ export default function PetFilters({
    * Chờ chạy xong hiệu ứng rồi mới gọi thì mắt nhìn thấy nó đi xuống.
    */
   const slideDownThen = (callback: () => void) => {
+    // Giảm chuyển động: đóng thẳng, không trượt xuống. Xem ghi chú ở trên.
+    if (reduceMotion) {
+      callback();
+      return;
+    }
+
     Animated.timing(translateY, {
       toValue: sheetHeight.current,
       duration: 220,
@@ -233,7 +252,7 @@ export default function PetFilters({
               // có nút nào khác nên nới ngang cũng không đụng ai.
               hitSlop={6}
             >
-              <Ionicons name="close" size={18} color={colors.textSoft} />
+              <Ionicons name="close" size={iconSize.lg} color={colors.textSoft} />
             </TouchableOpacity>
           </View>
 

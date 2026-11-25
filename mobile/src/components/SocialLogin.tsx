@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
+import { iconSize } from '../theme';
 
 /*
  * Đăng nhập bằng Google hoặc Facebook. Tương đương SocialLogin.vue bên web.
@@ -330,7 +331,7 @@ export default function SocialLogin() {
           {busy === 'google' ? (
             <ActivityIndicator size="small" color={colors.onGoogle} />
           ) : (
-            <Ionicons name="logo-google" size={19} color={colors.googleIcon} />
+            <Ionicons name="logo-google" size={iconSize.xl} color={colors.googleIcon} />
           )}
           <Text className="text-[15px] font-bold text-on-google">
             {t(busy === 'google' ? 'social.working' : 'social.google')}
@@ -350,7 +351,7 @@ export default function SocialLogin() {
           {busy === 'facebook' ? (
             <ActivityIndicator size="small" color={colors.onFacebook} />
           ) : (
-            <Ionicons name="logo-facebook" size={19} color={colors.onFacebook} />
+            <Ionicons name="logo-facebook" size={iconSize.xl} color={colors.onFacebook} />
           )}
           <Text className="text-[15px] font-bold text-on-facebook">
             {t(busy === 'facebook' ? 'social.working' : 'social.facebook')}

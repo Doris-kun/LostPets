@@ -8,6 +8,7 @@ import claim from '../claim';
 import nudge from '../nudge';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
+import { iconSize } from '../theme';
 
 /*
  * Dải hỏi "tìm được chưa?", nằm trên đầu Trang chủ.
@@ -175,7 +176,7 @@ export default function ResolveNudge() {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           activeOpacity={0.7}
         >
-          <Ionicons name="close" size={18} color={colors.tealText} />
+          <Ionicons name="close" size={iconSize.lg} color={colors.tealText} />
         </TouchableOpacity>
       </View>
     </View>

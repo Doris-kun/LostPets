@@ -33,7 +33,7 @@ import PetFilters, { EMPTY_FILTERS, countActiveFilters } from '../components/Pet
 import PetMapView from '../components/PetMapView';
 import ResolveNudge from '../components/ResolveNudge';
 import { useLanguage } from '../context/language';
-import { spacing, statusStyle } from '../theme';
+import { iconSize, spacing, statusStyle } from '../theme';
 import { useTheme } from '../context/theme';
 
 /*
@@ -453,7 +453,7 @@ export default function HomeScreen({ navigation }: Props) {
         min-h-[46px] cho đủ vùng chạm 44pt.
       */}
       <View className="mx-lg mb-md min-h-[46px] flex-row items-center gap-sm rounded-full border-[1.5px] border-border-strong bg-surface px-md">
-        <Ionicons name="search-outline" size={17} color={colors.textMuted} />
+        <Ionicons name="search-outline" size={iconSize.lg} color={colors.textMuted} />
         <TextInput
           /*
            * py-0 — Android tự chèn đệm trên dưới vào TextInput, không gỡ đi
@@ -480,7 +480,7 @@ export default function HomeScreen({ navigation }: Props) {
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             activeOpacity={0.7}
           >
-            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+            <Ionicons name="close-circle" size={iconSize.lg} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -544,7 +544,7 @@ export default function HomeScreen({ navigation }: Props) {
           */}
           <Ionicons
             name="options-outline"
-            size={15}
+            size={iconSize.md}
             color={activeCount > 0 ? colors.onPrimary : colors.textSoft}
           />
           <Text
@@ -584,7 +584,7 @@ export default function HomeScreen({ navigation }: Props) {
             >
               <Ionicons
                 name={mode === 'list' ? 'list-outline' : 'map-outline'}
-                size={15}
+                size={iconSize.md}
                 color={on ? colors.onPrimary : colors.textSoft}
               />
               <Text
@@ -615,7 +615,7 @@ export default function HomeScreen({ navigation }: Props) {
           disabled={locating}
           activeOpacity={0.8}
         >
-          <Ionicons name="navigate-outline" size={14} color={colors.textSoft} />
+          <Ionicons name="navigate-outline" size={iconSize.sm} color={colors.textSoft} />
           <Text className="text-[12.5px] font-bold text-text-soft">
             {t(locating ? 'map.locating' : 'home.showDistance')}
           </Text>
@@ -947,7 +947,7 @@ function Featured({
             {/* Mũi tên vẽ bằng icon — xem lý do ở SettingsScreen */}
             <View className="flex-row items-center gap-0.5">
               <Text className="text-[13px] font-bold text-primary">{t('home.view')}</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+              <Ionicons name="chevron-forward" size={iconSize.sm} color={colors.primary} />
             </View>
           </View>
         </View>

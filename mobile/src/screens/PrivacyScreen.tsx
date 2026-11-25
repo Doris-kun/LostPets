@@ -6,7 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
-import { spacing } from '../theme';
+import { iconSize, spacing } from '../theme';
 
 /*
  * Chính sách bảo mật.
@@ -402,7 +402,7 @@ export default function PrivacyScreen({ navigation }: Props) {
             activeOpacity={0.7}
           >
             <Text className="flex-1 text-[13px] text-text-soft">{s.h}</Text>
-            <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+            <Ionicons name="chevron-forward" size={iconSize.sm} color={colors.textMuted} />
           </TouchableOpacity>
         ))}
       </View>
@@ -453,7 +453,7 @@ export default function PrivacyScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('Contact')}
           activeOpacity={0.85}
         >
-          <Ionicons name="chatbubbles-outline" size={16} color={colors.onPrimary} />
+          <Ionicons name="chatbubbles-outline" size={iconSize.md} color={colors.onPrimary} />
           <Text className="text-[13px] font-bold text-on-primary">{c.contactBtn}</Text>
         </TouchableOpacity>
       </View>

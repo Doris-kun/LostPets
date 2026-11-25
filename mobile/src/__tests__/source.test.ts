@@ -340,6 +340,41 @@ describe('không dùng StyleSheet.absoluteFillObject', () => {
   );
 });
 
+describe('cỡ icon lấy từ token, không viết số trần', () => {
+  /*
+   * App từng gom được MƯỜI BỐN cỡ icon rời nhau: 11, 12, 14, 15, 16, 17, 18,
+   * 19, 20, 22, 30, 40, 44, 56. Không chỗ nào sai riêng lẻ — người viết nhìn
+   * từng màn đều thấy thuận mắt. Cái hỏng chỉ lộ ra khi đặt cạnh nhau: icon
+   * cùng một cấp lệch nhau một hai điểm ảnh, đọc ra thành "làm ẩu" mà không
+   * ai chỉ được ra chỗ nào sai.
+   *
+   * Đúng loại lỗi cần test canh: nó không làm gì hỏng, không ném lỗi nào, và
+   * lần tới ai thêm một icon nữa thì lại viết số trần theo thói quen.
+   *
+   * Cỡ nằm trong iconSize ở theme.ts, kèm giải thích từng bậc dùng vào đâu.
+   */
+  it.each(FILE_GIAO_DIEN.map((f) => [f.split(/[\\/]/).pop() as string, f]))(
+    '%s',
+    (_ten, duongDan) => {
+      const ma = boChuThich(docFile(duongDan));
+      const soTran = ma.match(/size=\{\d+\}/g) ?? [];
+
+      expect(soTran).toEqual([]);
+    },
+  );
+
+  it('iconSize có đủ các bậc, và không bậc nào trùng giá trị', () => {
+    const { iconSize } = require('../theme');
+    const gia = Object.values(iconSize);
+
+    expect(gia.length).toBeGreaterThanOrEqual(9);
+    // Hai tên khác nhau mà cùng một số thì bậc đó thừa, và người sau sẽ phân
+    // vân không biết chọn cái nào.
+    expect(new Set(gia).size).toBe(gia.length);
+    expect(gia.every((v) => typeof v === 'number' && v > 0)).toBe(true);
+  });
+});
+
 /*
  * Tailwind và theme.ts phải nói cùng một thứ tiếng.
  *

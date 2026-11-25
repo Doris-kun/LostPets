@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Modal, Text, View } from 'react-native';
 import { useLanguage } from '../context/language';
+import { useTheme } from '../context/theme';
 import { lightColors } from '../theme';
 
 /*
@@ -130,6 +131,18 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const { t } = useLanguage();
 
   /*
+   * CHỈ lấy mỗi reduceMotion từ useTheme, KHÔNG lấy màu.
+   *
+   * Màu phải là bảng sáng cố định — xem luật (a) ở đầu file. Nhưng giảm
+   * chuyển động thì khác hẳn: nó không phải lựa chọn sáng/tối của app mà là
+   * cài đặt trợ năng của máy, không có lớp 1 lớp 2 nào để lệch nhau.
+   *
+   * Đọc được ở đây vì ThemeProvider chặn không vẽ gì cho tới khi sẵn sàng,
+   * nên lúc màn chào gắn vào thì giá trị đã có.
+   */
+  const { reduceMotion } = useTheme();
+
+  /*
    * Bảng màu CỐ ĐỊNH, không theo chế độ của app — xem luật (a) ở đầu file.
    * Màn chào là một tấm biển thương hiệu, không phải một màn hình của app:
    * nó phải trùng khít với nền trắng mà app.json khai cho lớp 1, mà app.json
@@ -158,6 +171,29 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   const contentOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    /*
+     * Bật "giảm chuyển động": bỏ hết hiệu ứng, chỉ giữ tấm biển đứng yên.
+     *
+     * Đặt thẳng mọi giá trị về trạng thái cuối — logo đúng cỡ đúng chỗ, hai
+     * gạch và slogan hiện đủ — rồi đợi một nhịp cho người ta đọc kịp, xong
+     * tắt. Không phóng, không trượt, không mờ dần.
+     *
+     * Vẫn phải đợi HOLD_MS chứ không gọi onFinish() ngay: tắt phụt một cái
+     * thì người dùng thấy màn hình chớp, cũng là một loại chuyển động đột
+     * ngột — đúng thứ họ bật tuỳ chọn này để tránh.
+     *
+     * setTimeout chứ không Animated.delay: Animated.delay vẫn dựng cả bộ máy
+     * animation lên chỉ để không làm gì, mà ở đây không có gì để chạy cả.
+     */
+    if (reduceMotion) {
+      logoScale.setValue(1);
+      logoShift.setValue(0);
+      tailOpacity.setValue(1);
+
+      const hen = setTimeout(onFinish, HOLD_MS + 320);
+      return () => clearTimeout(hen);
+    }
+
     Animated.sequence([
       /*
         Nối liền từ màn chào gốc: vòng tròn phóng và trượt lên đúng chỗ của
@@ -208,7 +244,7 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
       // Chỉ gọi khi chạy hết. Bị ngắt giữa chừng (app xuống nền) thì bỏ qua.
       if (finished) onFinish();
     });
-  }, [logoScale, logoShift, tailOpacity, contentOpacity, onFinish]);
+  }, [logoScale, logoShift, tailOpacity, contentOpacity, reduceMotion, onFinish]);
 
   return (
     <Modal

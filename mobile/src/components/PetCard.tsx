@@ -5,7 +5,7 @@ import type { Pet } from '../types';
 import { THUMB_CARD, thumbnail } from '../image';
 import { distanceKm, formatDistanceKm, hasPoint, type Point } from '../map';
 import { useTheme } from '../context/theme';
-import { statusStyle } from '../theme';
+import { iconSize, statusStyle } from '../theme';
 
 /*
  * Thẻ một bài đăng trong danh sách.
@@ -175,7 +175,7 @@ export default function PetCard({ pet, onPress, showCode = false, me = null }: P
 
         <View className="mt-1.5 flex-row items-center justify-between">
           <View className="flex-1 flex-row items-center gap-[3px]">
-            <Ionicons name="location" size={12} color={colors.textMuted} />
+            <Ionicons name="location" size={iconSize.xs} color={colors.textMuted} />
             <Text className="flex-1 text-[12.5px] text-text-soft" numberOfLines={1}>
               {pet.area}
             </Text>
@@ -205,7 +205,7 @@ export default function PetCard({ pet, onPress, showCode = false, me = null }: P
               {/* Mũi tên vẽ bằng icon, không dùng ký tự → — có máy Android
                   không có sẵn ký tự đó trong phông và hiện ra ô vuông. Lỗi
                   này đã gặp thật một lần rồi. */}
-              <Ionicons name="chevron-forward" size={11} color={colors.textMuted} />
+              <Ionicons name="chevron-forward" size={iconSize.xs} color={colors.textMuted} />
             </View>
           )}
         </View>

@@ -7,7 +7,7 @@ import { THUMB_CARD, thumbnail } from '../image';
 import { timeAgo } from './PetCard';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
-import { statusStyle } from '../theme';
+import { iconSize, statusStyle } from '../theme';
 
 /*
  * Danh sách báo cáo tin xấu, nằm trên đầu trang quản trị.
@@ -144,7 +144,7 @@ export default function AdminReports({ onOpenPet, onPetDeleted }: AdminReportsPr
   return (
     <View className="mb-xl">
       <View className="mb-md flex-row items-center gap-sm">
-        <Ionicons name="flag" size={15} color={colors.danger} />
+        <Ionicons name="flag" size={iconSize.md} color={colors.danger} />
         <Text className="text-[13px] font-extrabold tracking-[0.3px] text-text">
           {t('admin.reports')}
         </Text>
@@ -231,7 +231,7 @@ function ReportCard({
             />
           ) : (
             <View className="h-11 w-11 items-center justify-center rounded-sm bg-surface-tint">
-              <Ionicons name="paw" size={18} color={colors.textMuted} />
+              <Ionicons name="paw" size={iconSize.lg} color={colors.textMuted} />
             </View>
           )}
 
@@ -259,11 +259,11 @@ function ReportCard({
             </Text>
           </View>
 
-          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          <Ionicons name="chevron-forward" size={iconSize.md} color={colors.textMuted} />
         </TouchableOpacity>
       ) : (
         <View className="mt-md flex-row items-center gap-sm">
-          <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
+          <Ionicons name="trash-outline" size={iconSize.md} color={colors.textMuted} />
           <Text className="text-[12.5px] italic text-text-muted">{t('admin.reportPetGone')}</Text>
         </View>
       )}

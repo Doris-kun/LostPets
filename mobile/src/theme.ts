@@ -275,6 +275,45 @@ export const spacing = {
   xl: 24,
 };
 
+/*
+ * Cỡ icon.
+ *
+ * Trước đây mỗi chỗ gọi Ionicons tự viết một con số, và app gom được 14 giá
+ * trị rời: 11, 12, 14, 15, 16, 17, 18, 19, 20, 22, 30, 40, 44, 56. Không ai
+ * chọn sai cả — từng chỗ đều nhìn thuận mắt — nhưng đặt cạnh nhau thì icon
+ * cùng một cấp lại lệch nhau một hai pixel, và cái lệch đó đọc ra thành
+ * "làm ẩu" dù không chỉ được ra chỗ nào sai.
+ *
+ * Năm bậc đầu dành cho icon nằm trong dòng chữ, chọn sao cho mọi giá trị cũ
+ * dịch nhiều nhất 1px — đủ để thống nhất mà không xô lệch bố cục nào.
+ *
+ * Bốn cỡ cuối là hình trang trí lớn giữa màn, mỗi màn chỉ có một cái nên
+ * không có nhịp nào để phá. Giữ NGUYÊN số cũ: đặt tên cho chúng là để không
+ * ai viết số trần nữa, không phải để đổi diện mạo.
+ */
+export const iconSize = {
+  /** Trong nhãn phụ, cạnh chữ 11–12. Gộp 11 và 12. */
+  xs: 12,
+  /** Cạnh chữ 13–14. */
+  sm: 14,
+  /** Mặc định, cạnh chữ 15–16. Gộp 15 và 16. */
+  md: 16,
+  /** Tiêu đề nhỏ, nút phụ. Gộp 17 và 18. */
+  lg: 18,
+  /** Nút chính, thanh tab. Gộp 19 và 20. */
+  xl: 20,
+  /** Ảnh thiếu trên thẻ bản đồ. */
+  placeholderSm: 24,
+  /** Dấu tích báo xong ở màn Quên mật khẩu. */
+  successSm: 30,
+  /** Bản đồ không có tin nào — hình giữa màn trống. */
+  emptyMap: 40,
+  /** Dấu tích báo xong ở hộp Báo cáo. */
+  successLg: 44,
+  /** Ảnh thiếu ở màn Chi tiết. */
+  placeholderLg: 56,
+};
+
 export const radius = {
   sm: 8,
   md: 12,

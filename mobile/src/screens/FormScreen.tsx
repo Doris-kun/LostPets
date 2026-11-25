@@ -28,7 +28,7 @@ import PetMap from '../components/PetMap';
 import { areaFromCoords } from '../map';
 import { useAuth } from '../context/auth';
 import { useLanguage } from '../context/language';
-import { spacing } from '../theme';
+import { iconSize, spacing } from '../theme';
 import { useTheme } from '../context/theme';
 
 /*
@@ -730,7 +730,7 @@ export default function FormScreen({ route, navigation }: Props) {
           <>
             <Field
               label={t('secret.label')}
-              icon={<Ionicons name="lock-closed" size={12} color={colors.secretText} />}
+              icon={<Ionicons name="lock-closed" size={iconSize.xs} color={colors.secretText} />}
               value={form.secretDetail}
               onChangeText={(v) => update('secretDetail', v)}
               placeholder={t('secret.placeholder')}
@@ -801,7 +801,7 @@ export default function FormScreen({ route, navigation }: Props) {
 
                 {!aiLoading && !!aiResult && (
                   <View className="flex-row flex-wrap items-center gap-sm">
-                    <Ionicons name="checkmark-circle" size={14} color={colors.aiText} />
+                    <Ionicons name="checkmark-circle" size={iconSize.sm} color={colors.aiText} />
                     <Text className="flex-1 text-[12px] leading-[17px] text-ai-text">
                       {t('ai.filled')}{' '}
                       <Text className="font-extrabold">{aiResult.confidence}%</Text>
@@ -895,7 +895,7 @@ export default function FormScreen({ route, navigation }: Props) {
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name="camera-outline" size={19} color={colors.text} />
+              <Ionicons name="camera-outline" size={iconSize.xl} color={colors.text} />
               <Text className="text-[15px] font-bold text-text">{t('form.photoTake')}</Text>
             </TouchableOpacity>
 
@@ -907,7 +907,7 @@ export default function FormScreen({ route, navigation }: Props) {
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name="images-outline" size={19} color={colors.text} />
+              <Ionicons name="images-outline" size={iconSize.xl} color={colors.text} />
               <Text className="text-[15px] font-bold text-text">{t('form.photoLibrary')}</Text>
             </TouchableOpacity>
 
@@ -921,7 +921,7 @@ export default function FormScreen({ route, navigation }: Props) {
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="trash-outline" size={19} color={colors.danger} />
+                <Ionicons name="trash-outline" size={iconSize.xl} color={colors.danger} />
                 <Text className="text-[15px] font-bold text-danger">
                   {t('form.photoRemove')}
                 </Text>

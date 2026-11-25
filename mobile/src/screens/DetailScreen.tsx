@@ -22,7 +22,7 @@ import PetMap, { DirectionsButton } from '../components/PetMap';
 import { WEB_URL } from '../config';
 import { hasPoint } from '../map';
 import { useLanguage } from '../context/language';
-import { statusStyle } from '../theme';
+import { iconSize, statusStyle } from '../theme';
 import { useTheme } from '../context/theme';
 
 /*
@@ -372,7 +372,7 @@ export default function DetailScreen({ route, navigation }: Props) {
         <View className="h-[220px] w-full rounded-lg bg-surface items-center justify-center">
           {/* Ionicons không phải thẻ của React Native nên NativeWind không
               gắn className vào được — phải để style như cũ. */}
-          <Ionicons name="paw" size={56} color={colors.textMuted} style={{ opacity: 0.4 }} />
+          <Ionicons name="paw" size={iconSize.placeholderLg} color={colors.textMuted} style={{ opacity: 0.4 }} />
         </View>
       )}
 
@@ -397,7 +397,7 @@ export default function DetailScreen({ route, navigation }: Props) {
       {/* Tin đã đoàn tụ: báo rõ bằng một dải màu, không chỉ ẩn nút đi */}
       {pet.resolved && (
         <View className="mt-md flex-row items-center gap-sm rounded-md border border-sky bg-surface-tint px-md py-[11px]">
-          <Ionicons name="checkmark-circle" size={17} color={colors.resolved} />
+          <Ionicons name="checkmark-circle" size={iconSize.lg} color={colors.resolved} />
           <Text className="flex-1 text-[13px] font-bold text-resolved">
             {t('detail.resolvedBanner')}
           </Text>
@@ -469,7 +469,7 @@ export default function DetailScreen({ route, navigation }: Props) {
 
       {/* Cảnh báo đặt ngay dưới số liên hệ — đúng lúc người ta sắp bấm gọi */}
       <View className="mt-md flex-row gap-sm rounded-md border border-warn-border bg-warn-bg px-md py-[11px]">
-        <Ionicons name="warning" size={15} color={colors.warnText} style={{ marginTop: 1 }} />
+        <Ionicons name="warning" size={iconSize.md} color={colors.warnText} style={{ marginTop: 1 }} />
         <Text className="flex-1 text-[12.5px] leading-[18px] text-warn-text">
           {t('scam.warning')}
         </Text>
@@ -484,7 +484,7 @@ export default function DetailScreen({ route, navigation }: Props) {
       {!!pet.secretDetail && (
         <View className="mt-md rounded-md border border-secret-border bg-secret-bg px-md py-3">
           <View className="flex-row items-center gap-[5px]">
-            <Ionicons name="lock-closed" size={12} color={colors.secretText} />
+            <Ionicons name="lock-closed" size={iconSize.xs} color={colors.secretText} />
             <Text className="text-[11px] font-bold tracking-[0.4px] text-secret-text">
               {t('secret.yours')}
             </Text>
@@ -519,7 +519,7 @@ export default function DetailScreen({ route, navigation }: Props) {
               <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
               <View className="flex-row items-center gap-1.5">
-                <Ionicons name="sparkles" size={15} color={colors.onPrimary} />
+                <Ionicons name="sparkles" size={iconSize.md} color={colors.onPrimary} />
                 <Text className="text-[14px] font-bold text-on-primary">
                   {t('match.action')}
                 </Text>
@@ -585,7 +585,7 @@ export default function DetailScreen({ route, navigation }: Props) {
         onPress={handleShare}
         activeOpacity={0.85}
       >
-        <Ionicons name="share-social-outline" size={16} color={colors.textSoft} />
+        <Ionicons name="share-social-outline" size={iconSize.md} color={colors.textSoft} />
         <Text className="text-[14px] font-bold text-text-soft">{t('detail.share')}</Text>
       </TouchableOpacity>
 
@@ -600,7 +600,7 @@ export default function DetailScreen({ route, navigation }: Props) {
           activeOpacity={0.85}
         >
           {/* Lúc đang lưu thì bỏ icon đi, chỉ còn chữ "Đang lưu..." */}
-          {!resolving && <Ionicons name="checkmark-circle-outline" size={17} color={colors.resolved} />}
+          {!resolving && <Ionicons name="checkmark-circle-outline" size={iconSize.lg} color={colors.resolved} />}
           <Text className="text-[14px] font-bold text-resolved">
             {t(resolving ? 'detail.resolving' : 'detail.resolve')}
           </Text>
@@ -645,7 +645,7 @@ export default function DetailScreen({ route, navigation }: Props) {
       >
         <Ionicons
           name={reported ? 'flag' : 'flag-outline'}
-          size={15}
+          size={iconSize.md}
           color={colors.textMuted}
         />
         <Text className="text-[12.5px] font-semibold text-text-muted">

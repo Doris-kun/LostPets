@@ -7,6 +7,7 @@ import type { RootStackParamList } from '../types';
 import { CONTACT_EMAIL } from '../contact';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
+import { iconSize } from '../theme';
 
 /*
  * Màn Liên hệ — tương đương views/Contact.vue bên web (PR #73).
@@ -137,7 +138,7 @@ export default function ContactScreen({ navigation }: Props) {
       {/* ---- Trợ lý ---- */}
       <View className="mt-lg rounded-md border border-ai-border bg-ai-bg p-lg">
         <View className="h-11 w-11 items-center justify-center rounded-md bg-ai-accent">
-          <Ionicons name="chatbubble-ellipses" size={20} color={colors.onPrimary} />
+          <Ionicons name="chatbubble-ellipses" size={iconSize.xl} color={colors.onPrimary} />
         </View>
 
         <Text className="mt-md text-[15px] font-extrabold text-ai-text">{c.chatH}</Text>
@@ -159,7 +160,7 @@ export default function ContactScreen({ navigation }: Props) {
       {!!CONTACT_EMAIL && (
         <View className="mt-md rounded-md border border-contact-border bg-contact-bg p-lg">
           <View className="h-11 w-11 items-center justify-center rounded-md bg-primary">
-            <Ionicons name="mail-outline" size={20} color={colors.onPrimary} />
+            <Ionicons name="mail-outline" size={iconSize.xl} color={colors.onPrimary} />
           </View>
 
           <Text className="mt-md text-[15px] font-extrabold text-teal-text">{c.mailH}</Text>
@@ -177,7 +178,7 @@ export default function ContactScreen({ navigation }: Props) {
           >
             <Ionicons
               name={copied ? 'checkmark' : 'mail-outline'}
-              size={16}
+              size={iconSize.md}
               color={colors.textSoft}
             />
             <Text className="text-[14px] font-bold text-text-soft">

@@ -15,6 +15,7 @@ import api, { errorStatus } from '../api';
 import type { RootStackParamList } from '../types';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
+import { iconSize } from '../theme';
 
 /*
  * Quên mật khẩu — tương đương ForgotPassword.vue và ResetPassword.vue bên web.
@@ -148,7 +149,7 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
       <ScrollView className="flex-1 bg-background" contentContainerClassName="p-lg">
         <View className="items-center pt-xl">
           <View className="h-16 w-16 items-center justify-center rounded-full bg-surface-tint">
-            <Ionicons name="checkmark" size={30} color={colors.resolved} />
+            <Ionicons name="checkmark" size={iconSize.successSm} color={colors.resolved} />
           </View>
 
           <Text className="mt-lg text-center text-[16px] font-extrabold text-text">
@@ -195,6 +196,15 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
               placeholderTextColor={colors.textMuted}
               secureTextEntry
               autoCapitalize="none"
+              /*
+                'new-password' chứ không phải 'password': đây là mật khẩu MỚI.
+                Khai sai thì trình quản lý điền đè mật khẩu cũ vào — mà mật
+                khẩu cũ chính là thứ người dùng đang muốn bỏ đi.
+
+                Khai đúng thì nó còn gợi ý một mật khẩu mạnh và tự lưu lại.
+              */
+              autoComplete="new-password"
+              textContentType="newPassword"
             />
 
             {/*
@@ -218,6 +228,8 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
               placeholderTextColor={colors.textMuted}
               secureTextEntry
               autoCapitalize="none"
+              autoComplete="new-password"
+              textContentType="newPassword"
               returnKeyType="done"
               onSubmitEditing={savePassword}
             />
@@ -231,6 +243,8 @@ export default function ForgotPasswordScreen({ navigation, route }: Props) {
             accessibilityLabel={t('auth.email')}
             placeholderTextColor={colors.textMuted}
             keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
             // Email không bao giờ viết hoa chữ đầu, mà iOS thì tự viết hoa —
             // hỏng chuỗi ngay từ ký tự đầu tiên.
             autoCapitalize="none"

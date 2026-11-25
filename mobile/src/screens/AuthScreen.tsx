@@ -247,6 +247,8 @@ export default function AuthScreen({ navigation }: Props) {
             onChangeText={(v) => update('name', v)}
             placeholder={t('auth.namePh')}
             autoCapitalize="words"
+            autoComplete="name"
+            textContentType="name"
           />
         )}
 
@@ -260,8 +262,25 @@ export default function AuthScreen({ navigation }: Props) {
           // Với email thì cả hai đều phá hỏng những gì người dùng gõ.
           autoCapitalize="none"
           autoCorrect={false}
+          autoComplete="email"
+          textContentType="emailAddress"
         />
 
+        {/*
+          autoComplete đổi theo tab, KHÔNG để cứng một giá trị.
+
+          Thiếu hai dòng này thì trình quản lý mật khẩu không nhận ra đây là ô
+          mật khẩu: nó không gợi ý gì khi đăng nhập, và không hỏi lưu khi đăng
+          ký. Người dùng phải gõ tay — mà gõ tay thì họ chọn mật khẩu dễ nhớ,
+          tức là mật khẩu yếu.
+
+          Để cứng 'password' cũng hỏng theo kiểu khác: lúc đăng ký trình quản
+          lý tưởng đây là ô đăng nhập nên điền đè mật khẩu CŨ vào, người dùng
+          không để ý là tạo tài khoản mới bằng mật khẩu cũ.
+
+          textContentType là tên của iOS, autoComplete là tên của Android —
+          phải khai cả hai, mỗi hệ đọc một cái.
+        */}
         <Field
           label={t('auth.password')}
           value={form.password}
@@ -269,6 +288,8 @@ export default function AuthScreen({ navigation }: Props) {
           placeholder={t('auth.passwordPh')}
           secureTextEntry
           autoCapitalize="none"
+          autoComplete={isRegister ? 'new-password' : 'current-password'}
+          textContentType={isRegister ? 'newPassword' : 'password'}
         />
 
         {/*

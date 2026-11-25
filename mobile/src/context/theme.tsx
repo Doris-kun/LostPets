@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Appearance } from 'react-native';
+import { AccessibilityInfo, Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colorScheme } from 'nativewind';
 import { darkColors, darkShadow, lightColors, lightShadow, type Colors } from '../theme';
@@ -47,6 +47,17 @@ export interface ThemeValue {
   colors: Colors;
   shadow: Shadow;
   isDark: boolean;
+  /**
+   * Người dùng đã bật "giảm chuyển động" trong Trợ năng của máy chưa.
+   *
+   * Bật nghĩa là họ KHÔNG muốn thấy thứ gì tự chạy. Có người bật vì rối loạn
+   * tiền đình — hiệu ứng trượt và phóng làm họ chóng mặt, buồn nôn thật sự,
+   * chứ không phải chỉ khó chịu. Có người bật vì máy yếu.
+   *
+   * Đặt cạnh sáng/tối vì cùng một loại: sở thích hiển thị của người dùng, đọc
+   * một lần lúc mở app, cả app dùng chung.
+   */
+  reduceMotion: boolean;
 }
 
 const ThemeContext = createContext<ThemeValue | null>(null);
@@ -54,6 +65,16 @@ const ThemeContext = createContext<ThemeValue | null>(null);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // null = chưa đọc xong ổ đĩa, hoặc người dùng chưa chọn bao giờ.
   const [savedScheme, setSavedScheme] = useState<Scheme | null>(null);
+
+  /*
+   * Mặc định false — tức là CÓ hiệu ứng.
+   *
+   * Chọn chiều này vì đọc cài đặt trợ năng là bất đồng bộ: đoán sai chiều kia
+   * thì mọi người đều thấy app đứng hình một nhịp rồi hiệu ứng mới bật lên.
+   * Đoán sai chiều này thì chỉ người đã bật giảm chuyển động chịu một khung
+   * hình thừa, mà họ cũng không kịp thấy vì ThemeProvider chưa vẽ gì.
+   */
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   /*
    * Đã đọc xong lựa chọn trong ổ đĩa chưa.
@@ -95,6 +116,36 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     return () => {
       ignore = true;
+    };
+  }, []);
+
+  /*
+   * Đọc cài đặt "giảm chuyển động" của máy, và theo dõi khi nó đổi.
+   *
+   * Có listener chứ không chỉ đọc một lần: người dùng bật tắt nó giữa chừng
+   * được, mà app thì sống qua nhiều lần mở tắt màn hình. Đọc một lần rồi thôi
+   * là họ bật trong Cài đặt xong quay lại app vẫn thấy mọi thứ trượt như cũ.
+   *
+   * KHÔNG chặn ready: app không được treo màn chào chỉ vì một cài đặt trợ
+   * năng chưa đọc xong. Chậm vài mili giây thì cùng lắm là khung hình đầu
+   * tiên còn hiệu ứng, mà lúc đó chưa vẽ gì ra màn hình cả.
+   */
+  useEffect(() => {
+    let ignore = false;
+
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((bat) => {
+        if (!ignore) setReduceMotion(bat);
+      })
+      .catch(() => {
+        // Không đọc được thì cứ chạy hiệu ứng như thường, không báo gì.
+      });
+
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+
+    return () => {
+      ignore = true;
+      sub.remove();
     };
   }, []);
 
@@ -158,10 +209,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       isDark: scheme === 'dark',
       colors: scheme === 'dark' ? darkColors : lightColors,
       shadow: scheme === 'dark' ? darkShadow : lightShadow,
+      reduceMotion,
       setScheme,
       toggleScheme,
     }),
-    [scheme, setScheme, toggleScheme],
+    [scheme, reduceMotion, setScheme, toggleScheme],
   );
 
   /*

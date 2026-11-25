@@ -8,7 +8,7 @@ import { THUMB_CARD, thumbnail } from '../image';
 import { distanceKm, hasPoint, locateMe, NEAR_ME_KM, readSavedMe, type Point } from '../map';
 import { useLanguage } from '../context/language';
 import { useTheme } from '../context/theme';
-import { statusStyle } from '../theme';
+import { iconSize, statusStyle } from '../theme';
 
 /*
  * Bản đồ tất cả tin, thay cho danh sách ở Trang chủ.
@@ -170,7 +170,7 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
   if (pets.length === 0) {
     return (
       <View className="flex-1 items-center justify-center gap-md px-xl">
-        <Ionicons name="location-outline" size={40} color={colors.textMuted} />
+        <Ionicons name="location-outline" size={iconSize.emptyMap} color={colors.textMuted} />
         <Text className="text-center text-[13px] leading-[19px] text-text-muted">
           {t('map.noLocated')}
         </Text>
@@ -244,7 +244,7 @@ export default function PetMapView({ params, onOpenPet }: PetMapViewProps) {
         {locating ? (
           <ActivityIndicator size="small" color={colors.onPrimary} />
         ) : (
-          <Ionicons name="navigate" size={16} color={colors.onPrimary} />
+          <Ionicons name="navigate" size={iconSize.md} color={colors.onPrimary} />
         )}
         <Text className="text-[13px] font-bold text-on-primary">
           {t(locating ? 'map.locating' : 'map.nearMe')}
@@ -282,13 +282,26 @@ function SelectedCard({
       className="absolute bottom-md left-md right-md rounded-lg bg-surface p-md"
       style={shadow.card}
     >
+      {/*
+        accessibilityLabel là BẮT BUỘC ở đây, không phải cho đẹp.
+
+        Nút này chỉ có mỗi icon ✕, không một chữ nào. Thiếu nhãn thì trình đọc
+        màn hình chỉ đọc được "button" — người khiếm thị nghe xong vẫn không
+        biết bấm vào sẽ ra gì, và đây là lối thoát duy nhất của thẻ xem trước.
+
+        Quét cả app có 78 vùng chạm, bốn cái chỉ có icon không có chữ, và đây
+        là cái duy nhất còn sót. Nút có chữ thì không cần: trình đọc màn hình
+        đọc chính chữ đó.
+      */}
       <TouchableOpacity
         className="absolute right-sm top-sm z-10 p-0.5"
         onPress={onClose}
+        accessibilityLabel={t('filter.close')}
+        accessibilityRole="button"
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         activeOpacity={0.7}
       >
-        <Ionicons name="close" size={18} color={colors.textMuted} />
+        <Ionicons name="close" size={iconSize.lg} color={colors.textMuted} />
       </TouchableOpacity>
 
       <View className="flex-row gap-md">
@@ -299,7 +312,7 @@ function SelectedCard({
           />
         ) : (
           <View className="h-16 w-16 items-center justify-center rounded-md bg-surface-tint">
-            <Ionicons name="paw" size={22} color={colors.textMuted} />
+            <Ionicons name="paw" size={iconSize.placeholderSm} color={colors.textMuted} />
           </View>
         )}
 
