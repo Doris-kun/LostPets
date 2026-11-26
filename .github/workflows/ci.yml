@@ -3,8 +3,15 @@ name: CI
 on:
   push:
     branches: [main]
+  # Moi PR deu chay, khong rieng PR nham thang vao main.
+  #
+  # Truoc day la branches: [main], tuc la BASE phai la main. Dot chuyen
+  # Vue sang React di theo chuoi PR xep chong — PR trang chu co base la
+  # nhanh nen mong, PR chi tiet tin co base la nhanh trang chu — nen khong
+  # PR nao trong chuoi do duoc kiem ca. Loi chi lo ra luc PR cuoi cung
+  # merge vao main, tuc la muon nhat co the.
   pull_request:
-    branches: [main]
+    branches: ["**"]
 
 jobs:
   test:
