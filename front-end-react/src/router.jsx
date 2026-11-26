@@ -23,6 +23,7 @@ import auth from './auth';
  * báo lỗi cũng không tải được.
  */
 const Home = lazy(() => import('./pages/Home.jsx'));
+const PetDetail = lazy(() => import('./pages/PetDetail.jsx'));
 
 /*
  * Vào trang cần đăng nhập mà chưa đăng nhập thì đẩy sang /login, NHỚ đường cũ
@@ -114,7 +115,6 @@ function LoiTuyenDuong() {
  *
  * CHƯA CÓ, theo thứ tự dự định làm:
  *
- *   /pet/:id             PetDetail
  *   /new                 NewPet
  *   /pet/:id/edit        EditPet
  *   /login               Login
@@ -139,6 +139,7 @@ const router = createBrowserRouter(
       errorElement: <LoiTuyenDuong />,
       children: [
         { index: true, element: <Home /> },
+        { path: 'pet/:id', element: <PetDetail /> },
         // Mọi đường dẫn chưa chuyển đều rơi vào đây.
         { path: '*', element: <NotFound /> },
       ],
