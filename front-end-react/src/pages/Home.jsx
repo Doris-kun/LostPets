@@ -552,9 +552,18 @@ export default function Home() {
                   <p className="text-xs font-bold text-accent uppercase tracking-widest mb-3">
                     {t('home.featured')}
                   </p>
-                  {/* Mất cột ảnh thì mất luôn chỗ gắn nhãn loại tin, dựng lại ở đây. */}
+                  {/*
+                    Mất cột ảnh thì mất luôn chỗ gắn nhãn loại tin, dựng lại ở
+                    đây.
+
+                    `self-start` là thứ bắt buộc, không phải cho đẹp: thẻ cha
+                    là `flex flex-col`, mà flex mặc định `align-items: stretch`
+                    — nên `inline-block` không giữ được bề ngang theo nội dung,
+                    cái nhãn bị kéo giãn thành một thanh màu chạy hết chiều
+                    ngang thẻ.
+                  */}
                   {!featured.image && (
-                    <span className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full shadow-sm mb-3 ${mauNhan(featured)}`}>
+                    <span className={`self-start text-xs font-bold px-3 py-1.5 rounded-full shadow-sm mb-3 ${mauNhan(featured)}`}>
                       {t(khoaNhan(featured))}
                     </span>
                   )}

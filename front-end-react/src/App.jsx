@@ -169,7 +169,19 @@ export default function App() {
       <nav className="sticky top-0 z-50 bg-card/90 backdrop-blur-sm border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="LostPets" className="w-9 h-9" />
+            {/*
+              Nền trắng ở chế độ tối, không phải trang trí.
+
+              logo.png có vùng trong suốt chạy dọc giữa hai nửa chó/mèo và vài
+              khoảng rỗng bên trong. Nó được vẽ cho nền trắng, nên trên nền
+              trắng mấy khoảng đó vô hình. Trên nền tối thì chúng thủng ra màu
+              nền và logo bị chẻ đôi.
+
+              Lấp bằng một đĩa trắng ngay dưới ảnh, thay vì làm thêm một tệp
+              logo bản tối: logo chỉ có một bản, thêm bản thứ hai là thêm một
+              thứ phải nhớ sửa cả đôi mỗi lần đổi nhận diện.
+            */}
+            <img src="/logo.png" alt="LostPets" className="w-9 h-9 dark:bg-white dark:rounded-full" />
             <span className="text-lg font-bold text-gray-900 tracking-tight">LostPets</span>
           </Link>
 

@@ -106,7 +106,10 @@ export default function ChatWidget() {
               type="button"
               onClick={() => setChatOpen(false)}
               aria-label={t('chat.close')}
-              className="p-1 rounded-lg hover:bg-card/20 transition-colors"
+              // Lớp phủ TRẮNG mờ, không phải màu thẻ: nút này nằm trên dải
+              // cam→ngọc, mà dải đó giữ nguyên ở cả hai chế độ nên lớp phủ
+              // cũng không đổi theo chế độ.
+              className="p-1 rounded-lg hover:bg-white/20 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
