@@ -2,7 +2,19 @@
 
 Tài liệu cho người mới vào dự án LostPets. Đọc hết một lượt rồi làm theo thứ tự.
 
-Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **MERN** — MongoDB, Express, React 19 (Vite), Node.js. Không có đăng nhập, mọi tính năng đều public.
+Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **MERN** — MongoDB, Express, React 19 (Vite), Node.js.
+
+**Đăng tin không cần tài khoản** — đó là chủ ý, người vừa mất thú cưng đang vội. Khách vãng lai đăng xong nhận một **mã xác nhận** lưu trong trình duyệt, và mã đó là thứ duy nhất cho phép sửa hoặc xoá tin sau này.
+
+Nhưng dự án **có** đăng nhập, và vài phần cần nó:
+
+| Phần | Điều kiện |
+|---|---|
+| Xem, tìm kiếm, đăng tin, báo cáo tin xấu | không cần gì |
+| `/me` — Tin của tôi | phải đăng nhập |
+| `/admin` — Quản trị | phải là quản trị viên |
+
+Đăng nhập bằng email + mật khẩu, hoặc Google / Facebook. Đăng ký xong **phải xác minh email** mới dùng được tài khoản — xem mục về `POST /auth/register` bên dưới, nó trả về hai dạng khác nhau tuỳ máy chủ có gửi được thư hay không.
 
 ---
 
@@ -561,7 +573,22 @@ Cần biến môi trường `JWT_SECRET`. Để trống thì các endpoint `/aut
 
 Body JSON: `name`, `email`, `password` (tối thiểu 6 ký tự).
 
-Phản hồi `201`: `{ "token": "...", "user": { "_id", "name", "email" } }`
+**Phản hồi `201` có HAI DẠNG, giao diện phải xử lý cả hai** (đổi từ PR #104):
+
+```jsonc
+// Gửi được thư xác minh — KHÔNG có token
+{ "verifyRequired": true,
+  "email": "a@example.com",
+  "message": "Đã gửi thư xác minh. Bấm đường dẫn trong thư rồi đăng nhập." }
+
+// Máy chủ chưa khai thiết lập gửi thư (chạy ở máy, chạy test) — có token như cũ
+{ "token": "...", "user": { "_id", "name", "email" } }
+```
+
+Đăng ký xong **không tự đăng nhập nữa** ở dạng thứ nhất. Đừng giả định lúc nào
+cũng có `token`: gọi `auth.login(undefined, undefined)` thì phiên rỗng, giao
+diện vẫn hiện "khách", và người dùng đứng im không hiểu chuyện gì. App di động
+đã dính đúng lỗi này một lần.
 
 | Mã | Khi nào |
 |---|---|
@@ -570,9 +597,29 @@ Phản hồi `201`: `{ "token": "...", "user": { "_id", "name", "email" } }`
 
 ### `POST /auth/login`
 
-Body JSON: `email`, `password`. Phản hồi giống `register`.
+Body JSON: `email`, `password`. Phản hồi `200`: `{ token, user }`.
 
 Sai email hoặc sai mật khẩu đều trả `401` với **cùng một thông báo**, để không lộ email nào đã có trong hệ thống.
+
+| Mã | Nghĩa | Giao diện phải làm gì |
+|---|---|---|
+| `401` | sai email hoặc mật khẩu | hiện lỗi đăng nhập |
+| `403` + `verifyRequired: true` | **đúng mật khẩu nhưng chưa xác minh email** | chỉ sang chỗ gửi lại thư, **đừng** nói "sai mật khẩu" |
+
+Body của `403` có sẵn `email`, dùng luôn cho nút gửi lại. Gộp `403` vào cùng
+câu với `401` thì người dùng gõ lại mật khẩu đúng mười lần vẫn không vào được
+mà không hiểu vì sao.
+
+### `POST /auth/verify-email` và `POST /auth/resend-verification`
+
+| Endpoint | Gửi gì | Việc |
+|---|---|---|
+| `POST /auth/verify-email` | `{ token }` — lấy từ query của đường dẫn trong thư | xác minh xong trả về `{ token, user }` MỚI, vì vai trò trong token cũ đã lạc hậu |
+| `POST /auth/resend-verification` | `{ email }` | gửi lại thư, giới hạn tần suất |
+
+Mã xác minh dùng **đúng một lần**. Gọi hai lần thì lượt sau nhận lỗi "mã không
+hợp lệ" — nhớ chặn ở phía giao diện, nhất là với React: effect chạy hai lần ở
+chế độ phát triển, xem ghi chú trong `front-end-react/src/pages/VerifyEmail.jsx`.
 
 ### Đăng nhập bằng Google và Facebook
 
