@@ -315,16 +315,16 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
 
   /*
-   * Bật biến thể `dark:` — nhưng chỉ dành cho NGOẠI LỆ.
+   * Khai `darkMode` theo `data-theme`, dù hiện KHÔNG lớp nào dùng `dark:`.
    *
-   * Gần như mọi chỗ không cần `dark:`: màu đi qua biến CSS nên tự đổi. Biến
-   * thể này để cho mấy thứ không phải màu của mình, ví dụ cái logo: nó là tệp
-   * PNG có vùng trong suốt chạy dọc giữa hai nửa chó/mèo. Trên nền trắng thì
-   * khe đó vô hình, trên nền tối thì nó thủng ra màu nền và logo bị chẻ đôi.
-   * Không sửa bằng token được, phải lấp nền ngay dưới ảnh.
+   * Giữ lại làm hàng rào. Mặc định của Tailwind là `media`, tức `dark:` sẽ đi
+   * theo cài đặt máy — ngược hẳn với thiết kế ở đây, nơi web chỉ nghe lựa
+   * chọn người dùng tự bấm và không đọc `prefers-color-scheme`. Bỏ dòng này
+   * thì ai viết một lớp `dark:` sau này sẽ thấy nó chạy đúng ở máy mình rồi
+   * lệch hẳn trên máy người khác, mà không hiểu vì sao.
    *
-   * Khai theo `data-theme` chứ không theo lớp `.dark`, cho khớp với chỗ
-   * index.html đặt thuộc tính.
+   * Bình thường thì không cần tới `dark:`: màu đi qua biến CSS nên tự đổi.
+   * Chỉ dùng cho thứ không phải màu của mình — và đến giờ chưa có chỗ nào.
    */
   darkMode: ['selector', '[data-theme="dark"]'],
   theme: {

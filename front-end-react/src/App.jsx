@@ -170,18 +170,22 @@ export default function App() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             {/*
-              Nền trắng ở chế độ tối, không phải trang trí.
+              Hai bản logo, đổi theo chế độ — giống hệt app di động.
 
-              logo.png có vùng trong suốt chạy dọc giữa hai nửa chó/mèo và vài
-              khoảng rỗng bên trong. Nó được vẽ cho nền trắng, nên trên nền
-              trắng mấy khoảng đó vô hình. Trên nền tối thì chúng thủng ra màu
-              nền và logo bị chẻ đôi.
+              App có sẵn logo-mark.png và logo-mark-dark.png, bản tối có vầng
+              sáng xanh ngọc để nổi trên nền tối. Hai tệp ở đây chính là hai
+              tệp đó, thu nhỏ về 128×128.
 
-              Lấp bằng một đĩa trắng ngay dưới ảnh, thay vì làm thêm một tệp
-              logo bản tối: logo chỉ có một bản, thêm bản thứ hai là thêm một
-              thứ phải nhớ sửa cả đôi mỗi lần đổi nhận diện.
+              Trước đó web dùng một ảnh logo khác hẳn app, và ở chế độ tối thì
+              lấp thêm một đĩa trắng phía sau. Cả hai đều sai: đặt web cạnh app
+              là ra hai logo khác nhau, mà cái đĩa trắng còn che mất vòng tròn
+              xanh ngọc của logo.
             */}
-            <img src="/logo.png" alt="LostPets" className="w-9 h-9 dark:bg-white dark:rounded-full" />
+            <img
+              src={cheDo === 'dark' ? '/logo-dark.png' : '/logo.png'}
+              alt="LostPets"
+              className="w-9 h-9"
+            />
             <span className="text-lg font-bold text-gray-900 tracking-tight">LostPets</span>
           </Link>
 
