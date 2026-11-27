@@ -189,7 +189,7 @@ export default function PetDetail() {
       </Link>
 
       {loading ? (
-        <div className="mt-5 bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+        <div className="mt-5 bg-card rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
           <div className="aspect-video bg-gray-200" />
           <div className="p-6 space-y-4">
             <div className="h-6 bg-gray-200 rounded-full w-1/2" />
@@ -205,14 +205,14 @@ export default function PetDetail() {
           <p className="text-gray-500">{t('detail.notFound')}</p>
         </div>
       ) : (
-        <div className="mt-5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="mt-5 bg-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="relative aspect-video bg-gray-100">
             <PetPhoto src={pet.image} alt={pet.breed} type={pet.type} resolved={pet.resolved} width={1200} />
             <span
               className={
                 'absolute top-4 left-4 text-sm font-bold px-3 py-1.5 rounded-full shadow-md ' +
                 (pet.resolved
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-on-primary'
                   : pet.type === 'lost'
                     ? 'bg-lost text-on-brand'
                     : 'bg-found text-on-brand')
@@ -371,7 +371,7 @@ export default function PetDetail() {
                 type="button"
                 onClick={deletePet}
                 disabled={deleting}
-                className="bg-danger text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-danger-dark disabled:opacity-50 transition-all"
+                className="bg-danger text-on-danger px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-danger-dark disabled:opacity-50 transition-all"
               >
                 {deleting ? t('detail.deleting') : t('detail.delete')}
               </button>
@@ -423,7 +423,7 @@ export default function PetDetail() {
 
       {/* AI đối chiếu với các tin ngược loại để tìm tin có thể là cùng một con vật */}
       {pet && !pet.resolved && (
-        <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="mt-6 bg-card rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <p className="text-sm font-bold text-gray-900">{t('match.title')}</p>
@@ -433,7 +433,7 @@ export default function PetDetail() {
               type="button"
               onClick={findMatches}
               disabled={matchLoading}
-              className="flex items-center gap-2 bg-ai text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-ai-text disabled:opacity-50 transition-all shadow-sm"
+              className="flex items-center gap-2 bg-ai text-on-ai px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-ai-text disabled:opacity-50 transition-all shadow-sm"
             >
               {matchLoading && (
                 <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">

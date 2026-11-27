@@ -103,7 +103,7 @@ export default function MyPets() {
         </div>
         <Link
           to="/new"
-          className="inline-flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-primary-dark transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-4 py-2 rounded-full text-sm font-semibold hover:bg-primary-dark transition-all shadow-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
@@ -115,7 +115,7 @@ export default function MyPets() {
       {pets.length > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-6">
           {summary.map((card) => (
-            <div key={card.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3">
+            <div key={card.label} className="bg-card rounded-2xl border border-gray-100 shadow-sm px-4 py-3">
               <p className={'text-2xl font-bold ' + card.color}>{card.value}</p>
               <p className="text-xs text-gray-500 mt-0.5">{card.label}</p>
             </div>
@@ -126,7 +126,7 @@ export default function MyPets() {
       {loading ? (
         <p className="text-sm text-gray-500 text-center py-12">{t('mine.loading')}</p>
       ) : pets.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+        <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
           <p className="text-sm text-gray-500">{t('mine.empty')}</p>
           <Link to="/new" className="inline-block mt-3 text-sm font-semibold text-accent hover:underline">
             {t('mine.emptyAction')}
@@ -137,7 +137,7 @@ export default function MyPets() {
           {pets.map((pet) => (
             <div
               key={pet._id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 items-start"
+              className="bg-card rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 items-start"
             >
               <Link to={`/pet/${pet._id}`} className="shrink-0">
                 {/* Ô 96px, chữ "Chưa có ảnh" không vừa nên chỉ để dấu chân. */}
@@ -159,7 +159,7 @@ export default function MyPets() {
                     className={
                       'text-[11px] font-bold px-2 py-0.5 rounded-full ' +
                       (pet.resolved
-                        ? 'bg-primary text-white'
+                        ? 'bg-primary text-on-primary'
                         : pet.type === 'lost'
                           ? 'bg-lost text-on-brand'
                           : 'bg-found text-on-brand')

@@ -9,7 +9,7 @@ import { useI18n } from '../i18n';
 const LIMIT = 9;
 
 const TYPE_TABS = [
-  { value: '', labelKey: 'filter.all', activeClass: 'bg-gray-900 text-white' },
+  { value: '', labelKey: 'filter.all', activeClass: 'bg-gray-900 text-gray-50' },
   { value: 'lost', labelKey: 'filter.lost', activeClass: 'bg-lost text-on-brand' },
   { value: 'found', labelKey: 'filter.found', activeClass: 'bg-found text-on-brand' },
 ];
@@ -37,7 +37,7 @@ const DAYS_TABS = [
  */
 const mauNhan = (pet) =>
   pet.resolved
-    ? 'bg-primary text-white'
+    ? 'bg-primary text-on-primary'
     : pet.type === 'lost'
       ? 'bg-lost text-on-brand'
       : 'bg-found text-on-brand';
@@ -292,7 +292,7 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 mb-10 space-y-3">
+      <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 mb-10 space-y-3">
         {/*
           Ô tìm kiếm đặt trên cùng vì đây là đường vào chính, các nút lọc bên
           dưới chỉ để thu hẹp thêm.
@@ -313,7 +313,7 @@ export default function Home() {
             placeholder={t('search.placeholder')}
             value={goQ}
             onChange={(e) => setGoQ(e.target.value)}
-            className="w-full border border-gray-400 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-500"
+            className="w-full border border-gray-400 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
           {goQ && (
             <button
@@ -355,7 +355,7 @@ export default function Home() {
                 onClick={() => setSpecies(s.value)}
                 className={
                   'px-4 py-2 rounded-full text-sm font-medium transition-all ' +
-                  (species === s.value ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+                  (species === s.value ? 'bg-gray-900 text-gray-50' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
                 }
               >
                 {t(s.labelKey)}
@@ -370,7 +370,7 @@ export default function Home() {
             placeholder={t('filter.area')}
             value={goArea}
             onChange={(e) => setGoArea(e.target.value)}
-            className="flex-1 border border-gray-400 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-500"
+            className="flex-1 border border-gray-400 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
@@ -383,7 +383,7 @@ export default function Home() {
                 onClick={() => setDays(d.value)}
                 className={
                   'px-3 py-1.5 rounded-full text-xs font-medium transition-all ' +
-                  (days === d.value ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+                  (days === d.value ? 'bg-gray-900 text-gray-50' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
                 }
               >
                 {t(d.labelKey)}
@@ -403,7 +403,7 @@ export default function Home() {
             onChange={(e) => setSort(e.target.value)}
             disabled={!!q}
             title={q ? t('search.sortLocked') : ''}
-            className="border border-gray-400 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary bg-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="border border-gray-400 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary bg-card cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <option value="newest">{t('sort.newest')}</option>
             <option value="oldest">{t('sort.oldest')}</option>
@@ -440,7 +440,7 @@ export default function Home() {
                 aria-pressed={view === ma}
                 className={
                   'px-3 py-1 rounded-full text-xs font-semibold transition-all ' +
-                  (view === ma ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-600')
+                  (view === ma ? 'bg-card text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-600')
                 }
               >
                 {t(khoa)}
@@ -455,7 +455,7 @@ export default function Home() {
         (mapLoading ? (
           <p className="text-sm text-gray-500 text-center py-16">{t('mine.loading')}</p>
         ) : !locatedCount ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+          <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
             <p className="text-sm text-gray-500">{t('map.noLocated')}</p>
           </div>
         ) : (
@@ -465,7 +465,7 @@ export default function Home() {
       {/* Khung xương lúc đang tải */}
       {view === 'list' && loading && (
         <div>
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse mb-5">
+          <div className="bg-card rounded-2xl border border-gray-100 overflow-hidden animate-pulse mb-5">
             <div className="flex flex-col sm:flex-row">
               <div className="sm:w-3/5 aspect-video sm:aspect-[16/9] bg-gray-200" />
               <div className="sm:w-2/5 p-6 space-y-4">
@@ -478,7 +478,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+              <div key={i} className="bg-card rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
                 <div className="aspect-[4/3] bg-gray-200" />
                 <div className="p-4 space-y-2.5">
                   <div className="h-4 bg-gray-200 rounded-full w-3/4" />
@@ -502,7 +502,7 @@ export default function Home() {
           <p className="text-gray-500 text-sm mt-1">{t('home.emptySub')}</p>
           <Link
             to="/new"
-            className="mt-5 inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-primary-dark transition-colors"
+            className="mt-5 inline-flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-primary-dark transition-colors"
           >
             {t('home.postNow')}
           </Link>
@@ -514,7 +514,7 @@ export default function Home() {
           {/* Thẻ tin nổi bật */}
           <Link
             to={`/pet/${featured._id}`}
-            className="group block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 mb-5"
+            className="group block bg-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 mb-5"
           >
             <div className="flex flex-col sm:flex-row">
               {/*
@@ -613,7 +613,7 @@ export default function Home() {
                   <Link
                     key={pet._id}
                     to={`/pet/${pet._id}`}
-                    className="group flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    className="group flex flex-col bg-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                       <PetPhoto
@@ -688,7 +688,7 @@ export default function Home() {
                 type="button"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="inline-flex items-center gap-2 bg-white border border-gray-400 text-gray-600 px-6 py-2.5 rounded-full text-sm font-semibold hover:border-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 bg-card border border-gray-400 text-gray-600 px-6 py-2.5 rounded-full text-sm font-semibold hover:border-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50"
               >
                 {loadingMore && (
                   <svg className="w-4 h-4 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24" aria-hidden="true">

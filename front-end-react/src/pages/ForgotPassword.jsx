@@ -49,7 +49,7 @@ export default function ForgotPassword() {
           nữa chỉ khiến họ tưởng lần đầu hỏng, rồi bấm thêm mấy lần nữa — mỗi
           lần là một lá thư và một bước gần hơn tới giới hạn chặn tần suất.
         */
-        <div className="mt-7 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+        <div className="mt-7 bg-card rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
           <div className="w-12 h-12 rounded-full bg-primary-soft flex items-center justify-center mx-auto">
             <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -59,13 +59,13 @@ export default function ForgotPassword() {
           <p className="text-sm text-gray-500 leading-relaxed mt-2">{message}</p>
           <Link
             to="/login"
-            className="inline-block mt-5 bg-gray-900 text-white rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-gray-800 transition-colors"
+            className="inline-block mt-5 bg-gray-900 text-gray-50 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-gray-800 transition-colors"
           >
             {t('forgot.backToLogin')}
           </Link>
         </div>
       ) : (
-        <form onSubmit={gui} className="mt-7 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <form onSubmit={gui} className="mt-7 bg-card rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t('auth.email')}
@@ -83,7 +83,7 @@ export default function ForgotPassword() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-white rounded-xl py-2.5 text-sm font-bold hover:bg-primary-dark disabled:opacity-50 transition-colors"
+            className="w-full bg-primary text-on-primary rounded-xl py-2.5 text-sm font-bold hover:bg-primary-dark disabled:opacity-50 transition-colors"
           >
             {loading ? t('forgot.sending') : t('forgot.submit')}
           </button>

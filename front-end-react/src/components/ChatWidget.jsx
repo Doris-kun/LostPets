@@ -91,7 +91,7 @@ export default function ChatWidget() {
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end">
       {open && (
-        <div className="mb-3 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white rounded-2xl border border-gray-200 shadow-xl flex flex-col overflow-hidden">
+        <div className="mb-3 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-card rounded-2xl border border-gray-200 shadow-xl flex flex-col overflow-hidden">
           {/*
             Dải cam→ngọc thì chữ phải là `on-brand`: chữ trắng chỉ được
             2.46:1 ở đầu dải. Chữ phụ cũng KHÔNG làm mờ — để `opacity-90` là
@@ -106,7 +106,7 @@ export default function ChatWidget() {
               type="button"
               onClick={() => setChatOpen(false)}
               aria-label={t('chat.close')}
-              className="p-1 rounded-lg hover:bg-white/20 transition-colors"
+              className="p-1 rounded-lg hover:bg-card/20 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -127,8 +127,8 @@ export default function ChatWidget() {
                   className={
                     'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-line shadow-sm ' +
                     (m.role === 'user'
-                      ? 'bg-primary text-white rounded-br-sm'
-                      : 'bg-white text-gray-700 border border-gray-100 rounded-bl-sm')
+                      ? 'bg-primary text-on-primary rounded-br-sm'
+                      : 'bg-card text-gray-700 border border-gray-100 rounded-bl-sm')
                   }
                 >
                   {m.content}
@@ -138,12 +138,15 @@ export default function ChatWidget() {
 
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-3.5 py-2.5 shadow-sm">
+                <div className="bg-card border border-gray-100 rounded-2xl rounded-bl-sm px-3.5 py-2.5 shadow-sm">
                   <div className="flex gap-1">
                     {[0, 150, 300].map((tre) => (
                       <span
                         key={tre}
-                        className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce"
+                        // Bậc 400, không phải 300: ba chấm này là dấu hiệu duy
+                        // nhất cho biết đang chờ trả lời, nên là hình MANG
+                        // NGHĨA — ngưỡng 3:1. Bậc 300 chỉ được 1.53:1.
+                        className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
                         style={{ animationDelay: `${tre}ms` }}
                       />
                     ))}
@@ -163,7 +166,7 @@ export default function ChatWidget() {
                   key={key}
                   type="button"
                   onClick={() => gui(t(key))}
-                  className="text-[11px] border border-gray-400 bg-white text-gray-600 rounded-full px-2.5 py-1 hover:border-accent hover:text-accent transition-colors"
+                  className="text-[11px] border border-gray-400 bg-card text-gray-600 rounded-full px-2.5 py-1 hover:border-accent hover:text-accent transition-colors"
                 >
                   {t(key)}
                 </button>
@@ -176,7 +179,7 @@ export default function ChatWidget() {
               e.preventDefault();
               gui();
             }}
-            className="flex items-end gap-2 p-2.5 border-t border-gray-100 bg-white"
+            className="flex items-end gap-2 p-2.5 border-t border-gray-100 bg-card"
           >
             <textarea
               id="draft"
@@ -206,7 +209,7 @@ export default function ChatWidget() {
               type="submit"
               disabled={loading || !draft.trim()}
               aria-label={t('chat.send')}
-              className="bg-primary text-white p-2.5 rounded-xl hover:bg-primary-dark disabled:opacity-40 transition-all shrink-0"
+              className="bg-primary text-on-primary p-2.5 rounded-xl hover:bg-primary-dark disabled:opacity-40 transition-all shrink-0"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M3.4 2.6a1 1 0 0 0-1.3 1.2l1.7 5.2H11a1 1 0 1 1 0 2H3.8l-1.7 5.2a1 1 0 0 0 1.3 1.2l14-7a1 1 0 0 0 0-1.8l-14-7z" />

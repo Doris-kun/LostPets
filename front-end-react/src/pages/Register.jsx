@@ -85,7 +85,7 @@ export default function Register() {
         <p className="text-sm text-gray-500 mt-1">{t('auth.registerSubtitle')}</p>
       </div>
 
-      <form onSubmit={gui} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+      <form onSubmit={gui} className="bg-card rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <div>
           <label htmlFor="name" className={NHAN}>{t('auth.name')}</label>
           <input
@@ -126,7 +126,7 @@ export default function Register() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-primary text-white py-3 rounded-2xl font-bold text-sm hover:bg-primary-dark disabled:opacity-50 transition-all shadow-sm"
+          className="w-full bg-primary text-on-primary py-3 rounded-2xl font-bold text-sm hover:bg-primary-dark disabled:opacity-50 transition-all shadow-sm"
         >
           {loading ? t('auth.registering') : t('auth.registerBtn')}
         </button>

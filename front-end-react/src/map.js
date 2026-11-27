@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import cauHinhTailwind from '../tailwind.config.js';
+import { BIEN_MAU } from '../tailwind.config.js';
 
 /*
  * Bảng màu, đọc thẳng từ tailwind.config.js.
@@ -12,16 +12,26 @@ import cauHinhTailwind from '../tailwind.config.js';
  * phải mở đúng trang bản đồ mới lộ ra.
  *
  * App di động làm y hệt: src/map.ts nhập màu từ src/theme.ts.
+ *
+ * Đây là BIẾN CSS (`rgb(var(--m-x))`) chứ không phải mã màu, nên pin và chấm
+ * gộp tự đổi theo chế độ sáng/tối mà không phải vẽ lại — var() chạy bình
+ * thường trong style nội dòng. Chỗ duy nhất không dùng được là tuỳ chọn màu
+ * của L.circle: Leaflet đặt nó lên thuộc tính SVG, mà thuộc tính SVG không
+ * nhận var(). Vòng bán kính vì vậy tô bằng CSS, xem .lp-vong-ban-kinh.
  */
-export const MAU = cauHinhTailwind.theme.extend.colors;
+export const MAU = BIEN_MAU;
 
-// Màu nền có độ mờ, dùng cho vòng bán kính và quầng sáng quanh chấm vị trí.
-// Leaflet nhận chuỗi CSS nên phải tự đổi từ mã hex sang rgba.
-const mo = (hex, alpha) => {
-  const s = hex.replace('#', '');
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(s.slice(i, i + 2), 16));
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
+/*
+ * Cùng một màu nhưng mờ đi, dùng cho quầng sáng quanh chấm vị trí.
+ *
+ * Biến vào có dạng `rgb(var(--m-primary))`, cần ra `rgb(var(--m-primary) / a)`
+ * — tức là chèn alpha trước dấu đóng CUỐI CÙNG. Đừng dùng replace(')', ...):
+ * nó bắt dấu đóng của var() và cho ra `rgb(var(--m-primary / a))`, sai cú pháp
+ * nên trình duyệt bỏ qua cả màu, quầng sáng biến mất.
+ *
+ * Làm được vì biến chứa ba số kênh, nên `rgb(31 92 122 / .25)` là màu hợp lệ.
+ */
+const mo = (bien, alpha) => `${bien.slice(0, -1)} / ${alpha})`;
 
 // Mặc định nhìn về TP.HCM, nơi phần lớn tin đăng đang tập trung.
 export const DEFAULT_CENTER = [10.776, 106.7];
@@ -67,9 +77,9 @@ export function pinIcon(color = PIN_COLORS.lost) {
  * cùng một bản đồ.
  */
 export const PIN_COLORS = {
-  lost: MAU.lost.DEFAULT,
-  found: MAU.found.DEFAULT,
-  resolved: MAU.primary.DEFAULT,
+  lost: MAU.lost,
+  found: MAU.found,
+  resolved: MAU.primary,
 };
 
 const colorKind = (pet) => (pet.resolved ? 'resolved' : pet.type === 'found' ? 'found' : 'lost');
@@ -147,7 +157,7 @@ export function clusterIcon(members) {
       <div style="
         width:${size - 10}px;height:${size - 10}px;border-radius:9999px;
         background:#fff;display:flex;align-items:center;justify-content:center;
-        font:700 ${members.length > 99 ? 12 : 14}px system-ui,sans-serif;color:${MAU.gray[900]};">
+        font:700 ${members.length > 99 ? 12 : 14}px system-ui,sans-serif;color:${MAU["gray-900"]};">
         ${members.length}
       </div></div>`,
     iconSize: [size, size],
@@ -167,8 +177,8 @@ export function meIcon() {
     className: 'lp-me',
     html: `<span style="
       display:block;width:14px;height:14px;border-radius:9999px;
-      background:${MAU.primary.DEFAULT};border:3px solid #fff;
-      box-shadow:0 0 0 6px ${mo(MAU.primary.DEFAULT, 0.25)};"></span>`,
+      background:${MAU.primary};border:3px solid #fff;
+      box-shadow:0 0 0 6px ${mo(MAU.primary, 0.25)};"></span>`,
     iconSize: [14, 14],
     iconAnchor: [7, 7],
   });

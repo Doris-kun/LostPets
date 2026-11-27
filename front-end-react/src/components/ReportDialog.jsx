@@ -58,9 +58,9 @@ export default function ReportDialog({ petId, onClose }) {
         nên trình đọc màn hình không thấy. Đó là CỐ Ý: người dùng bàn phím đã
         có nút Huỷ ngay trong hộp, thêm một vùng bấm vô danh nữa chỉ làm rối.
       */}
-      <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={close} aria-hidden="true" />
+      <div className="absolute inset-0 bg-scrim/50 backdrop-blur-sm" onClick={close} aria-hidden="true" />
 
-      <div className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-card w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
         {sent ? (
           <div className="text-center py-4">
             <div className="w-12 h-12 rounded-full bg-primary-soft flex items-center justify-center mx-auto mb-3">
@@ -73,7 +73,7 @@ export default function ReportDialog({ petId, onClose }) {
             <button
               type="button"
               onClick={close}
-              className="mt-5 w-full bg-gray-900 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-800 transition-colors"
+              className="mt-5 w-full bg-gray-900 text-gray-50 rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-800 transition-colors"
             >
               {t('report.done')}
             </button>
@@ -138,7 +138,7 @@ export default function ReportDialog({ petId, onClose }) {
                 type="button"
                 onClick={send}
                 disabled={!reason || sending}
-                className="flex-1 bg-danger text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-danger-dark disabled:opacity-40 transition-colors"
+                className="flex-1 bg-danger text-on-danger rounded-xl py-2.5 text-sm font-semibold hover:bg-danger-dark disabled:opacity-40 transition-colors"
               >
                 {sending ? t('report.sending') : t('report.send')}
               </button>

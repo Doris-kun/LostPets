@@ -87,18 +87,18 @@ export default function PetMap({
         ? `<img src="${esc(pet.image)}" alt="" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-bottom:6px"/>`
         : '';
       const away = me
-        ? `<div style="font-size:11px;color:${MAU.primary.DEFAULT};font-weight:600;margin-bottom:4px">${
+        ? `<div style="font-size:11px;color:${MAU.primary};font-weight:600;margin-bottom:4px">${
             distanceKm(me[0], me[1], pet.lat, pet.lng).toFixed(1)} km</div>`
         : '';
 
       return `
         <div style="min-width:150px">
           ${img}
-          <div style="font-weight:700;color:${MAU.gray[900]}">${esc(pet.name || pet.breed)}</div>
-          <div style="font-size:11px;color:${MAU.gray[500]};margin-bottom:6px">${esc(pet.color)} · ${esc(pet.area)}</div>
+          <div style="font-weight:700;color:${MAU["gray-900"]}">${esc(pet.name || pet.breed)}</div>
+          <div style="font-size:11px;color:${MAU["gray-500"]};margin-bottom:6px">${esc(pet.color)} · ${esc(pet.area)}</div>
           ${away}
           <button id="go-${pet._id}" style="
-            width:100%;background:${MAU.primary.DEFAULT};color:#fff;border:0;border-radius:8px;
+            width:100%;background:${MAU.primary};color:${MAU["on-primary"]};border:0;border-radius:8px;
             padding:5px 0;font-size:12px;font-weight:600;cursor:pointer">
             ${esc(t('map.viewPost'))}
           </button>
@@ -171,10 +171,16 @@ export default function PetMap({
     meLayerRef.current.clearLayers();
     if (!me) return;
 
+    /*
+      Màu của vòng này do CSS lo (.lp-vong-ban-kinh), không truyền vào đây.
+      Leaflet đặt màu lên thuộc tính SVG `stroke`/`fill`, mà thuộc tính SVG
+      không nhận var() — truyền biến CSS vào thì vòng mất màu hẳn. Qua CSS thì
+      nó tự đổi theo chế độ sáng/tối, không cần vẽ lại.
+    */
     L.circle(me, {
+      className: 'lp-vong-ban-kinh',
       radius: radiusKm * 1000,
-      color: MAU.primary.DEFAULT, weight: 1, opacity: 0.4,
-      fillColor: MAU.primary.DEFAULT, fillOpacity: 0.05,
+      weight: 1, opacity: 0.4, fillOpacity: 0.05,
     }).addTo(meLayerRef.current);
     L.marker(me, { icon: meIcon(), interactive: false }).addTo(meLayerRef.current);
   }, [me, radiusKm]);
@@ -316,7 +322,7 @@ export default function PetMap({
               aria-label={t('map.radius')}
               value={radiusKm}
               onChange={(e) => setRadiusKm(Number(e.target.value))}
-              className="border border-gray-400 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="border border-gray-400 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-600 bg-card focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             >
               {RADIUS_CHOICES_KM.map((km) => (
                 <option key={km} value={km}>{km} km</option>

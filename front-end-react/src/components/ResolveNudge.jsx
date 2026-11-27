@@ -131,7 +131,7 @@ export default function ResolveNudge() {
           type="button"
           onClick={danhDauDaTim}
           disabled={saving}
-          className="text-sm font-semibold bg-primary text-white px-3.5 py-1.5 rounded-full hover:bg-primary-dark disabled:opacity-50 transition-colors"
+          className="text-sm font-semibold bg-primary text-on-primary px-3.5 py-1.5 rounded-full hover:bg-primary-dark disabled:opacity-50 transition-colors"
         >
           {saving ? t('nudge.saving') : t('nudge.yes')}
         </button>

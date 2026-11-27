@@ -310,7 +310,7 @@ export default function Privacy() {
       </div>
 
       {/* Mục lục. Mỗi mục nhảy tới đúng thẻ section bên dưới bằng id. */}
-      <nav className="mt-7 bg-white border border-gray-100 rounded-2xl p-5" aria-label={c.tocH}>
+      <nav className="mt-7 bg-card border border-gray-100 rounded-2xl p-5" aria-label={c.tocH}>
         <p className="text-sm font-bold text-gray-900">{c.tocH}</p>
         <ul className="mt-3 space-y-1.5">
           {c.sections.map((s) => (
@@ -358,7 +358,7 @@ export default function Privacy() {
         <p className="text-gray-600 leading-relaxed mt-2 max-w-md mx-auto">{c.contactP}</p>
         <Link
           to="/contact"
-          className="inline-block mt-5 bg-primary text-white rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-primary-dark transition-colors"
+          className="inline-block mt-5 bg-primary text-on-primary rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-primary-dark transition-colors"
         >
           {c.contactBtn}
         </Link>

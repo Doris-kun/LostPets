@@ -80,7 +80,7 @@ export default function Login() {
         <p className="text-sm text-gray-500 mt-1">{t('auth.loginSubtitle')}</p>
       </div>
 
-      <form onSubmit={gui} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+      <form onSubmit={gui} className="bg-card rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
             {t('auth.email')}
@@ -114,7 +114,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-primary text-white py-3 rounded-2xl font-bold text-sm hover:bg-primary-dark disabled:opacity-50 transition-all shadow-sm"
+          className="w-full bg-primary text-on-primary py-3 rounded-2xl font-bold text-sm hover:bg-primary-dark disabled:opacity-50 transition-all shadow-sm"
         >
           {loading ? t('auth.loggingIn') : t('auth.loginBtn')}
         </button>

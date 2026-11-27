@@ -72,7 +72,7 @@ export default function Contact() {
           Trợ lý. Nói thẳng đây là máy trả lời, không phải người — hứa có người
           trực rồi để người ta chờ mới là thứ làm mất lòng tin.
         */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col hover:shadow-md transition-shadow">
           <div className="w-11 h-11 rounded-xl bg-accent-soft flex items-center justify-center">
             <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.9 9.9 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -88,14 +88,14 @@ export default function Contact() {
           <button
             type="button"
             onClick={openChat}
-            className="mt-5 w-full bg-primary text-white border-2 border-transparent rounded-xl py-2.5 text-sm font-bold hover:bg-primary-dark transition-colors"
+            className="mt-5 w-full bg-primary text-on-primary border-2 border-transparent rounded-xl py-2.5 text-sm font-bold hover:bg-primary-dark transition-colors"
           >
             {c.chatBtn}
           </button>
         </div>
 
         {CONTACT_EMAIL && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col hover:shadow-md transition-shadow">
+          <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col hover:shadow-md transition-shadow">
             <div className="w-11 h-11 rounded-xl bg-accent-soft flex items-center justify-center">
               <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

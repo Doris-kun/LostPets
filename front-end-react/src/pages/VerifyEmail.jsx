@@ -86,7 +86,7 @@ export default function VerifyEmail() {
     <div className="max-w-md mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold text-gray-900 text-center">{t('verify.title')}</h1>
 
-      <div className="mt-7 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+      <div className="mt-7 bg-card rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
         {trangThai === 'dangChay' && <p className="text-gray-600">{t('verify.working')}</p>}
 
         {trangThai === 'xong' && (
@@ -94,7 +94,7 @@ export default function VerifyEmail() {
             <p className="text-gray-700 leading-relaxed">{t('verify.done')}</p>
             <Link
               to="/"
-              className="inline-block mt-5 bg-primary text-white rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-primary-dark transition-colors"
+              className="inline-block mt-5 bg-primary text-on-primary rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-primary-dark transition-colors"
             >
               {t('verify.goHome')}
             </Link>
@@ -123,7 +123,7 @@ export default function VerifyEmail() {
               <button
                 type="submit"
                 disabled={dangGui}
-                className="w-full mt-3 bg-gray-900 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                className="w-full mt-3 bg-gray-900 text-gray-50 rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 transition-colors"
               >
                 {dangGui ? t('verify.sending') : t('verify.resend')}
               </button>

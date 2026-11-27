@@ -31,13 +31,25 @@ export default function Toast() {
       className={
         'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 ' +
         'px-5 py-3 rounded-2xl shadow-2xl text-sm font-semibold whitespace-nowrap ' +
-        'text-white ' +
-        (type === 'success' ? 'bg-gray-900' : 'bg-danger')
+        /*
+          Nền VÀ chữ đi cùng nhau, không tách ra hai chỗ.
+          Hai loại báo này nằm trên hai nền khác nhau, mà mỗi nền lại đổi màu
+          theo chế độ sáng/tối — nên không có một màu chữ nào phục vụ được cả
+          bốn trường hợp. Trước đây cả hai dùng chung `text-white`.
+        */
+        (type === 'success' ? 'bg-gray-900 text-gray-50' : 'bg-danger text-on-danger')
       }
     >
       {type === 'success' ? (
+        /*
+          Dấu tích đi theo `currentColor`, không có màu riêng.
+          Nền của báo thành công đảo đầu giữa hai chế độ (đậm ở chế độ sáng,
+          sáng ở chế độ tối), nên không màu nhấn cố định nào đạt cả hai: xanh
+          nhạt của logo được 7.18:1 ở chế độ sáng nhưng tụt còn 1.9:1 ở chế độ
+          tối, mà xanh ngọc đậm thì ngược lại.
+        */
         <svg
-          className="w-4 h-4 text-brand-sky flex-shrink-0"
+          className="w-4 h-4 flex-shrink-0"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

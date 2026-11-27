@@ -214,7 +214,7 @@ export default function Admin() {
     : [];
 
   const O_CHON =
-    'border border-gray-400 rounded-full px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary';
+    'border border-gray-400 rounded-full px-3 py-1.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-primary';
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
@@ -227,7 +227,7 @@ export default function Admin() {
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           {tiles.map((tile) => (
-            <div key={tile.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5">
+            <div key={tile.label} className="bg-card rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5">
               <p className="text-2xl font-bold text-gray-900 tabular-nums">{tile.value}</p>
               <div className="flex items-center gap-1.5 mt-1">
                 {tile.dot && <span className={'w-2 h-2 rounded-full shrink-0 ' + tile.dot} aria-hidden="true" />}
@@ -240,7 +240,7 @@ export default function Admin() {
 
       {/* Tỉ lệ đoàn tụ: một con số nổi bật kèm thanh tiến độ */}
       {stats && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+        <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-bold text-gray-900 tabular-nums">{stats.resolvedRate}%</p>
             <p className="text-sm text-gray-500">{t('admin.resolvedRate')}</p>
@@ -282,7 +282,7 @@ export default function Admin() {
         bảng tin chỉ để tra cứu. Ẩn hẳn khi hàng chờ trống.
       */}
       {reports.length > 0 && (
-        <div className="bg-white rounded-2xl border border-danger-border shadow-sm p-5 mb-6">
+        <div className="bg-card rounded-2xl border border-danger-border shadow-sm p-5 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="w-2 h-2 rounded-full bg-danger" aria-hidden="true" />
             <p className="text-sm font-bold text-gray-900">{t('admin.reports')}</p>
@@ -324,7 +324,7 @@ export default function Admin() {
                     type="button"
                     onClick={() => xoaTinBiBaoCao(r)}
                     disabled={busyReport === r._id}
-                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-danger text-white hover:bg-danger-dark disabled:opacity-50"
+                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-danger text-on-danger hover:bg-danger-dark disabled:opacity-50"
                   >
                     {t('admin.reportDeletePost')}
                   </button>
@@ -357,7 +357,7 @@ export default function Admin() {
       {stats && (
         <div className="grid md:grid-cols-2 gap-4 mb-6">
           {rankings.map((rank) => (
-            <div key={rank.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div key={rank.title} className="bg-card rounded-2xl border border-gray-100 shadow-sm p-5">
               <p className="text-sm font-bold text-gray-900 mb-3">{rank.title}</p>
               {rank.rows.length === 0 ? (
                 <p className="text-xs text-gray-500">{t('admin.noData')}</p>
@@ -418,7 +418,7 @@ export default function Admin() {
         </span>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
           <p className="text-sm text-gray-500 text-center py-10">{t('mine.loading')}</p>
         ) : pets.length === 0 ? (

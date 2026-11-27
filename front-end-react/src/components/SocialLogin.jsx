@@ -260,10 +260,21 @@ export default function SocialLogin({ onDone }) {
           Dùng hidden chứ không gỡ hẳn khỏi cây: googleBtnRef phải tồn tại thì
           SDK mới có chỗ để vẽ vào.
         */}
+        {/*
+          Bốn mã màu của chữ G và xanh Facebook bên dưới là màu của NGƯỜI KHÁC,
+          cố ý viết cứng: Google và Facebook đều có hướng dẫn riêng về nút
+          "Tiếp tục với...", và người dùng nhận ra nút nhờ đúng cặp màu đó. Tô
+          hai nút bằng màu của LostPets thì mất hết dấu hiệu nhận biết.
+
+          Riêng NỀN và CHỮ của nút thì dùng token, vì hai thứ đó phải đổi theo
+          chế độ sáng/tối — Google cũng có bản tối cho nút của họ. Trước đây
+          chữ viết cứng #3c4043: nền đổi sang tối mà chữ vẫn đậm thì nút còn ở
+          đó nhưng không ai đọc được.
+        */}
         <div className={'relative group ' + (showGoogle ? '' : 'hidden')} style={sizeStyle}>
           <div
             aria-hidden="true"
-            className="absolute inset-0 flex items-center rounded-full border border-social-border bg-white group-hover:bg-gray-50 transition-colors"
+            className="absolute inset-0 flex items-center rounded-full border border-social-border bg-card group-hover:bg-gray-50 transition-colors"
           >
             <span className="absolute left-3 flex items-center">
               <svg className="w-5 h-5" viewBox="0 0 48 48" aria-hidden="true">
@@ -273,7 +284,7 @@ export default function SocialLogin({ onDone }) {
                 <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
               </svg>
             </span>
-            <span className="w-full text-center text-sm font-medium text-[#3c4043] px-11 truncate">
+            <span className="w-full text-center text-sm font-medium text-gray-900 px-11 truncate">
               {t('auth.withGoogle')}
             </span>
           </div>
@@ -287,7 +298,7 @@ export default function SocialLogin({ onDone }) {
             onClick={loginFacebook}
             disabled={busy}
             style={sizeStyle}
-            className="relative flex items-center rounded-full border border-social-border bg-white hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white transition-colors"
+            className="relative flex items-center rounded-full border border-social-border bg-card hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:hover:bg-card transition-colors"
           >
             <span className="absolute left-3 flex items-center">
               {busy ? (
@@ -301,7 +312,7 @@ export default function SocialLogin({ onDone }) {
                 </svg>
               )}
             </span>
-            <span className="w-full text-center text-sm font-medium text-[#3c4043] px-11 truncate">
+            <span className="w-full text-center text-sm font-medium text-gray-900 px-11 truncate">
               {busy ? t('auth.loggingIn') : t('auth.withFacebook')}
             </span>
           </button>

@@ -184,7 +184,7 @@ export default function EditPet() {
         </div>
       ) : (
         <form onSubmit={gui} className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t('form.general')}</p>
 
             <div>
@@ -197,7 +197,7 @@ export default function EditPet() {
                   className={nutChon(
                     form.type === 'lost',
                     'bg-lost text-on-brand border-lost',
-                    'bg-white text-gray-500 border-gray-400 hover:border-lost',
+                    'bg-card text-gray-500 border-gray-400 hover:border-lost',
                   )}
                 >
                   {t('form.lostBtn')}
@@ -209,7 +209,7 @@ export default function EditPet() {
                   className={nutChon(
                     form.type === 'found',
                     'bg-found text-on-brand border-found',
-                    'bg-white text-gray-500 border-gray-400 hover:border-found',
+                    'bg-card text-gray-500 border-gray-400 hover:border-found',
                   )}
                 >
                   {t('form.foundBtn')}
@@ -229,7 +229,7 @@ export default function EditPet() {
                     className={nutChon(
                       form.species === loai,
                       'bg-lost text-on-brand border-lost',
-                      'bg-white text-gray-500 border-gray-400 hover:border-lost',
+                      'bg-card text-gray-500 border-gray-400 hover:border-lost',
                     )}
                   >
                     {t(loai === 'Chó' ? 'form.dog' : 'form.cat')}
@@ -239,7 +239,7 @@ export default function EditPet() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t('form.petInfo')}</p>
 
             <div>
@@ -263,7 +263,7 @@ export default function EditPet() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t('form.locationContact')}</p>
 
             <div>
@@ -287,7 +287,7 @@ export default function EditPet() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t('form.details')}</p>
 
             <div>
@@ -383,7 +383,7 @@ export default function EditPet() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-primary text-white py-3.5 rounded-2xl font-bold text-sm hover:bg-primary-dark disabled:opacity-50 transition-all shadow-sm hover:shadow-primary/30 hover:shadow-lg"
+            className="w-full bg-primary text-on-primary py-3.5 rounded-2xl font-bold text-sm hover:bg-primary-dark disabled:opacity-50 transition-all shadow-sm hover:shadow-primary/30 hover:shadow-lg"
           >
             {saving ? t('form.saving') : t('form.save')}
           </button>

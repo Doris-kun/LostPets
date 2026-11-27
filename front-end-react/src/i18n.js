@@ -4,6 +4,9 @@ import { showToast } from './toast';
 const translations = {
   vi: {
     'nav.lost': 'Thú Cưng Bị Mất',
+    // Dùng cho cả aria-label lẫn title của nút, nên phải đọc lên nghe được việc
+    // nó làm, không phải tên chế độ đang bật.
+    'theme.toggle': 'Đổi chế độ sáng / tối',
     'nav.found': 'Tìm Thấy Thú Cưng',
     'nav.post': 'Đăng tin',
     'nav.privacy': 'Chính sách bảo mật',
@@ -307,6 +310,7 @@ const translations = {
   },
   en: {
     'nav.lost': 'Lost Pets',
+    'theme.toggle': 'Toggle light / dark mode',
     'nav.found': 'Found Pets',
     'nav.post': 'New Post',
     'nav.privacy': 'Privacy Policy',

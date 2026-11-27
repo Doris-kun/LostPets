@@ -67,17 +67,17 @@ export default function ResetPassword() {
           Vào thẳng đường dẫn mà không có mã thì nói rõ luôn, đừng bày biểu mẫu
           ra để người ta gõ xong mới báo hỏng.
         */
-        <div className="mt-7 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+        <div className="mt-7 bg-card rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
           <p className="text-gray-600 leading-relaxed">{t('reset.noToken')}</p>
           <Link
             to="/forgot-password"
-            className="inline-block mt-5 bg-gray-900 text-white rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-gray-800 transition-colors"
+            className="inline-block mt-5 bg-gray-900 text-gray-50 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-gray-800 transition-colors"
           >
             {t('reset.askAgain')}
           </Link>
         </div>
       ) : (
-        <form onSubmit={gui} className="mt-7 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <form onSubmit={gui} className="mt-7 bg-card rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
           <div>
             <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t('reset.newPassword')}
@@ -113,7 +113,7 @@ export default function ResetPassword() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-white rounded-xl py-2.5 text-sm font-bold hover:bg-primary-dark disabled:opacity-50 transition-colors"
+            className="w-full bg-primary text-on-primary rounded-xl py-2.5 text-sm font-bold hover:bg-primary-dark disabled:opacity-50 transition-colors"
           >
             {loading ? t('reset.saving') : t('reset.submit')}
           </button>
