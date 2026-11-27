@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import ResolveNudge from './components/ResolveNudge.jsx';
 import Toast from './components/Toast.jsx';
 import { useI18n } from './i18n';
 import { showToast } from './toast';
@@ -276,10 +277,12 @@ export default function App() {
       </nav>
 
       {/*
-        CHƯA GẮN: <ResolveNudge /> nằm ở đây trong bản Vue, ngay trên <main>.
-        Nó nhắc người đăng tin đánh dấu đã đoàn tụ. Chuyển ở bước sau cùng với
-        ChatWidget — xem danh sách còn thiếu trong router.jsx.
+        Dải nhắc đánh dấu đã đoàn tụ. Nằm NGAY TRÊN <main> chứ không nằm trong
+        một trang nào: nó hỏi về tin của người dùng, mà người dùng thì đang ở
+        bất cứ trang nào cũng được.
       */}
+      <ResolveNudge />
+
 
       {/*
         Suspense là BẮT BUỘC vì router nạp từng trang thành tệp rời. Thiếu nó
