@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import PetMap from '../components/PetMap.jsx';
 import PetPhoto from '../components/PetPhoto.jsx';
@@ -48,17 +48,6 @@ const khoaNhan = (pet) =>
 export default function Home() {
   const { t, lang } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
-
-  /*
-   * Chế độ sáng/tối, do App.jsx truyền xuống.
-   *
-   * Chỉ dùng để chọn một trong hai tệp ảnh logo trong khối chào. Màu thì không
-   * cần tới nó: mọi màu đi qua biến CSS nên tự đổi theo `data-theme`.
-   *
-   * Có giá trị mặc định vì trang này cũng được dựng trong test, nơi không có
-   * <Outlet> nào bọc ngoài.
-   */
-  const { cheDo = 'light' } = useOutletContext() || {};
 
   // Loại tin nằm trong đường dẫn chứ không trong state: người dùng chia sẻ
   // link /?type=lost thì người nhận phải thấy đúng bộ lọc đó.
@@ -311,38 +300,24 @@ export default function Home() {
         3.09:1. Trên bậc nhạt thì chữ chính đạt 13.9:1 ở chế độ sáng và 12.1:1
         ở chế độ tối.
       */}
-      <section className="mb-6 rounded-2xl border border-accent-border bg-gradient-to-br from-lost-soft to-found-soft px-5 py-6 sm:px-7 sm:py-8">
-        <div className="flex items-start gap-4">
-          {/*
-            Logo lặp lại ở đây dù thanh menu đã có một cái. Cố ý: thanh menu
-            cuộn mất, còn khối này là chỗ người ta dừng mắt lần đầu.
-            aria-hidden vì tên thương hiệu đã nằm ngay trong câu chữ bên cạnh —
-            để trình đọc màn hình đọc "LostPets" hai lần thì chỉ tổ rườm.
-          */}
-          <img
-            src={cheDo === 'dark' ? '/logo-dark.png' : '/logo.png'}
-            alt=""
-            aria-hidden="true"
-            className="hidden sm:block w-14 h-14 shrink-0"
-          />
-          <div className="min-w-0">
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight leading-snug break-words">
-              {t('brand.slogan')}
-            </p>
-            <p className="text-sm text-gray-600 mt-2 leading-relaxed max-w-prose break-words">
-              {t('home.heroSub')}
-            </p>
-            <Link
-              to="/new"
-              className="mt-4 inline-flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-primary-dark transition-colors"
-            >
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              {t('nav.post')}
-            </Link>
-          </div>
-        </div>
+      <section className="mb-8 rounded-2xl border border-accent-border bg-gradient-to-br from-lost-soft to-found-soft px-6 py-10 sm:py-14">
+        {/*
+          CHỈ MỘT CÂU, không logo, không nút, không chữ phụ.
+
+          Thêm bất cứ thứ gì vào đây là chia nhỏ chỗ mắt dừng lại, mà cả khối
+          này sinh ra chỉ để làm đúng một việc: nói ngay web này dùng để làm gì.
+
+          `font-bold` (700) chứ không phải `font-extrabold` (800): font ở đây
+          là font hệ thống, phần lớn máy không có sẵn nét 800 nên trình duyệt
+          tự bôi đậm lấy — chữ to mà bị bôi đậm giả thì rìa nhoè, đúng cái
+          ngược với "sắc nét".
+
+          `text-balance` chia các dòng cho đều nhau thay vì để dòng cuối trơ
+          một hai chữ.
+        */}
+        <p className="text-center text-balance text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight leading-tight break-words">
+          {t('brand.slogan')}
+        </p>
       </section>
 
       <div className="mb-6">

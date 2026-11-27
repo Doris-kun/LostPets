@@ -10,7 +10,6 @@ const translations = {
     // Slogan lấy đúng của app di động (mobile/src/word.ts) — hai client cùng
     // một câu, không ai tự nghĩ ra câu riêng.
     'brand.slogan': 'Đăng một tin, mở một lối về',
-    'home.heroSub': 'Đăng tin miễn phí, không cần tài khoản. Tin của bạn hiện ngay cho người ở gần khu vực.',
     'nav.found': 'Tìm Thấy Thú Cưng',
     'nav.post': 'Đăng tin',
     'nav.privacy': 'Chính sách bảo mật',
@@ -316,7 +315,6 @@ const translations = {
     'nav.lost': 'Lost Pets',
     'theme.toggle': 'Toggle light / dark mode',
     'brand.slogan': 'One post, one way home',
-    'home.heroSub': 'Posting is free, no account needed. Your post reaches people near the area right away.',
     'nav.found': 'Found Pets',
     'nav.post': 'New Post',
     'nav.privacy': 'Privacy Policy',
