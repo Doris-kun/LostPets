@@ -1,0 +1,6 @@
+node_modules
+dist
+.env.local
+
+# Bo nho dem cua Vite khi chay npm run dev, sinh lai duoc
+.vite

@@ -7,6 +7,20 @@ dist/
 *.env
 !*.env.example
 
+# Ngoại lệ: tệp .env của bản web React.
+#
+# Nó chỉ chứa Google Client ID và Facebook App ID — hai thứ CÔNG KHAI, chính
+# Google và Meta cũng nói vậy, vì chúng nằm trong mã trang mà ai xem nguồn
+# cũng thấy. Khoá bí mật tương ứng nằm ở back-end/.env và vẫn bị chặn.
+#
+# Phải đi theo repo, nếu không thì ai clone về chạy ở máy cũng không có nút
+# "Tiếp tục với Google": Vite chỉ nạp .env.production cho bản dựng, nên hai
+# client ID bắt buộc phải nằm ở .env mới có mặt lúc chạy `npm run dev`.
+#
+# Mọi biến tên VITE_* đều bị nhét thẳng vào tệp JavaScript lúc dựng, nên
+# không thứ gì trong tệp đó giữ kín được. Đừng để khoá bí mật vào đấy.
+!front-end-react/.env
+
 # File tạm khi thử nghiệm
 *.tmp.js
 

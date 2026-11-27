@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      logo.png chứ không phải favicon.ico: PR #4 đã đổi sang logo để tab trình
+      duyệt nhận ra được web. favicon.ico vẫn giữ trong public/ cho trình duyệt
+      cũ tự dò /favicon.ico.
+    -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <!--
+      Tiêu đề phải mô tả web, không phải tên dự án. PR #4 đã sửa đúng chỗ này
+      một lần — "Lost Pets" trống không thì tab mở nhiều không ai biết tab nào
+      là tab nào, mà kết quả tìm kiếm cũng không nói lên điều gì.
+    -->
+    <title>LostPets — Tìm thú cưng thất lạc</title>
+    <!--
+      Đặt chế độ sáng/tối TRƯỚC khi React khởi động.
+
+      Đợi React thì màn hình loé trắng một nhịp rồi mới tối — người chọn chế độ
+      tối gặp cái loé đó ở mỗi lần tải trang. Đoạn này chạy đồng bộ ngay trong
+      <head>, lúc <body> còn chưa vẽ gì.
+
+      Script thường, KHÔNG phải type="module": module bị hoãn tới sau khi dựng
+      xong cây DOM, tức là đúng cái muốn tránh.
+
+      Tên khoá gõ lại ở đây một lần nữa, trùng với KHOA_CHE_DO trong
+      src/App.jsx. Đổi tên khoá thì phải đổi cả hai chỗ.
+
+      Mặc định là sáng, không đọc prefers-color-scheme — giống app di động, web
+      chỉ đi theo lựa chọn người dùng tự bấm.
+    -->
+    <script>
+      try {
+        if (localStorage.getItem('lostpets:theme') === 'dark') {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      } catch (e) {
+        /* Chặn cookie thì localStorage ném lỗi. Cứ để chế độ sáng. */
+      }
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <strong>Trang web cần bật JavaScript để hoạt động. Vui lòng bật JavaScript rồi tải lại trang.</strong>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

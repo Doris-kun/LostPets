@@ -2,7 +2,19 @@
 
 Tài liệu cho người mới vào dự án LostPets. Đọc hết một lượt rồi làm theo thứ tự.
 
-Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **MEVN** — MongoDB, Express, Vue 2, Node.js. Không có đăng nhập, mọi tính năng đều public.
+Dự án là web đăng tin thú cưng thất lạc / nhặt được. Stack: **MERN** — MongoDB, Express, React 19 (Vite), Node.js.
+
+**Đăng tin không cần tài khoản** — đó là chủ ý, người vừa mất thú cưng đang vội. Khách vãng lai đăng xong nhận một **mã xác nhận** lưu trong trình duyệt, và mã đó là thứ duy nhất cho phép sửa hoặc xoá tin sau này.
+
+Nhưng dự án **có** đăng nhập, và vài phần cần nó:
+
+| Phần | Điều kiện |
+|---|---|
+| Xem, tìm kiếm, đăng tin, báo cáo tin xấu | không cần gì |
+| `/me` — Tin của tôi | phải đăng nhập |
+| `/admin` — Quản trị | phải là quản trị viên |
+
+Đăng nhập bằng email + mật khẩu, hoặc Google / Facebook. Đăng ký xong **phải xác minh email** mới dùng được tài khoản — xem mục về `POST /auth/register` bên dưới, nó trả về hai dạng khác nhau tuỳ máy chủ có gửi được thư hay không.
 
 ---
 
@@ -22,7 +34,7 @@ cd LostPets
 
 cd back-end
 npm install
-cd ../front-end
+cd ../front-end-react
 npm install
 ```
 
@@ -92,13 +104,15 @@ npm start           # http://localhost:3000
 
 ```bash
 # Terminal 2 — giao diện
-cd front-end
-npm run serve       # http://localhost:8080
+cd front-end-react
+npm run dev         # http://localhost:8080
 ```
 
 Back-end chạy thành công sẽ in `Connected to MongoDB`. Nếu lỗi kết nối, nó tự thử lại mỗi 5 giây — kiểm tra lại `MONGODB_URI` và phần Network Access trên Atlas.
 
-Front-end mặc định gọi API ở `http://localhost:3000`. Muốn đổi thì tạo file `front-end/.env` với `VUE_APP_API_URL=...`.
+Front-end mặc định gọi API ở `http://localhost:3000`. Muốn đổi thì tạo file `front-end-react/.env.local` với `VITE_API_URL=...`.
+
+> Vite chỉ đọc biến có tiền tố `VITE_`, và đọc qua `import.meta.env` chứ không qua `process.env`. Đặt tên kiểu `VUE_APP_*` thì nó bỏ qua, không báo lỗi gì.
 
 ### Chạy test
 
@@ -217,7 +231,7 @@ Dự án tách sẵn hai thư mục, mỗi người giữ một bên để trán
 | Thư mục | Nội dung |
 |---|---|
 | `back-end/` | Express, Mongoose model, routes, controller, upload Cloudinary, test |
-| `front-end/` | Vue 2, các view, component, Tailwind, gọi API bằng axios |
+| `front-end-react/` | React 19 + Vite, các trang, component, Tailwind, gọi API bằng axios |
 
 Khi một tính năng cần cả hai bên (ví dụ thêm một trường dữ liệu mới), làm tuần tự: **back-end merge trước**, front-end pull về rồi làm sau. Và nhớ cập nhật mục API bên dưới trong cùng PR đó.
 
@@ -559,7 +573,22 @@ Cần biến môi trường `JWT_SECRET`. Để trống thì các endpoint `/aut
 
 Body JSON: `name`, `email`, `password` (tối thiểu 6 ký tự).
 
-Phản hồi `201`: `{ "token": "...", "user": { "_id", "name", "email" } }`
+**Phản hồi `201` có HAI DẠNG, giao diện phải xử lý cả hai** (đổi từ PR #104):
+
+```jsonc
+// Gửi được thư xác minh — KHÔNG có token
+{ "verifyRequired": true,
+  "email": "a@example.com",
+  "message": "Đã gửi thư xác minh. Bấm đường dẫn trong thư rồi đăng nhập." }
+
+// Máy chủ chưa khai thiết lập gửi thư (chạy ở máy, chạy test) — có token như cũ
+{ "token": "...", "user": { "_id", "name", "email" } }
+```
+
+Đăng ký xong **không tự đăng nhập nữa** ở dạng thứ nhất. Đừng giả định lúc nào
+cũng có `token`: gọi `auth.login(undefined, undefined)` thì phiên rỗng, giao
+diện vẫn hiện "khách", và người dùng đứng im không hiểu chuyện gì. App di động
+đã dính đúng lỗi này một lần.
 
 | Mã | Khi nào |
 |---|---|
@@ -568,9 +597,29 @@ Phản hồi `201`: `{ "token": "...", "user": { "_id", "name", "email" } }`
 
 ### `POST /auth/login`
 
-Body JSON: `email`, `password`. Phản hồi giống `register`.
+Body JSON: `email`, `password`. Phản hồi `200`: `{ token, user }`.
 
 Sai email hoặc sai mật khẩu đều trả `401` với **cùng một thông báo**, để không lộ email nào đã có trong hệ thống.
+
+| Mã | Nghĩa | Giao diện phải làm gì |
+|---|---|---|
+| `401` | sai email hoặc mật khẩu | hiện lỗi đăng nhập |
+| `403` + `verifyRequired: true` | **đúng mật khẩu nhưng chưa xác minh email** | chỉ sang chỗ gửi lại thư, **đừng** nói "sai mật khẩu" |
+
+Body của `403` có sẵn `email`, dùng luôn cho nút gửi lại. Gộp `403` vào cùng
+câu với `401` thì người dùng gõ lại mật khẩu đúng mười lần vẫn không vào được
+mà không hiểu vì sao.
+
+### `POST /auth/verify-email` và `POST /auth/resend-verification`
+
+| Endpoint | Gửi gì | Việc |
+|---|---|---|
+| `POST /auth/verify-email` | `{ token }` — lấy từ query của đường dẫn trong thư | xác minh xong trả về `{ token, user }` MỚI, vì vai trò trong token cũ đã lạc hậu |
+| `POST /auth/resend-verification` | `{ email }` | gửi lại thư, giới hạn tần suất |
+
+Mã xác minh dùng **đúng một lần**. Gọi hai lần thì lượt sau nhận lỗi "mã không
+hợp lệ" — nhớ chặn ở phía giao diện, nhất là với React: effect chạy hai lần ở
+chế độ phát triển, xem ghi chú trong `front-end-react/src/pages/VerifyEmail.jsx`.
 
 ### Đăng nhập bằng Google và Facebook
 
@@ -612,11 +661,11 @@ Người tạo tài khoản bằng Google mà đi gõ mật khẩu ở form đă
 | Nơi | Biến |
 |---|---|
 | Back-end (Render) | `GOOGLE_CLIENT_ID`, `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` |
-| Front-end (lúc build) | `VUE_APP_GOOGLE_CLIENT_ID`, `VUE_APP_FACEBOOK_APP_ID` |
+| Front-end (lúc build) | `VITE_GOOGLE_CLIENT_ID`, `VITE_FACEBOOK_APP_ID` |
 
 Nút chỉ hiện khi **đủ cả hai phía**. Thiếu bên nào thì nút ẩn đi và phần đăng nhập bằng mật khẩu vẫn chạy bình thường — giống cách `JWT_SECRET` tắt hẳn phần đăng nhập mà không làm sập web.
 
-> Biến `VUE_APP_*` được nhúng vào bundle **lúc build**, không đọc lúc chạy. Đổi giá trị trên Render thì phải build lại front-end mới có tác dụng.
+> Biến `VITE_*` được nhúng vào bundle **lúc build**, không đọc lúc chạy. Đổi giá trị trên Render thì phải build lại front-end mới có tác dụng.
 
 ### `GET /pets/mine` — tin của chính mình
 
@@ -686,7 +735,7 @@ Không đặt `setInterval` hay `node-cron` trong app vì Render gói miễn ph�
 
 **Vì sao không dùng TTL index của MongoDB**, dù cách đó không tốn dòng code nào: TTL xoá thẳng dưới tầng database nên code của app không chạy, ảnh trên Cloudinary bị bỏ lại vĩnh viễn và không còn tin nào trỏ tới để biết đường dọn. Đổi vài chục dòng code lấy một đống rác không bao giờ dọn được thì không đáng.
 
-> Đổi `CLEANUP_AFTER_DAYS` thì nhớ sửa luôn hai chuỗi dịch `detail.resolvedExpiry` trong `front-end/src/i18n.js` và dòng nói về 30 ngày trong `SYSTEM_INSTRUCTION` của `chatController.js`, không thì giao diện nói một đằng hệ thống làm một nẻo.
+> Đổi `CLEANUP_AFTER_DAYS` thì nhớ sửa luôn hai chuỗi dịch `detail.resolvedExpiry` trong `front-end-react/src/i18n.js` và dòng nói về 30 ngày trong `SYSTEM_INSTRUCTION` của `chatController.js`, không thì giao diện nói một đằng hệ thống làm một nẻo.
 
 ### Hàng chờ báo cáo
 

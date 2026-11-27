@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /*
+   * Nền của <body>, không chỉ của #app.
+   *
+   * #app có `bg-page` rồi, nhưng nó chỉ cao bằng nội dung. Chỗ trình duyệt vẽ
+   * thêm khi cuộn quá đầu hoặc quá cuối trang (Safari, và cử chỉ cuộn đàn hồi
+   * trên điện thoại) lấy màu từ <body> — để trống thì ở chế độ tối lộ ra một
+   * dải trắng ngay trên thanh menu.
+   *
+   * Biến --m-page do tailwind.config.js sinh ra, xem phần plugin ở cuối file
+   * đó. Ba số kênh nên phải bọc rgb().
+   */
+  body {
+    background-color: rgb(var(--m-page));
+    /*
+     * Màu chữ mặc định cũng phải khai.
+     *
+     * Chỗ nào trong mã có `text-gray-*` thì tự đảo rồi, nhưng chỗ KHÔNG khai
+     * màu chữ thì thừa hưởng từ đây — mà mặc định của trình duyệt là đen. Ở
+     * chế độ tối thành chữ đen trên nền xanh đen: còn ở đó, chọn được, trình
+     * đọc màn hình vẫn đọc, mà mắt thì không thấy gì.
+     */
+    color: rgb(var(--m-gray-900));
+  }
+
+  /*
+   * Ô nhập, vùng gõ nhiều dòng, ô chọn.
+   *
+   * Khai ở đây chứ không đi thêm `bg-card` vào từng ô: phần lớn ô nhập trong
+   * mã không khai nền, nên nền của chúng do trình duyệt quyết. `color-scheme`
+   * bên dưới làm phần lớn trình duyệt tự đổi, nhưng không phải tất cả — mà
+   * một ô nhập trắng giữa trang tối thì khỏi phải bàn.
+   *
+   * Lớp tiện ích vẫn thắng chỗ này, nên ô nào cố ý khai nền khác vẫn giữ.
+   */
+  input,
+  textarea,
+  select {
+    background-color: rgb(var(--m-card));
+    color: rgb(var(--m-gray-900));
+  }
+
+  /*
+   * Chữ gợi ý trong ô nhập.
+   *
+   * Phải viết ĐÚNG `input::placeholder, textarea::placeholder` chứ không phải
+   * `::placeholder` trơn: preflight của Tailwind khai sẵn bằng selector dài
+   * đó, và nó đặt màu là bậc 400 — chỉ 3.32:1, dưới ngưỡng 4.5:1 của chữ
+   * thường. Viết selector ngắn hơn thì độ đặc hiệu thấp hơn, preflight thắng,
+   * và chữ gợi ý ở MỌI ô nhập trong web dưới chuẩn mà bảng đo không thấy, vì
+   * bảng đo chỉ đo token chứ không biết quy tắc nào thắng.
+   */
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(var(--m-gray-500)); /* 4.96:1 */
+    opacity: 1;
+  }
+
+  /*
+   * Màu nhấn của trình duyệt cho ô nhập, con trỏ chữ, thanh cuộn.
+   *
+   * Không khai thì ở chế độ tối thanh cuộn và ô chọn vẫn là bộ giao diện sáng
+   * của hệ điều hành — nhìn ra ngay là "trang tối dán lên khung sáng".
+   */
+  :root {
+    color-scheme: light;
+  }
+
+  [data-theme='dark'] {
+    color-scheme: dark;
+  }
+}
+
+/*
+ * ---------------------------------------------------------------
+ * BẢN ĐỒ
+ *
+ * Leaflet tự khai CSS của nó, nên mấy lớp dưới đây phải đặt ngoài @layer để
+ * không bị Tailwind xếp xuống dưới.
+ *
+ * Ô bản đồ của OpenStreetMap SÁNG ở cả hai chế độ — không có bản tối miễn
+ * phí. Nên chỉ sửa những phần của Leaflet do mình vẽ, và giữ nguyên pin viền
+ * trắng vì chúng nằm trên ô bản đồ sáng chứ không nằm trên nền trang.
+ */
+
+/*
+ * Ô BẢN ĐỒ Ở CHẾ ĐỘ TỐI.
+ *
+ * OpenStreetMap không có bản tối miễn phí. Mấy nhà cung cấp có sẵn bản tối thì
+ * vướng: CARTO Dark Matter ghi trong điều khoản rằng họ có thể dán watermark
+ * lên ô bản đồ phục vụ cho yêu cầu không kèm API key, Stadia thì đòi khoá cho
+ * bản chạy thật. Đồ án mà bản đồ hiện watermark "API KEY REQUIRED" thì còn tệ
+ * hơn là để nó sáng.
+ *
+ * Nên tự lọc màu, ngay trên ô bản đồ sẵn có:
+ *
+ *   invert(1)          đảo sáng thành tối — nhưng đảo xong thì nước hoá cam,
+ *                      cây hoá hồng, nhìn như âm bản
+ *   hue-rotate(180deg) xoay sắc về lại đúng phía: nước lại xanh, cây lại lục
+ *   brightness/contrast kéo lại một nhịp, vì sau khi đảo thì nền sáng quá so
+ *                      với phần còn lại của trang
+ *
+ * Đặt lên `.leaflet-tile` — tức TỪNG ảnh ô bản đồ — chứ không phải lên
+ * `.leaflet-tile-pane` là cái khung chứa tất cả. Hai lý do:
+ *
+ *   - Lọc cả khung thì trình duyệt phải gộp mọi ô thành một lớp vẽ chung rồi
+ *     lọc một lượt, nặng hơn và vẽ lại nhiều hơn mức cần.
+ *   - Pin, vòng bán kính và bóng chú nằm ở những lớp khác của Leaflet. Nhắm
+ *     càng hẹp thì càng chắc chúng không bị đảo màu theo — nếu không thì cam
+ *     của nhãn "Bị mất" hoá xanh.
+ *
+ * Công thức giống hệt app di động (`mobile/src/map.ts`), kể cả con số 0.95:
+ * hai client soi cùng một tấm bản đồ thì không có lý do gì lệch tông nhau.
+ */
+[data-theme='dark'] .leaflet-tile {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95);
+}
+
+/*
+ * Nút phóng to và dòng ghi nguồn: Leaflet tô nền trắng cứng trong CSS của nó.
+ * Để nguyên thì giữa bản đồ tối lòi ra hai mảng trắng.
+ */
+[data-theme='dark'] .leaflet-control-zoom a {
+  background: rgb(var(--m-card));
+  color: rgb(var(--m-gray-900));
+  border-bottom-color: rgb(var(--m-gray-200));
+}
+
+[data-theme='dark'] .leaflet-control-zoom a:hover {
+  background: rgb(var(--m-gray-50));
+}
+
+[data-theme='dark'] .leaflet-control-attribution {
+  background: rgb(var(--m-card) / 0.85);
+  color: rgb(var(--m-gray-500));
+}
+
+[data-theme='dark'] .leaflet-control-attribution a {
+  color: rgb(var(--m-primary));
+}
+
+/* Bóng chú khi bấm vào một pin. */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: rgb(var(--m-card));
+  color: rgb(var(--m-gray-900));
+}
+
+/*
+ * Vòng bán kính 500m quanh chấm "bạn đang ở đây".
+ *
+ * Tô bằng CSS chứ không truyền mã màu vào tuỳ chọn của Leaflet, vì Leaflet đặt
+ * màu lên thuộc tính SVG `stroke`/`fill` — thuộc tính SVG KHÔNG nhận var().
+ * Qua CSS thì vòng tự đổi màu khi đổi chế độ, không cần vẽ lại.
+ */
+.lp-vong-ban-kinh {
+  stroke: rgb(var(--m-primary));
+  fill: rgb(var(--m-primary));
+}

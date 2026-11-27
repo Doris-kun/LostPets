@@ -11,9 +11,11 @@ services:
 
   frontend:
     build:
-      context: ./front-end
+      context: ./front-end-react
       args:
-        VUE_APP_API_URL: http://localhost:3000
+        # Vite doc bien co tien to VITE_ va nhung vao bundle LUC BUILD. Doi gia
+        # tri thi phai dung lai image, khong sua duoc bang env luc docker run.
+        VITE_API_URL: http://localhost:3000
     ports:
       - "80:80"
     depends_on:
