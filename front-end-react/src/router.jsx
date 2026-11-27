@@ -34,6 +34,7 @@ const VerifyEmail = lazy(() => import('./pages/VerifyEmail.jsx'));
 const MyPets = lazy(() => import('./pages/MyPets.jsx'));
 const Contact = lazy(() => import('./pages/Contact.jsx'));
 const Privacy = lazy(() => import('./pages/Privacy.jsx'));
+const Admin = lazy(() => import('./pages/Admin.jsx'));
 
 /*
  * Vào trang cần đăng nhập mà chưa đăng nhập thì đẩy sang /login, NHỚ đường cũ
@@ -119,16 +120,18 @@ function LoiTuyenDuong() {
 /*
  * Bảng tuyến đường.
  *
- * ĐANG CHUYỂN DỞ. Danh sách đầy đủ 14 tuyến nằm ở docs/chuyen-sang-react.md
- * mục 4. Dưới đây chỉ khai những tuyến đã có trang thật; mỗi bước chuyển tiếp
- * theo thêm một trang và thêm đúng dòng của nó vào đây.
+ * ĐỦ CẢ 14 TUYẾN. Danh sách gốc nằm ở docs/chuyen-sang-react.md mục 4, và
+ * khớp từng dòng với bảng dưới đây.
  *
- * CHƯA CÓ, theo thứ tự dự định làm:
+ * Hai tuyến đáng để ý:
  *
- *   /admin               Admin              <CanQuyen admin>
+ *   /privacy   KHÔNG đặt sau lớp chặn quyền nào. Meta đòi một đường dẫn chính
+ *              sách bảo mật mở cho mọi người thì mới cho chuyển ứng dụng
+ *              Facebook sang chế độ Live.
  *
- * Giữ nguyên danh sách này trong mã chứ không chỉ trong tài liệu: ai làm tiếp
- * mở đúng file router ra là thấy còn thiếu gì, không phải đi tìm.
+ *   /admin     Chặn bằng <CanQuyen admin>. Không phải quản trị viên thì đẩy về
+ *              trang chủ chứ KHÔNG hiện câu "bạn không có quyền" — câu đó là
+ *              nói cho người lạ biết ở đây có một trang đáng để thử.
  */
 const router = createBrowserRouter(
   [
@@ -160,6 +163,14 @@ const router = createBrowserRouter(
           element: (
             <CanQuyen>
               <MyPets />
+            </CanQuyen>
+          ),
+        },
+        {
+          path: 'admin',
+          element: (
+            <CanQuyen admin>
+              <Admin />
             </CanQuyen>
           ),
         },
