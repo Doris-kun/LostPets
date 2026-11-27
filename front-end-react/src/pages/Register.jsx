@@ -7,7 +7,7 @@ import { useI18n } from '../i18n';
 import { showToast } from '../toast';
 
 const O_NHAP =
-  'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none ' +
+  'w-full border border-gray-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none ' +
   'focus:ring-2 focus:ring-primary focus:border-transparent transition';
 
 const NHAN = 'block text-sm font-semibold text-gray-700 mb-1.5';

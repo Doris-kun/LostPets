@@ -313,7 +313,7 @@ export default function Home() {
             placeholder={t('search.placeholder')}
             value={goQ}
             onChange={(e) => setGoQ(e.target.value)}
-            className="w-full border border-gray-200 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-400"
+            className="w-full border border-gray-400 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-500"
           />
           {goQ && (
             <button
@@ -370,7 +370,7 @@ export default function Home() {
             placeholder={t('filter.area')}
             value={goArea}
             onChange={(e) => setGoArea(e.target.value)}
-            className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-400"
+            className="flex-1 border border-gray-400 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-500"
           />
         </div>
 
@@ -403,7 +403,7 @@ export default function Home() {
             onChange={(e) => setSort(e.target.value)}
             disabled={!!q}
             title={q ? t('search.sortLocked') : ''}
-            className="border border-gray-200 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary bg-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="border border-gray-400 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary bg-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <option value="newest">{t('sort.newest')}</option>
             <option value="oldest">{t('sort.oldest')}</option>
@@ -688,7 +688,7 @@ export default function Home() {
                 type="button"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-6 py-2.5 rounded-full text-sm font-semibold hover:border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 bg-white border border-gray-400 text-gray-600 px-6 py-2.5 rounded-full text-sm font-semibold hover:border-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50"
               >
                 {loadingMore && (
                   <svg className="w-4 h-4 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24" aria-hidden="true">

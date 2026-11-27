@@ -295,7 +295,7 @@ export default function PetMap({
             type="button"
             onClick={locateMe}
             disabled={locating}
-            className="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-accent-border hover:text-accent disabled:opacity-50 transition-all"
+            className="inline-flex items-center gap-1.5 border border-gray-400 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-accent hover:text-accent disabled:opacity-50 transition-all"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -316,7 +316,7 @@ export default function PetMap({
               aria-label={t('map.radius')}
               value={radiusKm}
               onChange={(e) => setRadiusKm(Number(e.target.value))}
-              className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-600 bg-white focus:outline-none focus:border-accent-border"
+              className="border border-gray-400 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             >
               {RADIUS_CHOICES_KM.map((km) => (
                 <option key={km} value={km}>{km} km</option>

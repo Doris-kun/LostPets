@@ -122,7 +122,7 @@ export default function Contact() {
             <a
               href={mailtoLink}
               onClick={chepEmail}
-              className="mt-2.5 w-full border-2 border-accent-border text-accent rounded-xl py-2.5 text-sm font-bold text-center hover:bg-accent-soft hover:border-accent-border transition-colors"
+              className="mt-2.5 w-full border-2 border-accent text-accent rounded-xl py-2.5 text-sm font-bold text-center hover:bg-accent-soft hover:border-accent transition-colors"
             >
               {c.mailBtn}
             </a>

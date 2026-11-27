@@ -197,7 +197,7 @@ export default function MyPets() {
                   )}
                   <Link
                     to={`/pet/${pet._id}/edit`}
-                    className="border-2 border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-gray-300 hover:bg-gray-50 transition-all"
+                    className="border-2 border-gray-400 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-gray-500 hover:bg-gray-50 transition-all"
                   >
                     {t('detail.edit')}
                   </Link>

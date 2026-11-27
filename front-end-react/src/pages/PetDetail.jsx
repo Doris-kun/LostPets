@@ -279,7 +279,7 @@ export default function PetDetail() {
                     href={directionsUrl(pet.lat, pet.lng)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-accent-border hover:text-accent transition-all"
+                    className="inline-flex items-center gap-1.5 border border-gray-400 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-accent hover:text-accent transition-all"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -337,7 +337,7 @@ export default function PetDetail() {
               <button
                 type="button"
                 onClick={sharePet}
-                className="flex items-center gap-1.5 border-2 border-gray-200 text-gray-500 px-4 py-2.5 rounded-xl text-sm font-semibold hover:border-gray-300 hover:bg-gray-50 transition-all"
+                className="flex items-center gap-1.5 border-2 border-gray-400 text-gray-500 px-4 py-2.5 rounded-xl text-sm font-semibold hover:border-gray-500 hover:bg-gray-50 transition-all"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -363,7 +363,7 @@ export default function PetDetail() {
 
               <Link
                 to={`/pet/${pet._id}/edit`}
-                className="border-2 border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-semibold hover:border-gray-300 hover:bg-gray-50 transition-all"
+                className="border-2 border-gray-400 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-semibold hover:border-gray-500 hover:bg-gray-50 transition-all"
               >
                 {t('detail.edit')}
               </Link>
@@ -500,7 +500,7 @@ export default function PetDetail() {
             <button
               type="button"
               onClick={() => setShowReport(true)}
-              className="inline-flex items-center gap-2 text-sm text-gray-500 px-4 py-2.5 rounded-full border border-gray-200 hover:text-danger hover:border-danger-border hover:bg-danger-soft transition-all"
+              className="inline-flex items-center gap-2 text-sm text-gray-500 px-4 py-2.5 rounded-full border border-gray-400 hover:text-danger hover:border-danger-border hover:bg-danger-soft transition-all"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" />

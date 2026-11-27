@@ -120,7 +120,7 @@ export default function ReportDialog({ petId, onClose }) {
               maxLength={MAX_NOTE}
               rows={3}
               placeholder={t('report.notePlaceholder')}
-              className="w-full mt-3 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-accent-border resize-none"
+              className="w-full mt-3 border border-gray-400 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none"
             />
 
             {error && <p className="text-xs text-danger mt-2">{error}</p>}
@@ -130,7 +130,7 @@ export default function ReportDialog({ petId, onClose }) {
                 type="button"
                 onClick={close}
                 disabled={sending}
-                className="flex-1 border border-gray-200 text-gray-600 rounded-xl py-2.5 text-sm font-semibold hover:border-gray-300 disabled:opacity-50 transition-all"
+                className="flex-1 border border-gray-400 text-gray-600 rounded-xl py-2.5 text-sm font-semibold hover:border-gray-500 disabled:opacity-50 transition-all"
               >
                 {t('report.cancel')}
               </button>

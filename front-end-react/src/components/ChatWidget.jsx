@@ -163,7 +163,7 @@ export default function ChatWidget() {
                   key={key}
                   type="button"
                   onClick={() => gui(t(key))}
-                  className="text-[11px] border border-gray-200 bg-white text-gray-600 rounded-full px-2.5 py-1 hover:border-accent-border hover:text-accent transition-colors"
+                  className="text-[11px] border border-gray-400 bg-white text-gray-600 rounded-full px-2.5 py-1 hover:border-accent hover:text-accent transition-colors"
                 >
                   {t(key)}
                 </button>
@@ -200,7 +200,7 @@ export default function ChatWidget() {
                 e.preventDefault();
                 gui();
               }}
-              className="flex-1 resize-none border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+              className="flex-1 resize-none border border-gray-400 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
             />
             <button
               type="submit"

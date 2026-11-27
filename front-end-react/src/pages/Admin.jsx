@@ -214,7 +214,7 @@ export default function Admin() {
     : [];
 
   const O_CHON =
-    'border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary';
+    'border border-gray-400 rounded-full px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary';
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
@@ -268,7 +268,7 @@ export default function Admin() {
                 type="button"
                 onClick={chayDonDep}
                 disabled={cleaning}
-                className="text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                className="text-xs font-medium px-3 py-1.5 rounded-full border border-gray-400 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
               >
                 {cleaning ? t('admin.cleanupRunning') : t('admin.cleanupNow')}
               </button>
@@ -333,7 +333,7 @@ export default function Admin() {
                   type="button"
                   onClick={() => boQuaBaoCao(r)}
                   disabled={busyReport === r._id}
-                  className="text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                  className="text-xs font-medium px-3 py-1.5 rounded-full border border-gray-400 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 >
                   {t('admin.reportDismiss')}
                 </button>
@@ -410,7 +410,7 @@ export default function Admin() {
           id="q" name="q" type="text"
           aria-label={t('admin.search')} placeholder={t('admin.search')}
           value={goQ} onChange={(e) => setGoQ(e.target.value)}
-          className="flex-1 min-w-[10rem] border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="flex-1 min-w-[10rem] border border-gray-400 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
         <span className="text-xs text-gray-500">
@@ -487,7 +487,7 @@ export default function Admin() {
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="border-2 border-gray-200 text-gray-600 px-5 py-2 rounded-full text-sm font-semibold hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50 transition-all"
+            className="border-2 border-gray-400 text-gray-600 px-5 py-2 rounded-full text-sm font-semibold hover:border-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-all"
           >
             {loadingMore ? t('mine.loading') : t('home.loadMore')}
           </button>

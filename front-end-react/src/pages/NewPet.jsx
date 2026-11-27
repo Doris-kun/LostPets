@@ -23,7 +23,7 @@ const FORM_RONG = {
 };
 
 const O_NHAP =
-  'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none ' +
+  'w-full border border-gray-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none ' +
   'focus:ring-2 focus:ring-primary focus:border-transparent transition';
 
 const NHAN = 'block text-sm font-semibold text-gray-700 mb-1.5';
@@ -216,7 +216,7 @@ export default function NewPet() {
                 className={nutChon(
                   form.type === 'lost',
                   'bg-lost text-on-brand border-lost shadow-sm',
-                  'bg-white text-gray-500 border-gray-200 hover:border-lost',
+                  'bg-white text-gray-500 border-gray-400 hover:border-lost',
                 )}
               >
                 {t('form.lostBtn')}
@@ -228,7 +228,7 @@ export default function NewPet() {
                 className={nutChon(
                   form.type === 'found',
                   'bg-found text-on-brand border-found shadow-sm',
-                  'bg-white text-gray-500 border-gray-200 hover:border-found',
+                  'bg-white text-gray-500 border-gray-400 hover:border-found',
                 )}
               >
                 {t('form.foundBtn')}
@@ -248,7 +248,7 @@ export default function NewPet() {
                   className={nutChon(
                     form.species === loai,
                     'bg-lost text-on-brand border-lost shadow-sm',
-                    'bg-white text-gray-500 border-gray-200 hover:border-lost',
+                    'bg-white text-gray-500 border-gray-400 hover:border-lost',
                   )}
                 >
                   {t(loai === 'Chó' ? 'form.dog' : 'form.cat')}
@@ -355,7 +355,7 @@ export default function NewPet() {
               value={form.secretDetail}
               onChange={(e) => doiO('secretDetail', e.target.value)}
               placeholder={t('secret.placeholder')}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+              className="w-full border border-gray-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
             />
             <p className="text-xs text-secret-text mt-1.5 leading-relaxed">{t('secret.hint')}</p>
           </div>
@@ -372,7 +372,7 @@ export default function NewPet() {
             <button
               type="button"
               onClick={() => fileRef.current.click()}
-              className="w-full border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-accent-border hover:bg-accent-soft transition-all"
+              className="w-full border-2 border-dashed border-gray-400 rounded-xl p-6 text-center cursor-pointer hover:border-accent hover:bg-accent-soft transition-all"
             >
               {preview ? (
                 <img src={preview} alt="" className="mx-auto max-h-52 rounded-xl object-cover mb-3" />

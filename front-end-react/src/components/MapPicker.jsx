@@ -154,7 +154,7 @@ export default function MapPicker({ lat = null, lng = null, onChange }) {
           type="button"
           onClick={dungViTriCuaToi}
           disabled={locating}
-          className="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-accent-border hover:text-accent disabled:opacity-50 transition-all"
+          className="inline-flex items-center gap-1.5 border border-gray-400 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-accent hover:text-accent disabled:opacity-50 transition-all"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

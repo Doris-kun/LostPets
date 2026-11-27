@@ -177,17 +177,37 @@ export default {
          *
          * Bảy bậc lấy thẳng từ mobile/src/theme.ts, ba bậc còn lại (300, 700,
          * 800) nội suy cho liền thang. Đã đo cả ba:
-         *   300 #C7D3DB  chỉ dùng làm viền trang trí
+         *   300 #C7D3DB  1.53:1 — chỉ làm hình trang trí, KHÔNG làm viền điều khiển
          *   700 #3E525F  8.15:1 trên nền trắng
          *   800 #2A3C4B  11.37:1
+         *
+         * ------------------------------------------------------------------
+         * BẬC 200 VÀ BẬC 400 LÀ HAI VIỆC KHÁC NHAU, đừng dùng lẫn
+         *
+         * App tách đôi khái niệm này trong theme.ts và web nay theo đúng vậy:
+         *
+         *   200 (border)        ngăn lớp này với lớp kia. Chỉ là trang trí,
+         *                       nhạt được, vì nội dung bên trong mới là thứ
+         *                       nhận diện. 1.22:1.
+         *   400 (borderStrong)  ĐƯỜNG BAO của một điều khiển — ô nhập, nút
+         *                       viền, nút chọn. Nhiều khi nó là thứ DUY NHẤT
+         *                       cho biết đây là chỗ bấm được hoặc gõ được,
+         *                       nên chuẩn đòi tối thiểu 3:1. 3.32:1.
+         *
+         * Trước đây web dùng bậc 200 cho cả hai việc, nên mọi ô nhập và nút
+         * viền trên web đều không có đường bao nhìn thấy được.
+         *
+         * Kéo theo: trỏ vào thì viền phải ĐẬM THÊM (bậc 500, 4.96:1). Bậc 300
+         * nhạt hơn 400, dùng làm hover là viền nhạt đi đúng lúc người ta sắp
+         * bấm.
          */
         gray: {
           50: '#F7FAFB', // surface
           100: '#F1F5F7', // borderLight
-          200: '#E3E9ED', // border
-          300: '#C7D3DB', // nội suy — chỉ làm viền
-          400: '#7391A5', // borderStrong, 3.32:1 — đủ cho đường bao điều khiển
-          500: '#617281', // textMuted, 4.96:1
+          200: '#E3E9ED', // border — ngăn lớp, trang trí
+          300: '#C7D3DB', // nội suy — hình trang trí
+          400: '#7391A5', // borderStrong, 3.32:1 — đường bao điều khiển
+          500: '#617281', // textMuted, 4.96:1 — chữ phụ, chữ gợi ý, viền lúc trỏ vào
           600: '#5B6B78', // textSoft, 5.50:1
           700: '#3E525F', // nội suy
           800: '#2A3C4B', // nội suy
