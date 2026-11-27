@@ -104,12 +104,20 @@
  *   brightness/contrast kéo lại một nhịp, vì sau khi đảo thì nền sáng quá so
  *                      với phần còn lại của trang
  *
- * CHỈ áp lên lớp ô bản đồ, không áp lên cả khung. Pin, vòng bán kính và bóng
- * chú nằm ở những lớp khác của Leaflet — phủ filter lên cả khung thì chúng
- * cũng bị đảo màu theo, và cam của nhãn "Bị mất" hoá xanh.
+ * Đặt lên `.leaflet-tile` — tức TỪNG ảnh ô bản đồ — chứ không phải lên
+ * `.leaflet-tile-pane` là cái khung chứa tất cả. Hai lý do:
+ *
+ *   - Lọc cả khung thì trình duyệt phải gộp mọi ô thành một lớp vẽ chung rồi
+ *     lọc một lượt, nặng hơn và vẽ lại nhiều hơn mức cần.
+ *   - Pin, vòng bán kính và bóng chú nằm ở những lớp khác của Leaflet. Nhắm
+ *     càng hẹp thì càng chắc chúng không bị đảo màu theo — nếu không thì cam
+ *     của nhãn "Bị mất" hoá xanh.
+ *
+ * Công thức giống hệt app di động (`mobile/src/map.ts`), kể cả con số 0.95:
+ * hai client soi cùng một tấm bản đồ thì không có lý do gì lệch tông nhau.
  */
-[data-theme='dark'] .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+[data-theme='dark'] .leaflet-tile {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95);
 }
 
 /*
