@@ -186,18 +186,18 @@
                 class="inline-block text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm mb-3">
                 {{ $t(featured.resolved ? 'badge.resolved' : featured.type === 'lost' ? 'badge.lost' : 'badge.found') }}
               </span>
-              <h2 class="text-2xl font-bold text-gray-900 leading-tight mb-1">{{ featured.name || featured.breed }}</h2>
+              <h2 class="text-2xl font-bold text-gray-900 leading-tight mb-1 break-words">{{ featured.name || featured.breed }}</h2>
               <!-- Thêm màu lông: loài, giống, màu là ba thứ người ta dùng để
                    nhận ra con vật của mình. Thẻ nhỏ không đủ chỗ nên chỉ hiện
                    loài và giống, còn thẻ này thì đủ. -->
-              <p class="text-sm text-gray-500 mb-3">
+              <p class="text-sm text-gray-500 mb-3 break-words">
                 {{ featured.species }} · {{ featured.breed }}<template v-if="featured.color"> · {{ featured.color }}</template>
               </p>
               <div class="flex items-center gap-1.5 mb-4">
                 <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                <p class="text-sm text-gray-500">{{ featured.area }}</p>
+                <p class="text-sm text-gray-500 break-words min-w-0">{{ featured.area }}</p>
               </div>
               <p v-if="featured.description" class="text-sm text-gray-500 leading-relaxed line-clamp-3">{{ featured.description }}</p>
             </div>
@@ -233,8 +233,8 @@
               </span>
             </div>
             <div class="p-4 flex flex-col flex-1">
-              <h3 class="font-bold text-gray-900 text-base leading-tight">{{ pet.name || pet.breed }}</h3>
-              <p class="text-sm text-gray-500 mt-0.5">{{ pet.species }} · {{ pet.breed }}</p>
+              <h3 class="font-bold text-gray-900 text-base leading-tight break-words">{{ pet.name || pet.breed }}</h3>
+              <p class="text-sm text-gray-500 mt-0.5 break-words">{{ pet.species }} · {{ pet.breed }}</p>
               <div class="flex items-center gap-1 mt-1.5">
                 <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>

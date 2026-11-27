@@ -543,7 +543,7 @@ export default function Home() {
                       {t(khoaNhan(featured))}
                     </span>
                   )}
-                  <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1">
+                  <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1 break-words">
                     {featured.name || featured.breed}
                   </h2>
                   {/*
@@ -551,7 +551,7 @@ export default function Home() {
                     nhận ra con vật của mình. Thẻ nhỏ không đủ chỗ nên chỉ hiện
                     loài và giống, còn thẻ này thì đủ.
                   */}
-                  <p className="text-sm text-gray-500 mb-3">
+                  <p className="text-sm text-gray-500 mb-3 break-words">
                     {featured.species} · {featured.breed}
                     {featured.color ? ` · ${featured.color}` : ''}
                   </p>
@@ -559,7 +559,7 @@ export default function Home() {
                     <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <p className="text-sm text-gray-500">{featured.area}</p>
+                    <p className="text-sm text-gray-500 break-words min-w-0">{featured.area}</p>
                   </div>
                   {featured.description && (
                     <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">
@@ -614,10 +614,10 @@ export default function Home() {
                       </span>
                     </div>
                     <div className="p-4 flex flex-col flex-1">
-                      <h3 className="font-bold text-gray-900 text-base leading-tight">
+                      <h3 className="font-bold text-gray-900 text-base leading-tight break-words">
                         {pet.name || pet.breed}
                       </h3>
-                      <p className="text-sm text-gray-500 mt-0.5">
+                      <p className="text-sm text-gray-500 mt-0.5 break-words">
                         {pet.species} · {pet.breed}
                       </p>
                       <div className="flex items-center gap-1 mt-1.5">
