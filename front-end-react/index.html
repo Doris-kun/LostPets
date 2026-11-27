@@ -3,12 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="/favicon.ico" />
-    <title>Lost Pets</title>
+    <!--
+      logo.png chứ không phải favicon.ico: PR #4 đã đổi sang logo để tab trình
+      duyệt nhận ra được web. favicon.ico vẫn giữ trong public/ cho trình duyệt
+      cũ tự dò /favicon.ico.
+    -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <!--
+      Tiêu đề phải mô tả web, không phải tên dự án. PR #4 đã sửa đúng chỗ này
+      một lần — "Lost Pets" trống không thì tab mở nhiều không ai biết tab nào
+      là tab nào, mà kết quả tìm kiếm cũng không nói lên điều gì.
+    -->
+    <title>LostPets — Tìm thú cưng thất lạc</title>
   </head>
   <body>
     <noscript>
-      <strong>Trang web cần JavaScript để hoạt động. Vui lòng bật JavaScript.</strong>
+      <strong>Trang web cần bật JavaScript để hoạt động. Vui lòng bật JavaScript rồi tải lại trang.</strong>
     </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>

@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.lostpets.app",
+      "sha256_cert_fingerprints": [
+        "16:0B:8D:28:7C:E5:4C:BC:BE:36:D8:10:8F:9F:FB:F6:30:2F:06:72:BE:DF:C2:E8:74:3B:26:6B:15:1A:CF:A5"
+      ]
+    }
+  }
+]
