@@ -407,7 +407,14 @@ export default function App() {
       */}
       <main>
         <Suspense fallback={null}>
-          <Outlet />
+          {/*
+            Đưa chế độ sáng/tối xuống cho các trang con.
+
+            Chỉ cần cho mấy chỗ KHÔNG phải màu — ví dụ trang chủ phải chọn một
+            trong hai tệp ảnh logo. Màu thì đã đi qua biến CSS nên không trang
+            nào cần biết đang ở chế độ nào.
+          */}
+          <Outlet context={{ cheDo }} />
         </Suspense>
       </main>
 
