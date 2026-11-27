@@ -200,8 +200,8 @@ export default function Admin() {
   const tiles = stats
     ? [
         { label: t('admin.totalPosts'), value: stats.total },
-        { label: t('badge.lost'), value: stats.lost, dot: 'bg-rose-500' },
-        { label: t('badge.found'), value: stats.found, dot: 'bg-emerald-500' },
+        { label: t('badge.lost'), value: stats.lost, dot: 'bg-lost' },
+        { label: t('badge.found'), value: stats.found, dot: 'bg-found' },
         { label: t('admin.users'), value: stats.users },
       ]
     : [];
@@ -214,7 +214,7 @@ export default function Admin() {
     : [];
 
   const O_CHON =
-    'border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300';
+    'border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary';
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
@@ -247,7 +247,7 @@ export default function Admin() {
           </div>
           <div className="mt-3 h-2 rounded-full bg-gray-100 overflow-hidden">
             <div
-              className="h-full rounded-full bg-teal-500 transition-all"
+              className="h-full rounded-full bg-primary transition-all"
               style={{ width: `${stats.resolvedRate}%` }}
             />
           </div>
@@ -282,11 +282,11 @@ export default function Admin() {
         bảng tin chỉ để tra cứu. Ẩn hẳn khi hàng chờ trống.
       */}
       {reports.length > 0 && (
-        <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-5 mb-6">
+        <div className="bg-white rounded-2xl border border-danger-border shadow-sm p-5 mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true" />
+            <span className="w-2 h-2 rounded-full bg-danger" aria-hidden="true" />
             <p className="text-sm font-bold text-gray-900">{t('admin.reports')}</p>
-            <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-danger-dark bg-danger-soft px-2 py-0.5 rounded-full">
               {reportTotal}
             </span>
           </div>
@@ -298,13 +298,13 @@ export default function Admin() {
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-danger-soft text-danger-dark">
                     {t(`report.reason.${r.reason}`)}
                   </span>
                   {r.pet ? (
                     <Link
                       to={`/pet/${r.pet._id}`}
-                      className="text-sm font-semibold text-gray-900 hover:text-orange-600 truncate"
+                      className="text-sm font-semibold text-gray-900 hover:text-accent truncate"
                     >
                       {r.pet.breed} · {r.pet.area}
                     </Link>
@@ -324,7 +324,7 @@ export default function Admin() {
                     type="button"
                     onClick={() => xoaTinBiBaoCao(r)}
                     disabled={busyReport === r._id}
-                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
+                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-danger text-white hover:bg-danger-dark disabled:opacity-50"
                   >
                     {t('admin.reportDeletePost')}
                   </button>
@@ -373,7 +373,7 @@ export default function Admin() {
                       </div>
                       <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-orange-400 rounded-r-full"
+                          className="h-full bg-lost rounded-r-full"
                           style={{ width: barWidth(row.count, rank.rows) }}
                         />
                       </div>
@@ -410,7 +410,7 @@ export default function Admin() {
           id="q" name="q" type="text"
           aria-label={t('admin.search')} placeholder={t('admin.search')}
           value={goQ} onChange={(e) => setGoQ(e.target.value)}
-          className="flex-1 min-w-[10rem] border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+          className="flex-1 min-w-[10rem] border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
         <span className="text-xs text-gray-500">
@@ -443,11 +443,11 @@ export default function Admin() {
                         <span
                           className={
                             'w-2 h-2 rounded-full shrink-0 ' +
-                            (pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500')
+                            (pet.resolved ? 'bg-primary' : pet.type === 'lost' ? 'bg-lost' : 'bg-found')
                           }
                           aria-hidden="true"
                         />
-                        <Link to={`/pet/${pet._id}`} className="font-semibold text-gray-900 hover:text-orange-600">
+                        <Link to={`/pet/${pet._id}`} className="font-semibold text-gray-900 hover:text-accent">
                           {pet.name || pet.breed}
                         </Link>
                         <span className="text-xs text-gray-500 font-mono">{pet.postId}</span>
@@ -468,7 +468,7 @@ export default function Admin() {
                         type="button"
                         onClick={() => xoaTin(pet)}
                         disabled={busyId === pet._id}
-                        className="text-rose-500 px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-rose-50 disabled:opacity-50 transition-all"
+                        className="text-danger px-2.5 py-1 rounded-lg text-xs font-semibold hover:bg-danger-soft disabled:opacity-50 transition-all"
                       >
                         {t('detail.delete')}
                       </button>

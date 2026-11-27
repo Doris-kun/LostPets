@@ -6,7 +6,7 @@ import { showToast } from '../toast';
 
 const O_NHAP =
   'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none ' +
-  'focus:ring-2 focus:ring-orange-300 focus:border-transparent';
+  'focus:ring-2 focus:ring-primary focus:border-transparent';
 
 export default function ResetPassword() {
   const { t } = useI18n();
@@ -108,12 +108,12 @@ export default function ResetPassword() {
             />
           </div>
 
-          {error && <p className="text-sm text-rose-500">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-500 text-white rounded-xl py-2.5 text-sm font-bold hover:bg-orange-600 disabled:opacity-50 transition-colors"
+            className="w-full bg-primary text-white rounded-xl py-2.5 text-sm font-bold hover:bg-primary-dark disabled:opacity-50 transition-colors"
           >
             {loading ? t('reset.saving') : t('reset.submit')}
           </button>

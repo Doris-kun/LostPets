@@ -263,7 +263,7 @@ export default function SocialLogin({ onDone }) {
         <div className={'relative group ' + (showGoogle ? '' : 'hidden')} style={sizeStyle}>
           <div
             aria-hidden="true"
-            className="absolute inset-0 flex items-center rounded-full border border-gray-200 bg-white group-hover:bg-gray-50 transition-colors"
+            className="absolute inset-0 flex items-center rounded-full border border-social-border bg-white group-hover:bg-gray-50 transition-colors"
           >
             <span className="absolute left-3 flex items-center">
               <svg className="w-5 h-5" viewBox="0 0 48 48" aria-hidden="true">
@@ -287,7 +287,7 @@ export default function SocialLogin({ onDone }) {
             onClick={loginFacebook}
             disabled={busy}
             style={sizeStyle}
-            className="relative flex items-center rounded-full border border-gray-200 bg-white hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white transition-colors"
+            className="relative flex items-center rounded-full border border-social-border bg-white hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white transition-colors"
           >
             <span className="absolute left-3 flex items-center">
               {busy ? (
@@ -309,7 +309,7 @@ export default function SocialLogin({ onDone }) {
       </div>
 
       {error && (
-        <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3 mt-3">
+        <p className="text-sm text-danger-dark bg-danger-soft border border-danger-border rounded-xl px-4 py-3 mt-3">
           {error}
         </p>
       )}

@@ -32,12 +32,12 @@ export default function Toast() {
         'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 ' +
         'px-5 py-3 rounded-2xl shadow-2xl text-sm font-semibold whitespace-nowrap ' +
         'text-white ' +
-        (type === 'success' ? 'bg-gray-900' : 'bg-rose-500')
+        (type === 'success' ? 'bg-gray-900' : 'bg-danger')
       }
     >
       {type === 'success' ? (
         <svg
-          className="w-4 h-4 text-emerald-400 flex-shrink-0"
+          className="w-4 h-4 text-brand-sky flex-shrink-0"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

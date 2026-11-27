@@ -24,7 +24,7 @@ const FORM_RONG = {
 
 const O_NHAP =
   'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none ' +
-  'focus:ring-2 focus:ring-orange-300 focus:border-transparent transition';
+  'focus:ring-2 focus:ring-primary focus:border-transparent transition';
 
 const NHAN = 'block text-sm font-semibold text-gray-700 mb-1.5';
 
@@ -215,8 +215,8 @@ export default function NewPet() {
                 aria-pressed={form.type === 'lost'}
                 className={nutChon(
                   form.type === 'lost',
-                  'bg-rose-500 text-white border-rose-500 shadow-sm',
-                  'bg-white text-gray-500 border-gray-200 hover:border-rose-300',
+                  'bg-lost text-on-brand border-lost shadow-sm',
+                  'bg-white text-gray-500 border-gray-200 hover:border-lost',
                 )}
               >
                 {t('form.lostBtn')}
@@ -227,8 +227,8 @@ export default function NewPet() {
                 aria-pressed={form.type === 'found'}
                 className={nutChon(
                   form.type === 'found',
-                  'bg-emerald-500 text-white border-emerald-500 shadow-sm',
-                  'bg-white text-gray-500 border-gray-200 hover:border-emerald-300',
+                  'bg-found text-on-brand border-found shadow-sm',
+                  'bg-white text-gray-500 border-gray-200 hover:border-found',
                 )}
               >
                 {t('form.foundBtn')}
@@ -247,15 +247,15 @@ export default function NewPet() {
                   aria-pressed={form.species === loai}
                   className={nutChon(
                     form.species === loai,
-                    'bg-amber-500 text-white border-amber-500 shadow-sm',
-                    'bg-white text-gray-500 border-gray-200 hover:border-amber-300',
+                    'bg-lost text-on-brand border-lost shadow-sm',
+                    'bg-white text-gray-500 border-gray-200 hover:border-lost',
                   )}
                 >
                   {t(loai === 'Chó' ? 'form.dog' : 'form.cat')}
                 </button>
               ))}
             </div>
-            {showSpeciesError && <p className="text-xs text-rose-500 mt-1.5">{t('form.speciesError')}</p>}
+            {showSpeciesError && <p className="text-xs text-danger mt-1.5">{t('form.speciesError')}</p>}
           </div>
         </div>
 
@@ -355,9 +355,9 @@ export default function NewPet() {
               value={form.secretDetail}
               onChange={(e) => doiO('secretDetail', e.target.value)}
               placeholder={t('secret.placeholder')}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
             />
-            <p className="text-xs text-amber-600 mt-1.5 leading-relaxed">{t('secret.hint')}</p>
+            <p className="text-xs text-secret-text mt-1.5 leading-relaxed">{t('secret.hint')}</p>
           </div>
 
           <div>
@@ -372,7 +372,7 @@ export default function NewPet() {
             <button
               type="button"
               onClick={() => fileRef.current.click()}
-              className="w-full border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/50 transition-all"
+              className="w-full border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-accent-border hover:bg-accent-soft transition-all"
             >
               {preview ? (
                 <img src={preview} alt="" className="mx-auto max-h-52 rounded-xl object-cover mb-3" />
@@ -397,7 +397,7 @@ export default function NewPet() {
             {image && (
               <div className="mt-2.5 min-h-[1.5rem]">
                 {aiLoading ? (
-                  <p className="flex items-center gap-1.5 text-xs text-violet-500">
+                  <p className="flex items-center gap-1.5 text-xs text-ai-text">
                     <svg className="w-3.5 h-3.5 animate-spin shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -405,7 +405,7 @@ export default function NewPet() {
                     {t('ai.working')}
                   </p>
                 ) : aiResult ? (
-                  <p className="flex items-center gap-1.5 text-xs text-violet-700">
+                  <p className="flex items-center gap-1.5 text-xs text-ai-text">
                     <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                       <path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clipRule="evenodd" />
                     </svg>
@@ -418,7 +418,7 @@ export default function NewPet() {
                     <button
                       type="button"
                       onClick={() => phanTichAnh(image)}
-                      className="font-semibold text-violet-600 hover:underline"
+                      className="font-semibold text-ai-text hover:underline"
                     >
                       {t('ai.retry')}
                     </button>
@@ -430,7 +430,7 @@ export default function NewPet() {
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-danger-dark bg-danger-soft border border-danger-border rounded-xl px-4 py-3">
             <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
@@ -441,7 +441,7 @@ export default function NewPet() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-orange-500 text-white py-3.5 rounded-2xl font-bold text-sm hover:bg-orange-600 disabled:opacity-50 transition-all shadow-sm hover:shadow-orange-200 hover:shadow-lg"
+          className="w-full bg-primary text-white py-3.5 rounded-2xl font-bold text-sm hover:bg-primary-dark disabled:opacity-50 transition-all shadow-sm hover:shadow-primary/30 hover:shadow-lg"
         >
           {loading ? t('form.submitting') : t('form.submit')}
         </button>

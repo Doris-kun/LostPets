@@ -92,10 +92,15 @@ export default function ChatWidget() {
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end">
       {open && (
         <div className="mb-3 w-[21rem] max-w-[calc(100vw-2.5rem)] bg-white rounded-2xl border border-gray-200 shadow-xl flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-orange-500 to-rose-500 text-white">
+          {/*
+            Dải cam→ngọc thì chữ phải là `on-brand`: chữ trắng chỉ được
+            2.46:1 ở đầu dải. Chữ phụ cũng KHÔNG làm mờ — để `opacity-90` là
+            tụt còn 4.14:1 ở giữa dải, mà 11px vẫn tính là chữ thường.
+          */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-brand-orange to-brand-teal text-on-brand">
             <div>
               <p className="text-sm font-bold">{t('chat.title')}</p>
-              <p className="text-[11px] opacity-90">{t('chat.subtitle')}</p>
+              <p className="text-[11px]">{t('chat.subtitle')}</p>
             </div>
             <button
               type="button"
@@ -122,7 +127,7 @@ export default function ChatWidget() {
                   className={
                     'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-line shadow-sm ' +
                     (m.role === 'user'
-                      ? 'bg-orange-500 text-white rounded-br-sm'
+                      ? 'bg-primary text-white rounded-br-sm'
                       : 'bg-white text-gray-700 border border-gray-100 rounded-bl-sm')
                   }
                 >
@@ -147,7 +152,7 @@ export default function ChatWidget() {
               </div>
             )}
 
-            {error && <p className="text-xs text-rose-500 text-center px-2">{error}</p>}
+            {error && <p className="text-xs text-danger text-center px-2">{error}</p>}
           </div>
 
           {/* Gợi ý sẵn, chỉ hiện khi chưa hỏi gì */}
@@ -158,7 +163,7 @@ export default function ChatWidget() {
                   key={key}
                   type="button"
                   onClick={() => gui(t(key))}
-                  className="text-[11px] border border-gray-200 bg-white text-gray-600 rounded-full px-2.5 py-1 hover:border-orange-300 hover:text-orange-600 transition-colors"
+                  className="text-[11px] border border-gray-200 bg-white text-gray-600 rounded-full px-2.5 py-1 hover:border-accent-border hover:text-accent transition-colors"
                 >
                   {t(key)}
                 </button>
@@ -195,13 +200,13 @@ export default function ChatWidget() {
                 e.preventDefault();
                 gui();
               }}
-              className="flex-1 resize-none border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent transition"
+              className="flex-1 resize-none border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
             />
             <button
               type="submit"
               disabled={loading || !draft.trim()}
               aria-label={t('chat.send')}
-              className="bg-orange-500 text-white p-2.5 rounded-xl hover:bg-orange-600 disabled:opacity-40 transition-all shrink-0"
+              className="bg-primary text-white p-2.5 rounded-xl hover:bg-primary-dark disabled:opacity-40 transition-all shrink-0"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M3.4 2.6a1 1 0 0 0-1.3 1.2l1.7 5.2H11a1 1 0 1 1 0 2H3.8l-1.7 5.2a1 1 0 0 0 1.3 1.2l14-7a1 1 0 0 0 0-1.8l-14-7z" />
@@ -217,7 +222,7 @@ export default function ChatWidget() {
         onClick={() => setChatOpen(!open)}
         aria-label={t('chat.title')}
         aria-expanded={open}
-        className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-lg hover:shadow-xl flex items-center justify-center transition-all"
+        className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-orange to-brand-teal text-on-brand shadow-lg hover:shadow-xl flex items-center justify-center transition-all"
       >
         {!open ? (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

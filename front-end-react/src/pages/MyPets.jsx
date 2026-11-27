@@ -90,8 +90,8 @@ export default function MyPets() {
   const soDaXong = pets.filter((p) => p.resolved).length;
   const summary = [
     { label: t('mine.total'), value: pets.length, color: 'text-gray-900' },
-    { label: t('mine.open'), value: pets.length - soDaXong, color: 'text-orange-500' },
-    { label: t('mine.resolved'), value: soDaXong, color: 'text-teal-500' },
+    { label: t('mine.open'), value: pets.length - soDaXong, color: 'text-accent' },
+    { label: t('mine.resolved'), value: soDaXong, color: 'text-primary' },
   ];
 
   return (
@@ -103,7 +103,7 @@ export default function MyPets() {
         </div>
         <Link
           to="/new"
-          className="inline-flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-orange-600 transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-primary-dark transition-all shadow-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
@@ -128,7 +128,7 @@ export default function MyPets() {
       ) : pets.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
           <p className="text-sm text-gray-500">{t('mine.empty')}</p>
-          <Link to="/new" className="inline-block mt-3 text-sm font-semibold text-orange-600 hover:underline">
+          <Link to="/new" className="inline-block mt-3 text-sm font-semibold text-accent hover:underline">
             {t('mine.emptyAction')}
           </Link>
         </div>
@@ -157,8 +157,12 @@ export default function MyPets() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
                     className={
-                      'text-white text-[11px] font-bold px-2 py-0.5 rounded-full ' +
-                      (pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500')
+                      'text-[11px] font-bold px-2 py-0.5 rounded-full ' +
+                      (pet.resolved
+                        ? 'bg-primary text-white'
+                        : pet.type === 'lost'
+                          ? 'bg-lost text-on-brand'
+                          : 'bg-found text-on-brand')
                     }
                   >
                     {t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found')}
@@ -172,7 +176,7 @@ export default function MyPets() {
 
                 <Link
                   to={`/pet/${pet._id}`}
-                  className="block text-base font-bold text-gray-900 mt-1 hover:text-orange-600 transition-colors"
+                  className="block text-base font-bold text-gray-900 mt-1 hover:text-accent transition-colors"
                 >
                   {pet.name || pet.breed}
                 </Link>
@@ -186,7 +190,7 @@ export default function MyPets() {
                       type="button"
                       onClick={() => danhDau(pet)}
                       disabled={busyId === pet._id}
-                      className="border-2 border-teal-200 text-teal-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-teal-50 disabled:opacity-50 transition-all"
+                      className="border-2 border-primary-border text-primary px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-primary-soft disabled:opacity-50 transition-all"
                     >
                       {t('detail.resolve')}
                     </button>
@@ -201,7 +205,7 @@ export default function MyPets() {
                     type="button"
                     onClick={() => xoa(pet)}
                     disabled={busyId === pet._id}
-                    className="text-rose-500 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-rose-50 disabled:opacity-50 transition-all"
+                    className="text-danger px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-danger-soft disabled:opacity-50 transition-all"
                   >
                     {t('detail.delete')}
                   </button>

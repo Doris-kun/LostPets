@@ -26,7 +26,7 @@ export default function NotFound() {
       <p className="text-gray-500 text-sm mt-2">{t('404.sub')}</p>
       <Link
         to="/"
-        className="mt-8 inline-flex items-center gap-2 bg-orange-500 text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors"
+        className="mt-8 inline-flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-primary-dark transition-colors"
       >
         {t('404.back')}
       </Link>

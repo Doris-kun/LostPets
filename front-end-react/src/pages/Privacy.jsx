@@ -295,12 +295,12 @@ export default function Privacy() {
       <p className="text-gray-600 leading-relaxed mt-5">{c.intro}</p>
 
       {/* Bốn điều đáng biết nhất — đặt trên cùng vì phần lớn người đọc dừng ở đây. */}
-      <div className="mt-7 bg-orange-50 border border-orange-100 rounded-2xl p-5">
+      <div className="mt-7 bg-accent-soft border border-accent-border rounded-2xl p-5">
         <p className="text-sm font-bold text-gray-900">{c.summaryH}</p>
         <ul className="mt-3 space-y-2">
           {c.summary.map((text) => (
             <li key={text} className="flex gap-2.5 text-sm text-gray-700 leading-relaxed">
-              <span className="text-orange-500 shrink-0" aria-hidden="true">
+              <span className="text-accent shrink-0" aria-hidden="true">
                 •
               </span>
               <span>{text}</span>
@@ -315,7 +315,7 @@ export default function Privacy() {
         <ul className="mt-3 space-y-1.5">
           {c.sections.map((s) => (
             <li key={s.id}>
-              <a href={'#' + s.id} className="text-sm text-gray-600 hover:text-orange-600 transition-colors">
+              <a href={'#' + s.id} className="text-sm text-gray-600 hover:text-accent transition-colors">
                 <span className="text-gray-500 tabular-nums">{s.n}.</span> {s.h}
               </a>
             </li>
@@ -330,7 +330,7 @@ export default function Privacy() {
       {c.sections.map((s) => (
         <section key={s.id} id={s.id} className="mt-10 scroll-mt-24">
           <h2 className="text-lg font-bold text-gray-900 flex items-baseline gap-2">
-            <span className="text-sm font-semibold text-orange-500 tabular-nums">{s.n}</span>
+            <span className="text-sm font-semibold text-accent tabular-nums">{s.n}</span>
             {s.h}
           </h2>
           {(s.p || []).map((text) => (
@@ -342,7 +342,7 @@ export default function Privacy() {
             <ul className="mt-3 space-y-2">
               {s.ul.map((text) => (
                 <li key={text} className="flex gap-2.5 text-gray-600 leading-relaxed">
-                  <span className="text-orange-400 shrink-0" aria-hidden="true">
+                  <span className="text-accent shrink-0" aria-hidden="true">
                     •
                   </span>
                   <span>{text}</span>
@@ -358,7 +358,7 @@ export default function Privacy() {
         <p className="text-gray-600 leading-relaxed mt-2 max-w-md mx-auto">{c.contactP}</p>
         <Link
           to="/contact"
-          className="inline-block mt-5 bg-orange-500 text-white rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-orange-600 transition-colors"
+          className="inline-block mt-5 bg-primary text-white rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-primary-dark transition-colors"
         >
           {c.contactBtn}
         </Link>

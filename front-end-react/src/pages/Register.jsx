@@ -8,7 +8,7 @@ import { showToast } from '../toast';
 
 const O_NHAP =
   'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none ' +
-  'focus:ring-2 focus:ring-orange-300 focus:border-transparent transition';
+  'focus:ring-2 focus:ring-primary focus:border-transparent transition';
 
 const NHAN = 'block text-sm font-semibold text-gray-700 mb-1.5';
 
@@ -118,7 +118,7 @@ export default function Register() {
         </div>
 
         {error && (
-          <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
+          <p className="text-sm text-danger-dark bg-danger-soft border border-danger-border rounded-xl px-4 py-3">
             {error}
           </p>
         )}
@@ -126,14 +126,14 @@ export default function Register() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-orange-500 text-white py-3 rounded-2xl font-bold text-sm hover:bg-orange-600 disabled:opacity-50 transition-all shadow-sm"
+          className="w-full bg-primary text-white py-3 rounded-2xl font-bold text-sm hover:bg-primary-dark disabled:opacity-50 transition-all shadow-sm"
         >
           {loading ? t('auth.registering') : t('auth.registerBtn')}
         </button>
 
         <p className="text-sm text-gray-500 text-center">
           {t('auth.haveAccount')}{' '}
-          <Link to="/login" className="text-orange-600 font-semibold hover:underline">
+          <Link to="/login" className="text-accent font-semibold hover:underline">
             {t('auth.loginBtn')}
           </Link>
         </p>

@@ -125,12 +125,12 @@ export default function App() {
           </Link>
 
           <div className="flex items-center gap-1 sm:gap-2">
-            <Link to="/?type=lost" className={lopNutLoc(dangLoc('lost'), 'bg-rose-50 text-rose-600')}>
+            <Link to="/?type=lost" className={lopNutLoc(dangLoc('lost'), 'bg-lost-soft text-lost-text')}>
               {t('nav.lost')}
             </Link>
             <Link
               to="/?type=found"
-              className={lopNutLoc(dangLoc('found'), 'bg-emerald-50 text-emerald-600')}
+              className={lopNutLoc(dangLoc('found'), 'bg-found-soft text-found-text')}
             >
               {t('nav.found')}
             </Link>
@@ -173,13 +173,18 @@ export default function App() {
                   onClick={() => setMenuOpen((mo) => !mo)}
                   className={
                     'flex items-center gap-1.5 p-0.5 pr-1.5 rounded-full border-2 transition-all ' +
-                    (menuOpen ? 'border-orange-300 bg-orange-50' : 'border-transparent hover:bg-gray-50')
+                    (menuOpen ? 'border-accent-border bg-accent-soft' : 'border-transparent hover:bg-gray-50')
                   }
                   aria-expanded={menuOpen}
                   aria-haspopup="true"
                   aria-label={t('nav.account')}
                 >
-                  <span className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 text-white text-sm font-bold flex items-center justify-center shrink-0">
+                  {/*
+                    Chữ trên dải cam→ngọc dùng `on-brand`, không dùng trắng.
+                    Chữ trắng chỉ được 2.46:1 ở đầu dải và 3.09:1 ở chỗ cao
+                    nhất; `on-brand` được tối thiểu 4.81:1 trên toàn dải.
+                  */}
+                  <span className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-orange to-brand-teal text-on-brand text-sm font-bold flex items-center justify-center shrink-0">
                     {chuDau(user && user.name)}
                   </span>
                   <svg
@@ -205,7 +210,7 @@ export default function App() {
                       className={
                         'flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ' +
                         (location.pathname === '/me'
-                          ? 'text-orange-600 bg-orange-50/60 font-semibold'
+                          ? 'text-accent bg-accent-soft font-semibold'
                           : 'text-gray-600 hover:bg-gray-50')
                       }
                     >
@@ -226,7 +231,7 @@ export default function App() {
                         className={
                           'flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ' +
                           (location.pathname === '/admin'
-                            ? 'text-violet-600 bg-violet-50/60 font-semibold'
+                            ? 'text-ai-text bg-ai-bg font-semibold'
                             : 'text-gray-600 hover:bg-gray-50')
                         }
                       >
@@ -246,7 +251,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={dangXuat}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:text-danger hover:bg-danger-soft transition-colors"
                       >
                         <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path
@@ -266,7 +271,7 @@ export default function App() {
 
             <Link
               to="/new"
-              className="ml-1 inline-flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-orange-600 transition-all shadow-sm hover:shadow-orange-200 hover:shadow-md"
+              className="ml-1 inline-flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-primary-dark transition-all shadow-sm hover:shadow-primary/30 hover:shadow-md"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />

@@ -118,9 +118,9 @@ export default function ResolveNudge() {
       Dải hỏi lại, nằm ngay dưới thanh menu. Mỗi lần chỉ hỏi MỘT tin: hỏi dồn
       ba bốn tin một lúc thì người ta bấm bừa cho xong, dữ liệu thu về vô nghĩa.
     */
-    <div className="bg-teal-50 border-b border-teal-100">
+    <div className="bg-primary-soft border-b border-primary-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <p className="text-sm text-teal-900 flex-1 min-w-[15rem]">
+        <p className="text-sm text-gray-900 flex-1 min-w-[15rem]">
           {t(pet.type === 'found' ? 'nudge.askFound' : 'nudge.askLost', {
             name: petName,
             days: ageInDays,
@@ -131,7 +131,7 @@ export default function ResolveNudge() {
           type="button"
           onClick={danhDauDaTim}
           disabled={saving}
-          className="text-sm font-semibold bg-teal-500 text-white px-3.5 py-1.5 rounded-full hover:bg-teal-600 disabled:opacity-50 transition-colors"
+          className="text-sm font-semibold bg-primary text-white px-3.5 py-1.5 rounded-full hover:bg-primary-dark disabled:opacity-50 transition-colors"
         >
           {saving ? t('nudge.saving') : t('nudge.yes')}
         </button>
@@ -140,7 +140,7 @@ export default function ResolveNudge() {
           type="button"
           onClick={() => hoan(SNOOZE_NO_DAYS)}
           disabled={saving}
-          className="text-sm font-medium text-teal-700 px-3 py-1.5 rounded-full hover:bg-teal-100 disabled:opacity-50 transition-colors"
+          className="text-sm font-medium text-primary px-3 py-1.5 rounded-full hover:bg-primary-border disabled:opacity-50 transition-colors"
         >
           {t('nudge.no')}
         </button>
@@ -150,7 +150,7 @@ export default function ResolveNudge() {
           onClick={() => hoan(SNOOZE_LATER_DAYS)}
           disabled={saving}
           aria-label={t('nudge.later')}
-          className="text-teal-400 hover:text-teal-700 p-1 rounded-full disabled:opacity-50 transition-colors"
+          className="text-gray-500 hover:text-primary p-1 rounded-full disabled:opacity-50 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />

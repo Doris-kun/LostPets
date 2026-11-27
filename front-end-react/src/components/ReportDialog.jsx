@@ -63,8 +63,8 @@ export default function ReportDialog({ petId, onClose }) {
       <div className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
         {sent ? (
           <div className="text-center py-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div className="w-12 h-12 rounded-full bg-primary-soft flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -89,7 +89,7 @@ export default function ReportDialog({ petId, onClose }) {
                 htmlFor={`reason-${r}`}
                 className={
                   'flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all mb-1.5 ' +
-                  (reason === r ? 'border-orange-300 bg-orange-50/50' : 'border-gray-100 hover:border-gray-200')
+                  (reason === r ? 'border-accent-border bg-accent-soft' : 'border-gray-100 hover:border-gray-200')
                 }
               >
                 {/*
@@ -105,7 +105,7 @@ export default function ReportDialog({ petId, onClose }) {
                   value={r}
                   checked={reason === r}
                   onChange={() => setReason(r)}
-                  className="mt-0.5 accent-orange-500"
+                  className="mt-0.5 accent-primary"
                 />
                 <span className="text-sm text-gray-700 leading-snug">{t(`report.reason.${r}`)}</span>
               </label>
@@ -120,10 +120,10 @@ export default function ReportDialog({ petId, onClose }) {
               maxLength={MAX_NOTE}
               rows={3}
               placeholder={t('report.notePlaceholder')}
-              className="w-full mt-3 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-300 resize-none"
+              className="w-full mt-3 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-accent-border resize-none"
             />
 
-            {error && <p className="text-xs text-rose-500 mt-2">{error}</p>}
+            {error && <p className="text-xs text-danger mt-2">{error}</p>}
 
             <div className="flex gap-2 mt-4">
               <button
@@ -138,7 +138,7 @@ export default function ReportDialog({ petId, onClose }) {
                 type="button"
                 onClick={send}
                 disabled={!reason || sending}
-                className="flex-1 bg-rose-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-rose-700 disabled:opacity-40 transition-colors"
+                className="flex-1 bg-danger text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-danger-dark disabled:opacity-40 transition-colors"
               >
                 {sending ? t('report.sending') : t('report.send')}
               </button>

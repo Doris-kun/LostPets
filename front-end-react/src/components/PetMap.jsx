@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import L, {
   addTiles, pinIcon, colorForPet, clusterByScreen, clusterIcon, meIcon,
   distanceKm, AREA_RADIUS_M, DEFAULT_CENTER, DEFAULT_ZOOM, NEAR_ZOOM, RADIUS_CHOICES_KM,
-  ME_KEY, readSavedMe,
+  ME_KEY, readSavedMe, MAU,
 } from '../map';
 import { useI18n } from '../i18n';
 
@@ -87,18 +87,18 @@ export default function PetMap({
         ? `<img src="${esc(pet.image)}" alt="" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-bottom:6px"/>`
         : '';
       const away = me
-        ? `<div style="font-size:11px;color:#3b82f6;font-weight:600;margin-bottom:4px">${
+        ? `<div style="font-size:11px;color:${MAU.primary.DEFAULT};font-weight:600;margin-bottom:4px">${
             distanceKm(me[0], me[1], pet.lat, pet.lng).toFixed(1)} km</div>`
         : '';
 
       return `
         <div style="min-width:150px">
           ${img}
-          <div style="font-weight:700;color:#111827">${esc(pet.name || pet.breed)}</div>
-          <div style="font-size:11px;color:#9ca3af;margin-bottom:6px">${esc(pet.color)} · ${esc(pet.area)}</div>
+          <div style="font-weight:700;color:${MAU.gray[900]}">${esc(pet.name || pet.breed)}</div>
+          <div style="font-size:11px;color:${MAU.gray[500]};margin-bottom:6px">${esc(pet.color)} · ${esc(pet.area)}</div>
           ${away}
           <button id="go-${pet._id}" style="
-            width:100%;background:#f97316;color:#fff;border:0;border-radius:8px;
+            width:100%;background:${MAU.primary.DEFAULT};color:#fff;border:0;border-radius:8px;
             padding:5px 0;font-size:12px;font-weight:600;cursor:pointer">
             ${esc(t('map.viewPost'))}
           </button>
@@ -173,8 +173,8 @@ export default function PetMap({
 
     L.circle(me, {
       radius: radiusKm * 1000,
-      color: '#3b82f6', weight: 1, opacity: 0.4,
-      fillColor: '#3b82f6', fillOpacity: 0.05,
+      color: MAU.primary.DEFAULT, weight: 1, opacity: 0.4,
+      fillColor: MAU.primary.DEFAULT, fillOpacity: 0.05,
     }).addTo(meLayerRef.current);
     L.marker(me, { icon: meIcon(), interactive: false }).addTo(meLayerRef.current);
   }, [me, radiusKm]);
@@ -295,7 +295,7 @@ export default function PetMap({
             type="button"
             onClick={locateMe}
             disabled={locating}
-            className="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-orange-300 hover:text-orange-600 disabled:opacity-50 transition-all"
+            className="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-accent-border hover:text-accent disabled:opacity-50 transition-all"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -316,7 +316,7 @@ export default function PetMap({
               aria-label={t('map.radius')}
               value={radiusKm}
               onChange={(e) => setRadiusKm(Number(e.target.value))}
-              className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-600 bg-white focus:outline-none focus:border-orange-300"
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-600 bg-white focus:outline-none focus:border-accent-border"
             >
               {RADIUS_CHOICES_KM.map((km) => (
                 <option key={km} value={km}>{km} km</option>
@@ -330,8 +330,8 @@ export default function PetMap({
 
       <div ref={divRef} className={`${height} w-full rounded-2xl border border-gray-100 overflow-hidden z-0`} />
 
-      {geoError && <p className="text-xs text-rose-500 mt-1.5">{geoError}</p>}
-      {capped && <p className="text-xs text-amber-600 mt-1.5">{t('map.capped')}</p>}
+      {geoError && <p className="text-xs text-danger mt-1.5">{geoError}</p>}
+      {capped && <p className="text-xs text-danger-dark mt-1.5">{t('map.capped')}</p>}
       {unlocated > 0 && (
         <p className="text-xs text-gray-500 mt-2">
           {unlocated} {t('map.withoutCoords')}

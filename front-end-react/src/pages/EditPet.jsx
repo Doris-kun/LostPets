@@ -8,7 +8,7 @@ import { showToast } from '../toast';
 
 const O_NHAP =
   'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none ' +
-  'focus:ring-2 focus:ring-orange-300 focus:border-transparent transition';
+  'focus:ring-2 focus:ring-primary focus:border-transparent transition';
 
 const NHAN = 'block text-sm font-semibold text-gray-700 mb-1.5';
 
@@ -180,7 +180,7 @@ export default function EditPet() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <form onSubmit={gui} className="space-y-4">
@@ -196,8 +196,8 @@ export default function EditPet() {
                   aria-pressed={form.type === 'lost'}
                   className={nutChon(
                     form.type === 'lost',
-                    'bg-rose-500 text-white border-rose-500',
-                    'bg-white text-gray-500 border-gray-200 hover:border-rose-300',
+                    'bg-lost text-on-brand border-lost',
+                    'bg-white text-gray-500 border-gray-200 hover:border-lost',
                   )}
                 >
                   {t('form.lostBtn')}
@@ -208,8 +208,8 @@ export default function EditPet() {
                   aria-pressed={form.type === 'found'}
                   className={nutChon(
                     form.type === 'found',
-                    'bg-emerald-500 text-white border-emerald-500',
-                    'bg-white text-gray-500 border-gray-200 hover:border-emerald-300',
+                    'bg-found text-on-brand border-found',
+                    'bg-white text-gray-500 border-gray-200 hover:border-found',
                   )}
                 >
                   {t('form.foundBtn')}
@@ -228,8 +228,8 @@ export default function EditPet() {
                     aria-pressed={form.species === loai}
                     className={nutChon(
                       form.species === loai,
-                      'bg-amber-500 text-white border-amber-500',
-                      'bg-white text-gray-500 border-gray-200 hover:border-amber-300',
+                      'bg-lost text-on-brand border-lost',
+                      'bg-white text-gray-500 border-gray-200 hover:border-lost',
                     )}
                   >
                     {t(loai === 'Chó' ? 'form.dog' : 'form.cat')}
@@ -305,9 +305,9 @@ export default function EditPet() {
                 value={form.secretDetail}
                 onChange={(e) => doiO('secretDetail', e.target.value)}
                 placeholder={t('secret.placeholder')}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent transition"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
               />
-              <p className="text-xs text-amber-600 mt-1.5 leading-relaxed">{t('secret.hint')}</p>
+              <p className="text-xs text-secret-text mt-1.5 leading-relaxed">{t('secret.hint')}</p>
             </div>
 
             <div>
@@ -321,7 +321,7 @@ export default function EditPet() {
               <button
                 type="button"
                 onClick={() => fileRef.current.click()}
-                className="w-full border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/50 transition-all"
+                className="w-full border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-accent-border hover:bg-accent-soft transition-all"
               >
                 {shownPhoto ? (
                   <>
@@ -349,7 +349,7 @@ export default function EditPet() {
                 <button
                   type="button"
                   onClick={xoaAnh}
-                  className="mt-2 text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                  className="mt-2 text-xs font-semibold text-danger hover:text-danger transition-colors"
                 >
                   {t('form.photoRemove')}
                 </button>
@@ -361,7 +361,7 @@ export default function EditPet() {
                     <button
                       type="button"
                       onClick={() => setRemoveImage(false)}
-                      className="font-semibold text-orange-500 hover:text-orange-600 transition-colors"
+                      className="font-semibold text-accent hover:text-accent transition-colors"
                     >
                       {t('form.undo')}
                     </button>
@@ -372,7 +372,7 @@ export default function EditPet() {
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-danger-dark bg-danger-soft border border-danger-border rounded-xl px-4 py-3">
               <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
@@ -383,7 +383,7 @@ export default function EditPet() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-orange-500 text-white py-3.5 rounded-2xl font-bold text-sm hover:bg-orange-600 disabled:opacity-50 transition-all shadow-sm hover:shadow-orange-200 hover:shadow-lg"
+            className="w-full bg-primary text-white py-3.5 rounded-2xl font-bold text-sm hover:bg-primary-dark disabled:opacity-50 transition-all shadow-sm hover:shadow-primary/30 hover:shadow-lg"
           >
             {saving ? t('form.saving') : t('form.save')}
           </button>

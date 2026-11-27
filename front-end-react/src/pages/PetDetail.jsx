@@ -210,8 +210,12 @@ export default function PetDetail() {
             <PetPhoto src={pet.image} alt={pet.breed} type={pet.type} resolved={pet.resolved} width={1200} />
             <span
               className={
-                'absolute top-4 left-4 text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-md ' +
-                (pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500')
+                'absolute top-4 left-4 text-sm font-bold px-3 py-1.5 rounded-full shadow-md ' +
+                (pet.resolved
+                  ? 'bg-primary text-white'
+                  : pet.type === 'lost'
+                    ? 'bg-lost text-on-brand'
+                    : 'bg-found text-on-brand')
               }
             >
               {t(pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found')}
@@ -224,12 +228,12 @@ export default function PetDetail() {
           </div>
 
           {pet.resolved && (
-            <div className="mx-6 mt-6 bg-teal-50 border border-teal-100 rounded-xl px-4 py-3">
+            <div className="mx-6 mt-6 bg-primary-soft border border-primary-border rounded-xl px-4 py-3">
               <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-teal-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <svg className="w-4 h-4 text-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <p className="text-sm font-semibold text-teal-700">{t('detail.resolvedBanner')}</p>
+                <p className="text-sm font-semibold text-primary">{t('detail.resolvedBanner')}</p>
                 <div className="flex-1" />
                 {/*
                   Đường lùi lại. Đánh dấu đoàn tụ là hẹn giờ xoá tin, nên bấm
@@ -241,12 +245,12 @@ export default function PetDetail() {
                   type="button"
                   onClick={() => datTrangThai(false)}
                   disabled={resolving}
-                  className="text-xs font-semibold text-teal-600 underline underline-offset-2 hover:text-teal-800 disabled:opacity-50 flex-shrink-0"
+                  className="text-xs font-semibold text-primary underline underline-offset-2 hover:text-primary-dark disabled:opacity-50 flex-shrink-0"
                 >
                   {t('detail.unresolve')}
                 </button>
               </div>
-              <p className="text-xs text-teal-600 mt-1.5 leading-relaxed">{t('detail.resolvedExpiry')}</p>
+              <p className="text-xs text-primary mt-1.5 leading-relaxed">{t('detail.resolvedExpiry')}</p>
             </div>
           )}
 
@@ -275,7 +279,7 @@ export default function PetDetail() {
                     href={directionsUrl(pet.lat, pet.lng)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-orange-300 hover:text-orange-600 transition-all"
+                    className="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:border-accent-border hover:text-accent transition-all"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -300,32 +304,32 @@ export default function PetDetail() {
               </div>
             )}
 
-            <div className="mt-5 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 rounded-xl p-4">
-              <p className="text-xs text-orange-400 font-bold uppercase tracking-wide mb-1">{t('detail.contact')}</p>
-              <a href={contactHref} className="text-gray-900 font-bold text-base hover:text-orange-600 transition-colors">
+            <div className="mt-5 bg-accent-soft border border-accent-border rounded-xl p-4">
+              <p className="text-xs text-accent font-bold uppercase tracking-wide mb-1">{t('detail.contact')}</p>
+              <a href={contactHref} className="text-gray-900 font-bold text-base hover:text-accent transition-colors">
                 {pet.contact}
               </a>
             </div>
 
             {/* Cảnh báo đặt ngay dưới số liên hệ, đúng lúc người ta sắp gọi */}
-            <div className="mx-6 mt-3 flex gap-2.5 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
-              <svg className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <div className="mx-6 mt-3 flex gap-2.5 bg-danger-soft border border-danger-border rounded-xl px-4 py-3">
+              <svg className="w-4 h-4 text-danger shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fillRule="evenodd" d="M8.257 3.1c.765-1.36 2.72-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
-              <p className="text-xs text-rose-700 leading-relaxed">{t('scam.warning')}</p>
+              <p className="text-xs text-danger-dark leading-relaxed">{t('scam.warning')}</p>
             </div>
 
             {/* Chỉ chủ tin mới nhận được secretDetail từ server, nên chỉ họ thấy ô này */}
             {pet.secretDetail && (
-              <div className="mx-6 mt-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+              <div className="mx-6 mt-3 bg-secret-soft border border-secret-border rounded-xl px-4 py-3">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <svg className="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="w-3.5 h-3.5 text-secret-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
-                  <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">{t('secret.yours')}</p>
+                  <p className="text-xs font-bold text-secret-text uppercase tracking-wide">{t('secret.yours')}</p>
                 </div>
-                <p className="text-sm text-amber-900 font-medium">{pet.secretDetail}</p>
-                <p className="text-xs text-amber-600 mt-1.5 leading-relaxed">{t('secret.howToUse')}</p>
+                <p className="text-sm text-gray-900 font-medium">{pet.secretDetail}</p>
+                <p className="text-xs text-secret-text mt-1.5 leading-relaxed">{t('secret.howToUse')}</p>
               </div>
             )}
 
@@ -346,7 +350,7 @@ export default function PetDetail() {
                   type="button"
                   onClick={() => datTrangThai(true)}
                   disabled={resolving}
-                  className="flex items-center gap-1.5 border-2 border-teal-200 text-teal-600 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-teal-50 disabled:opacity-50 transition-all"
+                  className="flex items-center gap-1.5 border-2 border-primary-border text-primary px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-soft disabled:opacity-50 transition-all"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -367,7 +371,7 @@ export default function PetDetail() {
                 type="button"
                 onClick={deletePet}
                 disabled={deleting}
-                className="bg-rose-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-600 disabled:opacity-50 transition-all"
+                className="bg-danger text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-danger-dark disabled:opacity-50 transition-all"
               >
                 {deleting ? t('detail.deleting') : t('detail.delete')}
               </button>
@@ -403,7 +407,7 @@ export default function PetDetail() {
                       <button
                         type="button"
                         onClick={copyCode}
-                        className="text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors"
+                        className="text-xs font-semibold text-accent hover:text-accent transition-colors"
                       >
                         {copied ? t('claim.copied') : t('claim.copy')}
                       </button>
@@ -429,7 +433,7 @@ export default function PetDetail() {
               type="button"
               onClick={findMatches}
               disabled={matchLoading}
-              className="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:from-violet-600 hover:to-indigo-600 disabled:opacity-50 transition-all shadow-sm"
+              className="flex items-center gap-2 bg-ai text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-ai-text disabled:opacity-50 transition-all shadow-sm"
             >
               {matchLoading && (
                 <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -447,7 +451,7 @@ export default function PetDetail() {
                 <Link
                   key={m.pet._id}
                   to={`/pet/${m.pet._id}`}
-                  className="flex gap-3 items-start border border-gray-100 rounded-xl p-3 hover:border-violet-200 hover:bg-violet-50/40 transition-all"
+                  className="flex gap-3 items-start border border-gray-100 rounded-xl p-3 hover:border-ai-border hover:bg-ai-bg transition-all"
                 >
                   {m.pet.image && (
                     <img src={m.pet.image} alt={m.pet.breed} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
@@ -459,7 +463,7 @@ export default function PetDetail() {
                       <span
                         className={
                           'ml-auto text-xs font-bold px-2 py-0.5 rounded-full ' +
-                          (m.score >= 70 ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500')
+                          (m.score >= 70 ? 'bg-ai-bg text-ai-text' : 'bg-gray-100 text-gray-500')
                         }
                       >
                         {m.score}%
@@ -475,7 +479,7 @@ export default function PetDetail() {
           {matches.length === 0 && matchDone && !matchError && (
             <p className="text-sm text-gray-500 mt-4 text-center py-3">{t('match.none')}</p>
           )}
-          {matchError && <p className="text-sm text-rose-500 mt-4 text-center">{matchError}</p>}
+          {matchError && <p className="text-sm text-danger mt-4 text-center">{matchError}</p>}
         </div>
       )}
 
@@ -496,7 +500,7 @@ export default function PetDetail() {
             <button
               type="button"
               onClick={() => setShowReport(true)}
-              className="inline-flex items-center gap-2 text-sm text-gray-500 px-4 py-2.5 rounded-full border border-gray-200 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50/50 transition-all"
+              className="inline-flex items-center gap-2 text-sm text-gray-500 px-4 py-2.5 rounded-full border border-gray-200 hover:text-danger hover:border-danger-border hover:bg-danger-soft transition-all"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" />

@@ -11,10 +11,21 @@ import { useI18n } from '../i18n';
  * Nên đổi sang dấu chân thú trên nền pha màu theo loại tin: nhìn là biết cố ý,
  * và vẫn đọc được ngay tin đó thuộc loại nào.
  */
+/*
+ * Ba tông pha, mỗi tông đi với một loại tin.
+ *
+ * Dấu chân làm mờ còn 80% cho nó lùi lại sau chữ, nhưng KHÔNG mờ hơn: khi
+ * `label` tắt (thẻ nhỏ trong lưới) thì dấu chân là thứ duy nhất nói "chưa có
+ * ảnh", nên nó phải đạt 3:1 như mọi hình mang nghĩa. Đo ở mức 80%: 3.30:1 /
+ * 3.22:1 / 4.22:1 — mờ xuống 40% thì chỉ còn 1.4:1, nhìn như ô trống trơn.
+ *
+ * Chữ nhãn thì để màu ĐẶC. Chữ 12px là chữ thường, ngưỡng 4.5:1, mà làm mờ
+ * 70% là tụt xuống 2.7:1.
+ */
 const TINTS = {
-  lost: { bg: 'bg-rose-50', icon: 'text-rose-200', text: 'text-rose-300' },
-  found: { bg: 'bg-emerald-50', icon: 'text-emerald-200', text: 'text-emerald-300' },
-  resolved: { bg: 'bg-teal-50', icon: 'text-teal-200', text: 'text-teal-300' },
+  lost: { bg: 'bg-lost-soft', icon: 'text-lost-text/80', text: 'text-lost-text' },
+  found: { bg: 'bg-found-soft', icon: 'text-found-text/80', text: 'text-found-text' },
+  resolved: { bg: 'bg-primary-soft', icon: 'text-primary/80', text: 'text-primary' },
 };
 
 export default function NoPhoto({ type = 'lost', resolved = false, label = true }) {

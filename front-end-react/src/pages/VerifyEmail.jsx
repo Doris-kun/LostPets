@@ -94,7 +94,7 @@ export default function VerifyEmail() {
             <p className="text-gray-700 leading-relaxed">{t('verify.done')}</p>
             <Link
               to="/"
-              className="inline-block mt-5 bg-orange-500 text-white rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-orange-600 transition-colors"
+              className="inline-block mt-5 bg-primary text-white rounded-xl px-5 py-2.5 text-sm font-bold hover:bg-primary-dark transition-colors"
             >
               {t('verify.goHome')}
             </Link>
@@ -118,7 +118,7 @@ export default function VerifyEmail() {
                 id="email" name="email" type="email" required autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
               <button
                 type="submit"

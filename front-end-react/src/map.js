@@ -1,5 +1,27 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import cauHinhTailwind from '../tailwind.config.js';
+
+/*
+ * Bảng màu, đọc thẳng từ tailwind.config.js.
+ *
+ * Pin và chấm gộp là HTML thô do mình nối chuỗi rồi đưa cho Leaflet, nên lớp
+ * tiện ích của Tailwind không với tới được. Nhưng MÀU thì vẫn chung một nguồn
+ * được, và đó mới là thứ đáng giữ cho khớp: trước đây chỗ này viết cứng mã
+ * màu, nên đổi bảng màu xong mà bản đồ vẫn giữ màu cũ — mà không ai thấy, vì
+ * phải mở đúng trang bản đồ mới lộ ra.
+ *
+ * App di động làm y hệt: src/map.ts nhập màu từ src/theme.ts.
+ */
+export const MAU = cauHinhTailwind.theme.extend.colors;
+
+// Màu nền có độ mờ, dùng cho vòng bán kính và quầng sáng quanh chấm vị trí.
+// Leaflet nhận chuỗi CSS nên phải tự đổi từ mã hex sang rgba.
+const mo = (hex, alpha) => {
+  const s = hex.replace('#', '');
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(s.slice(i, i + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
 
 // Mặc định nhìn về TP.HCM, nơi phần lớn tin đăng đang tập trung.
 export const DEFAULT_CENTER = [10.776, 106.7];
@@ -25,7 +47,7 @@ export function addTiles(map) {
 
 // Ảnh marker mặc định của Leaflet hỏng đường dẫn khi đóng gói bằng webpack.
 // Tự vẽ bằng HTML nên không phụ thuộc file ảnh, và đổi màu theo loại tin được.
-export function pinIcon(color = '#f97316') {
+export function pinIcon(color = PIN_COLORS.lost) {
   return L.divIcon({
     className: 'lp-pin',
     html: `<span style="
@@ -37,10 +59,17 @@ export function pinIcon(color = '#f97316') {
   });
 }
 
+/*
+ * Ba màu pin, đúng bằng ba màu nhãn trạng thái.
+ *
+ * "Đã đoàn tụ" dùng primary (navy) chứ không dùng xanh ngọc nữa: xanh ngọc
+ * giờ là màu của tin "Tìm thấy", để nguyên thì hai trạng thái trùng màu trên
+ * cùng một bản đồ.
+ */
 export const PIN_COLORS = {
-  lost: '#f43f5e',
-  found: '#10b981',
-  resolved: '#14b8a6',
+  lost: MAU.lost.DEFAULT,
+  found: MAU.found.DEFAULT,
+  resolved: MAU.primary.DEFAULT,
 };
 
 const colorKind = (pet) => (pet.resolved ? 'resolved' : pet.type === 'found' ? 'found' : 'lost');
@@ -118,7 +147,7 @@ export function clusterIcon(members) {
       <div style="
         width:${size - 10}px;height:${size - 10}px;border-radius:9999px;
         background:#fff;display:flex;align-items:center;justify-content:center;
-        font:700 ${members.length > 99 ? 12 : 14}px system-ui,sans-serif;color:#111827;">
+        font:700 ${members.length > 99 ? 12 : 14}px system-ui,sans-serif;color:${MAU.gray[900]};">
         ${members.length}
       </div></div>`,
     iconSize: [size, size],
@@ -126,14 +155,20 @@ export function clusterIcon(members) {
   });
 }
 
-// Chấm "bạn đang ở đây". Màu xanh dương để không lẫn với ba màu của tin đăng.
+/*
+ * Chấm "bạn đang ở đây".
+ *
+ * Dùng primary, giống app di động. Trùng màu với pin "Đã đoàn tụ", nên phân
+ * biệt bằng HÌNH chứ không bằng màu: chấm này nhỏ hơn và có quầng sáng rộng
+ * bao quanh, pin thì không.
+ */
 export function meIcon() {
   return L.divIcon({
     className: 'lp-me',
     html: `<span style="
       display:block;width:14px;height:14px;border-radius:9999px;
-      background:#3b82f6;border:3px solid #fff;
-      box-shadow:0 0 0 6px rgba(59,130,246,.25);"></span>`,
+      background:${MAU.primary.DEFAULT};border:3px solid #fff;
+      box-shadow:0 0 0 6px ${mo(MAU.primary.DEFAULT, 0.25)};"></span>`,
     iconSize: [14, 14],
     iconAnchor: [7, 7],
   });

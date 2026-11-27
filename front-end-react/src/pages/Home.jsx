@@ -10,8 +10,8 @@ const LIMIT = 9;
 
 const TYPE_TABS = [
   { value: '', labelKey: 'filter.all', activeClass: 'bg-gray-900 text-white' },
-  { value: 'lost', labelKey: 'filter.lost', activeClass: 'bg-rose-500 text-white' },
-  { value: 'found', labelKey: 'filter.found', activeClass: 'bg-emerald-500 text-white' },
+  { value: 'lost', labelKey: 'filter.lost', activeClass: 'bg-lost text-on-brand' },
+  { value: 'found', labelKey: 'filter.found', activeClass: 'bg-found text-on-brand' },
 ];
 const SPECIES_TABS = [
   { value: '', labelKey: 'filter.allSpecies' },
@@ -24,8 +24,23 @@ const DAYS_TABS = [
   { value: '30', labelKey: 'filter.days.30' },
 ];
 
+/*
+ * Nền VÀ chữ của nhãn trạng thái, trả về cùng một chuỗi.
+ *
+ * Gộp hai thứ làm một là cố ý: chữ trắng trên nền cam chỉ được 2.46:1, trên
+ * nền xanh ngọc 3.03:1 — dưới xa ngưỡng 4.5:1. Tách ra hai chỗ thì sớm muộn
+ * có người đổi nền mà quên đổi chữ.
+ *
+ *   Bị mất      cam   + chữ mực đậm   6.03:1
+ *   Tìm thấy    ngọc  + chữ mực đậm   4.90:1
+ *   Đã đoàn tụ  navy  + chữ trắng     7.32:1
+ */
 const mauNhan = (pet) =>
-  pet.resolved ? 'bg-teal-500' : pet.type === 'lost' ? 'bg-rose-500' : 'bg-emerald-500';
+  pet.resolved
+    ? 'bg-primary text-white'
+    : pet.type === 'lost'
+      ? 'bg-lost text-on-brand'
+      : 'bg-found text-on-brand';
 
 const khoaNhan = (pet) =>
   pet.resolved ? 'badge.resolved' : pet.type === 'lost' ? 'badge.lost' : 'badge.found';
@@ -298,7 +313,7 @@ export default function Home() {
             placeholder={t('search.placeholder')}
             value={goQ}
             onChange={(e) => setGoQ(e.target.value)}
-            className="w-full border border-gray-200 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent placeholder-gray-400"
+            className="w-full border border-gray-200 rounded-full pl-11 pr-11 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-400"
           />
           {goQ && (
             <button
@@ -355,7 +370,7 @@ export default function Home() {
             placeholder={t('filter.area')}
             value={goArea}
             onChange={(e) => setGoArea(e.target.value)}
-            className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent placeholder-gray-400"
+            className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-400"
           />
         </div>
 
@@ -388,7 +403,7 @@ export default function Home() {
             onChange={(e) => setSort(e.target.value)}
             disabled={!!q}
             title={q ? t('search.sortLocked') : ''}
-            className="border border-gray-200 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="border border-gray-200 rounded-full px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary bg-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <option value="newest">{t('sort.newest')}</option>
             <option value="oldest">{t('sort.oldest')}</option>
@@ -487,7 +502,7 @@ export default function Home() {
           <p className="text-gray-500 text-sm mt-1">{t('home.emptySub')}</p>
           <Link
             to="/new"
-            className="mt-5 inline-flex items-center gap-2 bg-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors"
+            className="mt-5 inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-primary-dark transition-colors"
           >
             {t('home.postNow')}
           </Link>
@@ -521,7 +536,7 @@ export default function Home() {
                     width={800}
                     imgClass="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <span className={`absolute top-4 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md ${mauNhan(featured)}`}>
+                  <span className={`absolute top-4 left-4 text-xs font-bold px-3 py-1.5 rounded-full shadow-md ${mauNhan(featured)}`}>
                     {t(khoaNhan(featured))}
                   </span>
                 </div>
@@ -534,12 +549,12 @@ export default function Home() {
                   chữ ở giữa thì khoảng đó chia đều trên dưới và trông như có ý.
                 */}
                 <div className="flex-1 flex flex-col justify-center">
-                  <p className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-3">
+                  <p className="text-xs font-bold text-accent uppercase tracking-widest mb-3">
                     {t('home.featured')}
                   </p>
                   {/* Mất cột ảnh thì mất luôn chỗ gắn nhãn loại tin, dựng lại ở đây. */}
                   {!featured.image && (
-                    <span className={`inline-block text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm mb-3 ${mauNhan(featured)}`}>
+                    <span className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full shadow-sm mb-3 ${mauNhan(featured)}`}>
                       {t(khoaNhan(featured))}
                     </span>
                   )}
@@ -582,7 +597,7 @@ export default function Home() {
                       </p>
                     )}
                   </div>
-                  <span className="text-sm font-semibold text-orange-500 group-hover:text-orange-600 transition-colors shrink-0">
+                  <span className="text-sm font-semibold text-accent group-hover:text-accent transition-colors shrink-0">
                     {t('home.view')}
                   </span>
                 </div>
@@ -609,7 +624,7 @@ export default function Home() {
                         width={600}
                         imgClass="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <span className={`absolute top-3 left-3 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm ${mauNhan(pet)}`}>
+                      <span className={`absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm ${mauNhan(pet)}`}>
                         {t(khoaNhan(pet))}
                       </span>
                     </div>
@@ -655,7 +670,7 @@ export default function Home() {
                             {t('card.away', { d: khoangCach(pet) })}
                           </p>
                         ) : (
-                          <span className="text-xs text-gray-500 group-hover:text-orange-500 transition-colors shrink-0">
+                          <span className="text-xs text-gray-500 group-hover:text-accent transition-colors shrink-0">
                             {t('card.detail')} →
                           </span>
                         )}

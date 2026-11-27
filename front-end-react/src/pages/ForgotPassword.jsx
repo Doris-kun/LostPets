@@ -50,8 +50,8 @@ export default function ForgotPassword() {
           lần là một lá thư và một bước gần hơn tới giới hạn chặn tần suất.
         */
         <div className="mt-7 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
-          <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto">
-            <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div className="w-12 h-12 rounded-full bg-primary-soft flex items-center justify-center mx-auto">
+            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -74,22 +74,22 @@ export default function ForgotPassword() {
               id="email" name="email" type="email" required autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
 
-          {error && <p className="text-sm text-rose-500">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-500 text-white rounded-xl py-2.5 text-sm font-bold hover:bg-orange-600 disabled:opacity-50 transition-colors"
+            className="w-full bg-primary text-white rounded-xl py-2.5 text-sm font-bold hover:bg-primary-dark disabled:opacity-50 transition-colors"
           >
             {loading ? t('forgot.sending') : t('forgot.submit')}
           </button>
 
           <p className="text-sm text-gray-500 text-center">
-            <Link to="/login" className="text-orange-600 font-semibold hover:underline">
+            <Link to="/login" className="text-accent font-semibold hover:underline">
               {t('forgot.backToLogin')}
             </Link>
           </p>
