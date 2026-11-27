@@ -1,5 +1,11 @@
 # Chuyển front-end sang React — những gì phải mang theo
 
+> **Đã xong — tháng 11/2026, PR #113.** Bản React nay nằm ở
+> `front-end-react/`, đủ 14 trang và 9 component; thư mục `front-end/` Vue
+> đã xoá. Giữ file này nguyên văn làm hồ sơ của đợt chuyển: mục 5 và mục 6
+> vẫn đúng và vẫn là chỗ tra cứu những hành vi vô hình phải giữ. Riêng mục 1
+> ("đừng merge nhánh React lúc này") chỉ còn giá trị lịch sử.
+
 Viết cho người làm phần React (Híu), dựa trên trạng thái `main` ngày 12/11/2026.
 
 Bản Vue trong `front-end/` đã nhận khá nhiều bản sửa về bảo mật, quyền riêng tư

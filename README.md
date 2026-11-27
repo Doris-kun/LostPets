@@ -23,9 +23,9 @@ cp .env.example .env     # rồi điền các biến, xem chú thích ngay trong
 npm start                # cổng 3000
 
 # Front-end, ở cửa sổ khác
-cd front-end
+cd front-end-react
 npm install
-npm run serve            # cổng 8080
+npm run dev              # cổng 8080
 ```
 
 Thiếu biến môi trường nào thì phần ấy tự tắt chứ không làm sập web: không có
@@ -39,7 +39,7 @@ Có sẵn `docker-compose.yml` nếu muốn chạy cả hai trong container.
 
 | Tầng | Dùng gì |
 |---|---|
-| Front-end | Vue 2, Vue CLI 5, Tailwind 3.4, Leaflet |
+| Front-end | React 19, Vite 7, Tailwind 3.4, Leaflet |
 | Back-end | Express 5, Mongoose 6 |
 | Dữ liệu | MongoDB Atlas |
 | Ảnh | Cloudinary |
