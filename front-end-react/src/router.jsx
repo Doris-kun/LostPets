@@ -26,6 +26,8 @@ const Home = lazy(() => import('./pages/Home.jsx'));
 const PetDetail = lazy(() => import('./pages/PetDetail.jsx'));
 const NewPet = lazy(() => import('./pages/NewPet.jsx'));
 const EditPet = lazy(() => import('./pages/EditPet.jsx'));
+const Login = lazy(() => import('./pages/Login.jsx'));
+const Register = lazy(() => import('./pages/Register.jsx'));
 
 /*
  * Vào trang cần đăng nhập mà chưa đăng nhập thì đẩy sang /login, NHỚ đường cũ
@@ -117,8 +119,6 @@ function LoiTuyenDuong() {
  *
  * CHƯA CÓ, theo thứ tự dự định làm:
  *
- *   /login               Login
- *   /register            Register
  *   /forgot-password     ForgotPassword
  *   /reset-password      ResetPassword      mã đi qua QUERY, không qua đường dẫn
  *   /verify-email        VerifyEmail
@@ -142,6 +142,8 @@ const router = createBrowserRouter(
         { path: 'pet/:id', element: <PetDetail /> },
         { path: 'new', element: <NewPet /> },
         { path: 'pet/:id/edit', element: <EditPet /> },
+        { path: 'login', element: <Login /> },
+        { path: 'register', element: <Register /> },
         // Mọi đường dẫn chưa chuyển đều rơi vào đây.
         { path: '*', element: <NotFound /> },
       ],
