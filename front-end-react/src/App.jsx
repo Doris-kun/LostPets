@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import ChatWidget from './components/ChatWidget.jsx';
 import ResolveNudge from './components/ResolveNudge.jsx';
 import Toast from './components/Toast.jsx';
 import { useI18n } from './i18n';
@@ -324,7 +325,13 @@ export default function App() {
 
       <Toast />
 
-      {/* CHƯA GẮN: <ChatWidget /> — xem ghi chú ở trên. */}
+      {/*
+        Hộp trợ lý. Nằm ở khung chung chứ không trong một trang nào, vì nó phải
+        mở được từ nút "Hỏi trợ lý" ở trang Liên hệ — trang đó không phải cha
+        của nó nên không truyền prop xuống được. Trạng thái mở/đóng giữ trong
+        chat.js, xem ghi chú ở đầu file đó.
+      */}
+      <ChatWidget />
     </div>
   );
 }

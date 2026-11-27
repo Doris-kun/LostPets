@@ -32,6 +32,8 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail.jsx'));
 const MyPets = lazy(() => import('./pages/MyPets.jsx'));
+const Contact = lazy(() => import('./pages/Contact.jsx'));
+const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 
 /*
  * Vào trang cần đăng nhập mà chưa đăng nhập thì đẩy sang /login, NHỚ đường cũ
@@ -124,9 +126,6 @@ function LoiTuyenDuong() {
  * CHƯA CÓ, theo thứ tự dự định làm:
  *
  *   /admin               Admin              <CanQuyen admin>
- *   /contact             Contact
- *   /privacy             Privacy            PHẢI công khai — Meta đòi có thì
- *                                           mới cho app chạy Live
  *
  * Giữ nguyên danh sách này trong mã chứ không chỉ trong tài liệu: ai làm tiếp
  * mở đúng file router ra là thấy còn thiếu gì, không phải đi tìm.
@@ -149,6 +148,13 @@ const router = createBrowserRouter(
         // ResetPassword.jsx.
         { path: 'reset-password', element: <ResetPassword /> },
         { path: 'verify-email', element: <VerifyEmail /> },
+        { path: 'contact', element: <Contact /> },
+        /*
+          PHẢI công khai, không đặt sau lớp chặn quyền nào: Meta đòi một đường
+          dẫn chính sách bảo mật mở cho mọi người thì mới cho chuyển ứng dụng
+          Facebook sang chế độ Live.
+        */
+        { path: 'privacy', element: <Privacy /> },
         {
           path: 'me',
           element: (
