@@ -22,7 +22,7 @@ cd LostPets
 
 cd back-end
 npm install
-cd ../front-end
+cd ../front-end-react
 npm install
 ```
 
@@ -92,13 +92,15 @@ npm start           # http://localhost:3000
 
 ```bash
 # Terminal 2 — giao diện
-cd front-end
-npm run serve       # http://localhost:8080
+cd front-end-react
+npm run dev         # http://localhost:8080
 ```
 
 Back-end chạy thành công sẽ in `Connected to MongoDB`. Nếu lỗi kết nối, nó tự thử lại mỗi 5 giây — kiểm tra lại `MONGODB_URI` và phần Network Access trên Atlas.
 
-Front-end mặc định gọi API ở `http://localhost:3000`. Muốn đổi thì tạo file `front-end/.env` với `VUE_APP_API_URL=...`.
+Front-end mặc định gọi API ở `http://localhost:3000`. Muốn đổi thì tạo file `front-end-react/.env.local` với `VITE_API_URL=...`.
+
+> Vite chỉ đọc biến có tiền tố `VITE_`, và đọc qua `import.meta.env` chứ không qua `process.env`. Đặt tên kiểu `VUE_APP_*` thì nó bỏ qua, không báo lỗi gì.
 
 ### Chạy test
 
@@ -217,7 +219,7 @@ Dự án tách sẵn hai thư mục, mỗi người giữ một bên để trán
 | Thư mục | Nội dung |
 |---|---|
 | `back-end/` | Express, Mongoose model, routes, controller, upload Cloudinary, test |
-| `front-end/` | Vue 2, các view, component, Tailwind, gọi API bằng axios |
+| `front-end-react/` | React 19 + Vite, các trang, component, Tailwind, gọi API bằng axios |
 
 Khi một tính năng cần cả hai bên (ví dụ thêm một trường dữ liệu mới), làm tuần tự: **back-end merge trước**, front-end pull về rồi làm sau. Và nhớ cập nhật mục API bên dưới trong cùng PR đó.
 
@@ -612,11 +614,11 @@ Người tạo tài khoản bằng Google mà đi gõ mật khẩu ở form đă
 | Nơi | Biến |
 |---|---|
 | Back-end (Render) | `GOOGLE_CLIENT_ID`, `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` |
-| Front-end (lúc build) | `VUE_APP_GOOGLE_CLIENT_ID`, `VUE_APP_FACEBOOK_APP_ID` |
+| Front-end (lúc build) | `VITE_GOOGLE_CLIENT_ID`, `VITE_FACEBOOK_APP_ID` |
 
 Nút chỉ hiện khi **đủ cả hai phía**. Thiếu bên nào thì nút ẩn đi và phần đăng nhập bằng mật khẩu vẫn chạy bình thường — giống cách `JWT_SECRET` tắt hẳn phần đăng nhập mà không làm sập web.
 
-> Biến `VUE_APP_*` được nhúng vào bundle **lúc build**, không đọc lúc chạy. Đổi giá trị trên Render thì phải build lại front-end mới có tác dụng.
+> Biến `VITE_*` được nhúng vào bundle **lúc build**, không đọc lúc chạy. Đổi giá trị trên Render thì phải build lại front-end mới có tác dụng.
 
 ### `GET /pets/mine` — tin của chính mình
 
@@ -686,7 +688,7 @@ Không đặt `setInterval` hay `node-cron` trong app vì Render gói miễn ph�
 
 **Vì sao không dùng TTL index của MongoDB**, dù cách đó không tốn dòng code nào: TTL xoá thẳng dưới tầng database nên code của app không chạy, ảnh trên Cloudinary bị bỏ lại vĩnh viễn và không còn tin nào trỏ tới để biết đường dọn. Đổi vài chục dòng code lấy một đống rác không bao giờ dọn được thì không đáng.
 
-> Đổi `CLEANUP_AFTER_DAYS` thì nhớ sửa luôn hai chuỗi dịch `detail.resolvedExpiry` trong `front-end/src/i18n.js` và dòng nói về 30 ngày trong `SYSTEM_INSTRUCTION` của `chatController.js`, không thì giao diện nói một đằng hệ thống làm một nẻo.
+> Đổi `CLEANUP_AFTER_DAYS` thì nhớ sửa luôn hai chuỗi dịch `detail.resolvedExpiry` trong `front-end-react/src/i18n.js` và dòng nói về 30 ngày trong `SYSTEM_INSTRUCTION` của `chatController.js`, không thì giao diện nói một đằng hệ thống làm một nẻo.
 
 ### Hàng chờ báo cáo
 

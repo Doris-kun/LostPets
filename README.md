@@ -57,8 +57,8 @@ back-end/
     routes/
   scripts/         nạp dữ liệu mẫu, đo độ chính xác, kiểm cấu hình thư, đo tải
   tests/           toàn bộ test, chạy trên MongoDB trong bộ nhớ
-front-end/src/
-  views/           từng trang
+front-end-react/src/
+  pages/           từng trang
   components/      bản đồ, hộp chat, hộp báo cáo
 mobile/            ứng dụng React Native
 ```
@@ -94,7 +94,7 @@ Những chỗ này đều có đo đạc hoặc lý do cụ thể, ghi ngay tron
 500m ngay lúc gán ở tầng schema. Thú cưng thường mất gần nhà; một điểm ghim
 chính xác đặt cạnh số điện thoại công khai là đủ để người lạ tìm ra nơi ở.
 Lúc tra tên khu vực từ toạ độ cũng làm tròn trước khi gửi ra ngoài.
-→ `back-end/api/models/petModel.js`, `front-end/src/geocode.js`
+→ `back-end/api/models/petModel.js`, `front-end-react/src/geocode.js`
 
 **So khớp xếp theo vector chứ không theo ngày.** Cách cũ lấy ba tin mới nhất
 rồi đưa AI chấm, đo trên 20 cặp gán nhãn thì recall@3 chỉ 20% — tin đúng
